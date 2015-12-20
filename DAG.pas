@@ -2546,6 +2546,22 @@ var
         	  kill := false;
         	  stop := true;
         	  end {if}
+        	                                {kill indirect accesses on stores}
+        	                                {to indirectly-accessible locations}
+               else if op1^.opcode in [pc_sto,pc_cpi,pc_iil,pc_ili,pc_idl,pc_ild,
+        	  pc_cup,pc_cui,pc_tl1,pc_ind] then begin
+        	  if list^.opcode in [pc_sto,pc_cpi,pc_iil,pc_ili,pc_idl,pc_ild,
+        	  pc_cup,pc_cui,pc_tl1] then begin
+        	     kill := true;
+        	     stop := true;
+        	     end {if}
+        	  else if list^.opcode in [pc_str,pc_sro,pc_cop,pc_cpo,pc_lli,
+        	  pc_lil,pc_lld,pc_ldl,pc_gli,pc_gil,pc_gld,pc_gdl] then
+        	     if Member(list, c_ind) then begin
+        	        kill := true;
+        	        stop := true;
+        	        end {if}
+        	  end {else if}
                else if list^.opcode in [pc_str,pc_sro,pc_cop,pc_cpo,pc_lli,pc_lil,
         	  pc_lld,pc_ldl,pc_gli,pc_gil,pc_gld,pc_gdl] then begin
         	  if MatchLoc(list, op2) then begin
