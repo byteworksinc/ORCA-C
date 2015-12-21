@@ -934,11 +934,12 @@ case op^.opcode of			{check for optimizations of this node}
       end; {case pc_bnl}
 
    pc_bno: begin			{pc_bno}
-      if op^.left^.opcode = pc_str then
+      {Invalid optimization disabled}
+      {if op^.left^.opcode = pc_str then
          if op^.left^.left^.opcode in [pc_lda,pc_lao] then begin
             ReplaceLoads(op^.left^.left, op^.left, op^.right);
             opv := op^.right;
-            end; {if}
+            end;} {if}
       end; {case pc_bno}
 
    pc_bnt: begin			{pc_bnt}
