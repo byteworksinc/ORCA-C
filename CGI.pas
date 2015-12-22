@@ -854,7 +854,7 @@ if codeGeneration then begin
          else if (baseTypeEnum(fp1) in [cgUByte,cgWord,cgUWord])
             and (baseTypeEnum(fp2) in [cgWord,cgUWord]) then
             goto 1
-         else if (baseTypeEnum(fp1) in [cgByte,cgUByte])
+         else if (baseTypeEnum(fp1) in [cgUByte])
             and (baseTypeEnum(fp2) in [cgByte,cgUByte]) then
             goto 1
          else
