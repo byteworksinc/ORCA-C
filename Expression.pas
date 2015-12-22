@@ -288,10 +288,8 @@ function Unary(tp: baseTypeEnum): baseTypeEnum;
 
 begin {Unary}
 if tp in [cgByte,cgUByte,cgReal,cgDouble,cgComp] then
-   if tp = cgByte then
+   if tp in [cgByte,cgUByte] then
       tp := cgWord
-   else if tp = cgUByte then
-      tp := cgUWord
    else {if tp in [cgReal,cgDouble,cgComp] then}
       tp := cgExtended;
 Unary := tp;
