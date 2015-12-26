@@ -857,6 +857,9 @@ if codeGeneration then begin
          else if (baseTypeEnum(fp1) in [cgUByte])
             and (baseTypeEnum(fp2) in [cgByte,cgUByte]) then
             goto 1
+         else if (baseTypeEnum(fp1) = cgByte)
+            and (baseTypeEnum(fp2) = cgUByte) then
+            lcode^.q := (ord(cgWord) << 4) | ord(cgUByte)
          else
             lcode^.q := (fp1 << 4) | fp2;
 

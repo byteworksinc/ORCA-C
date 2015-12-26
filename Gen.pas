@@ -1131,7 +1131,6 @@ const                                {note: these constants list all legal }
    cExtended         = $09;
    cVoid             = $0B;
 
-   byteToUByte       = $01;
    byteToWord        = $02;
    byteToUword       = $03;
    byteToLong        = $04;
@@ -1250,7 +1249,7 @@ else if op^.q in [ubyteToLong,ubyteToUlong,uwordToLong,uwordToUlong] then
       GenImplied(m_pha);
       end; {else}
    end {else if}
-else if op^.q in [byteToUByte,wordToByte,wordToUbyte,uwordToByte,uwordToUbyte] then
+else if op^.q in [wordToByte,wordToUbyte,uwordToByte,uwordToUbyte] then
    GenNative(m_and_imm, immediate, $00FF, nil, 0)
 else if op^.q in [byteToReal,uByteToReal,wordToReal] then
    GenCall(11)
