@@ -1993,7 +1993,7 @@ var
                end {if}
             else if kind = uand then begin
                tree := tree^.left;
-               iPtr^.pPlus := operator = plusch;
+               iPtr^.pPlus := true;
                iPtr^.isName := true;
                if tree^.token.kind = ident then begin
                   ip := FindSymbol(tree^.token, allSpaces, false, true);
