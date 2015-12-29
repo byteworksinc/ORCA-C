@@ -400,7 +400,7 @@ var
       LabelSearch(maxLabel, 2, 0, 0);
       if operand <> 0 then begin
          Out(129);
-         Out2(operand); Out2(0);
+         Out2(operand); if (operand < 0) then Out2(-1) else Out2(0);
          Out(1);
          end; {if}
       if (flags & shift16) <> 0 then begin
