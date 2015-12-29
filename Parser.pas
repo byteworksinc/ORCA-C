@@ -2035,7 +2035,7 @@ var
                end {else if}
             else if kind = stringConst then begin
                iPtr^.pval := offset;
-               iPtr^.pPlus := operator = plusch;
+               iPtr^.pPlus := true;
                iPtr^.isName := false;
                iPtr^.pStr := tree^.token.sval;
                end {else if}
