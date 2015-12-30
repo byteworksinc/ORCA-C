@@ -1297,18 +1297,17 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
       until done;
       if paramCount <> macro^.parameters then
          Error(14);
-      if token.kind = rparench then     {insist on a closing ')'}
-         begin
-         if not gettingFileName then
-            NextToken
-         end {if}
-      else
+      if token.kind <> rparench then begin  {insist on a closing ')'}
+         if not gettingFileName then        {put back the source stream token}
+            PutBackToken(token, true);
          Error(12);
+         end;
       end {if}
-   else
+   else begin
       Error(13);
-   if not gettingFileName then          {put back the source stream token}
-      PutBackToken(token, true);
+      if not gettingFileName then       {put back the source stream token}
+         PutBackToken(token, true);
+      end; {else}
    end; {if}
 if macro^.readOnly then begin           {handle special macros}
    case macro^.algorithm of
