@@ -3505,6 +3505,13 @@ else {if not isFunction then} begin
                Error(52);
             if doingPrototypes then
                Error(88);
+                                        {allocate copy of incomplete array type,}
+            tp := variable^.itype;      {so it can be completed by Initializer}
+            if (tp^.kind = arrayType) and (tp^.elements = 0) then begin
+               variable^.itype := pointer(Malloc(sizeof(typeRecord)));
+               variable^.itype^ := tp^;
+               variable^.itype^.saveDisp := 0;
+               end;
             NextToken;                  {handle an initializer}
             ltypeSpec := typeSpec;
             Initializer(variable);
