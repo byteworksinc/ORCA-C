@@ -1775,7 +1775,7 @@ var
    bt: baseTypeEnum;                    {base type of loaded value}
 
 begin {CompareToZero}
-if expressionType^.kind = pointerType then
+if expressionType^.kind in [pointerType,arrayType] then
    expressionType := uLongPtr;
 if expressionType^.kind = scalarType then begin
    bt := UsualUnaryConversions;
@@ -3075,7 +3075,7 @@ case tree^.token.kind of
 
    barbarop: begin                      {||}
       GenerateCode(tree^.left);
-      if expressionType^.kind = pointerType then
+      if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
       else if UsualUnaryConversions = cgExtended then begin
          GenLdcReal(0.0);
@@ -3084,7 +3084,7 @@ case tree^.token.kind of
          end; {if}
       lType := expressionType;
       GenerateCode(tree^.right);
-      if expressionType^.kind = pointerType then
+      if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
       else if UsualUnaryConversions = cgExtended then begin
          GenLdcReal(0.0);
@@ -3104,7 +3104,7 @@ case tree^.token.kind of
 
    andandop: begin                      {&&}
       GenerateCode(tree^.left);
-      if expressionType^.kind = pointerType then
+      if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
       else if UsualUnaryConversions = cgExtended then begin
          GenLdcReal(0.0);
@@ -3113,7 +3113,7 @@ case tree^.token.kind of
          end; {if}
       lType := expressionType;
       GenerateCode(tree^.right);
-      if expressionType^.kind = pointerType then
+      if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
       else if UsualUnaryConversions = cgExtended then begin
          GenLdcReal(0.0);
