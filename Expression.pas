@@ -3456,7 +3456,9 @@ case tree^.token.kind of
          else if lType^.kind = pointerType then
             Gen1t(pc_ind, 0, cgULong)
          else if not
-            (lType^.kind in [functionType,arrayType,structType,unionType]) then
+            ((lType^.kind in [functionType,arrayType,structType,unionType])
+            or ((lType^.kind = definedType) and  {handle const struct/union}
+                (lType^.dType^.kind in [structType,unionType]))) then
             Error(79);
          end {if}
       else if not (lType^.kind in [structType,unionType]) then
