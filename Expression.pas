@@ -2256,6 +2256,7 @@ var
 
       {load the address of the item pointed to by the pointer}
       GenerateCode(tree^.left);
+      isBitField := false;
       end {else if}
    else if tree^.token.kind = dotch then begin
 
