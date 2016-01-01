@@ -556,7 +556,7 @@ function ExpressionTree (kind: expressionKind; stopSym: tokenSet): tokenPtr;
 {               an expression when evaluating a function         }
 {               parameter list.                                  }
 
-label 1,2;
+label 1,2,3;
 
 var
    done,done2: boolean;                 {for loop termination}
@@ -1541,9 +1541,18 @@ if token.kind in startExpression then begin
             stack := sp;
             if kind in [preprocessorExpression,arrayExpression] then
                if token.kind in [stringconst,doubleconst] then begin
+                  if kind = arrayExpression then begin
+                     op := opStack;
+                     while op <> nil do begin
+                        if op^.token.kind = sizeofsy then
+                           goto 3;
+                        op := op^.next;
+                        end; {while}
+                     end; {if}
                   Error(41);
                   errorFound := true;
                   end; {if}
+3:
             NextToken;
             ComplexTerm;
             end; {else}
