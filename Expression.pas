@@ -2892,7 +2892,8 @@ case tree^.token.kind of
       begin
       L_Value(tree^.left);
       if (token.kind = ident)
-         and (id^.itype^.kind in [scalarType,pointerType]) then begin
+         and ((id^.itype^.kind in [scalarType,pointerType])
+            or ((id^.itype^.kind = arrayType) and (id^.storage = parameter))) then begin
          doingScalar := true;
          LoadScalar(id);
          lType := id^.itype;
@@ -2922,13 +2923,18 @@ case tree^.token.kind of
          end; {else}
       if lType^.isConstant then
          Error(93);
+      if doingScalar 
+         and (ltype^.kind = arrayType) and (id^.storage = parameter) then
+         kind := pointerType
+      else
+         kind := lType^.kind;
       GenerateCode(tree^.right);
-      if lType^.kind <> pointerType then
+      if kind <> pointerType then
          et := UsualBinaryConversions(lType);
       case tree^.token.kind of
 
          pluseqop:
-            if lType^.kind = pointerType then begin
+            if kind = pointerType then begin
                ChangePointer(pc_adl, lType^.pType^.size, UsualUnaryConversions);
                expressionType := lType;
                end
@@ -2942,7 +2948,7 @@ case tree^.token.kind of
                Error(66);
 
          minuseqop:
-            if lType^.kind = pointerType then begin
+            if kind = pointerType then begin
                ChangePointer(pc_sbl, lType^.pType^.size, UsualUnaryConversions);
                expressionType := lType;
                end
@@ -3043,7 +3049,7 @@ case tree^.token.kind of
          end; {case}
       AssignmentConversion(lType,expressionType,false,0,true,true);
       if doingScalar then begin
-         if lType^.kind = pointerType then
+         if kind = pointerType then
             lType := uLongPtr;
          case id^.storage of
             stackFrame, parameter:
