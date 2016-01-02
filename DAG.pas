@@ -26,6 +26,9 @@ procedure DAG (code: icptr);
 { parameters:                                                   }
 {       code - opcode						}
 
+
+function TypeOf (op: icptr): baseTypeEnum;
+
 {---------------------------------------------------------------}
 
 implementation
@@ -1493,14 +1496,22 @@ case op^.opcode of			{check for optimizations of this node}
          end; {else if}
       end; {case pc_ixa}
 
-   pc_leq: begin			{pc_leq}
-      if op^.optype in [cgWord,cgUWord] then
+   pc_leq, pc_les, pc_geq, pc_grt: begin  {pc_leq, pc_les, pc_geq, pc_grt}
+      if (op^.opcode = pc_leq) and (op^.optype in [cgWord,cgUWord]) then
          if op^.right^.opcode = pc_ldc then
             if op^.right^.q < maxint then begin
                op^.right^.q := op^.right^.q + 1;
                op^.opcode := pc_les;
                end; {if}
-      end; {case pc_lnm}
+      if (op^.optype = cgWord) then
+         if (TypeOf(op^.right) = cgUByte)
+            or ((op^.right^.opcode = pc_ldc) and (op^.right^.q >= 0)
+                and (op^.right^.optype in [cgByte,cgUByte,cgWord])) then
+            if (TypeOf(op^.left) = cgUByte)
+               or ((op^.left^.opcode = pc_ldc) and (op^.left^.q >= 0)
+                   and (op^.left^.optype in [cgByte,cgUByte,cgWord])) then
+               op^.optype := cgUWord;
+      end; {case pc_leq, pc_les, pc_geq, pc_grt}
 
    pc_lnd: begin			{pc_lnd}
       if op^.right^.opcode = pc_ldc then begin
@@ -2168,7 +2179,7 @@ while list <> nil do begin
 end; {Member}
 
 
-function TypeOf (op: icptr): baseTypeEnum;
+function TypeOf {(op: icptr): baseTypeEnum};
 
 { find the type for the expression tree				}
 {								}
