@@ -716,7 +716,7 @@ case op^.opcode of			{check for optimizations of this node}
                end; {else if}
             end {if}
          else if CodesMatch(op^.left, op^.right, false) then begin
-            if NoFunctions(op^.left) then begin
+            if not SideEffects(op^.left) then begin
                ZeroIntermediateCode(op^.right);
                with op^.right^ do begin
                   opcode := pc_ldc;
@@ -782,7 +782,7 @@ case op^.opcode of			{check for optimizations of this node}
                end; {else if}
             end {if}
          else if CodesMatch(op^.left, op^.right, false) then
-            if NoFunctions(op^.left) then begin
+            if not SideEffects(op^.left) then begin
                ZeroIntermediateCode(op^.right);
                with op^.right^ do begin
                   opcode := pc_ldc;
@@ -1620,7 +1620,7 @@ case op^.opcode of			{check for optimizations of this node}
             if q = 1 then
                opv := op^.left
             else if q = 0 then begin
-               if NoFunctions(op^.left) then
+               if not SideEffects(op^.left) then
                   opv := op^.right;
                end {else if}
             else if (q = -1) and (op^.opcode = pc_mpi) then begin
@@ -1652,7 +1652,7 @@ case op^.opcode of			{check for optimizations of this node}
             if lval = 1 then
                opv := op^.left
             else if lval = 0 then begin
-               if NoFunctions(op^.left) then
+               if not SideEffects(op^.left) then
                   opv := op^.right;
                end {else if}
             else if (lval = -1) and (op^.opcode = pc_mpl) then begin
@@ -1680,7 +1680,7 @@ case op^.opcode of			{check for optimizations of this node}
             if rval = 1.0 then
                opv := op^.left
             else if rval = 0.0 then
-               if NoFunctions(op^.left) then
+               if not SideEffects(op^.left) then
                   opv := op^.right;
             end; {if}
          end; {else}
