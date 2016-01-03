@@ -3164,6 +3164,14 @@ var
       bb := bb^.next;
       end; {while}
    Search(DAGBlocks);
+   if i <> 0 then begin                 {ensure DFNs start from 1}
+      bb := DAGblocks;
+      while bb <> nil do begin
+         if bb ^.dfn <> 0 then
+            bb^.dfn := bb^.dfn - i;
+         bb := bb^.next;
+         end; {while}
+      end; {if}
    end; {DepthFirstOrder}
 
 
