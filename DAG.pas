@@ -2193,7 +2193,7 @@ case op^.opcode of
    pc_gil, pc_gli, pc_gdl, pc_gld, pc_iil, pc_ili, pc_idl, pc_ild,
    pc_ldc, pc_ldo, pc_lil, pc_lli, pc_ldl, pc_lld, pc_lod, pc_dec,
    pc_inc, pc_ind, pc_lbf, pc_lbu, pc_cop, pc_cbf, pc_cpi, pc_cpo,
-   pc_tri:
+   pc_tri, pc_cup, pc_cui:
       TypeOf := op^.optype;
 
    pc_lad, pc_lao, pc_lca, pc_lda, pc_psh, pc_ixa:
@@ -2225,6 +2225,9 @@ case op^.opcode of
 
    pc_bno:
       TypeOf := TypeOf(op^.right);
+
+   pc_tl1:				{pc_tl1 doesn't have type info.}
+      TypeOf := cgVoid;			{Just return cgVoid for now.}
 
    otherwise: Error(cge1);       
    end; {case}
