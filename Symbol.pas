@@ -1498,6 +1498,7 @@ var
 begin {ResolveForwardReference}
 iPtr^.isForwardDeclared := false;	{we will succeeed or flag an error...}
 tPtr := iPtr^.itype;			{skip to the struct/union type}
+lPtr := tPtr;					{initialize it here -- kws}
 while tPtr^.kind in [pointerType,arrayType,functionType,definedType] do begin
    lPtr := tPtr;
    tPtr := tPtr^.pType;
