@@ -1135,7 +1135,7 @@ case op^.opcode of			{check for optimizations of this node}
          end {if}
       else if op^.left^.opcode = pc_cnv then begin
          doit := false;
-         firsttype.i := (op^.q & $00F0) >> 4;
+         firsttype.i := (op^.left^.q & $00F0) >> 4;
          if fromType.optype in [cgReal,cgDouble,cgComp,cgExtended] then begin
             if toType.optype in [cgReal,cgDouble,cgComp,cgExtended] then
                doit := true;
@@ -1152,6 +1152,9 @@ case op^.opcode of			{check for optimizations of this node}
             if TypeSize(firstType.optype) = TypeSize(fromType.optype) then
                if TypeSize(firstType.optype) = TypeSize(toType.optype) then
                   doit := true;
+            if TypeSize(fromType.optype) < TypeSize(firstType.optype) then
+               if TypeSize(fromType.optype) < TypeSize(toType.optype) then
+                  doit := false;        {disable optimization in invalid cases}
             end; {else}
          if doit then begin
             op^.q := (op^.left^.q & $00F0) | (op^.q & $000F);
