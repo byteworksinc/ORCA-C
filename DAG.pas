@@ -987,6 +987,10 @@ case op^.opcode of			{check for optimizations of this node}
    pc_cnv: begin			{pc_cnv}
       fromtype.i := (op^.q & $00F0) >> 4;
       totype.i := op^.q & $000F;
+      if (fromtype.optype = cgWord) and (TypeOf(op^.left) = cgUByte) then begin
+         fromType.optype := cgUWord;
+         op^.q := (op^.q & $FF0F) | (fromtype.i << 4);
+         end; {if}
       if op^.left^.opcode = pc_ldc then begin
 	 case fromtype.optype of
             cgByte,cgWord:
