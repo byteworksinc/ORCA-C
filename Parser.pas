@@ -427,7 +427,7 @@ var
       val := long(expressionValue).lsw;
       if val <> expressionValue then
          if not stPtr^.isLong then
-            Error(71);
+            expressionValue := val;     {convert out-of-range value to (U)Word}
       if stPtr = nil then
          Error(72)
       else begin
