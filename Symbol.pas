@@ -1498,7 +1498,7 @@ var
 begin {ResolveForwardReference}
 iPtr^.isForwardDeclared := false;	{we will succeeed or flag an error...}
 tPtr := iPtr^.itype;			{skip to the struct/union type}
-lPtr := tPtr;					{initialize it here -- kws}
+lPtr := nil;
 while tPtr^.kind in [pointerType,arrayType,functionType,definedType] do begin
    lPtr := tPtr;
    tPtr := tPtr^.pType;
@@ -1513,12 +1513,16 @@ if tPtr^.sName <> nil then begin	{resolve the forward reference}
       else begin
          if sym^.itype = tPtr then
             tPtr^.sName := nil
-         else
-	    lPtr^.ptype := sym^.itype;
+         else begin
+            tPtr := sym^.itype;
+            if lPtr <> nil then
+               lPtr^.ptype := tPtr;
+            end; {else}
          end; {else}
       end; {if}
    end; {if}
-tPtr := lPtr^.pType;			{check the field list for other fwd refs}
+if lPtr <> nil then
+   tPtr := lPtr^.pType;			{check the field list for other fwd refs}
 while tPtr^.kind in [pointerType,arrayType,functionType,definedType] do
    tPtr := tPtr^.pType;
 if tPtr^.kind in [structType,unionType] then begin
