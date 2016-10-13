@@ -3682,6 +3682,7 @@ else begin                              {record the expression for an initialize
          end {else if}
       else if tree^.token.kind = uintconst then begin
          expressionValue := tree^.token.ival;
+         expressionValue := expressionValue & $0000FFFF;
          expressionType := uwordPtr;
          isConstant := true;
          end {else if}
