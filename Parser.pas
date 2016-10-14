@@ -1683,7 +1683,7 @@ var
       iPtr^.count := 1;
       iPtr^.bitdisp := 0;
       iPtr^.bitsize := 0;
-      iPtr^.isStruct := false;
+      iPtr^.isStructOrUnion := false;
       iPtr^.iVal := bitvalue;
       if bitcount > 16 then
          iPtr^.itype := cgULong
@@ -1819,7 +1819,7 @@ var
       iPtr^.count := 1;
       iPtr^.bitdisp := 0;
       iPtr^.bitsize := 0;
-      iPtr^.isStruct := false;
+      iPtr^.isStructOrUnion := false;
       end; {if}
    etype := expressionType;
    AssignmentConversion(tp, expressionType, isConstant, expressionValue,
@@ -1912,7 +1912,7 @@ var
                errorFound := true;
                end; {else}
 
-         structType,enumType: begin
+         structType,unionType,enumType: begin
             Error(46);
             errorFound := true;
             end;
@@ -2047,8 +2047,8 @@ var
             goto 1;
             end; {if}
          end {if}
-      else if tp^.kind = structType then
-         iPtr^.isStruct := true;
+      else if tp^.kind in [structType,unionType] then
+         iPtr^.isStructOrUnion := true;
 
       {handle auto variables}
       if bitsize <> 0 then begin
@@ -2059,7 +2059,7 @@ var
          iPtr^.count := 1;
          iPtr^.bitdisp := bitdisp;
          iPtr^.bitsize := bitsize;
-         iPtr^.isStruct := false;
+         iPtr^.isStructOrUnion := false;
          end; {if}
       if variable^.storage in [external,global,private] then begin
          Error(41);
@@ -2144,7 +2144,7 @@ var
             iPtr^.isConstant := variable^.storage in [external,global,private];
            {iPtr^.bitdisp := 0;}
            {iPtr^.bitsize := 0;}
-           {iPtr^.isStruct := false;}
+           {iPtr^.isStructOrUnion := false;}
             if iPtr^.isConstant then begin
                if tp^.kind = scalarType then
                   iPtr^.itype := tp^.baseType
@@ -2231,7 +2231,7 @@ var
             iPtr^.count := 1;
             iPtr^.bitdisp := 0;
             iPtr^.bitsize := 0;
-            iPtr^.isStruct := false;
+            iPtr^.isStructOrUnion := false;
             if (variable^.storage in [external,global,private]) then begin
                iPtr^.isConstant := true;
                iPtr^.itype := cgString;
@@ -2292,8 +2292,8 @@ var
          end; {else}
       end {if}
 
-   {handle structures}
-   else if kind = structType then begin
+   {handle structures and unions}
+   else if kind in [structType, unionType] then begin
       if braces or (not main) then begin
          count := tp^.size;
          ip := tp^.fieldList;
@@ -2318,7 +2318,10 @@ var
                count := count-ip^.itype^.size;
                end; {else}
 {           writeln('Initializer: ', ip^.bitsize:10, ip^.bitdisp:10, bitCount:10); {debug}
-            ip := ip^.next;
+            if kind = unionType then
+               ip := nil
+            else
+               ip := ip^.next;
             if token.kind = commach then begin
                if ip <> nil then
                   NextToken;
@@ -2335,19 +2338,8 @@ var
          if count > 0 then
             Fill(count, bytePtr);
          end {if}
-      else                              {struct assignment initializer}
+      else                              {struct/union assignment initializer}
          GetInitializerValue(tp, bitsize, bitdisp);
-      end {else if}
-
-   {handle unions}
-   else if kind = unionType then begin
-      ip := tp^.fieldList;
-      if ip^.isForwardDeclared then
-         ResolveForwardReference(ip);
-      InitializeTerm(ip^.itype, 0, 0, false);
-      count := tp^.size - ip^.itype^.size;
-      if count > 0 then
-         Fill(count, bytePtr);
       end {else if}
 
    {handle single-valued types}
@@ -3757,7 +3749,7 @@ procedure DoStatement;
 1:          end;
 
          structType,unionType: begin
-            if iPtr^.isStruct then begin
+            if iPtr^.isStructOrUnion then begin
                LoadAddress;             {load the destination address}
                GenerateCode(iptr^.iTree); {load the stuct address}
                                         {do the assignment}
