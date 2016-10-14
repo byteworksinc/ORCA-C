@@ -536,7 +536,7 @@ if list or (numErr <> 0) then begin
          53: msg := @'the structure has already been defined';
          54: msg := @'bit fields must be less than 32 bits wide';
          55: msg := @'a value cannot be zero bits wide';
-         56: msg := @'unions cannot have bit fields';
+         56: msg := @'bit fields in unions are not supported by ORCA/C';
          57: msg := @'compiler error';
          58: msg := @'implementation restriction: too many local labels';
          59: msg := @'file name expected';
