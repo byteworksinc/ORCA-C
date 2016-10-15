@@ -2512,7 +2512,15 @@ var
                   variable^.bitdisp := bitdisp;
                   variable^.bitsize := long(expressionValue).lsw;
                   bitdisp := bitdisp+long(expressionValue).lsw;
-                  end; {if}
+                  tPtr := variable^.itype;
+                  end {if}
+               else
+                  tPtr := typeSpec;
+               if (tPtr^.kind <> scalarType)
+                  or not (tPtr^.baseType in
+                     [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
+                  or (expressionValue > tPtr^.size*8) then
+                  Error(115);
                end {if}
             else if variable <> nil then begin
                if bitdisp <> 0 then begin

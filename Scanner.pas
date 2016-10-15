@@ -595,6 +595,7 @@ if list or (numErr <> 0) then begin
         112: msg := @'segment buffer overflow';
         113: msg := @'all parameters must have a name';
         114: msg := @'a function call was made to a non-function';
+        115: msg := @'illegal bit field declaration';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
