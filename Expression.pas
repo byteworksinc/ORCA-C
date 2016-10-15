@@ -1931,13 +1931,20 @@ if (tp^.kind = scalarType) and (expressionType^.kind = scalarType) then begin
    rt := tp^.baseType;
    et := expressionType^.baseType;
    if rt <> et then
-      Gen2(pc_cnv, ord(et), ord(rt));
+      if et <> cgVoid then
+         Gen2(pc_cnv, ord(et), ord(rt))
+      else
+         Error(40);
    end {if}
 else if (tp^.kind = enumType) and (expressionType^.kind = scalarType) then begin
-   rt := cgWord;
-   et := Unary(expressionType^.baseType);
-   if rt <> et then
-      Gen2(pc_cnv, ord(et), ord(rt));
+   if expressionType^.baseType <> cgVoid then begin
+      rt := cgWord;
+      et := Unary(expressionType^.baseType);
+      if rt <> et then
+         Gen2(pc_cnv, ord(et), ord(rt));
+      end {if}
+   else
+      Error(40);
    end {if}
 else if (tp^.kind = scalarType) and (expressionType^.kind = enumType) then begin
    rt := Unary(tp^.baseType);
