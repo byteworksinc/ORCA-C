@@ -321,14 +321,18 @@ UsualBinaryConversions := cgULong;
 if lType^.kind = pointerType then
    lType := uLongPtr
 else if lType^.kind = scalarType then
-   if lType^.baseType = cgVoid then
+   if lType^.baseType = cgVoid then begin
       lType := uLongPtr;
+      Error(66);
+      end; {if}
 rType := expressionType;
 if rType^.kind = pointerType then
    rType := uLongPtr
 else if rType^.kind = scalarType then
-   if rType^.baseType = cgVoid then
+   if rType^.baseType = cgVoid then begin
       rType := uLongPtr;
+      Error(66);
+      end; {if}
 if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
    lt := Unary(lType^.baseType);
    rt := Unary(rType^.baseType);
@@ -3580,7 +3584,13 @@ case tree^.token.kind of
             tType := expressionType
          else
             tType := lType;
-         et := UsualBinaryConversions(lType);
+         if (expressionType^.kind = scalarType)
+            and (expressionType^.baseType = cgVoid)
+            and (lType^.kind = scalarType)
+            and (lType^.baseType = cgVoid) then
+            et := cgVoid
+         else
+            et := UsualBinaryConversions(lType);
          Gen0(pc_bno);
          Gen0t(pc_tri, et);
          end; {else}
