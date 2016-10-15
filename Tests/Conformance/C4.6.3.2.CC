@@ -60,7 +60,7 @@ main ()
    unsigned long ul1 = { 42959796 };
 
    struct S struct1 = { 3, 3.3 };
-   union  U union1  = 5;
+   union  U union1  = { 5 };
    enum   E enum1   = c;
 
    int      i2  [2] = { 160, 140 };                /* define local arrays */

@@ -66,7 +66,7 @@ main ()
    unsigned long  ul1 = 0x11001100;
 
    struct S s = { 5.5, 6.6 };
-   union  U u = 4.5;
+   union  U u = { 4.5 };
 
    void (*funcPtr) (void);
 

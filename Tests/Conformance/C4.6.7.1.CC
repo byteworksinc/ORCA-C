@@ -5,7 +5,7 @@ union U1 { int   i;
            float f; };
 
 union U1 u1 = { 3 };
-static union U1 u2 = 5;
+static union U1 u2 = { 5 };
 
 main ()
   {
