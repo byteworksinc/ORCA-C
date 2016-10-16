@@ -1198,7 +1198,10 @@ fp^.next := fileList;
 fileList := fp;
 fp^.name := includeFileGS;
 fp^.sname := sourceFileGS;
-fp^.lineNumber := lineNumber+1;
+if default then
+   fp^.lineNumber := lineNumber
+else
+   fp^.lineNumber := lineNumber+1;
 if OpenFile(true, default) then begin	{open a new file and proceed from there}
    lineNumber := 1;
    StartInclude(@includeFileGS);
