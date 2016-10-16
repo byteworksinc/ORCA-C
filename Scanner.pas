@@ -533,7 +533,7 @@ if list or (numErr <> 0) then begin
          50: msg := @'only parameters or types may be declared here';
          51: msg := @'lint: undefined function';
          52: msg := @'you cannot initialize a type';
-         53: msg := @'the structure has already been defined';
+         53: msg := @'the structure or union has already been defined';
          54: msg := @'bit fields must be less than 32 bits wide';
          55: msg := @'a value cannot be zero bits wide';
          56: msg := @'bit fields in unions are not supported by ORCA/C';
@@ -596,6 +596,7 @@ if list or (numErr <> 0) then begin
         113: msg := @'all parameters must have a name';
         114: msg := @'a function call was made to a non-function';
         115: msg := @'illegal bit field declaration';
+        116: msg := @'missing field name';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

@@ -2535,7 +2535,9 @@ var
                disp := disp + variable^.itype^.size;
                if disp > maxDisp then
                   maxDisp := disp;
-               end; {if}
+               end {if}
+            else
+               Error(116);
             if token.kind = commach then {allow repeated declarations}
                begin
                NextToken;
@@ -2543,7 +2545,9 @@ var
                end {if}
             else
                done := true;
-         until done or (token.kind = eofsy);
+         until done or (token.kind = eofsy)
+      else
+         Error(116);
       Match(semicolonch,22);            {insist on a closing ';'}
       end; {while}
    if fl <> nil then begin
