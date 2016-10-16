@@ -3488,7 +3488,7 @@ case tree^.token.kind of
                 (lType^.dType^.kind in [structType,unionType]))) then
             Error(79);
          end {if}
-      else if not (lType^.kind in [structType,unionType]) then
+      else
          Error(79);
       end; {case uasterisk}
 
