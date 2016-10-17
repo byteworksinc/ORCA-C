@@ -3662,7 +3662,9 @@ procedure DoStatement;
                   with iPtr^.itree^ do
         	     if token.kind = intconst then
                         if token.ival = 0 then
-                           ZeroFill := true;
+                                        {don't call ~ZERO for very small arrays}
+                           if elements * itype^.size > 10 then
+                              ZeroFill := true;
          end; {ZeroFill}
 
 
