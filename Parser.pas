@@ -2298,7 +2298,8 @@ var
          count := tp^.size;
          ip := tp^.fieldList;
          bitCount := 0;
-         while (ip <> nil) and (token.kind <> rbracech) do begin
+         while (ip <> nil) and (ip^.itype^.size > 0) 
+            and (token.kind <> rbracech) do begin
             if ip^.isForwardDeclared then
                ResolveForwardReference(ip);
             InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false);
@@ -2449,6 +2450,7 @@ var
       lstorageClass: tokenEnum;         {storage class of the declaration}
       maxDisp: longint;                 {for determining union sizes}
       variable: identPtr;               {variable being defined}
+      didFlexibleArray: boolean;        {have we seen a flexible array member?}
  
    begin {FieldList}
    ldoingParameters := doingParameters; {allow fields in K&R dec. area}
@@ -2459,6 +2461,7 @@ var
    bitDisp := 0;                        {start allocation from byte 0}
    disp := 0;
    maxDisp := 0;
+   didFlexibleArray := false;
    fl := nil;                           {nothing in the field list, yet}
                                         {check for no declarations}
    if not (token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
@@ -2473,6 +2476,8 @@ var
       TypeSpecifier(true,false);        {get the type specifier}
       if not skipDeclarator then
          repeat                         {declare the variables...}
+            if didFlexibleArray then
+               Error(118);
             variable := nil;
             if token.kind <> colonch then begin
                Declarator(typeSpec, variable, fieldListSpace, false);
@@ -2535,6 +2540,12 @@ var
                disp := disp + variable^.itype^.size;
                if disp > maxDisp then
                   maxDisp := disp;
+               if variable^.itype^.size = 0 then
+                  if (variable^.itype^.kind = arrayType) 
+                     and (disp > 0) then {handle flexible array member}
+                     didFlexibleArray := true
+                  else
+                     Error(117);
                end {if}
             else
                Error(116);
