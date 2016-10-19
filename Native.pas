@@ -1674,11 +1674,14 @@ var
             else if npeep[ns+1].opcode = m_dey then
                if npeep[ns+2].opcode = m_dey then
                   if npeep[ns+3].opcode = m_lda_indly then
-                     if npeep[ns+4].opcode = m_stx_dir then begin
-                        npeep[ns] := npeep[ns+4];
-                        opcode := m_sta_dir;
-                        Remove(ns+4);
-                        end; {if}
+                     if npeep[ns+4].opcode = m_stx_dir then
+                        if (npeep[ns+4].operand - npeep[ns+3].operand < -1)
+                           or (npeep[ns+4].operand - npeep[ns+3].operand > 2)
+                           then begin
+                           npeep[ns] := npeep[ns+4];
+                           opcode := m_sta_dir;
+                           Remove(ns+4);
+                           end; {if}
 
          m_tya:
             if npeep[ns+1].opcode = m_sta_dir then begin
