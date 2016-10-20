@@ -1431,6 +1431,15 @@ case op^.opcode of			{check for optimizations of this node}
          op^.left^.optype := op^.optype;
          op^.left^.q := op^.left^.q + op^.q;
          opv := op^.left;
+         end {else if}
+      else if opcode = pc_inc then begin
+         if op^.left^.optype = cgULong then begin
+            if ord4(op^.left^.q) + ord4(op^.q) < ord4(maxint - 1) then begin
+               op^.q := op^.q + op^.left^.q;
+               op^.left := op^.left^.left;
+               PeepHoleOptimization(opv);
+               end; {if}
+            end; {if}
          end; {else if}
       end; {case pc_ind}
 
