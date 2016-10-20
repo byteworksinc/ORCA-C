@@ -3291,8 +3291,7 @@ if isFunction then begin
       PopTable
 
    {external or forward declaration}
-   else if (storageClass = externsy)
-      or (token.kind in [commach,semicolonch,inlinesy]) then begin
+   else if token.kind in [commach,semicolonch,inlinesy] then begin
       fnType^.isPascal := isPascal;     {note if we have pascal parms}
       if token.kind = inlinesy then     {handle tool declarations}
          with fnType^ do begin
