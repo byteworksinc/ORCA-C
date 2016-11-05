@@ -1199,9 +1199,8 @@ var
                codeGeneration := lCodeGeneration and (numErrors = 0);
                op^.token.lval := expressionType^.size;
                with expressionType^ do
-                  if kind = arrayType then
-                     if (elements = 0) or (size = 0) then
-                        Error(49);
+                  if (size = 0) or ((kind = arrayType) and (elements = 0)) then
+                     Error(49);
                end; {else}
             op^.left := nil;
             end {if sizeofsy}
@@ -1607,8 +1606,8 @@ if token.kind in startExpression then begin
                sp^.token.kind := ulongconst;
                sp^.token.class := longConstant;
                sp^.token.lval := typeSpec^.size;
-               if typeSpec^.kind = arrayType then
-                  if (typeSpec^.elements = 0) or (typeSpec^.size = 0) then
+               with typeSpec^ do
+                  if (size = 0) or ((kind = arrayType) and (elements = 0)) then
                      Error(49);
                sp^.next := stack;
                stack := sp;

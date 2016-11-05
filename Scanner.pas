@@ -529,7 +529,7 @@ if list or (numErr <> 0) then begin
          46: msg := @'you must initialize the individual elements of a struct, union, or non-char array';
          47: msg := @'type conflict';
          48: msg := @'pointer initializers must resolve to an integer, address or string';
-         49: msg := @'the array size could not be determined';
+         49: msg := @'the size could not be determined';
          50: msg := @'only parameters or types may be declared here';
          51: msg := @'lint: undefined function';
          52: msg := @'you cannot initialize a type';
