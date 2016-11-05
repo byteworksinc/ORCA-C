@@ -1188,7 +1188,7 @@ var
          op^.left := Pop;
 
          if op^.token.kind = sizeofsy then begin
-            op^.token.kind := longConst;
+            op^.token.kind := ulongConst;
             op^.token.class := longConstant;
             if op^.left^.token.kind = stringConst then
                op^.token.lval := op^.left^.token.sval^.length+1
@@ -1604,7 +1604,7 @@ if token.kind in startExpression then begin
                sp^.left := nil;
                sp^.middle := nil;
                sp^.right := nil;
-               sp^.token.kind := longconst;
+               sp^.token.kind := ulongconst;
                sp^.token.class := longConstant;
                sp^.token.lval := typeSpec^.size;
                if typeSpec^.kind = arrayType then
