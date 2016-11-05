@@ -910,11 +910,9 @@ var
          end {else if}
       else if token.kind = longconst then begin
          IntVal := token.lval;
-         ekind := longconst;
          end {else if}
       else begin
          IntVal := token.lval;
-         ekind := longconst;
          unsigned := true;
          end; {else}
       end; {IntVal}
