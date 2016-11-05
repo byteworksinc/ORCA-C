@@ -2237,37 +2237,45 @@ var
 
    procedure DoError;
  
-   { #error STRING                                               }
+   { #error pp-tokens(opt)                                       }
  
    var
       i: integer;                       {loop variable}
       len: integer;                     {string length}
       msg: stringPtr;                   {error message ptr}
+      cp: ptr;                          {character pointer}
+      lFirstPtr: ptr;                   {local copy of firstPtr}
 
    begin {DoError}
+   lFirstPtr := firstPtr;
+   numErrors := numErrors+1;
+   new(msg);
+   msg^ := '#error:';
    NextToken;                           {skip the command name}
-   if token.kind = stringConst then begin
-      numErrors := numErrors+1;
-      new(msg);
-      len := token.sval^.length;
-      if len > 246 then
-         len := 246;
-      msg^ := '#error: ';
-      for i := 1 to len do
-         msg^ := concat(msg^, token.sval^.str[i]);
-      writeln(msg^);
-      if terminalErrors then begin
-         if enterEditor then
-            ExitToEditor(msg, ord4(firstPtr)-ord4(bofPtr))
-         else
-            TermError(0);
-         end; {if}
-      end {if}
-   else
-      Error(83);
-   NextToken;                            {skip the command name}
-   if token.kind <> eolsy then           {check for extra stuff on the line}
-      Error(11);
+   while not (token.kind in [eolsy, eofsy]) do begin
+      msg^ := concat(msg^, ' ');
+      if token.kind = stringConst then begin
+         len := token.sval^.length;
+         for i := 1 to len do
+            msg^ := concat(msg^, token.sval^.str[i]);
+         end {if}
+      else begin
+         len := ord(ord4(tokenEnd) - ord4(tokenStart));
+         cp := tokenStart;
+         for i := 1 to len do begin
+            msg^ := concat(msg^, chr(cp^));
+            cp := pointer(ord4(cp)+1);
+            end; {for}
+         end; {else}
+      NextToken;
+      end; {while}
+   writeln(msg^);
+   if terminalErrors then begin
+      if enterEditor then
+         ExitToEditor(msg, ord4(lFirstPtr)-ord4(bofPtr))
+      else
+         TermError(0);
+      end; {if}
    end; {DoError}
 
 
