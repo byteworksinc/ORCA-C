@@ -1061,11 +1061,17 @@ var
                                    op1 := ord(op1 >= op2);
                                 ekind := intconst;
                                 end;
-                  ltltop      : op1 := op1 << op2;                      {<<}
-                  gtgtop      : if unsigned1 then                       {>>}
+                  ltltop      : begin                                   {<<}
+                                op1 := op1 << op2;
+                                ekind := kindLeft;
+                                end;
+                  gtgtop      : begin                                   {>>}
+                                if unsigned1 then
                                    op1 := lshr(op1,op2)
                                 else
                                    op1 := op1 >> op2;
+                                ekind := kindLeft;
+                                end;
                   plusch      : op1 := op1 + op2;                       {+}
                   minusch     : op1 := op1 - op2;                       {-}
                   asteriskch  : if unsigned then          		{*}
@@ -3199,9 +3205,16 @@ case tree^.token.kind of
 
    ltltop: begin                        {<<}
       GenerateCode(tree^.left);
+      et := UsualUnaryConversions;
       lType := expressionType;
       GenerateCode(tree^.right);
-      case UsualBinaryConversions(lType) of
+      if (expressionType^.kind <> scalarType)
+         or not (expressionType^.baseType in
+         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong]) then
+         error(66);
+      if expressionType^.baseType <> et then
+         Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
+      case et of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_shl);
          cgLong,cgULong:
@@ -3209,13 +3222,21 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
+      expressionType := lType;
       end; {case ltltop}
 
    gtgtop: begin                        {>>}
       GenerateCode(tree^.left);
+      et := UsualUnaryConversions;
       lType := expressionType;
       GenerateCode(tree^.right);
-      case UsualBinaryConversions(lType) of
+      if (expressionType^.kind <> scalarType)
+         or not (expressionType^.baseType in
+         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong]) then
+         error(66);
+      if expressionType^.baseType <> et then
+         Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
+      case et of
          cgByte,cgWord:
             Gen0(pc_shr);
          cgUByte,cgUWord:
@@ -3227,6 +3248,7 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
+      expressionType := lType;
       end; {case gtgtop}
 
    plusch: begin                        {+}
