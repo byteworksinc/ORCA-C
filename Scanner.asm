@@ -619,6 +619,11 @@ yeardone clc
          lda   1,S                      set the day
          inc   A
          jsr   convert
+         short M
+         cmp   #'0'
+         bne   dateOK
+         lda   #' '
+dateOK   long  M
          sta   date+6
          pla                            set the month
          xba
