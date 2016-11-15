@@ -602,8 +602,20 @@ SetDateTime private
          sta   time+2
          pla                            set the year
          xba
+         and   #$00FF
+         ldy   #19
+yearloop sec
+         sbc   #100
+         bmi   yeardone
+         iny
+         bra   yearloop
+yeardone clc
+         adc   #100
          jsr   convert
          sta   date+11
+         tya
+         jsr   convert
+         sta   date+9
          lda   1,S                      set the day
          inc   A
          jsr   convert
@@ -624,7 +636,7 @@ SetDateTime private
          rtl
 
 month    dc    c'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'
-date     dc    i'12',c'mmm dd 19yy',i1'0'
+date     dc    i'12',c'mmm dd YYyy',i1'0'
 time     dc    i'9',c'hh:mm:ss',i1'0'
 
 convert  and   #$00FF
