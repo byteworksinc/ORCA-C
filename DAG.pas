@@ -2562,8 +2562,10 @@ var
          {    start - has op1 been found?  (initialize to false)	}
          {    stop - has kill been set?	 (initialize to false)		}
 
+         label 1;
+
          begin {Scan}
-         if not start then			{see if it is time to start}
+1:       if not start then			{see if it is time to start}
             if list = op1 then
                start := true;
          if list^.left <> nil then		{scan the children}
@@ -2607,8 +2609,10 @@ var
                      stop := true;
                      end; {if}
          if not stop then			{scan forward in the stream}
-            if list^.next <> nil then
-               Scan(list^.next, op1, op2);
+            if list^.next <> nil then begin
+               list := list^.next;
+               goto 1;
+               end; {if}
          end; {Scan}
 
 
