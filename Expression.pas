@@ -2963,8 +2963,19 @@ case tree^.token.kind of
       else
          kind := lType^.kind;
       GenerateCode(tree^.right);
+      if tree^.token.kind in [gtgteqop,ltlteqop] then
+         if kind = scalarType then
+            if expressionType^.kind = scalarType then begin
+               et := UsualUnaryConversions;
+               if et <> Unary(ltype^.baseType) then begin
+                  Gen2(pc_cnv, et, ord(Unary(ltype^.baseType)));
+                  expressionType := lType;
+                  end; {if}
+               end; {if}
       if kind <> pointerType then
-         et := UsualBinaryConversions(lType);
+         et := UsualBinaryConversions(lType)
+      else
+         et := ccPointer;
       case tree^.token.kind of
 
          pluseqop:
