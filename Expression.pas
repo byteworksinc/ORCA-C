@@ -378,8 +378,13 @@ if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
          expressionType := uWordPtr;
          end; {else}
       end {if}
-   else {types are the same}
+   else begin {types are the same}
       UsualBinaryConversions := lt;
+      if lt = cgWord then               {update types that may have changed}
+         expressionType := wordPtr
+      else if lt = cgExtended then
+         expressionType := extendedPtr;
+      end; {else}
    end {if}
 else
    Error(66);
@@ -401,12 +406,18 @@ function UsualUnaryConversions{: baseTypeEnum};
 {       expressionType - set to result type                     }
 
 var
-   lt,rt: baseTypeEnum;                 {work variables}
+   et: baseTypeEnum;                    {work variables}
 
 begin {UsualUnaryConversions}
 UsualUnaryConversions := cgULong;
-if expressionType^.kind = scalarType then
-   UsualUnaryConversions := Unary(expressionType^.baseType)
+if expressionType^.kind = scalarType then begin
+   et := Unary(expressionType^.baseType);
+   UsualUnaryConversions := et;
+   if et = cgWord then                  {update types that may have changed}
+      expressionType := wordPtr
+   else if et = cgExtended then
+      expressionType := extendedPtr;
+   end {if}
 {else if expressionType^.kind in [arrayType,pointerType] then
    UsualUnaryConversions := cgULong};
 end; {UsualUnaryConversions}
