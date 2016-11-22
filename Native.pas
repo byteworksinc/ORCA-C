@@ -1374,16 +1374,15 @@ var
             ASafe := true;
             goto 1;
             end {if}
-         else if opcode in
-            [m_adc_abs,m_adc_dir,m_adc_imm,m_adc_s,m_and_abs,m_and_dir,
-             m_and_imm,m_and_s,m_asl_a,m_cmp_abs,m_cmp_dir,m_cmp_dirX,m_cmp_imm,
-             m_cmp_long,m_cmp_s,m_dea,m_eor_abs,m_eor_dir,m_eor_imm,m_eor_s,
-             m_ina,m_lda_abs,m_lda_absx,m_lda_dir,m_lda_dirx,m_lda_imm,
-             m_lda_indl,m_lda_indly,m_lda_long,m_lda_longx,m_lda_s,m_lsr_a,
-             m_ora_abs,m_ora_dir,m_ora_dirX,m_ora_imm,m_ora_longX,m_ora_s,
-             m_pha,m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,m_sta_abs,m_sta_absX,
-             m_sta_dir,m_sta_dirX,m_sta_indl,m_sta_indlY,m_sta_long,m_sta_longX,
-             m_sta_s,m_tax,m_tay,m_tcd,m_tcs,m_xba,m_tsb_dir,m_tsb_abs] then
+         else if not (opcode in
+            [m_clc,m_cop,m_cpx_abs,m_cpx_dir,m_cpx_imm,m_dec_abs,m_dec_absX,
+             m_dec_dir,m_dec_dirX,m_dex,m_dey,m_inc_abs,m_inc_absX,m_inc_dir,
+             m_inc_dirX,m_inx,m_iny,m_ldx_abs,m_ldx_dir,m_ldx_imm,m_ldy_abs,
+             m_ldy_absX,m_ldy_dir,m_ldy_dirX,m_ldy_imm,m_pea,m_pei_dir,m_phb,
+             m_phd,m_phx,m_phy,m_php,m_plb,m_pld,m_plx,m_ply,m_plp,m_rep,
+             m_sec,m_sep,m_stx_dir,m_stx_abs,m_sty_abs,m_sty_dir,m_sty_dirX,
+             m_stz_abs,m_stz_absX,m_stz_dir,m_stz_dirX,m_tsx,m_txs,m_txy,
+             m_tyx]) then
             goto 1;
          end; {for}
 1:
