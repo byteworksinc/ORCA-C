@@ -119,6 +119,7 @@ const
    m_ora_dir              =      5;
    m_ora_dirX             =     21;
    m_ora_imm              =      9;
+   m_ora_long             =     15;
    m_ora_longX            =     31;
    m_ora_s                =      3;
    m_pea                  =    244;

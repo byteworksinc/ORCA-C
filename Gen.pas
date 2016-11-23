@@ -1375,15 +1375,21 @@ var
    begin {DoOr}
    with op^ do begin
       if opcode = pc_ldo then begin
-         GenNative(m_lda_abs, absolute, q, lab, 0);
-         GenNative(m_ora_abs, absolute, q+2, lab, 0);
+         if smallMemoryModel then begin
+            GenNative(m_lda_abs, absolute, q, lab, 0);
+            GenNative(m_ora_abs, absolute, q+2, lab, 0);
+            end {if}
+         else begin
+            GenNative(m_lda_long, longabsolute, q, lab, 0);
+            GenNative(m_ora_long, longabsolute, q+2, lab, 0);
+            end; {else}
          end {if}
       else begin
          disp := LabelToDisp(r) + q;
          if disp < 254 then begin
             GenNative(m_lda_dir, direct, disp, nil, 0);
             GenNative(m_ora_dir, direct, disp+2, nil, 0);
-            end {else if}
+            end {if}
          else begin
             GenNative(m_ldx_imm, immediate, disp, nil, 0);
             GenNative(m_lda_dirX, direct, 0, nil, 0);
