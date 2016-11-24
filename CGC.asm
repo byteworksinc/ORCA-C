@@ -96,7 +96,7 @@ rec_cmp  equ   18                       disp to comp (SANE) value
 ****************************************************************
 *
 InitLabels start
-maxLabel equ   2400
+maxLabel equ   3200
 
 !                                       with labelTab[0] do begin
          lda   #-1                         val := -1;

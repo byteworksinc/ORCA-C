@@ -622,7 +622,8 @@ implementation
 
 const
                                         {Note: maxLabel is also defined in cgi.pas}
-   maxLabel = 2400;			{max # compiler generated labels}
+                                        {Note: maxlabel is also defined in CGC.asm}
+   maxLabel = 3200;			{max # compiler generated labels}
 
 					{spinner}
                                         {-------}
