@@ -2021,6 +2021,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
    OpenObj(fname2);
 
    {write the header}
+   InitNative;
    Header(@'~_ROOT', $4000, 0);
 
    {new desk accessory initialization}
