@@ -81,7 +81,7 @@ COut     start
          pha
          plb
          jsr   OutByte
-         inc   blkcnt                   blkcnt := blkcnt+1;
+         inc4  blkcnt                   blkcnt := blkcnt+1;
          inc4  pc                       pc := pc+1;
          rtl
          end
@@ -105,8 +105,7 @@ Out2     start
          pha
          plb
          jsr   OutWord
-         inc   blkcnt                   blkcnt := blkcnt+2;
-         inc   blkcnt
+         add4  blkcnt,#2                blkcnt := blkcnt+2;
          rtl
          end
 
@@ -129,7 +128,7 @@ Out      start
          pha
          plb
          jsr   OutByte
-         inc   blkcnt                   blkcnt := blkcnt+1;
+         inc4  blkcnt                   blkcnt := blkcnt+1;
          rtl
          end
 
@@ -147,15 +146,26 @@ OutByte  private
          lda   objLen                   if objLen+segDisp = buffSize then
          clc
          adc   segDisp
-         bcc   lb2
+         lda   objLen+2
+         adc   segDisp+2
+         and   #$FFFE
+         beq   lb2
 	phx		   PurgeObjBuffer;
 	jsl	PurgeObjBuffer
 	plx
 	lda	objLen	   check for segment overflow
 	clc
 	adc	segDisp
-	bcs	lb2a
-lb2      ph4   objPtr                   p := pointer(ord4(objPtr)+segDisp);
+         lda   objLen+2
+         adc   segDisp+2
+         and   #$FFFE
+         bne   lb2a
+lb2      anop                           carry must be clear
+         lda   objPtr+2                 p := pointer(ord4(objPtr)+segDisp);
+         adc   segDisp+2
+         pha
+         lda   objPtr
+         pha
          tsc                            p^ := b;
          phd
          tcd
@@ -164,7 +174,7 @@ lb2      ph4   objPtr                   p := pointer(ord4(objPtr)+segDisp);
          txa
          sta   [1],Y
          long  M
-         inc   segDisp                  segDisp := segDisp+1;
+         inc4  segDisp                  segDisp := segDisp+1;
 
 	pld
          tsc
@@ -175,6 +185,7 @@ lb2      ph4   objPtr                   p := pointer(ord4(objPtr)+segDisp);
 
 lb2a     lda   #$8000	handle a segment overflow
          sta   segDisp
+         stz   segDisp+2
          ph2   #112
          jsl   Error
 	rts
@@ -194,24 +205,33 @@ OutWord  private
          lda   objLen                   if objLen+segDisp+1 = buffSize then
          sec
          adc   segDisp
-         bcc   lb2
+         lda   objLen+2
+         adc   segDisp+2
+         and   #$FFFE
+         beq   lb2
 	phx		   PurgeObjBuffer;
 	jsl	PurgeObjBuffer
 	plx
 	lda	objLen	   check for segment overflow
 	sec
 	adc	segDisp
-	bcs	lb3
-lb2      ph4   objPtr                   p := pointer(ord4(objPtr)+segDisp);
+         lda   objLen+2
+         adc   segDisp+2
+         and   #$FFFE
+         bne   lb3
+lb2      anop                          carry must be clear
+         lda   objPtr+2                p := pointer(ord4(objPtr)+segDisp);
+         adc   segDisp+2
+         pha
+         lda   objPtr
+         pha
          tsc                            p^ := b;
          phd
          tcd
          ldy   segDisp
          txa
          sta   [1],Y
-         iny                            segDisp := segDisp+2;
-         iny
-	sty   segDisp                  save new segDisp
+         add4  segDisp,#2               segDisp := segDisp+2;
 
          pld
          tsc
@@ -224,5 +244,6 @@ lb3      ph2   #112                     flag segment overflow error
          jsl   Error
          lda   #$8000
 	sta	segDisp
+         stz   segDisp+2
 	rts
          end

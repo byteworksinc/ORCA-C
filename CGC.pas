@@ -40,12 +40,12 @@ type
 var
                                         {msc}
                                         {---}
-   blkcnt: integer;                     {number of bytes in current segment}
+   blkcnt: longint;                     {number of bytes in current segment}
 
                                         {buffers}
                                         {-------}
    cbufflen: 0..maxcbuff;               {number of bytes now in cbuff}
-   segDisp: integer;                    {disp in the current segment}
+   segDisp: longint;                    {disp in the current segment}
 
 {-- Global subroutines -----------------------------------------}
 

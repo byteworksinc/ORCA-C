@@ -139,8 +139,8 @@ implementation
 
 const
 					{NOTE: OutByte and Outword assume }
-                                        { buffSize is 64K		  }
-   buffSize = 65536;			{size of the obj buffer}
+                                        { buffSize is 128K                }
+   buffSize = 131072;                   {size of the obj buffer}
    maxCBuffLen  = 191;                  {length of the constant buffer}
    OBJ = $B1;                           {object file type}
 
@@ -313,7 +313,7 @@ if len <> 0 then begin
    if ToolError <> 0 then		{check for write errors}
       TermError(9);
    objLen := 0;				{adjust file pointers}
-   BlockMove(segStart, sPtr, ord4(segDisp) & $00FFFF);
+   BlockMove(segStart, sPtr, segDisp);
    objPtr := sPtr;
    segStart := sPtr;
    end; {if}                      
@@ -436,12 +436,13 @@ var
 
 begin {CloseSeg}
 longPtr := pointer(objPtr);             {set the block count}
-longPtr^ := ord4(segDisp) & $00FFFF;
-objLen := objLen + (ord4(segDisp) & $00FFFF); {update the length of the obj file}
+longPtr^ := segDisp;
+objLen := objLen + segDisp;             {update the length of the obj file}
 objPtr := pointer(ord4(objHandle^)+objLen); {set objPtr}
 segStart := objPtr;
 if objLen = buffSize then
    PurgeObjBuffer;
+currentSegment := defaultSegment;       {revert to default segment name}
 end; {CloseSeg}
 
 
@@ -513,7 +514,6 @@ Out2($30); Out2($3B+len);
 Out2(0); Out2(0);			{temporg}
 for i := 1 to 10 do                     {write the segment name}
    Out(ord(currentSegment[i]));
-currentSegment := defaultSegment;       {revert to default segment name}
 Out(len);                               {segname}
 for i := 1 to len do
    Out(ord(name^[i]));

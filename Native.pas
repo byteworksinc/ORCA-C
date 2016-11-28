@@ -35,7 +35,7 @@ uses CCommon, CGI, CGC, ObjOut;
 type
    labelptr = ^labelentry;              {pointer to a forward ref node}
    labelentry = record                  {forward ref node}
-      addr: integer;
+      addr: longint;
       next: labelptr;
       end;
 
@@ -359,7 +359,7 @@ var
       end;
    count: integer;                      {number of constants to repeat}
    i,j,k: integer;                      {loop variables}
-   lsegDisp: integer;                   {for backtracking while writting the   }
+   lsegDisp: longint;                   {for backtracking while writting the   }
                                         { debugger's symbol table              }
    lval: longint;                       {temp storage for long constant}
    nptr: stringPtr;                     {pointer to a name}
@@ -1292,6 +1292,9 @@ Out(0);                                 {end the segment}
 segDisp := 8;                           {update header}
 Out2(long(pc).lsw);
 Out2(long(pc).msw);
+if pc > $0000FFFF then
+   if currentSegment <> '~ARRAYS   ' then
+      Error(112);
 blkcnt := blkcnt-4;                     {purge the segment to disk}
 segDisp := blkcnt;
 CloseSeg;
@@ -2218,7 +2221,6 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
    if stackSize <> 0 then begin
       currentSegment := '~_STACK   ';	{write the header}
       Header(@'~_STACK', $4012, 0);
-      currentSegment := defaultSegment;
       Out($F1);				{write the DS record to reserve space}
       Out2(stackSize);
       Out2(0);
