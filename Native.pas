@@ -1385,7 +1385,7 @@ var
              m_phd,m_phx,m_phy,m_php,m_plb,m_pld,m_plx,m_ply,m_plp,m_rep,
              m_sec,m_sep,m_stx_dir,m_stx_abs,m_sty_abs,m_sty_dir,m_sty_dirX,
              m_stz_abs,m_stz_absX,m_stz_dir,m_stz_dirX,m_tsx,m_txs,m_txy,
-             m_tyx]) then
+             m_tyx,d_lab]) then
             goto 1;
          end; {for}
 1:
