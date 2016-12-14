@@ -2658,7 +2658,7 @@ var
                if pCount = 0 then begin
                   if parameters <> nil then begin
                      AssignmentConversion(parameters^.parameterType,
-                        expressionType, lastWasConst, lastConst, true, true);
+                        expressionType, lastWasConst, lastConst, true, false);
                      end; {if}
                   parameters := parameters^.next;
                   end {if}

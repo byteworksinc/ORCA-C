@@ -701,7 +701,7 @@ var
          end; {if}
       Expression(normalExpression, [semicolonch]);
       AssignmentConversion(fType, expressionType, lastWasConst, lastConst,
-         true, true);
+         true, false);
       case fType^.kind of
          scalarType:    Gen2t(pc_str, 0, 0, fType^.baseType);
          enumType:      Gen2t(pc_str, 0, 0, cgWord);
