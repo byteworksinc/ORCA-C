@@ -1438,12 +1438,20 @@ var
 
             {create a pointer type}
             NextToken;
-            AbstractDeclarator;
             tp := pointer(Malloc(sizeof(typeRecord)));
             tp^.size := cgLongSize;
             tp^.saveDisp := 0;
             tp^.isConstant := false;
             tp^.kind := pointerType;
+            while token.kind in [constsy,volatilesy] do begin
+               if token.kind = constsy then
+                  tp^.isConstant := true
+               else {if token.kind = volatilesy then}
+                  if not doingSizeof then
+                     volatile := true;
+               NextToken;
+               end; {while}
+            AbstractDeclarator;
             tp^.fType := tl;
             tl := tp;
             end {else if token.kind = asteriskch}
