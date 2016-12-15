@@ -1095,29 +1095,32 @@ case op^.opcode of			{check for optimizations of this node}
                         lval := 0
                      else if rval > 65535.0 then
                         lval := 65535
-                     else begin
-                        rval := trunc4(rval);
-                        lval := round4(rval);
-                        end; {else}
+                     else
+                        lval := trunc4(rval);
                      op^.left^.rval := 0.0;
                      op^.left^.q := long(lval).lsw;
                      end;
-        	  cgLong,cgULong: begin
-                     rval := op^.left^.rval;
-                     if totype.optype = cgULong then begin
-                        if rval < 0 then
-                           rval := 0
-                        else if rval > 2147483647.0 then
-                           rval := rval - 4294967296.0
-                        end; {if}
+        	  cgLong: begin
                      if rval < -2147483648.0 then
                         lval := $80000000
                      else if rval > 2147483647.0 then
                         lval := 2147483647
-                     else begin
-                        rval := trunc4(rval);
-                        lval := round4(rval);
-                        end; {else}
+                     else
+                        lval := trunc4(rval);
+                     op^.left^.rval := 0.0;
+                     op^.left^.lval := lval;
+                     end;
+        	  cgULong: begin
+                     if rval < 0.0 then
+                        lval := 0
+                     else if rval >= 4294967295.0 then
+                        lval := $FFFFFFFF
+                     else if rval > 2147483647.0 then begin
+                        rval := rval - 2147483647.0;
+                        lval := 2147483647 + trunc4(rval);
+                        end {else if}
+                     else
+                        lval := trunc4(rval);
                      op^.left^.rval := 0.0;
                      op^.left^.lval := lval;
                      end;
