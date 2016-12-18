@@ -1308,7 +1308,7 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
          if not gettingFileName then        {put back the source stream token}
             PutBackToken(token, true);
          Error(12);
-         end;
+         end; {if}
       end {if}
    else begin
       Error(13);
@@ -3552,6 +3552,7 @@ var
    expandEnabled: boolean;              {can a token be expanded?}
    i: 0..maxint;                        {loop/index counter}
    inhibit: boolean;                    {inhibit macro expansion?}
+   lExpandMacros: boolean;              {local copy of expandMacros}
    lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
    mPtr: macroRecordPtr;                {for checking list of macros}
    setLength: boolean;                  {is the current string a p-string?}
@@ -3652,7 +3653,10 @@ if tokenList <> nil then begin          {get a token put back by a macro}
       token.kind := ident;
    if token.kind = ident then begin
       CopyString(@workString, token.name);
+      lExpandMacros := expandMacros;
+      expandMacros := false;
       CheckIdentifier;
+      expandMacros := lExpandMacros;
       end; {if}
 { dead code
    if token.kind = ident then
