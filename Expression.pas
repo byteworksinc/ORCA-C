@@ -1562,6 +1562,13 @@ if token.kind in startExpression then begin
                if token.kind in [stringconst,doubleconst] then begin
                   if kind = arrayExpression then begin
                      op := opStack;
+                     if token.kind = doubleconst then
+                        if op <> nil then
+                           if op^.token.kind = castoper then
+                              if op^.casttype^.kind = scalarType then
+                                 if op^.casttype^.baseType in [cgByte,cgUByte,
+                                    cgWord,cgUWord,cgLong,cgULong] then
+                                    goto 3;
                      while op <> nil do begin
                         if op^.token.kind = sizeofsy then
                            goto 3;
