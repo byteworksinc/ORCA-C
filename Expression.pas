@@ -1100,10 +1100,11 @@ var
                                    op1 := op1 div op2;
                                 end;
                   percentch   : begin                                   {%}
-                                if op2 <= 0 then begin
-                                   Error(109);
-                                   op2 := 1;
-                                   end; {if}
+                                if op2 <= 0 then {FIXME: support negative values}
+                                   if (op2 = 0) or (not unsigned) then begin
+                                      Error(109);
+                                      op2 := 1;
+                                      end; {if}
                                 if unsigned then
                                    op1 := umod(op1,op2)
                                 else
