@@ -862,7 +862,7 @@ var
       op1,op2: longint;                 {for evaluating constant expressions}
       rop1,rop2: double;                {for evaluating double expressions}
       tp: typePtr;                      {cast type}
-      unsigned, unsigned1: boolean;     {is the term unsigned?}
+      unsigned: boolean;                {is the term unsigned?}
 
 
       function Pop: tokenPtr;
@@ -917,14 +917,9 @@ var
          IntVal := token.ival
       else if token.kind = uintconst then begin
          IntVal := token.ival & $0000FFFF;
-         unsigned := true;
          end {else if}
-      else if token.kind = longconst then begin
+      else {if token.kind in [longconst,ulongconst] then} begin
          IntVal := token.lval;
-         end {else if}
-      else begin
-         IntVal := token.lval;
-         unsigned := true;
          end; {else}
       end; {IntVal}
 
@@ -1018,12 +1013,9 @@ var
                   ekind := intconst;
 
                {evaluate a constant operation}
-               unsigned := false;
+               unsigned := ekind in [uintconst,ulongconst];
                op1 := IntVal(op^.left^.token);
-               unsigned1 := unsigned;
-               unsigned := false;
                op2 := IntVal(op^.right^.token);
-               unsigned := unsigned or unsigned1;
                dispose(op^.right);
                op^.right := nil;
                dispose(op^.left);
@@ -1077,7 +1069,7 @@ var
                                 ekind := kindLeft;
                                 end;
                   gtgtop      : begin                                   {>>}
-                                if unsigned1 then
+                                if kindLeft in [uintconst,ulongconst] then
                                    op1 := lshr(op1,op2)
                                 else
                                    op1 := op1 >> op2;
