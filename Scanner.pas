@@ -218,6 +218,7 @@ type
 
 var
    dateStr: longStringPtr;              {macro date string}
+   doingPPExpression: boolean;          {are we processing a preprocessor expression?}
    doingstring: boolean;                {used to supress comments in strings}
    errors: array[1..maxErr] of errorType; {errors in this line}
    eofPtr: ptr;                         {points one byte past the last char in the file}
@@ -1837,8 +1838,10 @@ var
    { global variable expressionValue.                            }
  
    begin {NumericDirective}
+   doingPPExpression := true;
    NextToken;                            {skip the directive name}
    Expression(preprocessorExpression, []); {evaluate the expression}
+   doingPPExpression := false;
    end; {NumericDirective}
 
 
@@ -3308,6 +3311,7 @@ needWriteLine := false;                 {no lines are pending}
 switchLanguages := false;               {not switching languages}
 lastWasReturn := false;                 {last char was not return}
 doingstring := false;                   {not doing a string}
+doingPPExpression := false;             {not doing a preprocessor expression}
 unix_1 := false;			{int is 16 bits}
 
 new(mp);                                {__LINE__}
@@ -4045,6 +4049,15 @@ if token.kind = stringconst then        {handle adjacent strings}
       token := tToken;
    until done;
 1:
+if doingPPExpression then begin
+   if token.class = reservedWord then begin
+      token.name := @reservedWords[token.kind];
+      token.kind := ident;
+      token.class := identifier;
+      end; {if}
+   if token.kind = typedef then
+      token.kind := ident;
+   end; {if}
 if printMacroExpansions then		{print the token stream}
    PrintToken(token);
 end; {NextToken}
