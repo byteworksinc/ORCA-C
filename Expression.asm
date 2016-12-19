@@ -145,8 +145,7 @@ result   equ   0
          lda   x
          cmp   y
 lb1      blt   lb2
-         dec   result
-         dec   result+2
+         inc   result
 
 lb2      return 2:result
          end
@@ -170,8 +169,7 @@ result   equ   0
          lda   x
          cmp   y
 lb1      ble   lb2
-         dec   result
-         dec   result+2
+         inc   result
 
 lb2      return 2:result
          end
@@ -195,8 +193,7 @@ result   equ   0
          lda   x
          cmp   y
 lb1      bgt   lb2
-         dec   result
-         dec   result+2
+         inc   result
 
 lb2      return 2:result
          end
@@ -220,8 +217,7 @@ result   equ   0
          lda   x
          cmp   y
 lb1      bge   lb2
-         dec   result
-         dec   result+2
+         inc   result
 
 lb2      return 2:result
          end
