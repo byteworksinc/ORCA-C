@@ -1302,7 +1302,7 @@ var
                      end;
                   uminus      : op1 := -op1;                    {unary -}
                   uand        : op1 := 0;                       {unary &}
-                  uasterisk   : op1 := 0;                       {unary *}
+                  uasterisk   : Error(79);                      {unary *}
                   otherwise: Error(57);
                   end; {case}
                op^.token.kind := ekind;
