@@ -1311,17 +1311,12 @@ var
                dispose(op^.left);
                op^.left := nil;
                case op^.token.kind of
-                  opplusplus,                                   {posfix ++}
-                  plusplusop  : op1 := op1+1;                   {prefix ++}
-                  opminusminus,                                 {postfix --}
-                  minusminusop: op1 := op1-1;                   {prefix --}
                   tildech     : op1 := ~op1;                    {~}
                   excch       : begin                           {!}
                      op1 := ord(op1 = 0);
                      ekind := intconst;
                      end;
                   uminus      : op1 := -op1;                    {unary -}
-                  uand        : op1 := 0;                       {unary &}
                   uasterisk   : Error(79);                      {unary *}
                   otherwise: Error(57);
                   end; {case}
