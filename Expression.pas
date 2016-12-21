@@ -1039,10 +1039,14 @@ var
                dispose(op^.left);
                op^.left := nil;
                case op^.token.kind of
-                  barbarop    :                                         {||}
-                     op1 := ord((op1 <> 0) or (op2 <> 0));
-                  andandop    :                                         {&&}
-                     op1 := ord((op1 <> 0) and (op2 <> 0));
+                  barbarop    : begin                                   {||}
+                                op1 := ord((op1 <> 0) or (op2 <> 0));
+                                ekind := intconst;
+                                end;
+                  andandop    : begin                                   {&&}
+                                op1 := ord((op1 <> 0) and (op2 <> 0));
+                                ekind := intconst;
+                                end;
                   carotch     : op1 := op1 ! op2;                       {^}
                   barch       : op1 := op1 | op2;                       {|}
                   andch       : op1 := op1 & op2;                       {&}
@@ -1147,10 +1151,14 @@ var
                dispose(op^.left);
                op^.left := nil;
                case op^.token.kind of
-                  barbarop    :                                         {||}
-                     rop1 := ord((rop1 <> 0.0) or (rop2 <> 0.0));
-                  andandop    :                                         {&&}
-                     rop1 := ord((rop1 <> 0.0) and (rop2 <> 0.0));
+                  barbarop    : begin                                   {||}
+                                op1 := ord((rop1 <> 0.0) or (rop2 <> 0.0));
+                                ekind := intconst;
+                                end;
+                  andandop    : begin                                   {&&}
+                                op1 := ord((rop1 <> 0.0) and (rop2 <> 0.0));
+                                ekind := intconst;
+                                end;
                   eqeqop      : begin                                   {==}
                                 op1 := ord(rop1 = rop2);
                                 ekind := intconst;
