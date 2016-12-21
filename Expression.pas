@@ -1341,6 +1341,11 @@ var
                      op^.token.kind := doubleConst;
                      op^.token.rval := -rop1;
                      end;
+                  excch       : begin                        {!}
+                     op^.token.class := intConstant;
+                     op^.token.kind := intconst;
+                     op^.token.ival := ord(rop1 = 0.0);
+                     end;
                   otherwise   : begin                        {illegal operation}
                      Error(66);
                      op^.token.class := doubleConstant;
