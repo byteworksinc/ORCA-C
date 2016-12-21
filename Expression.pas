@@ -924,6 +924,20 @@ var
       end; {IntVal}
 
 
+      function PPKind (token: tokenType): tokenEnum;
+
+      { adjust kind of token for use in preprocessor expression }
+
+      begin {PPKind}
+      if token.kind = intconst then
+         PPKind := longconst
+      else if token.kind = uintconst then
+         PPKind := ulongconst
+      else
+         PPKind := token.kind;
+      end; {PPKind}
+
+
    begin {Operation}
    op := opStack;                       {pop the operation}
    opStack := op^.next;
@@ -1001,6 +1015,10 @@ var
          kindLeft := op^.left^.token.kind;
          if kindRight in [intconst,uintconst,longconst,ulongconst] then begin
             if kindLeft in [intconst,uintconst,longconst,ulongconst] then begin
+               if kind = preprocessorExpression then begin
+                  kindLeft := PPKind(op^.left^.token);
+                  kindRight := PPKind(op^.right^.token);
+                  end; {if}
 
                {do the usual binary conversions}
                if (kindRight = ulongconst) or (kindLeft = ulongconst) then
@@ -1287,6 +1305,8 @@ var
 
                {evaluate a constant operation}
                ekind := op^.left^.token.kind;
+               if kind = preprocessorExpression then
+                  ekind := PPKind(op^.left^.token);
                op1 := IntVal(op^.left^.token);
                dispose(op^.left);
                op^.left := nil;
