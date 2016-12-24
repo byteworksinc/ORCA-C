@@ -165,8 +165,11 @@ if numErrors = 0 then begin             {set up the return parameters}
       liDCBGS.sFile := @outFileGS;
       end; {if}
    end {if}
-else
+else begin
    liDCBGS.lops := 0;
+   if liDCBGS.merrf = 0 then
+      liDCBGS.merrf := 16;
+   end; {else}
 MMQuit;                                 {dispose of our memory pools}
 with liDCBGS do begin			{return to the shell}
    sFile := pointer(ord4(sFile)+2);
