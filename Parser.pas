@@ -291,6 +291,22 @@ stPtr := statementList;                 {pop the statement record}
 statementList := stPtr^.next;
 doingFunction := statementList <> nil;  {see if we're done with the function}
 if not doingFunction then begin         {if so, finish it off}
+   if doingMain then begin              {executing to the end of main returns 0}
+      if fType^.kind = scalarType then begin
+         if fType^.baseType in [cgByte,cgUByte,cgWord,cgUWord] then begin
+            Gen1t(pc_ldc, 0, fType^.baseType);
+            Gen2t(pc_str, 0, 0, fType^.baseType);
+            end {if}
+         else if fType^.baseType in [cgLong,cgULong] then begin
+            GenLdcLong(0);
+            Gen2t(pc_str, 0, 0, fType^.baseType);
+            end; {else if}
+         end {if}
+      else if fType^.kind = enumType then begin
+         Gen1t(pc_ldc, 0, cgWord);
+         Gen2t(pc_str, 0, 0, cgWord);
+         end; {else if}
+      end; {if}
    Gen1(dc_lab, returnLabel);
    with fType^ do                       {generate the pc_ret instruction}
       case kind of
