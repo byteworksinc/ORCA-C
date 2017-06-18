@@ -1857,7 +1857,8 @@ var
  
    begin {ProcessIf}
    if token.kind <> eolsy then          {check for extra stuff on the line}
-      Error(11);
+      if not tSkipping then
+         Error(11);
    new(ip);                             {create a new if record}
    ip^.next := ifList;
    ifList := ip;
@@ -2517,7 +2518,8 @@ if ch in ['a','d','e','i','l','p','u'] then begin
    NextToken;
    case token.kind of
       ifsy: begin
-         NumericDirective;
+         if not tSkipping then
+            NumericDirective;
          ProcessIf(expressionValue = 0);
          goto 2;
          end;
@@ -2559,16 +2561,23 @@ if ch in ['a','d','e','i','l','p','u'] then begin
                   end; {else if}
             'i':
                if token.name^ = 'if' then begin
-                  NumericDirective;
+                  if not tSkipping then
+                     NumericDirective;
                   ProcessIf(expressionValue = 0);
                   goto 2;
                   end {if}
                else if token.name^ = 'ifdef' then begin
-                  ProcessIf(not Defined);
+                  if tSkipping then
+                     ProcessIf(false)
+                  else
+                     ProcessIf(not Defined);
                   goto 2;
                   end {else}
                else if token.name^ = 'ifndef' then begin
-                  ProcessIf(Defined);
+                  if tSkipping then
+                     ProcessIf(false)
+                  else
+                     ProcessIf(Defined);
                   goto 2;
                   end {else}
                else if token.name^ = 'include' then begin
