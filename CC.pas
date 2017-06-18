@@ -112,7 +112,7 @@ while token.kind <> eofsy do begin      {compile the program}
    else if (token.kind in [autosy,externsy,registersy,staticsy,typedefsy,
                            unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
                            floatsy,doublesy,compsy,extendedsy,enumsy,
-                           structsy,unionsy,typedef,voidsy,volatilesy,
+                           structsy,unionsy,typedef,voidsy,inlinesy,volatilesy,
                            constsy,ident,asmsy,pascalsy,asmsy,segmentsy])
       then
       DoDeclaration(false)

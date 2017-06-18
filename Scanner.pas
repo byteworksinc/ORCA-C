@@ -600,6 +600,8 @@ if list or (numErr <> 0) then begin
         116: msg := @'missing field name';
         117: msg := @'field cannot have incomplete type';
         118: msg := @'flexible array must be last member of structure';
+        119: msg := @'inline specifier is only allowed on functions';
+        120: msg := @'non-static inline functions are not supported';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

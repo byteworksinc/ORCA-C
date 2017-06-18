@@ -2965,6 +2965,7 @@ var
    fName: stringPtr;                    {for forming uppercase names}
    i: integer;                          {loop variable}
    isAsm: boolean;                      {has the asm modifier been used?}
+   isInline: boolean;                   {has the inline specifier been used?}
    lDoingParameters: boolean;           {local copy of doingParameters}
    lisPascal: boolean;                  {local copy of isPascal}
    lp,tlp,tlp2: identPtr;               {for tracing parameter list}
@@ -3217,11 +3218,14 @@ if token.kind in [autosy,externsy,registersy,staticsy,typedefsy] then begin
    end; {if}
 isAsm := false;
 isPascal := false;
-while token.kind in [pascalsy,asmsy] do begin
+isInline := false;
+while token.kind in [pascalsy,asmsy,inlinesy] do begin
    if token.kind = pascalsy then
       isPascal := true
-   else
-      isAsm := true;
+   else if token.kind = asmsy then
+      isAsm := true
+   else {if token.kind = inlinesy then}
+      isInline := true;
    NextToken;
    end; {while}
 lisPascal := isPascal;
@@ -3291,6 +3295,9 @@ if isFunction then begin
       SkipStatement;
       goto 1;
       end; {if}
+   if isInline then
+      if storageClass <> staticsy then
+         Error(120);
    if isPascal then begin		{reverse prototyped parameters}
       p1 := fnType^.parameterList;
       if p1 <> nil then begin
@@ -3533,6 +3540,8 @@ else {if not isFunction then} begin
                   functionType: begin tp^.isPascal := true; tp := nil; end;
                   end; {case}
             end; {if}
+         if isInline then
+            Error(119);
          if token.kind = eqch then begin
             if storageClass = typedefsy then
                Error(52);
