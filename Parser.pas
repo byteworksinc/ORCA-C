@@ -2821,6 +2821,9 @@ case token.kind of
                begin
                done := false;
                NextToken;
+               {kws -- allow trailing , in enum }
+               { C99 6.7.2.2 Enumeration specifiers }
+               if token.kind = rbracech then done := true;
                end {if}
             else
                done := true;
