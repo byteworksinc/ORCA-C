@@ -2907,6 +2907,18 @@ var
    end; {NextChar}
 
 
+   procedure FlagError (errCode: integer);
+
+   {  Handle an error when processing a number.  Don't report   }
+   {  errors when skipping code, because pp-numbers in skipped  }
+   {  code never actually get converted to numeric constants.   }
+   
+   begin {FlagError}
+      if not skipping then
+         Error(errCode);
+   end; {FlagError}
+
+
    procedure GetDigits;
 
    {  Read in a digit stream                                    }
@@ -2923,7 +2935,7 @@ var
          c2 := chr(ord(c2) & $5F);
       stringIndex := stringIndex+1;
       if stringIndex > 255 then begin
-         Error(6);
+         FlagError(6);
          stringIndex := 1;
          end; {if}
       numString[stringIndex] := c2;
@@ -2988,7 +3000,7 @@ if c2 in ['e','E'] then begin           {handle an exponent}
    else begin
       stringIndex := stringIndex+1;
       numString[stringIndex] := '0';
-      Error(101);
+      FlagError(101);
       end; {else}
    end; {if}
 1:
@@ -3002,13 +3014,13 @@ while c2 in ['l','u','L','U'] do        {check for long or unsigned}
       NextChar;
       unsigned := true;
       if isReal then
-         Error(91);
+         FlagError(91);
       end; {else}
 if c2 in ['f','F'] then begin           {allow F designator on reals}
    if unsigned then
-      Error(91);
+      FlagError(91);
    if not isReal then begin
-      Error(100);
+      FlagError(100);
       isReal := true;
       end; {if}
    NextChar;
@@ -3018,7 +3030,7 @@ if isReal then begin                    {convert a real constant}
    token.kind := doubleConst;
    token.class := doubleConstant;
    if stringIndex > 80 then begin
-      Error(6);
+      FlagError(6);
       token.rval := 0.0;
       end {if}
    else
@@ -3033,7 +3045,7 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
       ((stringIndex = 10) and (numString > '4294967295')) then begin
       numString := '0';
       if flagOverflows then
-         Error(6);
+         FlagError(6);
       end; {if}
    if isLong then begin
       token.class := longConstant;
@@ -3063,7 +3075,7 @@ else begin                            {hex & octal}
          if token.lval & $F0000000 <> 0 then begin
             i := maxint;
             if flagOverflows then
-               Error(6);
+               FlagError(6);
             end {if}
          else begin
             if numString[i] > '9' then
@@ -3081,11 +3093,11 @@ else begin                            {hex & octal}
          if token.lval & $E0000000 <> 0 then begin
             i := maxint;
             if flagOverflows then
-               Error(6);
+               FlagError(6);
             end {if}
          else begin
             if numString[i] in ['8','9'] then
-               Error(7);
+               FlagError(7);
             token.lval := (token.lval << 3) | (ord(numString[i]) & $0007);
             i := i+1;
             end; {else}
