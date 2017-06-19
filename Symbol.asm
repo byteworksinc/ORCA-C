@@ -8,7 +8,7 @@
 *
 ****************************************************************
 *
-ClearTable private
+ClearTable private cc
 tableSize equ  7026                     sizeof(symbolTable)
 
          subroutine (4:table),0

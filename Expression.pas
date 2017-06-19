@@ -50,7 +50,7 @@ interface
 
 uses CCommon, Table, CGI, Scanner, Symbol, MM;
 
-{$segment 'exp'}
+{$segment 'EXP'}
 
 var
    startExpression: tokenSet;           {tokens that can start an expression}

@@ -12,7 +12,7 @@
 *
 ****************************************************************
 *
-lshr     start
+lshr     start exp
 
          subroutine (4:num1,4:num2),0
 
@@ -62,7 +62,7 @@ lb4      lda   0                        fix stack and return
 *
 ****************************************************************
 *
-udiv     start
+udiv     start exp
 ans      equ   0                        answer
 rem      equ   4                        remainder
 
@@ -132,7 +132,7 @@ dv9      return 4:ans                   move answer
 *
 ****************************************************************
 *
-uge      start
+uge      start exp
 result   equ   0
 
          subroutine (4:x,4:y),4
@@ -156,7 +156,7 @@ lb2      return 2:result
 *
 ****************************************************************
 *
-ugt      start
+ugt      start exp
 result   equ   0
 
          subroutine (4:x,4:y),4
@@ -180,7 +180,7 @@ lb2      return 2:result
 *
 ****************************************************************
 *
-ule      start
+ule      start exp
 result   equ   0
 
          subroutine (4:x,4:y),4
@@ -204,7 +204,7 @@ lb2      return 2:result
 *
 ****************************************************************
 *
-ult      start
+ult      start exp
 result   equ   0
 
          subroutine (4:x,4:y),4
@@ -235,7 +235,7 @@ lb2      return 2:result
 *
 ****************************************************************
 *
-umod     start
+umod     start exp
 ans      equ   0                        answer
 rem      equ   4                        remainder
 
@@ -311,7 +311,7 @@ dv9      return 4:ans+4                 move answer
 *
 ****************************************************************
 *
-umul     start
+umul     start exp
 ans      equ   0                        answer
 
          subroutine (4:num1,4:num2),8

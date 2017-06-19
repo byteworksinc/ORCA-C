@@ -52,7 +52,7 @@ interface
 
 uses CCommon, CGI, MM, Scanner;
 
-{$segment 'cc'}
+{$segment 'CC'}
 
 {---------------------------------------------------------------}
 

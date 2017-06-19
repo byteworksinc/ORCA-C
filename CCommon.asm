@@ -9,7 +9,7 @@
 *
 ****************************************************************
 *
-CopyString start
+CopyString start cc
 
          subroutine (4:toPtr,4:fromPtr),0
 
@@ -41,7 +41,7 @@ lb1      lda   [fromPtr],Y
 *
 ****************************************************************
 *
-Hash     start
+Hash     start cc
 hashSize equ   876                      # hash buckets - 1
 
 sum      equ   0                        hash

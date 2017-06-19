@@ -20,7 +20,7 @@ program cc(output);
 
 uses CCommon, CGI, Scanner, Header, Symbol, MM, Expression, Parser, Asm;
 
-{$segment 'cc'}
+{$segment 'CC'}
 
 var
    i: 1..maxPath;			{loop/index variable}

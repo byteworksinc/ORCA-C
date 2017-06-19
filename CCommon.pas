@@ -69,6 +69,8 @@ unit CCommon;
 
 interface
 
+{$segment 'CC'}
+
 const
                                         {hashsize appears in CCOMMON.ASM}
    hashSize      = 876;                 {# hash buckets - 1}

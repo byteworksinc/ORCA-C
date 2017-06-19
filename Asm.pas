@@ -22,7 +22,7 @@ interface
 
 uses CCommon, Table, CGI, Scanner, Symbol, MM, Expression;
 
-{$segment 'cc'}
+{$segment 'CC'}
 
 procedure AsmFunction (variable: identPtr);
 
