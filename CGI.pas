@@ -197,7 +197,7 @@ const
                                         {Note: maxlabel is also defined in CGC.asm}
    maxLabel     =       3200;           {max # of internal labels}
    maxLocalLabel =      200;            {max # local variables}
-   maxString    =       8000;           {max # chars in string space}
+   maxString    =       12500;          {max # chars in string space}
 
                                         {size of internal types}
                                         {----------------------}
