@@ -1596,7 +1596,18 @@ if tPtr^.kind = functionType then begin {declare the identifier}
                   pt2 := p2^.parameterType
                else
                   pt2 := p2^.parameter^.itype;
-               if not CompTypes(pt1, pt2) then begin
+               compatible := false;
+               if CompTypes(pt1, pt2) then 
+                  compatible := true
+               else begin
+                  tk1 := pt1^.kind;
+                  tk2 := pt2^.kind;
+                  if (tk1 = arrayType) and (tk2 = pointerType) then
+                     compatible := CompTypes(pt1^.aType, pt2^.pType)
+                  else if (tk1 = pointerType) and (tk2 = arrayType) then
+                     compatible := CompTypes(pt1^.pType, pt2^.aType)
+                  end; {else}
+               if not compatible then begin
                   Error(47);
                   goto 1;
                   end; {if}
