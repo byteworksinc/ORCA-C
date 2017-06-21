@@ -1142,6 +1142,7 @@ var
    tsPtr: typeDefPtr;                   {work pointer}
    typeStack: typeDefPtr;               {stack of type definitions}
    varParmList: boolean;                {did we prototype a variable?}
+   firstIteration: boolean;             {first iteration of type-unstacking loop?}
 
                                         {for checking function compatibility}
                                         {-----------------------------------}
@@ -1489,6 +1490,7 @@ typeStack := nil;                       {no types so far}
 parameterStorage := false;              {symbol is not in a parameter list}
 checkParms := false;                    {assume we won't need to check for parameter type errors}
 StackDeclarations(varParmList);         {stack the type records}
+firstIteration := true;
 while typeStack <> nil do begin         {reverse the type stack}
    tsPtr := typeStack;
    typeStack := tsPtr^.next;
@@ -1501,7 +1503,8 @@ while typeStack <> nil do begin         {reverse the type stack}
       tPtr2 := tsPtr^.typeDef;
    dispose(tsPtr);
    if tPtr^.kind = functionType then
-      PopTable;
+      if not firstIteration then
+         PopTable;                      {balance push in StackDeclarations}
    case tPtr2^.kind of
       pointerType: begin
          tPtr2^.pType := tPtr;                     
@@ -1520,6 +1523,7 @@ while typeStack <> nil do begin         {reverse the type stack}
       otherwise: ;
       end; {case}
    tPtr := tPtr2;
+   firstIteration := false;
    end; {while}
 
 if checkParms then begin                {check for parameter type conflicts}
