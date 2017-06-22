@@ -447,14 +447,18 @@ procedure DoGlobals;
       lval: longint;                    {for converting types}
       size: longint;                    {size of the array}
       sp: identPtr;                     {pointer to a symbol table entry}
+      tPtr: typePtr;                    {type of global array/struct/union}
 
    begin {GenArrays}
    didOne := false;
    for i := 0 to hashSize do begin
       sp := table^.buckets[i];
       while sp <> nil do begin
-         if sp^.storage in [global,private] then
-            if sp^.itype^.kind in [arrayType,structType,unionType] then begin
+         if sp^.storage in [global,private] then begin
+            tPtr := sp^.itype;
+            while tPtr^.kind = definedType do
+               tPtr := tPtr^.dType;
+            if tPtr^.kind in [arrayType,structType,unionType] then begin
                if not didOne then begin
                   if smallMemoryModel then
                      currentSegment := '          '
@@ -507,6 +511,7 @@ procedure DoGlobals;
                      end; {while}
                   end; {else}
                end; {if}
+            end; {if}
          sp := sp^.next;
          end; {while}
       end; {for}
