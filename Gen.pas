@@ -5024,7 +5024,7 @@ procedure GenTree {op: icptr};
          end {if}
       else begin
          GenNative(m_lda_dir, direct, localSize+2, nil, 0);
-         if localSize+parameterSize > 254 then begin
+         if localSize+parameterSize > 253 then begin
             GenNative(m_ldx_imm, immediate,
                localSize+parameterSize+1, nil, 0);
             GenNative(m_sta_dirx, direct, 1, nil, 0);
