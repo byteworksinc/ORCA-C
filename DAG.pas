@@ -479,13 +479,19 @@ var
       result: boolean;		{temp result}
 
    begin {SideEffects}
-   if (op = nil) or volatile then
-      SideEffects := false
+   if op = nil then begin
+      if volatile then
+         SideEffects := true
+      else
+         SideEffects := false
+      end {if}
    else if op^.opcode in
       [pc_mov,pc_cbf,pc_cop,pc_cpi,pc_cpo,pc_gil,pc_gli,pc_gdl,
        pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,pc_lil,pc_lli,pc_ldl,
        pc_lld,pc_sbf,pc_sro,pc_sto,pc_str,pc_cui,pc_cup,pc_tl1] then
       SideEffects := true
+   else if op^.opcode = pc_ldc then
+      SideEffects := false
    else
       SideEffects := SideEffects(op^.left) or SideEffects(op^.right);
    end; {SideEffects}
