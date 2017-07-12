@@ -154,6 +154,7 @@ var
    returnLabel: integer;                {label for exit point}
    skipDeclarator: boolean;             {for enum,struct,union with no declarator}
    statementList: statementPtr;         {list of open statements}
+   savedVolatile: boolean;              {saved copy of volatile}
 
                                         {parameter processing variables}
                                         {------------------------------}
@@ -330,6 +331,7 @@ if not doingFunction then begin         {if so, finish it off}
       end; {while}
    dumpLocal := true;                   {dump the local pool}
    nameFound := false;                  {no pc_nam for the next function (yet)}
+   volatile := savedVolatile;           {local volatile vars are out of scope}
    end; {if}
 PopTable;				{remove this symbol table}
 dispose(stPtr);                         {dump the record}
@@ -3529,6 +3531,7 @@ if isFunction then begin
             GenParameters(nil)
          else
             GenParameters(fnType^.parameterList); 
+         savedVolatile := volatile;
          CompoundStatement(false);      {process the statements}
          end; {else}
       end; {else}
