@@ -2967,6 +2967,7 @@ case tree^.token.kind of
          doingScalar := true;
          LoadScalar(id);
          lType := id^.itype;
+         t1 := 0;
          end {if}
       else begin
          doingScalar := false;
@@ -2978,7 +2979,6 @@ case tree^.token.kind of
          Gen2t(pc_str, t1, 0, cgULong);
          Gen2t(pc_lod, t1, 0, cgULong);
          Gen2t(pc_lod, t1, 0, cgULong);
-         FreeTemp(t1, cgLongSize);
          lType := expressionType^.pType;
          if isBitField then begin
             if unsigned then
@@ -3150,6 +3150,8 @@ case tree^.token.kind of
             end; {else}
          Gen0t(pc_bno, lType^.baseType);
          end; {else}
+      if t1 <> 0 then
+         FreeTemp(t1, cgLongSize);
       end; {with}
 
    commach: begin                       {,}
