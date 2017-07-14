@@ -609,7 +609,7 @@ else begin
          DoOp(0, m_sta_abs, m_sta_dir, save, 2);
          end; {else}
       end {if}
-   else if Simple(op^.right) then begin
+   else if (save = nil) and Simple(op^.right) then begin
       gLong.preference := gLong.preference & A_X;
       GenTree(op^.left);
       GenImplied(clc);
