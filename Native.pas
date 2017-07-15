@@ -30,7 +30,7 @@ interface
 
 uses CCommon, CGI, CGC, ObjOut;
 
-{$segment 'CodeGen'}
+{$segment 'CODEGEN'}
 
 type
    labelptr = ^labelentry;              {pointer to a forward ref node}

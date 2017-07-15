@@ -8,7 +8,7 @@
 *
 ****************************************************************
 *
-CnvSX    start
+CnvSX    start cg
 rec      equ   4                        record containing values
 rec_real equ   0                        disp to real value
 rec_ext  equ   8                        disp to extended (SANE) value
@@ -42,7 +42,7 @@ rec_ext  equ   8                        disp to extended (SANE) value
 *
 ****************************************************************
 *
-CnvSC    start
+CnvSC    start cg
 rec      equ   4                        record containing values
 rec_real equ   0                        disp to real value
 rec_ext  equ   8                        disp to extended (SANE) value
@@ -85,6 +85,7 @@ rec_cmp  equ   18                       disp to comp (SANE) value
          rtl
          end
 
+         datachk off
 ****************************************************************
 *
 *  InitLabels - initialize the labels array
@@ -95,7 +96,7 @@ rec_cmp  equ   18                       disp to comp (SANE) value
 *
 ****************************************************************
 *
-InitLabels start
+InitLabels start cg
 maxLabel equ   3200
 
 !                                       with labelTab[0] do begin

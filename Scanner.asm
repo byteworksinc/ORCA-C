@@ -1,4 +1,5 @@
          mcopy scanner.macros
+         datachk off
 ****************************************************************
 *
 *  Convertsl - Convert a string to a long integer
@@ -14,7 +15,7 @@
 *
 ****************************************************************
 *
-Convertsl start
+Convertsl start scanner
 
 val      equ   0                        return value
 
@@ -100,7 +101,7 @@ rkModifiers ds	2
 *
 ****************************************************************
 *
-NextCh   start
+NextCh   start scanner
 eofChar  equ   0                        end of file character
 eolChar	equ	13	end of line character
 

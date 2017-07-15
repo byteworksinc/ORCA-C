@@ -31,7 +31,7 @@ interface
 
 uses CCommon, Table, CGI, MM;
 
-{$segment 'scanner'}
+{$segment 'SCANNER'}
 
 type
    pragmas =				{kinds of pragmas}

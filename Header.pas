@@ -15,7 +15,7 @@ interface
 
 uses CCommon, MM, Scanner, Symbol, CGI;
 
-{$segment 'scanner'}
+{$segment 'SCANNER'}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}

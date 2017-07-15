@@ -26,7 +26,7 @@ interface
 
 uses CCommon, CGI;
 
-{$segment 'cg'}
+{$segment 'CG'}
 
 type
                                         {pcode code generation}

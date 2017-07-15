@@ -1,4 +1,5 @@
          mcopy native.macros
+         datachk off
 ****************************************************************
 *
 *  Remove - remove an instruction from the peephole array
@@ -8,7 +9,7 @@
 *
 ****************************************************************
 *
-Remove   start
+Remove   start CodeGen
 elSize   equ   12                       size of an element
 nPeepSize equ  128                      size of array
 ns       equ   4                        array element

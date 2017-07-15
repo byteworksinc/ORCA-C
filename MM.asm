@@ -13,7 +13,7 @@
 *
 ****************************************************************
 *
-Calloc   start
+Calloc   start cc
 
 ptr      equ   0                        pointer to reserved memory
 
@@ -59,7 +59,7 @@ lb4      return 4:ptr                   return the pointer
 *
 ****************************************************************
 *
-GCalloc  start
+GCalloc  start cc
 
 ptr      equ   0                        pointer to reserved memory
 
@@ -107,9 +107,9 @@ lb4      return 4:ptr                   return the pointer
 *
 ****************************************************************
 *
-Malloc   start
+Malloc   start cc
 
-         lda   useGlobalPool
+         lda   |useGlobalPool
          jne   GMalloc
          jmp   LMalloc
          end

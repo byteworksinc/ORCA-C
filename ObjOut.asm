@@ -1,4 +1,5 @@
          mcopy objout.macros
+         datachk off
 ****************************************************************
 *
 *  CnOut - write a byte to the constant buffer
@@ -8,7 +9,7 @@
 *
 ****************************************************************
 *
-CnOut    start
+CnOut    start CodeGen
 maxCBuffLen equ 191                     max index into the constant buffer
 
          lda   cBuffLen                 if cBuffLen = maxCBuffLen then
@@ -39,7 +40,7 @@ lb1      phb                            cBuff[cBuffLen] := i;
 *
 ****************************************************************
 *
-CnOut2   start
+CnOut2   start CodeGen
 maxCBuffLen equ 191                     max index into the constant buffer
 
          lda   cBuffLen                 if cBuffLen+1 >= maxCBuffLen then
@@ -71,7 +72,7 @@ lb1      phb                            cBuff[cBuffLen] := i;
 *
 ****************************************************************
 *
-COut     start
+COut     start CodeGen
 
          phb                            OutByte(b);
          pla
@@ -95,7 +96,7 @@ COut     start
 *
 ****************************************************************
 *
-Out2     start
+Out2     start CodeGen
 
          phb                            OutWord(w);
          pla
@@ -118,7 +119,7 @@ Out2     start
 *
 ****************************************************************
 *
-Out      start
+Out      start CodeGen
 
          phb                            OutByte(b);
          pla
@@ -141,7 +142,7 @@ Out      start
 *
 ****************************************************************
 *
-OutByte  private
+OutByte  private CodeGen
 
          lda   objLen                   if objLen+segDisp = buffSize then
          clc
@@ -200,7 +201,7 @@ lb2a     lda   #$8000	handle a segment overflow
 *
 ****************************************************************
 *
-OutWord  private
+OutWord  private CodeGen
 
          lda   objLen                   if objLen+segDisp+1 = buffSize then
          sec

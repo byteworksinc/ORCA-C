@@ -39,6 +39,8 @@ interface
 
 uses CCommon;
 
+{$segment 'CC'}
+
 var
    localID,globalID: integer;           {user ID's for the local & global pools}
 

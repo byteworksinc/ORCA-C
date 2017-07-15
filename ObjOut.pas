@@ -34,7 +34,7 @@ interface
 
 uses CCommon, CGI, CGC;
 
-{$segment 'CodeGen'}
+{$segment 'CODEGEN'}
 
 
 procedure CloseObj;

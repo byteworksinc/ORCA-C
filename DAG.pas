@@ -11,7 +11,7 @@ unit DAG;
 
 interface
 
-{$segment 'cg'}
+{$segment 'CG'}
 
 {$LibPrefix '0/obj/'}
 
