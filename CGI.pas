@@ -196,7 +196,7 @@ const
                                         {Note: maxlabel is also defined in CCommon.pas}
                                         {Note: maxlabel is also defined in CGC.asm}
    maxLabel     =       3200;           {max # of internal labels}
-   maxLocalLabel =      200;            {max # local variables}
+   maxLocalLabel =      220;            {max # local variables}
    maxString    =       12500;          {max # chars in string space}
 
                                         {size of internal types}
