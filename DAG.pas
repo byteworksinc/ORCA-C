@@ -2420,6 +2420,8 @@ var
          end {else if}
       else if opcode = pc_stk then
          Block := true
+      else if opcode = pc_psh then
+         Block := true
       else if opcode = pc_cnv then
          if op^.q & $000F = ord(cgVoid) then
             Block := true;
