@@ -2790,7 +2790,8 @@ else if charKinds[ord(ch)] = ch_eol     {allow null commands}
    NextToken;
    goto 2;
    end; {else if}
-Error(8);                               {bad preprocessor command}
+if not tSkipping then
+   Error(8);                            {bad preprocessor command}
 2:
 charKinds[ord('#')] := ch_pound;        {allow # as a token}
 expandMacros := false;                  {skip to the end of the line}
