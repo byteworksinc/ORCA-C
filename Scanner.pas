@@ -2243,7 +2243,7 @@ var
    end; {DoEndif}
 
 
-   procedure DoError;
+   procedure DoError (isError: boolean);
  
    { #error pp-tokens(opt)                                       }
  
@@ -2256,9 +2256,13 @@ var
 
    begin {DoError}
    lFirstPtr := firstPtr;
-   numErrors := numErrors+1;
+   if isError then
+      numErrors := numErrors+1;
    new(msg);
-   msg^ := '#error:';
+   if isError then
+      msg^ := '#error:'
+   else
+      msg^ := '#warning:';
    NextToken;                           {skip the command name}
    while not (token.kind in [eolsy, eofsy]) do begin
       msg^ := concat(msg^, ' ');
@@ -2278,7 +2282,7 @@ var
       NextToken;
       end; {while}
    writeln(msg^);
-   if terminalErrors then begin
+   if isError and terminalErrors then begin
       if enterEditor then
          ExitToEditor(msg, ord4(lFirstPtr)-ord4(bofPtr))
       else
@@ -2518,7 +2522,7 @@ skipping := false;
 NextCh;                                 {skip the '#' char}
 while charKinds[ord(ch)] = ch_white do  {skip white space}
    NextCh;
-if ch in ['a','d','e','i','l','p','u'] then begin
+if ch in ['a','d','e','i','l','p','u','w'] then begin
    NextToken;
    case token.kind of
       ifsy: begin
@@ -2560,7 +2564,7 @@ if ch in ['a','d','e','i','l','p','u'] then begin
                   end {else if}
                else if token.name^ = 'error' then begin
                   if tskipping then goto 2;
-                  DoError;
+                  DoError(true);
                   goto 2;
                   end; {else if}
             'i':
@@ -2781,6 +2785,12 @@ if ch in ['a','d','e','i','l','p','u'] then begin
                if token.name^ = 'undef' then begin
                   if tskipping then goto 2;
                   DoUndef;
+                  goto 2;
+                  end; {if}
+            'w':
+               if token.name^ = 'warning' then begin
+                  if tskipping then goto 2;
+                  DoError(false);
                   goto 2;
                   end; {if}
             otherwise: Error(57);
