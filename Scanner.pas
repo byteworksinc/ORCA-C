@@ -79,6 +79,7 @@ var
    reportEOL: boolean;                  {report eolsy as a token?}
    skipIllegalTokens: boolean;		{skip flagging illegal tokens in skipped code?}
    slashSlashComments: boolean;		{allow // comments?}
+   allowLongIntChar: boolean;		{allow long int char constants?}
    token: tokenType;                    {next token to process}
 
 {---------------------------------------------------------------}
@@ -483,7 +484,7 @@ if list or (numErr <> 0) then begin
          write('     Error in column ', col:1, ' of line ', line:1, ': ');
        case num of
          1 : msg := @'illegal character';
-         2 : msg := @'a character constant must contain exactly one character';
+         2 : msg := @'invalid character constant';
          3 : msg := @'no end was found to the string';
          4 : msg := @'further errors suppressed';
          5 : msg := @'cannot redefine a macro';
@@ -2766,6 +2767,7 @@ if ch in ['a','d','e','i','l','p','u'] then begin
                      NumericDirective;    
                      val := long(expressionValue).lsw;
                      skipIllegalTokens := odd(val);
+                     allowLongIntChar := odd(val >> 1);
                      slashSlashComments := odd(val >> 3);
                      if token.kind <> eolsy then
                         Error(11);
@@ -3307,6 +3309,7 @@ var
 begin {InitScanner}
 printMacroExpansions := false;          {don't print the token list}
 skipIllegalTokens := false;		{flag illegal tokens in skipped code}
+allowLongIntChar := false;		{allow long int char constants}
 slashSlashComments := true;		{allow // comments}
 foundFunction := false;                 {no functions found so far}
 fileList := nil;                        {no included files}
@@ -3661,6 +3664,54 @@ var
    end; {EscapeCh}
 
 
+
+   procedure CharConstant;
+   
+   { Scan a single-quote character constant			}
+   
+   var
+      cnt: integer;			{number of characters scanned}
+      result: longint;			{character value}
+   
+   begin {CharConstant}
+   
+   {set up locals}
+   cnt := 0;
+   result := 0;
+      
+   {skip the leading quote}
+   NextCh;
+   
+   {read the characters in the constant}
+   while (not (charKinds[ord(ch)] in [ch_char,ch_eol,ch_eof])) do begin
+      if cnt < maxint then
+         cnt := cnt + 1;
+      result := (result << 8) | EscapeCh;
+      end; {while}
+   
+   {skip the closing quote}
+   if (charKinds[ord(ch)] = ch_char) then begin
+      if (cnt = 0) and ((not skipping) or (not skipIllegalTokens)) then
+         Error(2);
+      NextCh;
+      end {if}
+   else if (not skipping) or (not skipIllegalTokens) then
+      Error(2);
+   
+   {create the token}
+   if allowLongIntChar and (cnt >= 3) then begin
+      token.kind := longconst;
+      token.class := longConstant;
+      token.lval := result;
+      end {if}
+   else begin
+      token.kind := intconst;
+      token.class := intConstant;
+      token.ival := long(result).lsw;
+      end {else}
+   end; {CharConstant}
+
+
 begin {NextToken}
 if ifList = nil then			{do pending EndInclude calls}
    while includeCount <> 0 do begin
@@ -3958,23 +4009,7 @@ case charKinds[ord(ch)] of
          end; {else}
       end;
 
-   ch_char  : begin                      {character constants}
-      NextCh;
-      token.kind := intconst;
-      token.class := intConstant;
-      if ch = '''' then begin
-         if (not skipping) or (not skipIllegalTokens) then
-            Error(2);
-         token.ival := ord(' ');
-         end {if}
-      else
-         token.ival := EscapeCh;
-      if ch = '''' then
-         NextCh
-      else
-         if (not skipping) or (not skipIllegalTokens) then
-            Error(2);
-      end;
+   ch_char  : CharConstant;		{character constants}
 
    ch_string: begin                     {string constants}
       doingstring := true;              {change character scanning}
