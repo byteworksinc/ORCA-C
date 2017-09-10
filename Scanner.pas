@@ -603,6 +603,7 @@ if list or (numErr <> 0) then begin
         118: msg := @'flexible array must be last member of structure';
         119: msg := @'inline specifier is only allowed on functions';
         120: msg := @'non-static inline functions are not supported';
+        121: msg := @'invalid digit for binary constant';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -2879,6 +2880,7 @@ label 1;
 var
    c2: char;                            {next character to process}
    i: integer;                          {loop index}
+   isBin: boolean;                      {is the value a binary number?}
    isHex: boolean;                      {is the value a hex number?}
    isLong: boolean;                     {is the value a long number?}
    isReal: boolean;                     {is the value a real number?}
@@ -2949,6 +2951,7 @@ var
 
 
 begin {DoNumber}
+isBin := false;                         {assume it's not binary}
 isHex := false;                         {assume it's not hex}
 isReal := false;                        {assume it's an integer}
 isLong := false;                        {assume a short integer}
@@ -2966,13 +2969,15 @@ if c2 = '.' then begin                  {handle the case of no leading digits}
    end {if}
 else begin
    GetDigits;                           {read the leading digit stream}
-   if c2 in ['x','X'] then              {detect hex numbers}
+   if c2 in ['x','X','b','B'] then      {detect hex numbers}
       if stringIndex = 1 then
          if numString[1] = '0' then begin
             stringIndex := 2;
-            numString[2] := 'X';
+            c2 := chr(ord(c2) & $5f);
+            numString[2] := c2;
+            if c2 = 'X' then isHex := true;
+            if c2 = 'B' then isBin := true;
             NextChar;
-            isHex := true;
             GetDigits;
             goto 1;
             end; {if}
@@ -3087,6 +3092,22 @@ else begin                            {hex & octal}
             else
                val := ord(numString[i]) & $000F;
             token.lval := (token.lval << 4) | val;
+            i := i+1;
+            end; {else}
+         end; {while}
+      end {if}
+   else if isBin then begin
+      i := 3;
+      while i <= length(numString) do begin
+         if token.lval & $80000000 <> 0 then begin
+            i := maxint;
+            if flagOverflows then
+               FlagError(6);
+            end {if}
+         else begin
+            if not (numString[i] in ['0','1']) then
+               FlagError(121);
+            token.lval := (token.lval << 1) | (ord(numString[i]) & $0001);
             i := i+1;
             end; {else}
          end; {while}
