@@ -17,6 +17,9 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 
 {$segment 'SCANNER'}
 
+const
+   symFileVersion = 2;                  {version number of .sym file format}
+
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
 
@@ -810,11 +813,12 @@ procedure EndInclude {chPtr: ptr};
                      WriteString(openName);
 
                   p_debug:
-                     WriteByte(ord(rangeCheck)
+                     WriteWord(ord(rangeCheck)
                         | (ord(debugFlag) << 1)
                         | (ord(profileFlag) << 2)
                         | (ord(traceBack) << 3)
-                        | (ord(checkStack) << 4));
+                        | (ord(checkStack) << 4)
+                        | (ord(debugStrFlag) << 15));
 
                   p_lint: WriteWord(lint);
 
@@ -856,8 +860,10 @@ procedure EndInclude {chPtr: ptr};
                         end; {while}
                      end; {p_path}
 
-                  p_ignore: WriteByte(ord(skipIllegalTokens)
-                                      + (ord(slashSlashComments) << 3));
+                  p_ignore:
+                     WriteByte(ord(skipIllegalTokens)
+                        | (ord(allowLongIntChar) << 1)
+                        | (ord(slashSlashComments) << 3));
 
                   p_segment: begin
                      for i := 1 to 10 do begin
@@ -1212,7 +1218,7 @@ var
       if ToolError = 0 then begin           
          symRefnum := opRec.refnum;
          OpenSymbols := true;
-         WriteWord(1);
+         WriteWord(symFileVersion);
          tokenMark := GetMark;
          includeMark := false;
          end; {if}
@@ -1433,12 +1439,13 @@ var
             end;
 
          p_debug: begin
-            val := ReadByte;
+            val := ReadWord;
             rangeCheck := odd(val);
             debugFlag := odd(val >> 1);
             profileFlag := odd(val >> 2);
             traceback := odd(val >> 3);
             checkStack := odd(val >> 4);
+            debugStrFlag := odd(val >> 15);
             end;
 
          p_lint: lint := ReadWord;
@@ -1488,6 +1495,7 @@ var
          p_ignore: begin
             i := ReadByte;
             skipIllegalTokens := odd(i);
+            allowLongIntChar := odd(i >> 1);
             slashSlashComments := odd(i >> 3);
             end;
          
@@ -1833,7 +1841,7 @@ if not ignoreSymbols then begin
    includeLevel := 0;			{no nested includes}
    symChPtr := chPtr;			{record initial source location}
    if OpenSymbolFile(fName) then begin	{check for symbol file}
-      if SymbolVersion = 1 then begin
+      if SymbolVersion = symFileVersion then begin
 	 done := EndOfSymbols;		{valid file found - process it}
 	 if done then
             PurgeSymbols;
