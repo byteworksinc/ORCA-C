@@ -1920,7 +1920,7 @@ var
                iPtr^.isConstant := true;
                iPtr^.iType := ccPointer;
                iPtr^.pval := 0;
-               iPtr^.pPlus := operator = plusch;
+               iPtr^.pPlus := false;
                iPtr^.isName := false;
                iPtr^.pStr := longstringPtr(expressionValue);
                end {if}
