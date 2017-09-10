@@ -1169,6 +1169,7 @@ var
       cp,cpList: pointerListPtr;        {pointer list}
       done,done2: boolean;              {for loop termination}
       isPtr: boolean;                   {is the parenthesized expr a ptr?}
+      isVoid: boolean;                  {is the type specifier void?}
       wp: parameterPtr;                 {used to build prototype var list}
       pvar: identPtr;                   {work pointer}
       tPtr2: typePtr;                   {work pointer}
@@ -1309,7 +1310,12 @@ var
          typeStack := ttPtr;
          ttPtr^.typeDef := tPtr2;
          NextToken;                        {skip the '(' token}
-         if token.kind = voidsy then begin {check for a void prototype}
+         isVoid := token.kind = voidsy;
+         if token.kind = typedef then
+            if token.symbolPtr^.itype^.kind = scalarType then
+               if token.symbolPtr^.itype^.baseType = cgVoid then
+                  isVoid := true;
+         if isVoid then begin              {check for a void prototype}
             lPrintMacroExpansions := printMacroExpansions;
             printMacroExpansions := false;
             NextToken;
