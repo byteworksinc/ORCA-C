@@ -2632,6 +2632,7 @@ if ch in ['a','d','e','i','l','p','u'] then begin
                      profileFlag := odd(val >> 2);
                      traceBack   := odd(val >> 3);
                      checkStack  := odd(val >> 4);
+                     debugStrFlag := odd(val >> 15);
                      profileFlag := profileFlag or debugFlag;
                      if token.kind <> eolsy then
                         Error(11);

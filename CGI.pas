@@ -308,6 +308,7 @@ var
    currentSegment,defaultSegment: segNameType; {current & default seg names}
    segmentKind: integer;                {kind field of segment (ored with start/data)}
    debugFlag: boolean;                  {generate debugger calls?}
+   debugStrFlag: boolean;               {gsbug/niftylist debug names?}
    dataBank: boolean;                   {save, restore data bank?}
    floatCard: integer;                  {0 -> SANE; 1 -> FPE}
    floatSlot: integer;                  {FPE slot}
@@ -765,6 +766,7 @@ stringSize := 0;			{no strings, yet}
 rangeCheck := false;                    {don't generate range checks}
 profileFlag := false;                   {don't generate profiling code}
 debugFlag := false;                     {don't generate debug code}
+debugStrFlag := false;                  {don't generate gsbug debug strings}
 traceBack := false;                     {don't generate traceback code}
 volatile := false;			{no volatile quialifiers found}
 

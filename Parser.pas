@@ -3471,7 +3471,7 @@ if isFunction then begin
       firstCompoundStatement := true;
       Gen0 (dc_pin);
       if not isAsm then
-         Gen0(pc_ent);
+         Gen1Name(pc_ent, 0, variable^.name);
       nextLocalLabel := 1;              {initialize GetLocalLabel}
       returnLabel := GenLabel;          {set up an exit point}
       tempList := nil;                  {initialize the work label list}

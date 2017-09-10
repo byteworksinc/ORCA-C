@@ -4133,11 +4133,26 @@ procedure GenTree {op: icptr};
    end; {GenDviMod}
 
 
-   procedure GenEnt;
+   procedure GenEnt(op: icptr);
 
    { Generate code for a pc_ent					}
+   
+   var
+      i: integer;
+      len: integer;
 
    begin {GenEnt}
+   
+   if debugStrFlag then begin		{gsbug/niftylist debug string}
+      len := length(op^.lab^);
+      CnOut(m_brl);
+      CnOut2(len + 3);
+      CnOut2($7771);
+      CnOut(len);
+      for i := 1 to len do
+         CnOut(ord(op^.lab^[i]));
+   end;
+   
    if rangeCheck then begin		{if range checking is on, check for a stack overflow}
       GenNative(m_pea, immediate, localSize - returnSize - 1, nil, 0);
       GenCall(1);
@@ -5429,7 +5444,7 @@ case op^.opcode of
    pc_cup: GenCup(op);
    pc_dec,pc_inc: GenIncDec(op, nil);
    pc_dvi,pc_mod,pc_udi,pc_uim: GenDviMod(op);
-   pc_ent: GenEnt;
+   pc_ent: GenEnt(op);
    pc_equ,pc_neq: GenEquNeq(op, op^.opcode, 0);
    pc_fjp,pc_tjp: GenFjpTjp(op);
    pc_geq,pc_grt,pc_leq,pc_les: GenCmp(op, op^.opcode, 0);
