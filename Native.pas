@@ -1422,6 +1422,19 @@ var
                Remove(ns+1);
                end; {if}
 
+         m_eor_imm:
+            if npeep[ns+1].opcode = m_eor_imm then begin
+               operand := operand ! npeep[ns+1].operand;
+               Remove(ns+1);
+               end; {if}
+
+         m_ora_imm:
+            if npeep[ns+1].opcode = m_ora_imm then begin
+               operand := operand | npeep[ns+1].operand;
+               Remove(ns+1);
+               end; {if}
+
+
          m_asl_a:
             if npeep[ns+1].opcode = m_tay then
                if npeep[ns+2].opcode = m_iny then
@@ -1724,6 +1737,16 @@ var
         	  Remove(ns);
         	  Remove(ns);
         	  end; {if}
+
+         { kws }
+         { stz $xx, stz $xx }
+         m_stz_abs, m_stz_absX, m_stz_dir, m_stz_dirX:
+            if npeep[ns].opcode = npeep[ns+1].opcode then begin
+               if npeep[ns].operand = npeep[ns+1].operand then begin
+                  Remove(ns+1)
+               end; {if}
+
+            end; {if}
 
          otherwise: ;
 
