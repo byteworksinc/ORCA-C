@@ -1,0 +1,1 @@
+   printf ("Passed Special Conformance Test 3.4.0.1\n");   return 0;Fail:   printf ("Failed Special Conformance Test 3.4.0.1\n");   return 0;  }

@@ -1,0 +1,1 @@
+/* Final include file for Special Conformance Test spc3.4.0.2.cc */main ()  {   printf ("Passed Special Conformance Test 3.4.0.2\n");  }

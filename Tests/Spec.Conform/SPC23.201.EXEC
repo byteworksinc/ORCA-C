@@ -1,0 +1,1 @@
+cmpl spc23.2.0.1.cc keep=3/spc23.2if {status} == 0     3/spc23.2  one two three fourelse     echo Unable to compile/link Special Conformance Test 23.2.0.1end
