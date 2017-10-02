@@ -3236,6 +3236,7 @@ var
    label 1;
  
    var
+      cnt: 0..3;                        {for counting octal escape sequences}
       dig: 0..15;                       {value of a hex digit}
       skipChar: boolean;                {get next char when done?}
       val: 0..4095;                     {hex escape code value (scaled to 0..255)}
@@ -3248,8 +3249,10 @@ var
          case lch of
             '0','1','2','3','4','5','6','7': begin
                val := 0;
-               while lch in ['0'..'7'] do begin
+               cnt := 0;
+               while (cnt < 3) and (lch in ['0'..'7']) do begin
                   val := (val << 3) | (ord(lch) & 7);
+                  cnt := cnt+1;
                   NextCh;
                   end; {while}
                EscapeCh := val & $FF;
@@ -3637,6 +3640,7 @@ var
    label 1;
  
    var
+      cnt: 0..3;                        {for counting octal escape sequences}
       dig: 0..15;                       {value of a hex digit}
       skipChar: boolean;                {get next char when done?}
       val: 0..4095;                     {hex escape code value (scaled to 0..255)}
@@ -3649,8 +3653,10 @@ var
          case ch of
             '0','1','2','3','4','5','6','7': begin
                val := 0;
-               while ch in ['0'..'7'] do begin
+               cnt := 0;
+               while (cnt < 3) and (ch in ['0'..'7']) do begin
                   val := (val << 3) | (ord(ch) & 7);
+                  cnt := cnt+1;
                   NextCh;
                   end; {while}
                EscapeCh := val & $FF;
