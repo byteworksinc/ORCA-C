@@ -1,1 +1,8 @@
-unset exitecho {1}cmpl -i {1} keep=3/t >>3/tempif {status} == 0   3/telse   echo Could not compile {1}end
+unset exit
+echo {1}
+cmpl -i {1} keep=3/t >>3/temp
+if {status} == 0
+   3/t
+else
+   echo Could not compile {1}
+end

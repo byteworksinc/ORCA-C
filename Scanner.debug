@@ -1,1 +1,31 @@
-procedure PrintTokenList (tp: tokenListRecordPtr); {debug}beginif tp <> nil then begin   PrintTokenList(tp^.next);   PrintToken(tp^.token);   end; {if}end;procedure PrintMacroTable; {debug}{ print the macro definitions					}var   i: 0..hashSize;			{loop/index variable}   mp: macroRecordPtr;			{used to trace macro lists}begin {PrintMacroTable}for i := 0 to hashSize do begin   mp := macros^[i];   while mp <> nil do begin      write('  ', mp^.name^, '(', mp^.parameters:1, ') [');      PrintTokenList(mp^.tokens);      writeln(']');      mp := mp^.next;      end; {while}   end; {for}write('(Press RETURN to continue)');readln;end; {PrintMacroTable}
+procedure PrintTokenList (tp: tokenListRecordPtr); {debug}
+
+begin
+if tp <> nil then begin
+   PrintTokenList(tp^.next);
+   PrintToken(tp^.token);
+   end; {if}
+end;
+
+
+procedure PrintMacroTable; {debug}
+
+{ print the macro definitions					}
+
+var
+   i: 0..hashSize;			{loop/index variable}
+   mp: macroRecordPtr;			{used to trace macro lists}
+
+begin {PrintMacroTable}
+for i := 0 to hashSize do begin
+   mp := macros^[i];
+   while mp <> nil do begin
+      write('  ', mp^.name^, '(', mp^.parameters:1, ') [');
+      PrintTokenList(mp^.tokens);
+      writeln(']');
+      mp := mp^.next;
+      end; {while}
+   end; {for}
+write('(Press RETURN to continue)');
+readln;
+end; {PrintMacroTable}

@@ -1,1 +1,3 @@
-   x = TEN + NINE;   if (x != 19)       goto Fail;
+   x = TEN + NINE;
+   if (x != 19)
+       goto Fail;

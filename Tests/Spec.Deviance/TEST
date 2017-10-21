@@ -1,1 +1,4 @@
-echo {1}cmpl {1} keep=3/t >3/ttunset exit3/t
+echo {1}
+cmpl {1} keep=3/t >3/tt
+unset exit
+3/t

@@ -1,1 +1,7 @@
-unset exitcompile -e -i {1} keep=3/tif {status} == 0   echo Failed {1}else   echo Passed {1}end
+unset exit
+compile -e -i {1} keep=3/t
+if {status} == 0
+   echo Failed {1}
+else
+   echo Passed {1}
+end

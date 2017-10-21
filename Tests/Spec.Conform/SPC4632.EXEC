@@ -1,1 +1,27 @@
-* Exec file to run Special Conformance Test 4.6.3.2 *set exit onecho compile spc4.6.3.2.cccompile spc4.6.3.2.cc keep=3/outif {status} == 0   echo compile spc4632.1.cc   compile spc4632.1.cc  keep=3/out1   if {status} == 0       link 3/out  3/out1  keep=3/out       if {status} == 0           3/out       else           echo Unable to link Special Conformance Test 4.6.3.2       end   else       echo Unable to compile file spc4632.1.cc   endelse   echo Unable to compile file spc4.6.3.2.ccend
+* Exec file to run Special Conformance Test 4.6.3.2 *
+
+set exit on
+
+echo compile spc4.6.3.2.cc
+compile spc4.6.3.2.cc keep=3/out
+
+if {status} == 0
+   echo compile spc4632.1.cc
+   compile spc4632.1.cc  keep=3/out1
+
+   if {status} == 0
+       link 3/out  3/out1  keep=3/out
+
+       if {status} == 0
+           3/out
+       else
+           echo Unable to link Special Conformance Test 4.6.3.2
+       end
+
+   else
+       echo Unable to compile file spc4632.1.cc
+   end
+
+else
+   echo Unable to compile file spc4.6.3.2.cc
+end

@@ -1,1 +1,29 @@
-* Exec file to run Special Conformance Test 4.5.3.1 *unset exitcompile spc4.5.3.1.cc keep=3/spc4531set errNo {status}if {errNo} == 0   compile spc4531.1.cc  keep=3/spc4531.1   set errNo {status}   if {errNo} == 0       link 3/spc4531 3/spc4531.1 keep=3/spc4531       set errNo {status}       if {errNo} == 0           3/spc4531       else           echo Unable to link Special Conformance Test 4.5.3.1       end   else       echo Unable to compile file spc4531.1.cc   endelse   echo Unable to compile file spc4.5.3.1.ccend
+* Exec file to run Special Conformance Test 4.5.3.1 *
+
+unset exit
+
+compile spc4.5.3.1.cc keep=3/spc4531
+set errNo {status}
+
+if {errNo} == 0
+   compile spc4531.1.cc  keep=3/spc4531.1
+
+   set errNo {status}
+   if {errNo} == 0
+       link 3/spc4531 3/spc4531.1 keep=3/spc4531
+
+       set errNo {status}
+       if {errNo} == 0
+           3/spc4531
+
+       else
+           echo Unable to link Special Conformance Test 4.5.3.1
+       end
+
+   else
+       echo Unable to compile file spc4531.1.cc
+   end
+
+else
+   echo Unable to compile file spc4.5.3.1.cc
+end

@@ -1,1 +1,36 @@
-* Exec file to run Special Conformance Test 4.3.0.1 *set exit onecho compile spc4.3.0.1.cccompile spc4.3.0.1.cc keep=3/outif {status} == 0     echo compile spc4301.1.cc     compile spc4301.1.cc  keep=3/out1     if {status} == 0         echo compile spc4301.2.cc         compile spc4301.2.cc  keep=3/out2     if {status} == 0         link +s 3/out 3/out1 3/out2 keep=3/out  >3/spc4301.symt           if {status} == 0               3/out           else               echo "Unable to link Special Conformance Test 4.3.0.1"           end       else           echo "Unable to compile file spc4301.2.cc"       end   else       echo "Unable to compile file spc4301.1.cc"   endelse   echo "Unable to compile file spc4.3.0.1.cc"end
+* Exec file to run Special Conformance Test 4.3.0.1 *
+
+set exit on
+
+echo compile spc4.3.0.1.cc
+compile spc4.3.0.1.cc keep=3/out
+
+if {status} == 0
+     echo compile spc4301.1.cc
+     compile spc4301.1.cc  keep=3/out1
+
+     if {status} == 0
+         echo compile spc4301.2.cc
+         compile spc4301.2.cc  keep=3/out2
+
+     if {status} == 0
+         link +s 3/out 3/out1 3/out2 keep=3/out  >3/spc4301.symt
+
+           if {status} == 0
+               3/out
+
+           else
+               echo "Unable to link Special Conformance Test 4.3.0.1"
+           end
+
+       else
+           echo "Unable to compile file spc4301.2.cc"
+       end
+
+   else
+       echo "Unable to compile file spc4301.1.cc"
+   end
+
+else
+   echo "Unable to compile file spc4.3.0.1.cc"
+end

@@ -1,1 +1,29 @@
-* Exec file to run Special Conformance Test 4.6.3.6 *unset exitcompile spc4.6.3.6.cc keep=3/spc4636set errNo {status}if {errNo} == 0   compile spc4636.1.cc  keep=3/spc4636.1   set errNo {status}   if {errNo} == 0       link 3/spc4636  3/spc4636.1 keep=3/spc4636       set errNo {status}       if {errNo} == 0           3/spc4636       else           echo Unable to link Special Conformance Test 4.6.3.6       end   else       echo Unable to compile file spc4636.1.cc   endelse   echo Unable to compile file spc4.6.3.6.ccend
+* Exec file to run Special Conformance Test 4.6.3.6 *
+
+unset exit
+
+compile spc4.6.3.6.cc keep=3/spc4636
+set errNo {status}
+
+if {errNo} == 0
+   compile spc4636.1.cc  keep=3/spc4636.1
+
+   set errNo {status}
+   if {errNo} == 0
+       link 3/spc4636  3/spc4636.1 keep=3/spc4636
+
+       set errNo {status}
+       if {errNo} == 0
+           3/spc4636
+
+       else
+           echo Unable to link Special Conformance Test 4.6.3.6
+       end
+
+   else
+       echo Unable to compile file spc4636.1.cc
+   end
+
+else
+   echo Unable to compile file spc4.6.3.6.cc
+end

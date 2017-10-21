@@ -1,1 +1,6 @@
-cmpl spc22.1.0.1.cc keep=3/spc22.1if {status} == 0     3/spc22.1   cat  dog  runelse     echo Unable to compile/link Special Conformance Test 22.1.0.1end
+cmpl spc22.1.0.1.cc keep=3/spc22.1
+if {status} == 0
+     3/spc22.1   cat  dog  run
+else
+     echo Unable to compile/link Special Conformance Test 22.1.0.1
+end

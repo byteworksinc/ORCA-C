@@ -1,1 +1,3 @@
-/* First included file for Special Conformance Test spc3.4.0.2.cc */#include  "spc34022"
+/* First included file for Special Conformance Test spc3.4.0.2.cc */
+
+#include  "spc34022"

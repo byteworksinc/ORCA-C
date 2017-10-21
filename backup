@@ -1,1 +1,33 @@
-if "{#}" != "1"   echo Form: backup [day]   exit 65535endset dest /library/mike/{1}/ccset list        make make2 smake linkit linkit2 count backup cc.notesset list {list} CC.pas CC.rez CC.rez2set list {list} CCommon.pas CCommon.asm CCommon.macrosset list {list} MM.pas MM.asm MM.macrosset list {list} Table.pas Table.asm Table.macrosset list {list} Symbol.pas Symbol.Print Symbol.asm Symbol.macrosset list {list} Scanner.pas Scanner.debug Scanner.asm Scanner.macrosset list {list} Asm.passet list {list} Expression.pas Expression.asm Exp.macrosset list {list} Parser.passet list {list} CGC.pas CGC.asm CGC.macrosset list {list} CGI.pas CGI.Comments CGI.Debugset list {list} ObjOut.pas ObjOut.asm ObjOut2.pas ObjOut2.asm ObjOut.macrosset list {list} Native.pas Native2.pas Native.asm Native.macrosset list {list} DAG.pas DAG2.passet list {list} Gen.passet list {list} Header.pas Header2.pasunset exitcreate {dest} >.null >&.nullfor i in {list}   newer {dest}/{i} {i}   if {Status} != 0      copy -c {i} {dest}/{i}   endend
+if "{#}" != "1"
+   echo Form: backup [day]
+   exit 65535
+end
+
+set dest /library/mike/{1}/cc
+
+set list        make make2 smake linkit linkit2 count backup cc.notes
+set list {list} CC.pas CC.rez CC.rez2
+set list {list} CCommon.pas CCommon.asm CCommon.macros
+set list {list} MM.pas MM.asm MM.macros
+set list {list} Table.pas Table.asm Table.macros
+set list {list} Symbol.pas Symbol.Print Symbol.asm Symbol.macros
+set list {list} Scanner.pas Scanner.debug Scanner.asm Scanner.macros
+set list {list} Asm.pas
+set list {list} Expression.pas Expression.asm Exp.macros
+set list {list} Parser.pas
+set list {list} CGC.pas CGC.asm CGC.macros
+set list {list} CGI.pas CGI.Comments CGI.Debug
+set list {list} ObjOut.pas ObjOut.asm ObjOut2.pas ObjOut2.asm ObjOut.macros
+set list {list} Native.pas Native2.pas Native.asm Native.macros
+set list {list} DAG.pas DAG2.pas
+set list {list} Gen.pas
+set list {list} Header.pas Header2.pas
+
+unset exit
+create {dest} >.null >&.null
+for i in {list}
+   newer {dest}/{i} {i}
+   if {Status} != 0
+      copy -c {i} {dest}/{i}
+   end
+end

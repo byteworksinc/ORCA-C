@@ -1,1 +1,3 @@
-main ()  {   int  x;
+main ()
+  {
+   int  x;

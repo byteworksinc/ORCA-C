@@ -1,1 +1,2 @@
-copy -c cfile1    2/orcacdefscopy -c libfile2  2/orcacdefs
+copy -c cfile1    2/orcacdefs
+copy -c libfile2  2/orcacdefs
