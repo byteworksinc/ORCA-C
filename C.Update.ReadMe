@@ -1,0 +1,35 @@
+Welcome to ORCA/C 2.2.0 B1!  This is an update release containing
+patches from me and other community members, which fix several bugs
+and also add some new features.  For details on these changes, see
+the cc.notes file in the Release.Notes directory.
+
+This package is designed to be applied as an update to an existing
+ORCA installation containing ORCA/C 2.1.0 or later (including the one
+provided on Opus ][: The Software).  To apply the update, simply copy
+the files from this distribution into the corresponding locations in
+your ORCA installation, replacing any older versions.  (One easy way
+to do this is to extract the archive containing this update directly
+on top of your ORCA installation, overwriting all modified files.)
+
+In addition to the ORCA shell environment, this update can also be
+used under other environments that are compatible with ORCA/C, such as
+GNO and Golden Gate.  In these cases, only the directories containing
+files from a standard ORCA installation (normally /lang/orca for GNO)
+should be updated.  The GNO-specific libraries and headers in other
+directories should not be modified; the ones provided with GNO 2.0.6
+can be used with this version of ORCA/C.
+
+If you have any questions, or if you want to get involved in ORCA/C
+development, please get in touch.  The ORCA/C development project is
+hosted on GitHub, and bug reports or patches can be submitted there:
+https://github.com/byteworksinc/ORCA-C
+
+Thanks to:
+* Mike Westerfield, for writing ORCA/C, releasing the source code,
+  and permitting it to be updated by the community.
+* Kelvin Sherlock, for providing several patches and bug reports, and
+  for writing several useful tools for modern Apple II development.
+* Soenke Behrens, for compiling a list of ORCA/C bug reports and test
+  cases, which has helped me to identify and fix a number of bugs.
+
+--Stephen Heumann (stephenheumann@gmail.com)
