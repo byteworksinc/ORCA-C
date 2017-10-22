@@ -1,0 +1,20 @@
+filetype = src
+change =.rez rez
+change =.pas pascal
+change =.Comments pascal
+change =.Debug pascal
+change =.Print pascal
+change =.asm asm65816
+change =.macros asm65816
+change make= exec
+change linkit= linker
+change smake exec
+change count exec
+change backup exec
+change settypes exec
+filetype =.notes txt
+filetype =.md txt
+filetype LICENSE txt
+
+* Install udl and uncomment this to also convert to CR line endings.
+* udl -g =
