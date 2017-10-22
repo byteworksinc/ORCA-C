@@ -1,9 +1,27 @@
-ORCA/C 2.1.1
+ORCA/C 2.2.0 B1
 Copyright 1997, Byte Works Inc.
 
 -- Change List --------------------------------------------------------------
 
-2.1.1       1.	Bugs squashed.  See bug notes, below.
+2.2.0 B1    1.	Bugs squashed.  See bug notes, below.
+
+            2.	New language features added (mainly features from C99).
+              	See "Compiler changes introduced in C 2.2.0."
+
+            3.	Some optimization passes have small improvements.
+            
+            4.	Some internal size limits were raised, allowing compilation of
+              	larger functions.
+
+            5.	Certain errors that were previously ignored are now detected.
+
+            6.	New option added to generate inline function names for use with
+              	assembly-level debugging tools.  See "Inline Function Names."
+
+            7.	Some new headers specified by recent C standards are added.
+              	See "New Headers."
+
+2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
 2.1.0       1.	Bugs squashed.  See bug notes, below.
 
@@ -11,7 +29,7 @@ Copyright 1997, Byte Works Inc.
 		optimize, below.
 
 	    3.	There have been several changes to assert().  See the Manual
-		Erratta for page 343 for details.
+		Errata for page 343 for details.
 
 	    4.	C supports the extended character set.  See "Extended
 		Characters."
@@ -27,19 +45,17 @@ Copyright 1997, Byte Works Inc.
 
 2.0.1       1.	Bugs squashed.  See bug notes, below.
 
--- Bugs from C 2.1.1 B1 that have been fixed --------------------------------
+-- Known Issues -------------------------------------------------------------
 
-These bugs appeared in a beta release. They did not appear in any commercial release, but we introduced during bug corrections. These notes will be removed in the commercial release notes.
+1.  The loop invariant removal optimization pass can create infinite loops or otherwise generate bad code in some cases.
 
-1.  Reserved words appearing in macros were not correctly scanned.
+2.  The % operator will generally not work correctly when either operand is negative.  It may produce an incorrect result, or in certain scenarios it may give a compile-time or run-time error.
 
-(Mike Westerfield)
+3.  Not all orderings of storage class specifiers, type qualifiers, and type specifiers are supported in declarations and type names.
 
-2.  The rewind() function failed when #pragma lint -1 was used.
+4.  ORCA/C fails to detect various error conditions for which the C standards require a diagnostic message to be issued.
 
-(Marsha Jackson)
-
--- Manual Erratta -----------------------------------------------------------
+-- Manual Errata ------------------------------------------------------------
 
 p. 40
 
@@ -78,9 +94,17 @@ p. 107
 
 The table shows the language number for C as 7.  It should be 8.
 
+p. 237
+
+ORCA/C now supports character constants containing multiple characters.  See "Multi-Character Character Constants," below.
+
+p. 238
+
+The limit on the total length of string constants in a single function has been raised to 12500 characters.
+
 p. 240
 
-The discussion of escape sequences states that numeric escape sequences can contain from one to three digits.  This was true until ORCA/C 2.1, when the compiler was changed to respect the ANSI C standard.  The compiler will now scan an octal numeric escape sequence until no more octal characters are found, and it will scan a hexadecimal numeric escape sequence until no more hexadecimal characters are found.  In both cases, the result is then anded with 0x00FF to yield a single character.
+The discussion of escape sequences states that hexadecimal numeric escape sequences can contain from one to three digits.  This was true until ORCA/C 2.1, when the compiler was changed to respect the ANSI C standard.  The compiler will now scan a hexadecimal numeric escape sequence until no more hexadecimal characters are found.  The result is then anded with 0x00FF to yield a single character.  (ORCA/C 2.1 would also scan an octal escape sequence until no more octal characters were found, but this has been changed back to limit octal escape sequences to at most three octal digits, as required by the C standards.)
 
 The discussion concerning floating-point constants is misleading.  While constants are indeed handled as extended values in the executable program, the compiler itself uses double values for the constants internally, so you need to adhere to the valid exponent range for double values, and you should expect to see accuracy in constants that is in line with double values.
 
@@ -94,13 +118,26 @@ Several things are listed that will cause a .sym file to stop or not be built at
 
 It's worth keeping in mind that #append in included in ORCA/C solely for the purpose of appending files of a different language.  There are several advantages to using #append to tack assembly language source to the end of a C source file, but there is no other place in ORCA/C where a #append is more useful than a #include.
 
-p.258
+p. 254
 
-The #pragma ignore directive supports a new bit.  Bit 3 controls whether // comments are allowed.  If bit 3 is set, as in
+The #error directive may be followed by any sequence of preprocessing tokens, not just a string constant.
+
+p. 256
+
+The #pragma debug directive supports a new bit. If bit 15 is set, ORCA/C generates inline function names for use with assembly-level debugging tools.  See "Inline Function Names," below.
+
+p. 258
+
+The #pragma ignore directive supports two new bits.
+
+Bit 1 affects the interpretation of multi-character character constants.
+See "Multi-Character Character Constants," below.
+
+Bit 3 controls whether // comments are allowed.  If bit 3 is set, as in
 
    #pragma ignore 0x0008
 
-ORCA/C supports // comments.  If bit 3 is clear, ORCA/C does not support // comments, which are not actually allowed in ANSI C programs.
+ORCA/C supports // comments.  If bit 3 is clear, ORCA/C does not support // comments, which are not actually allowed in ANSI C89 programs.
 
 See "// Comments," below, for a complete description of // comments.
 
@@ -109,6 +146,16 @@ p. 263
 1. The discussion of NDAs is on page 40, not page 58.
 
 2. There is a new optimization bit for #pragma optimize.  See #pragma optimize, below.
+
+p. 289
+
+Unions can be initialized by a brace-enclosed expression giving the initializer value for the first element of the union, or by an expression of the appropriate union type.  The non-standard construct of initializing the first element of a union with a non-brace-enclosed initializer is no longer supported.  The supported alternative is simply to enclose the initializer in braces, e.g.
+
+   union nums {float f; int i;} x = {0.0};
+
+p. 321
+
+The unary conversion rules have been modified to convert values of type char or unsigned char to int (rather than unsigned int), as required by the C standards.
 
 p. 337
 
@@ -139,7 +186,7 @@ Beginning with ORCA/C 2.1, assert() prints a string that includes the assertion 
 
    Assertion failed: file :hd:foo.cc, line 47; assertion: bar==1
 
-The documentaion states assert() writes to stdout.  Beginning with ORCA/C 2.1, it writes to stderr.
+The documentation states assert() writes to stdout.  Beginning with ORCA/C 2.1, it writes to stderr.
 
 p. 353
 
@@ -177,6 +224,72 @@ p. 444,445
 
 The control codes to turn the cursor on and off are no longer used in the .CONSOLE driver, which is what the current version of ORCA/C uses for all text output.  In the .CONSOLE driver, the cursor is always off unless it is waiting for a character.
 
+-- Compiler changes introduced in C 2.2.0 -----------------------------------
+
+New Language Features
+---------------------
+
+ORCA/C 2.2.0 adds support for several new C language features.  Most are features that were added in the C99 language standard.
+
+1.  (C99) ORCA/C now supports flexible array members, in which the last member of a struct may be declared with an incomplete array type, e.g.
+
+   struct S {
+      int a;
+      int b[];
+   };
+   
+The flexible array member does not contribute to the size of the struct as reported by sizeof, but if such a struct is allocated in the heap, extra space may be allocated for the flexible array member, and elements of it up to the limit of the size allocated may be accessed.  (This feature was actually permitted "by accident" in previous versions of ORCA/C, but it is now a supported feature, and errors related to it are now detected.)
+
+2.  (C99) The value 0 will always be returned if execution reaches the end of the main function without encountering a return statement, provided main is declared as returning a value of type int.
+
+3.  (C99) Enumeration specifiers may contain a trailing comma, e.g.
+
+   enum color {black, purple, green, white,} pencolor;
+   
+(Kelvin Sherlock)
+
+4.  (C99) Functions may be declared as "static inline".  These have the same semantics as other static functions.  The "inline" specifier suggests (but does not require) that calls to the function should be inlined or otherwise optimized.  ORCA/C currently does not inline these functions or apply any other special optimizations, but future versions might introduce such features.  Note that non-static inline functions are not currently supported.
+
+5.  Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+
+(Kelvin Sherlock)
+
+6.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+
+
+Multi-Character Character Constants
+-----------------------------------
+
+Character constants containing multiple characters are now supported, as required by the C standards.  The value of such constants is implementation-defined.  In ORCA/C, the value is initially set to the ordinal value of the first character, as in a single-character constant.  For each subsequent character encountered, the existing value is shifted left by eight bit positions, and the ordinal value of the new character is placed in the lower eight bits.  (This is similar to the behavior of GCC and Clang.)
+
+A new bit is also introduced in #pragma ignore that affects the interpretation of such constants.  Setting #pragma ignore bit 1 (a value of 2) causes character constants with three or more characters to be treated as having type long, rather than type int.  This non-standard feature effectively allows a character constant to contain the values of up to four characters, rather than only two.
+
+Note that MPW IIGS ORCA/C also supports multi-character constants and #pragma ignore bit 1, but it calculates the value of such constants differently.  (In general, the bytes of a multi-character constant will be in the opposite order.)  Also, MPW IIGS ORCA/C treats #pragma ignore bit 1 as being set by default, but in this version it is unset by default, providing standard-compliant semantics.
+
+(Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
+
+
+Inline Function Names
+---------------------
+
+ORCA/C now supports recording the names of functions using the inline name format documented in Apple IIGS Technical Note #103.  This allows assembly-level debugging tools such as GSBug and Nifty List to display the names of functions in an ORCA/C program while debugging it.  To enable generation of inline function names, set #pragma debug bit 15 (a value of 0x8000).
+
+Note that inline function names are unrelated to the other types of debug code that ORCA/C can generate.  In particular, inline function names are not needed for source-level debugging using the desktop development environment or other compatible source-level debuggers, although it is not harmful to enable both types of debugging information at the same time.
+
+(Kelvin Sherlock)
+
+
+New Headers
+-----------
+
+ORCA/C now includes three new headers specified by recent C standards.
+
+1.  The <iso646.h> header contains macros giving alternative spellings for certain operators.  It may be useful in contexts where the characters in those operators cannot easily be typed or displayed.  It complies with the C95, C99, and C11 standards.
+
+2.  The <stdint.h> header defines various integer types with certain sizes and properties, as well as macros related to integer types.  It largely complies with the C99 and C11 standards, but is missing 64-bit integer types because ORCA/C does not currently support them.  For the same reason, intmax_t and uintmax_t are 32-bit types, even though C99 and C11 require them to be 64-bit or larger types.
+
+3.  The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  The macros provided generally conform to the C99 and C11 standards, but certain macros specified by the standards are not available due to ORCA/C limitations.  The functions that the standards specify should be declared in this header are also not available.
+
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
 The Default .h File
@@ -202,13 +315,13 @@ WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym
 
 ORCA/C supports // comments.  These comments begin with the characters //, and continue to the end of the physical line.
 
-// comments are a flagrant violation of the ANSI C standard.  This is legal ANSI C, and it should print 4:
+// comments are a flagrant violation of the ANSI C89 standard, although they are supported by the C99 and later standards.  This is legal ANSI C89, and it should print 4:
 
    a = 8//* yep, this is legal */ 2
    ;
    printf("All ANSI C compilers should now print 4! %d\n", a);
 
-To restore ANSI conformance, use the #pragma ignore directive.  Setting bit 3 (a value of 8) tells ORCA/C to allow // comments.  This is the default.  Clearing bit 3 tells ORCA/C not to look for // comments.  To restore ANSI conformance for all programs, use this directive in the defaults.h file.  (see "The Default .h File," above.)
+To restore ANSI C89 conformance, use the #pragma ignore directive.  Setting bit 3 (a value of 8) tells ORCA/C to allow // comments.  This is the default.  Clearing bit 3 tells ORCA/C not to look for // comments.  To restore ANSI C89 conformance for all programs, use this directive in the defaults.h file.  (see "The Default .h File," above.)
 
 
 Extended Characters
@@ -275,6 +388,152 @@ You can also add all of the other optimizations except removal of stack repair c
    #pragma optimize 0x003F
 
 If you use #pragma debug 0x0010 to enable stack check debug code, the compiler will still flag variable argument functions that do not consume all arguments as a run-time error, even though ANSI C does allow them.
+
+-- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
+
+1.  There were various bugs that could cause incorrect code to be generated in certain cases.  Some of these were specific to certain optimization passes, alone or in combination.
+
+(Doug Gwyn, Norman Dodge, Dave Tribby, Michael Lutinsky, Todd Whitesel, et al.)
+
+2.  The integer promotion rules (usual unary conversions) would previously promote values of type char or unsigned char to unsigned int, rather than int.  The C standards require these types to be promoted to int (not unsigned int) when the types involved have the ranges that they do in ORCA/C, and ORCA/C now behaves accordingly.  (This is sometimes referred to as "value-preserving" behavior, rather than the previous "unsigned-preserving" behavior.)  This can cause certain expressions to be evaluated differently, for example when char values are compared with negative integers.
+
+(Devin Reade)
+
+3.  Globals or static variables that used pointer arithmetic or the & operator in their initializers could sometimes get the wrong values.
+
+(Devin Reade)
+
+4.  Preprocessing directives could be mis-evaluated if they occurred immediately after a use of a function-like macro.
+
+5.  Arrays could not be used as operands of && and ||, or as the first operand of the ? : operator.  Now they can (they are implicitly converted to pointers).
+
+(Derek Taubert)
+
+6.  Dereferencing pointers to const struct or const union types gave spurious errors.
+
+(Derek Taubert)
+
+7.  When a bit-field is used within an lvalue expression but isn't what's being assigned to, the bit-field could erroneously be assigned to instead.
+
+(Michael Guitton)
+
+8.  When arrays are declared using a typedef'd incomplete array type, the size for all arrays of that type would erroneously be fixed based on the initializer of the first array using it.
+
+(Devin Reade)
+
+9.  The += and -= operators could not be used on function parameters declared using array syntax (which are adjusted to have pointer type).
+
+(Doug Gwyn, Norman Dodge)
+
+10.  String and floating-point constants may now appear within the operands of sizeof in a constant expression.
+
+(Devin Reade)
+
+11.  Code for narrowing conversions or casts was sometimes not properly generated.
+
+12.  Case labels in switch statements may now be out of range of the type being switched on.  They are converted to the promoted type of the expression being switched on, as if by a cast.  Code requiring this is dubious, but it's allowed under the C standards.
+
+13.  Unsigned constants in the range 0x8000-0xFFFF were erroneously being treated like negative signed values in some contexts.
+
+14.  Unions can now be initialized by assignment from expressions of the appropriate union type.
+
+15.  If a defaults.h file is present, the value of the __LINE__ macro would be off by one.
+
+(Steve Reeves)
+
+16.  Zero-initializing a one-byte array could crash the system.
+
+17.  The 'extern' storage-class specifier may now be used in function definitions.
+
+18.  Certain integer constant expressions, including sizeof expressions, were treated as having type signed long when they should have type unsigned long.
+
+19.  Spurious error messages were produced when #error was used with tokens other than a string constant.  It now properly accepts any sequence of pp-tokens.
+
+(Soenke Behrens)
+
+20.  The types of shift expressions depended on the types of both their operands.  They now correctly depend only on the (promoted) type of the left operand.
+
+21.  The __DATE__ macro did not properly report dates in the year 2000 or later, and used a slightly non-standard date format in some cases.
+
+(Dave Tribby)
+
+22.  When using common subexpression elimination, ORCA/C could crash or corrupt memory due to stack overflow in certain cases involving large switch statements or long sequences of code without control flow statements.
+
+23.  Comparing 32-bit values in static arrays or structs against 0 could sometimes give the wrong result when using the large memory model.
+
+24.  Pointer types with type qualifiers (const or volatile) were not allowed in casts and sizeof expressions.
+
+(Doug Gwyn)
+
+25.  Spurious errors were given when calling functions with const-qualified parameter types or returning from functions with const-qualified return type.
+
+(Norman Dodge)
+
+26.  Statically-evaluated conversions from floating-point values to integers could give wrong values because they were rounded rather than truncated in certain cases.
+
+27.  If a macro's name appeared inside the macro, it would be expanded repeatedly, leading to a crash.  (Bug in ORCA/C 2.1.1 betas only.)
+
+28.  Statically-evaluated division and remainder computations on unsigned 32-bit values could give incorrect results because of bugs in the math routines.
+
+29.  Unsigned long values greater than 2^31 could not be used as the second operand to % in constant expressions.
+
+30.  In constant binary expressions involving unsigned int and signed long operands, the operands would be converted to unsigned long and the expression evaluated using that type.  They are now correctly evaluated using the type long, rather than unsigned long.
+
+31.  Statically-evaluated signed comparisons evaluated to -1 if true.  They now properly evaluate to 1.
+
+32.  Floating literals that are immediately cast to integer types were not allowed in integer constant expressions.  Now they are, as required by the C standards.
+
+33.  Within preprocessor expressions, keywords and typedef names were sometimes processed based on their usual semantics rather than being treated as identifiers.  They are now consistently treated as identifiers.
+
+34.  Preprocessor expressions were being evaluated using the normal type conversion rules (with many expressions evaluated as type int).  All preprocessor expressions are now evaluated using the long and unsigned long types, as required by the ANSI C89 standard.
+
+35.  The unary ! operator could not be applied to floating constants.
+
+36.  In constant expressions, the result type of || and && expressions was based on the types of their operands.  Now they always correctly yield type int.
+
+37.  Certain error conditions (use of #error or undefined labels in goto statements) would not cause an error status to be reported to the shell.  This could cause a multi-step compilation process to continue when it should halt due to the error.  Now a non-zero error level is always reported in these cases, so the compilation process will halt.
+
+(Michael Lutinsky)
+
+38.  An error was reported if there were unknown preprocessor directives or unexpected tokens following a preprocessing directive within a section of code that was skipped during preprocessing.  Now these cases are not reported as errors.  This allows certain nonstandard constructs used by other compilers to appear within conditionally-skipped code.
+
+39.  Errors would be reported when a number-like token was not a valid numeric constant, even if it was a valid preprocessing-number token used in a context where it did not need to be converted to a numeric constant (e.g. within conditionally-skipped code).  Some such cases are now allowed.
+
+40.  Array types were not treated as compatible with corresponding pointer types in function prototypes.  Now they are, so the following declarations, for example, are permitted to all be present in one translation unit:
+
+int foo(int*);
+int foo(int[]);
+int foo(int[42]);
+
+41.  Spurious errors could be reported due to improper handling of the symbol table when a pointer to a typedef'd function type was declared.
+
+42.  Global structs and unions with const-qualified types were not being generated in object files.
+
+43.  In programs that used the 'volatile' keyword, both accesses to volatile variables and certain other operations could be erroneously optimized out in some cases.
+
+44.  Character constants containing multiple characters were not allowed.  Now they are, as required by the C standards.  See above for information on their semantics.
+
+45.  Typedef'd versions of "void" could not be used in the prototyped parameter list of a function taking no arguments.
+
+46.  The declaration of PutScrap in <scrap.h> was incorrect.
+
+(Kelvin Sherlock)
+
+47.  The declaration of LEClassifyKey in <lineedit.h> was incorrect.
+
+(Kelvin Sherlock)
+
+48.  The declaration of SetContentOrigin2 in <window.h> was commented out, with a comment indicating it was not documented.  It is actually a valid tool call documented in TBR2.  A prototyped declaration for it is now provided.
+
+49.  In some cases, very large functions would appear to compile correctly, but actually generate corrupt OMF object files.  These cases should now either work correctly (if they fit within the new, increased size limits) or give an error message.
+
+(Jawaid Bazyar)
+
+50.  There was a bug that might trash four bytes of memory in certain circumstances.
+
+(Kelvin Sherlock)
+
+51.  An unlimited number of octal digits could be processed as part of an octal escape sequence in a character constant or string.  Octal escape sequences are now limited to a maximum of three octal digits, as required by the C standards.  (This partially reverts a change in ORCA/C 2.1.0, which should only have applied to hexadecimal escape sequences.)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
