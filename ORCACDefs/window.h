@@ -372,6 +372,7 @@ extern pascal void SelectWindow(GrafPortPtr) inline(0x110E,dispatcher);
 extern pascal void SendBehind(GrafPortPtr, GrafPortPtr) inline(0x140E,dispatcher);
 extern pascal void SetContentDraw(VoidProcPtr, GrafPortPtr) inline(0x490E,dispatcher);
 extern pascal void SetContentOrigin(Word, Word, GrafPortPtr) inline(0x3F0E,dispatcher);
+extern pascal void SetContentOrigin2(Word, Word, Word, GrafPortPtr) inline(0x570E,dispatcher);
 extern pascal void SetDataSize(Word, Word, GrafPortPtr) inline(0x410E,dispatcher);
 extern pascal void SetDefProc(LongProcPtr, GrafPortPtr) inline(0x320E,dispatcher);
 extern pascal void SetFrameColor(WindColorPtr, GrafPortPtr) inline(0x0F0E,dispatcher);
@@ -431,10 +432,6 @@ extern pascal void UpdateWindow(Word, GrafPortPtr) inline(0x6C0E,dispatcher);
 extern pascal void GDRPrivate() inline(0x540E,dispatcher);
 extern pascal void TaskMasterContent() inline(0x5D0E,dispatcher);
 extern pascal void TaskMasterKey() inline(0x5E0E,dispatcher);
-*/
-
-/* This call appears in the Apple header file, but is not documented.
-extern pascal void SetContentOrigin2() inline(0x570E,dispatcher);
 */
 
 #endif

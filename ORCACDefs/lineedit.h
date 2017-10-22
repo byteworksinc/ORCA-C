@@ -93,6 +93,6 @@ extern pascal void LEUpdate(LERecHndl) inline(0x1714,dispatcher);
 
 extern pascal Pointer GetLEDefProc(void) inline(0x2414,dispatcher);
 
-extern pascal Word LEClassifyKey(EventRecord) inline(0x2514,dispatcher);
+extern pascal Word LEClassifyKey(EventRecordPtr) inline(0x2514,dispatcher);
       
 #endif

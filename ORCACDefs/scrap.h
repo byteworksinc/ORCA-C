@@ -53,7 +53,7 @@ extern pascal Pointer GetScrapPath(void) inline(0x1016,dispatcher);
 extern pascal LongWord GetScrapSize(Word) inline(0x0F16,dispatcher);
 extern pascal Word GetScrapState(void) inline(0x1316,dispatcher);
 extern pascal void LoadScrap(void) inline(0x0A16,dispatcher);
-extern pascal void PutScrap(unsigned Longint, Word, Pointer) inline(0x0C16,dispatcher);
+extern pascal void PutScrap(LongWord, Word, Pointer) inline(0x0C16,dispatcher);
 extern pascal void SetScrapPath(Pointer) inline(0x1116,dispatcher);
 extern pascal void UnloadScrap(void) inline(0x0916,dispatcher);
 extern pascal void ZeroScrap(void) inline(0x0B16,dispatcher);
