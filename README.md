@@ -1,6 +1,10 @@
 # ORCA-C
 Apple IIGS ORCA/C Compiler, an ANSI C compiler for the 65816 with libraries for the Apple IIGS
 
+__Binary downloads for the latest ORCA/C release are on the [releases page][releases].__
+
+[releases]: https://github.com/byteworksinc/ORCA-C/releases
+
 If you would like to make changes to this compiler and distribute them to others, feel free to submit them here. If the changes apply to compilation on and for an Apple IIGS, they will generally be approved for distribution on the master branch unless the changes deviate significantly from the ANSI C standard. For changes that deviate form ANSI C or changes that retarget the compiler to run on a different platform or generate code for a different platform, the project will either be forked or a new repository will be created, as appropriate.
 
 The general conditions that must be met before a change is released on master are:
