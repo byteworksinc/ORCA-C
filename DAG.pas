@@ -4044,7 +4044,7 @@ var
                    pc_grt,pc_les,pc_geq,pc_leq,pc_inc,pc_ior,pc_lor,
                    pc_ixa,pc_lad,pc_lao,pc_lca,pc_lda,pc_ldc,pc_mod,pc_uim,
                    pc_mdl,pc_ulm,pc_mpi,pc_umi,pc_mpl,pc_uml,pc_mpr,pc_ngi,
-                   pc_ngl,pc_ngr,pc_not,pc_pop,pc_sbf,pc_sbi,pc_sbl,pc_sbr,
+                   pc_ngl,pc_ngr,pc_not,pc_pop,pc_sbi,pc_sbl,pc_sbr,
                    pc_shl,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr,pc_tri]
                   then begin
         	  op^.parents := icount;
@@ -4064,7 +4064,7 @@ var
                      end; {if}
                   end {else if}
                else if opcode
-                  in [pc_sro,pc_sto,pc_str,pc_cop,pc_cpo,pc_cpi,pc_cbf]
+                  in [pc_sro,pc_sto,pc_str,pc_cop,pc_cpo,pc_cpi]
                   then begin
                   if not inhibit then
                      if not IndirectInhibit(op) then
