@@ -2593,9 +2593,9 @@ var
         	                                {kill indirect accesses on stores}
         	                                {to indirectly-accessible locations}
                else if op1^.opcode in [pc_sto,pc_cpi,pc_iil,pc_ili,pc_idl,pc_ild,
-        	  pc_cup,pc_cui,pc_tl1,pc_ind] then begin
+        	  pc_cup,pc_cui,pc_tl1,pc_ind,pc_sbf,pc_cbf] then begin
         	  if list^.opcode in [pc_sto,pc_cpi,pc_iil,pc_ili,pc_idl,pc_ild,
-        	  pc_cup,pc_cui,pc_tl1] then begin
+        	  pc_cup,pc_cui,pc_tl1,pc_sbf,pc_cbf] then begin
         	     kill := true;
         	     stop := true;
         	     end {if}
@@ -2614,8 +2614,9 @@ var
                      end {if}
         	  end {else if}
                else if list^.opcode in [pc_sto,pc_cpi,pc_iil,pc_ili,pc_idl,pc_ild,
-        	  pc_cup,pc_cui,pc_tl1] then
-        	  if Member(op1, c_ind) then begin
+        	  pc_cup,pc_cui,pc_tl1,pc_sbf,pc_cbf] then
+        	  if Member(op1, c_ind) or (op1^.opcode in [pc_lbf,pc_lbu]) then
+                     begin
                      kill := true;
                      stop := true;
                      end; {if}
