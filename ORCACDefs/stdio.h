@@ -106,6 +106,10 @@ typedef long fpos_t;
 #define setbuf(stream,buf)      ((buf==NULL) ? (void) __setvbuf(stream,NULL,_IONBF,0l) : (void) __setvbuf(stream,buf,_IOFBF,(size_t) BUFSIZ))
 #define rewind(stream)          (__fseek((stream),0L,SEEK_SET))
 
+/* Private functions used in the above macros (not to be used otherwise) */
+int             __setvbuf(FILE *, char *, int, size_t);
+int             __fseek(FILE *, long, int);
+
 /*
  *  Function declarations
  */
