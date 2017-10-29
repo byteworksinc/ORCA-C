@@ -4040,7 +4040,7 @@ var
         	  [pc_adi,pc_adl,pc_adr,pc_and,pc_lnd,pc_bnd,pc_bal,
                    pc_bnt,pc_bnl,pc_bor,pc_blr,pc_bxr,pc_blx,pc_bno,
                    pc_dec,pc_dvi,pc_udi,pc_dvl,pc_udl,pc_dvr,pc_equ,pc_neq,
-                   pc_grt,pc_les,pc_geq,pc_leq,pc_inc,pc_ind,pc_ior,pc_lor,
+                   pc_grt,pc_les,pc_geq,pc_leq,pc_inc,pc_ior,pc_lor,
                    pc_ixa,pc_lad,pc_lao,pc_lca,pc_lda,pc_ldc,pc_mod,pc_uim,
                    pc_mdl,pc_ulm,pc_mpi,pc_umi,pc_mpl,pc_uml,pc_mpr,pc_ngi,
                    pc_ngl,pc_ngr,pc_not,pc_pop,pc_sbf,pc_sbi,pc_sbl,pc_sbr,
@@ -4049,6 +4049,13 @@ var
         	  op^.parents := icount;
                   icount := icount+1;
                   end {if}
+               else if opcode = pc_ind then begin
+                  {conservatively assume any indirect stores may alias with op}
+                  if not indirectStores then begin
+                     op^.parents := icount;
+                     icount := icount+1;
+                     end; {if}
+                  end {else if}
                else if opcode = pc_cnv then begin
         	  if op^.q & $000F <> ord(cgVoid) then begin
         	     op^.parents := icount;
