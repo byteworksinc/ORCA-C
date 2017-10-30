@@ -2176,29 +2176,37 @@ case tp of
    cgByte,cgUByte,cgWord,cgUWord: begin
       if (size = long(size).lsw) and (op = pc_adl)
          and smallMemoryModel and (tp in [cgUByte,cgUWord]) then begin
-         Gen1t(pc_ldc, long(size).lsw, cgWord);
-         Gen0(pc_umi);
+         if size <> 1 then begin
+            Gen1t(pc_ldc, long(size).lsw, cgWord);
+            Gen0(pc_umi);
+            end; {if}
          Gen0t(pc_ixa, cgUWord);
          end {if}
       else if smallMemoryModel and (size = long(size).lsw) then begin
-         Gen1t(pc_ldc, long(size).lsw, cgWord);
-         Gen0(pc_mpi);
+         if size <> 1 then begin
+            Gen1t(pc_ldc, long(size).lsw, cgWord);
+            Gen0(pc_mpi);
+            end; {if}
          Gen2(pc_cnv, ord(tp), ord(cgLong));
          Gen0(op);
          end {else if}
       else begin
          Gen2(pc_cnv, ord(tp), ord(cgLong));
-         GenLdcLong(size);
-         Gen0(pc_mpl);
+         if size <> 1 then begin
+            GenLdcLong(size);
+            Gen0(pc_mpl);
+            end; {if}
          Gen0(op);
          end;
       end;
    cgLong,cgULong: begin
-      GenLdcLong(size);
-      if tp = cgLong then
-         Gen0(pc_mpl)
-      else
-         Gen0(pc_uml);
+      if size <> 1 then begin
+         GenLdcLong(size);
+         if tp = cgLong then
+            Gen0(pc_mpl)
+         else
+            Gen0(pc_uml);
+         end; {if}
       Gen0(op);
       end;
    otherwise:
