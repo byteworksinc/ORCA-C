@@ -2170,6 +2170,8 @@ procedure ChangePointer (op: pcodes; size: longint; tp: baseTypeEnum);
 {    tp - type of the integer operand                           }
 
 begin {ChangePointer}
+if size = 0 then
+   Error(122);
 case tp of
    cgByte,cgUByte,cgWord,cgUWord: begin
       if (size = long(size).lsw) and (op = pc_adl)
@@ -2494,6 +2496,8 @@ var
             end {if}
          else {if iType^.kind = pointerType then} begin
             lSize := iType^.pType^.size;
+            if lSize = 0 then
+               Error(122);
             if long(lSize).msw <> 0 then begin
 
                {handle inc/dec of >64K}
@@ -3359,6 +3363,11 @@ case tree^.token.kind of
          if expressionType^.kind in [arrayType,pointerType] then begin
 
             {subtraction of two pointers}
+            if size = 0 then
+               Error(122)
+                            {NOTE: assumes aType & pType overlap in typeRecord}
+            else if not CompTypes(lType^.aType, expressionType^.aType) then
+               Error(47);
             Gen0(pc_sbl);
             if size <> 1 then begin
                GenLdcLong(size);
