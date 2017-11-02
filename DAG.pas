@@ -822,6 +822,10 @@ case op^.opcode of			{check for optimizations of this node}
                                  end; {with}
                               op^.right^.opcode := pc_shl;
                               op^.opcode := pc_ixa;
+                              if fromType.optype in [cgByte,cgWord] then
+                                 op^.optype := cgWord
+                              else
+                                 op^.optype := cgUWord;
                               PeepHoleOptimization(opv);
                               end; {if}
                 	end; {if}
@@ -836,6 +840,10 @@ case op^.opcode of			{check for optimizations of this node}
                   else
                      op^.right := op^.right^.left;
                   op^.opcode := pc_ixa;
+                  if fromType.optype in [cgByte,cgWord] then
+                     op^.optype := cgWord
+                  else
+                     op^.optype := cgUWord;
                   PeepHoleOptimization(opv);
                   end; {if}
                end; {else if}
