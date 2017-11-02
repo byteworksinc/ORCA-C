@@ -806,23 +806,24 @@ case op^.opcode of			{check for optimizations of this node}
                      if op^.right^.left^.opcode = pc_cnv then begin
                 	fromtype.i := (op^.right^.left^.q & $00F0) >> 4;
                 	if fromType.optype in [cgByte,cgUByte,cgWord,cgUWord] then
-                           begin
-                           if fromType.optype = cgByte then
-                              op^.right^.left^.q := $02
-                           else if fromType.optype = cgUByte then
-                              op^.right^.left^.q := $13
-                           else
-                              op^.right^.left := op^.right^.left^.left;
-                           with op^.right^.right^ do begin
-                              lq := lval;
-                              lval := 0;
-                              q := long(lq).lsw;
-                              optype := cgUWord;
-                              end; {with}
-                           op^.right^.opcode := pc_shl;
-                           op^.opcode := pc_ixa;
-                           PeepHoleOptimization(opv);
-                           end; {if}
+                           if op^.left^.opcode = pc_lda then
+                              begin
+                              if fromType.optype = cgByte then
+                                 op^.right^.left^.q := $02
+                              else if fromType.optype = cgUByte then
+                                 op^.right^.left^.q := $13
+                              else
+                                 op^.right^.left := op^.right^.left^.left;
+                              with op^.right^.right^ do begin
+                                 lq := lval;
+                                 lval := 0;
+                                 q := long(lq).lsw;
+                                 optype := cgUWord;
+                                 end; {with}
+                              op^.right^.opcode := pc_shl;
+                              op^.opcode := pc_ixa;
+                              PeepHoleOptimization(opv);
+                              end; {if}
                 	end; {if}
                end {if}
             else if op^.right^.opcode = pc_cnv then begin
