@@ -2373,6 +2373,7 @@ case optype of
 end; {GenInd}
 
 
+
 procedure GenIxa (op: icptr);
 
 { Generate code for a pc_ixa					}
@@ -2406,6 +2407,29 @@ var
          end; {else}      
       end; {with}
    end; {Index}
+
+
+   function IndexCanBeNegative: boolean;
+
+   { Check if the index value (right argument) of a pc_ixa      }
+   { can validly be negative.  Returns false if this is         }
+   { precluded by the type of the operation or other available  }
+   { information, or if any use of a negative index would be    }
+   { undefined behavior.  Otherwise, returns true.              }
+   {                                                            }
+   { parameters:                                                }
+   {    op - pc_ixa operation                                   }
+
+   begin {IndexCanBeNegative}
+   IndexCanBeNegative := true;
+   if op^.optype in [cgUByte,cgUWord] then
+      IndexCanBeNegative := false
+   else if (op^.right^.opcode = pc_ldc) and (op^.right^.q >= 0) then
+      IndexCanBeNegative := false
+   else if (op^.left^.opcode in [pc_lao,pc_lda]) and (op^.left^.q = 0) then
+      {Can't index before start of array, so using a negative index would be UB}
+      IndexCanBeNegative := false;
+   end; {IndexCanBeNegative}
 
 
 begin {GenIxa}
@@ -2507,6 +2531,14 @@ if smallMemoryModel then begin
             LoadX(op^.right);
             gLong.fixedDisp := false;
             end; {else}
+         if gLong.where = globalLabel then
+            if IndexCanBeNegative then begin
+               GenImplied(m_txa);
+               GenImplied(m_clc);
+               GenNative(m_adc_imm, immediate, gLong.disp, nil, 0);
+               GenImplied(m_tax);
+               gLong.disp := 0;
+               end; {if}
          if (lLong.preference & gLong.where) = 0 then begin
             if (lLong.preference & inPointer) <> 0 then begin
                if gLong.where = localAddress then begin
@@ -2598,12 +2630,12 @@ if smallMemoryModel then begin
       otherwise:
          Error(cge1);
       end; {case}
-   end {if smallMemoryModel or (op^.right^.opcode = pc_ldc)}
+   end {if smallMemoryModel}
 else begin
    gLong.preference := onStack;
    GenTree(op^.left);
    GenTree(op^.right);
-   if op^.optype in [cgByte,cgWord] then begin
+   if IndexCanBeNegative then begin
       lab1 := GenLabel;
       GenNative(m_ldx_imm, immediate, $0000, nil, 0);
       GenImplied(m_tay);
