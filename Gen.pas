@@ -2533,11 +2533,19 @@ if smallMemoryModel then begin
             end; {else}
          if gLong.where = globalLabel then
             if IndexCanBeNegative then begin
-               GenImplied(m_txa);
-               GenImplied(m_clc);
-               GenNative(m_adc_imm, immediate, gLong.disp, nil, 0);
-               GenImplied(m_tax);
-               gLong.disp := 0;
+               if (gLong.disp >= 0) and (gLong.disp <= 2) then begin
+                  while gLong.disp > 0 do begin
+                     GenImplied(m_inx);
+                     gLong.disp := gLong.disp - 1;
+                     end; {while}
+                  end {if}
+               else begin
+                  GenImplied(m_txa);
+                  GenImplied(m_clc);
+                  GenNative(m_adc_imm, immediate, gLong.disp, nil, 0);
+                  GenImplied(m_tax);
+                  gLong.disp := 0;
+                  end; {else}
                end; {if}
          if (lLong.preference & gLong.where) = 0 then begin
             if (lLong.preference & inPointer) <> 0 then begin
