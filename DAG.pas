@@ -1522,11 +1522,16 @@ case op^.opcode of			{check for optimizations of this node}
             end; {if}
          end {else if}
       else if op^.left^.opcode = pc_ixa then begin
-         op2 := op^.left;
-         op^.left := op^.left^.left;
-         op2^.left := op^.right;
-         op2^.opcode := pc_adi;
-         op^.right := op2;
+         if smallMemoryModel then
+            if op^.left^.left^.opcode in [pc_lao,pc_lda] then
+               if op^.left^.left^.q = 0 then begin
+                  op2 := op^.left;
+                  op^.left := op^.left^.left;
+                  op2^.left := op^.right;
+                  op2^.opcode := pc_adi;
+                  op^.right := op2;
+                  op^.optype := cgUWord;
+                  end; {if}
          end; {else if}
       end; {case pc_ixa}
 
