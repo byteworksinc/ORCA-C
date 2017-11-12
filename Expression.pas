@@ -2185,7 +2185,7 @@ case tp of
       else if smallMemoryModel and (size = long(size).lsw) then begin
          if size <> 1 then begin
             Gen1t(pc_ldc, long(size).lsw, cgWord);
-            Gen0(pc_mpi);
+            Gen0(pc_umi);
             end; {if}
          Gen2(pc_cnv, ord(tp), ord(cgLong));
          Gen0(op);

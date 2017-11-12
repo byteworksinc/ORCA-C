@@ -1487,7 +1487,7 @@ case op^.opcode of			{check for optimizations of this node}
 
    pc_ixa: begin			{pc_ixa}
       if op^.right^.opcode = pc_ldc then begin
-         optype := op^.right^.optype;
+         optype := op^.optype;
          if optype in [cgUByte, cgByte, cgUWord, cgWord] then begin
             lval := op^.right^.q;
             if optype = cgUByte then
