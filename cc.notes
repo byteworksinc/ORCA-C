@@ -1,15 +1,15 @@
-ORCA/C 2.2.0 B1
+ORCA/C 2.2.0 B2
 Copyright 1997, Byte Works Inc.
 
 -- Change List --------------------------------------------------------------
 
-2.2.0 B1    1.	Bugs squashed.  See bug notes, below.
+2.2.0 B2    1.	Bugs squashed.  See bug notes, below.
 
             2.	New language features added (mainly features from C99).
               	See "Compiler changes introduced in C 2.2.0."
 
             3.	Some optimization passes have small improvements.
-            
+
             4.	Some internal size limits were raised, allowing compilation of
               	larger functions.
 
@@ -20,6 +20,9 @@ Copyright 1997, Byte Works Inc.
 
             7.	Some new headers specified by recent C standards are added.
               	See "New Headers."
+
+            7.	Two new #pragma ignore bits are defined.  See "Compiler changes
+              	introduced in C 2.2.0".
 
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
@@ -47,7 +50,7 @@ Copyright 1997, Byte Works Inc.
 
 -- Known Issues -------------------------------------------------------------
 
-1.  The loop invariant removal optimization pass can create infinite loops or otherwise generate bad code in some cases.
+1.  The loop invariant removal optimization pass can generate bad code (e.g. creating infinite loops) in some cases.
 
 2.  The % operator will generally not work correctly when either operand is negative.  It may produce an incorrect result, or in certain scenarios it may give a compile-time or run-time error.
 
@@ -255,6 +258,10 @@ The flexible array member does not contribute to the size of the struct as repor
 (Kelvin Sherlock)
 
 6.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+
+7.  A new bit (bit 2, a value of 4) is introduced in #pragma ignore that permits spurious tokens to appear after the #endif directive.  If this bit is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
+
+(Kelvin Sherlock, Mike Westerfield)
 
 
 Multi-Character Character Constants
@@ -534,6 +541,18 @@ int foo(int[42]);
 (Kelvin Sherlock)
 
 51.  An unlimited number of octal digits could be processed as part of an octal escape sequence in a character constant or string.  Octal escape sequences are now limited to a maximum of three octal digits, as required by the C standards.  (This partially reverts a change in ORCA/C 2.1.0, which should only have applied to hexadecimal escape sequences.)
+
+52. Fixed several bugs that could cause the loop invariant removal and common subexpression elimination optimizations to move code when it was invalid to do so.
+
+(Soenke Behrens, Michael Guitton)
+
+53. Added prototypes for internal functions called by macros in <stdio.h>, so they will not produce errors when certain #pragma lint options are used.
+
+(Robert Eckweiler)
+
+54. Fixed several bugs that could cause invalid code to be generated for array indexing or pointer arithmetic in certain cases.
+
+(Kelvin Sherlock, Stephen Heumann)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
