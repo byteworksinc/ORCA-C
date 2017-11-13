@@ -863,7 +863,8 @@ procedure EndInclude {chPtr: ptr};
                   p_ignore:
                      WriteByte(ord(skipIllegalTokens)
                         | (ord(allowLongIntChar) << 1)
-                        | (ord(slashSlashComments) << 3));
+                        | (ord(allowTokensAfterEndif) << 2)
+                        | (ord(allowSlashSlashComments) << 3));
 
                   p_segment: begin
                      for i := 1 to 10 do begin
@@ -1496,7 +1497,8 @@ var
             i := ReadByte;
             skipIllegalTokens := odd(i);
             allowLongIntChar := odd(i >> 1);
-            slashSlashComments := odd(i >> 3);
+            allowTokensAfterEndif := odd(i >> 2);
+            allowSlashSlashComments := odd(i >> 3);
             end;
          
          p_segment: begin

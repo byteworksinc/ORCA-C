@@ -77,10 +77,14 @@ var
    pathList: pathRecordPtr;		{additional search paths}
    printMacroExpansions: boolean;       {print the token list?}
    reportEOL: boolean;                  {report eolsy as a token?}
-   skipIllegalTokens: boolean;		{skip flagging illegal tokens in skipped code?}
-   slashSlashComments: boolean;		{allow // comments?}
-   allowLongIntChar: boolean;		{allow long int char constants?}
    token: tokenType;                    {next token to process}
+
+                                        {#pragma ignore flags}
+                                        {--------------------}
+   allowLongIntChar: boolean;           {allow long int char constants?}
+   allowSlashSlashComments: boolean;    {allow // comments?}
+   allowTokensAfterEndif: boolean;      {allow tokens after #endif?}
+   skipIllegalTokens: boolean;          {skip flagging illegal tokens in skipped code?}
 
 {---------------------------------------------------------------}
 
@@ -2227,9 +2231,6 @@ var
       ip: ifPtr;                        {used to create a new if record}
  
    begin {DoEndif}
-   NextToken;                           {skip the command name}
-   if token.kind <> eolsy then          {check for extra stuff on the line}
-      Error(11);
    if ifList <> nil then begin
       ip := ifList;                     {remove the top if record from the list}
       ifList := ip^.next;
@@ -2241,6 +2242,10 @@ var
       end {if}
    else
       Error(20);
+   NextToken;                           {skip the command name}
+   if token.kind <> eolsy then          {check for extra stuff on the line}
+      if not allowTokensAfterEndif then
+         Error(11);
    end; {DoEndif}
 
 
@@ -2768,13 +2773,16 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                   else if token.name^ = 'ignore' then begin
                      { ignore bits:                                        }
                      {     1 - don't flag illegal tokens in skipped source }
+                     {     2 - allow long int character constants          }
+                     {     4 - allow tokens after #endif                   }
                      {     8 - allow // comments                           }
                      FlagPragmas(p_ignore);
                      NumericDirective;    
                      val := long(expressionValue).lsw;
                      skipIllegalTokens := odd(val);
                      allowLongIntChar := odd(val >> 1);
-                     slashSlashComments := odd(val >> 3);
+                     allowTokensAfterEndif := odd(val >> 2);
+                     allowSlashSlashComments := odd(val >> 3);
                      if token.kind <> eolsy then
                         Error(11);
                      end {else if}
@@ -3345,7 +3353,8 @@ begin {InitScanner}
 printMacroExpansions := false;          {don't print the token list}
 skipIllegalTokens := false;		{flag illegal tokens in skipped code}
 allowLongIntChar := false;		{allow long int char constants}
-slashSlashComments := true;		{allow // comments}
+allowTokensAfterEndif := false;         {allow tokens after #endif}
+allowSlashSlashComments := true;		{allow // comments}
 foundFunction := false;                 {no functions found so far}
 fileList := nil;                        {no included files}
 gettingFileName := false;               {not in GetFileName}

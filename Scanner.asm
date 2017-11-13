@@ -329,7 +329,7 @@ lb9      anop
 !    {characters and return a space.      }
 !    if (not doingstring) and (ch = '/') and (chPtr <> eofPtr)
 !       and ((chr(chPtr^) = '*')
-!       or ((chr(chPtr^) = '/') and slashSlashComments))then begin
+!       or ((chr(chPtr^) = '/') and allowSlashSlashComments))then begin
          lda   doingstring
          jne   lc6
          lda   ch
@@ -348,7 +348,7 @@ lc1      move4 chPtr,p1
 	beq	lc1a
 	cmp	#'/'
          jne   lc6
-	ldx	slashSlashComments
+	ldx	allowSlashSlashComments
 	jeq	lc6
 !       cch := chr(chPtr^);
 lc1a	sta	cch
