@@ -28,6 +28,33 @@ extern char __ctype[],__ctype2[];
 #define __csymf         0x02
 #define __octal         0x04
 
+
+int             isalnum(int);
+int             isalpha(int);
+#ifndef __KeepNamespacePure__
+   int          isascii(int);
+#endif
+int             iscntrl(int);
+#ifndef __KeepNamespacePure__
+   int          iscsym(int);
+   int          iscsymf(int);
+#endif
+int             isdigit(int);
+int             isgraph(int);
+int             islower(int);
+#ifndef __KeepNamespacePure__
+   int          isodigit(int);
+#endif
+int             isprint(int);
+int             ispunct(int);
+int             isspace(int);
+int             isupper(int);
+int             isxdigit(int);
+#ifndef __KeepNamespacePure__
+   int          toascii(int);
+#endif
+
+
 #define isalnum(c)      ((__ctype)[(c)+1] & (__upper|__lower|__digit))
 #define isalpha(c)      ((__ctype)[(c)+1] & (__upper|__lower))
 #ifndef __KeepNamespacePure__

@@ -103,6 +103,9 @@ typedef long fpos_t;
  *  Functions declared as macros
  */
 
+void            setbuf(FILE *, char *);
+void            rewind(FILE *);
+
 #define setbuf(stream,buf)      ((buf==NULL) ? (void) __setvbuf(stream,NULL,_IONBF,0l) : (void) __setvbuf(stream,buf,_IOFBF,(size_t) BUFSIZ))
 #define rewind(stream)          (__fseek((stream),0L,SEEK_SET))
 
