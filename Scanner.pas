@@ -248,6 +248,7 @@ var
    tokenList: tokenListRecordPtr;       {token putback buffer}
    tokenStart: ptr;                     {pointer to the first char in the token}
    tokenEnd: ptr;                       {pointer to the first char past the token}
+   tokenExpandEnabled: boolean;         {can token be macro expanded? (only for ident)}
    versionStrL: longStringPtr;          {macro version string}
    workString: pstring;                 {for building strings and identifiers}
 
@@ -1300,6 +1301,7 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
                tPtr^.token := token;
                tPtr^.tokenStart := tokenStart;
                tPtr^.tokenEnd := tokenEnd;
+               tPtr^.expandEnabled := tokenExpandEnabled;
                if token.kind = lparench then
                   parenCount := parenCount+1
                else if token.kind = rparench then
@@ -1442,10 +1444,20 @@ else begin
                      if lastPtr <> nil then
                         if lastPtr^.token.kind = poundpoundop then
                            inhibit := true;
+                     if not tcPtr^.expandEnabled then
+                        inhibit := true;
+                     if tcPtr = pptr^.tokens then
+                        if (mPtr <> nil) and (mPtr^.parameters > 0) then
+                           inhibit := true;
                      if (mPtr <> nil) and (not inhibit) then
                         Expand(mPtr)
-                     else
-                        PutBackToken(tcPtr^.token, true);
+                     else begin
+                        expandEnabled := tcPtr^.expandEnabled;
+                        if expandEnabled then
+                           if tcPtr^.token.name^ = macro^.name^ then
+                              expandEnabled := false;
+                        PutBackToken(tcPtr^.token, expandEnabled);
+                        end; {else}
                      end {if}
                   else
                      PutBackToken(tcPtr^.token, true);
@@ -2089,6 +2101,7 @@ var
          tPtr^.token := token;
          tPtr^.tokenStart := tokenStart;
          tPtr^.tokenEnd := tokenEnd;
+         tPtr^.expandEnabled := true;
          slen := ord(ord4(chPtr) - ord4(tokenStart));
          sptr := pointer(GMalloc(slen+2));
          sptr^.length := slen;
@@ -3772,6 +3785,7 @@ if tokenList <> nil then begin          {get a token put back by a macro}
    tPtr := tokenList;
    tokenList := tPtr^.next;
    expandEnabled := tPtr^.expandEnabled;
+   tokenExpandEnabled := expandEnabled;
    token := tPtr^.token;
    tokenStart := tPtr^.tokenStart;
    tokenEnd := tPtr^.tokenEnd;
@@ -3825,6 +3839,7 @@ if tokenList <> nil then begin          {get a token put back by a macro}
             Merge(tToken, tPtr^.token);
             tokenList := tPtr^.next;
             token := tToken;
+            tokenExpandEnabled := true;
             dispose(tPtr);
             goto 4;
             end; {if}
@@ -4112,6 +4127,7 @@ case charKinds[ord(ch)] of
       token.kind := ident;
       token.class := identifier;
       token.name := @workString;
+      tokenExpandEnabled := true;
       i := 0;
       while charKinds[ord(ch)] in [letter,digit] do begin
          i := i+1;
@@ -4150,7 +4166,7 @@ if token.kind = stringconst then        {handle adjacent strings}
          done := false;
          end {if}
       else begin
-         PutBackToken(token, true);
+         PutBackToken(token, tokenExpandEnabled);
          done := true;
          end; {else}
       token := tToken;
