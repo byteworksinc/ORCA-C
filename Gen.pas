@@ -5061,8 +5061,8 @@ procedure GenTree {op: icptr};
    if namePushed then
       GenCall(2);
 
-   {generate an exit code for the debugger's benefit}
-   if debugFlag then
+   {generate an exit code for the debugger/profiler's benefit}
+   if debugFlag or profileFlag then
       GenNative(m_cop, immediate, 4, nil, 0);
 
    {if anything needs to be removed from the stack, move the return val}
