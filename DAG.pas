@@ -3224,6 +3224,27 @@ var
    end; {DepthFirstOrder}
 
 
+   procedure AddDominator (var dom: blockListPtr; dfn: integer);
+
+   { Add dfn to the list of dominators				}
+   {								}
+   { parameters:						}
+   {    dom - dominator list					}
+   {    dfn - new dominator number				}
+
+   var
+      dp: blockListPtr;			{new node}
+
+   begin {AddDominator}
+   new(dp);
+   dp^.last := nil;
+   dp^.next := dom;
+   dom^.last := dp;
+   dom := dp;
+   dp^.dfn := dfn;
+   end; {AddDominator}
+      
+
    procedure Dominators;
 
    { Find a list of dominators for each node			}
@@ -3233,27 +3254,6 @@ var
       change: boolean;			{for loop termination test}
       i, j: integer;			{loop variables}
       maxdfn, mindfn: integer;		{max and min dfn values used}
-
-
-      procedure Add (var dom: blockListPtr; dfn: integer);
-
-      { Add dfn to the list of dominators			}
-      {								}
-      { parameters:						}
-      {    dom - dominator list					}
-      {    dfn - new dominator number				}
-
-      var
-         dp: blockListPtr;		{new node}
-
-      begin {Add}
-      new(dp);
-      dp^.last := nil;
-      dp^.next := dom;
-      dom^.last := dp;
-      dom := dp;
-      dp^.dfn := dfn;
-      end; {Add}
 
 
       procedure CheckPredecessors (bb: blockPtr; bl: dftptr);
@@ -3305,13 +3305,13 @@ var
          maxdfn := bb^.dfn;
       bb := bb^.next;
       end; {while}
-   Add(DAGBlocks^.dom, DAGBlocks^.dfn);	{the first node is it's own dominator}
+   AddDominator(DAGBlocks^.dom, DAGBlocks^.dfn); {the first node is it's own dominator}
    mindfn := DAGBlocks^.dfn;		{assume all other nodes are dominated by every other node}
    for i := mindfn+1 to maxdfn do begin
       bb := DFN(i);
       if bb <> nil then
          for j := mindfn to maxdfn do
-            Add(bb^.dom, j);
+            AddDominator(bb^.dom, j);
       end; {for}
    repeat				{iterate to the true set of dominators}
       change := false;
@@ -3595,7 +3595,30 @@ var
       loops: loopListPtr;		{list of loops}
       lp: loopPtr;			{used to trace loop lists}
       llp: loopListPtr;			{used to trace the list of loops}
+      fakeDFN: integer;			{to uniquely number newly-created blocks}
 
+
+      function InLoop (blk: blockPtr; lp: loopPtr): boolean;
+
+      { See if the block is in the loop				}
+      {								}
+      { parameters:						}
+      {    blk - block to check for				}
+      {    lp - loop list					}
+      {								}
+      { Returns: True if blk is in the list, else false		}
+
+      begin {InLoop}
+      InLoop := false;
+      while lp <> nil do begin
+         if lp^.block = blk then begin
+            lp := nil;
+            InLoop := true;
+            end {if}
+         else
+            lp := lp^.next;
+         end; {while}
+      end; {InLoop}
 
 
       procedure FindLoops;
@@ -3630,29 +3653,6 @@ var
 	 end; {Add}
 
 
-         function InLoop (blk: blockPtr; lp: loopPtr): boolean;
-
-         { See if the block is in the loop				}
-         {								}
-         { parameters:							}
-         {    blk - block to check for					}
-         {    lp - loop list						}
-         {								}
-         { Returns: True if blk is in the list, else false		}
-
-         begin {InLoop}
-         InLoop := false;
-         while lp <> nil do begin
-            if lp^.block = blk then begin
-               lp := nil;
-               InLoop := true;
-               end {if}
-            else
-               lp := lp^.next;
-            end; {while}
-         end; {InLoop}
-
-
 	 procedure Insert (block: blockPtr);
 
 	 { Insert a block into the loop list				}
@@ -3677,28 +3677,6 @@ var
                bl := bl^.next;
                end; {while}
             end; {AddPredecessors}
-
-
-            function InLoop (block: blockPtr; lp: loopPtr): boolean;
-
-            { See if a block is in the loop				}
-            {								}
-            { parameters:						}
-            {    block - block to check					}
-            {    lp - list of blocks in the loop			}
-            {								}
-            { Returns: True if the block is in the loop, else false	}
-
-            begin {InLoop}
-            InLoop := false;
-            while lp <> nil do
-               if lp^.block = block then begin
-        	  InLoop := true;
-        	  lp := nil;
-        	  end {if}
-               else
-        	  lp := lp^.next;
-            end; {InLoop}
 
 
 	 begin {Insert}
@@ -4243,7 +4221,8 @@ var
 
       var
          icount, oldIcount: integer;	{invariant order counters}
-         nhp: blockPtr;			{new loop hedaer pointer}
+         nhp: blockPtr;			{new loop header pointer}
+         ohp: blockPtr;			{old loop header pointer}
          op1, op2, op3: icptr;		{used to reverse the code list}
 
 
@@ -4252,11 +4231,10 @@ var
          { Create the new loop header					}
          {								}
          { Notes: As a side effect, CreateHeader sets nhp to point to	}
-         {    the new loop header.					}
+         {    the new loop header, and ohp to point to the old header.	}
 
          var
             lp: loopPtr;			{new loop list entry}
-            ohp: blockPtr;			{old loop hedaer pointer}
 
          begin {CreateHeader}
          nhp := pointer(Calloc(sizeof(block)));	{create the new block}
@@ -4266,6 +4244,8 @@ var
             nhp^.last^.next := nhp;
          nhp^.next := ohp;
          ohp^.last := nhp;
+         nhp^.dfn := fakeDFN;			{just a unique number, not a real DFN}
+         fakeDFN := fakeDFN - 1;
 	 new(lp);				{add it to the loop list}
 	 lp^.next := llp^.loop;
 	 llp^.loop := lp;
@@ -4465,6 +4445,125 @@ var
          end; {RemoveInvariant}
 
 
+         procedure AdjustControlFlow;
+
+         { Adjust control flow to account for loop invariant removal.	}
+         { The current loop's back edges should go to the old header	}
+         { block, bypassing removed invariant computations.  Any other	}
+         { jumps to the start of the loop should go to the new header	}
+         { block so that those computations are performed.		}
+
+         var
+            lp: loopPtr;		{used to trace loop list}
+            op, op1: icptr;		{used to trace code list}
+
+         begin {AdjustControlFlow}
+         				{move old header label to new header}
+         				{(for any jumps to it from outside loop)}
+         if (ohp^.code = nil) or (ohp^.code^.opcode <> dc_lab) then
+            TermError(3);		{shouldn't happen, but let's be sure}
+         op1 := pointer(Calloc(sizeof(intermediate_code)));
+         op1^.opcode := dc_lab;
+         op1^.q := ohp^.code^.q;
+         op1^.next := nhp^.code;
+         nhp^.code := op1;
+
+         ohp^.code^.q := GenLabel;	{make new label for old header &}
+         lp := llp^.loop;		{adjust loop back edges to go to it}
+         while (lp <> nil) do begin
+            op := lp^.block^.code;
+            while op <> nil do begin
+               if op^.opcode in [pc_ujp,pc_fjp,pc_tjp,pc_add] then
+                  if op^.q = op1^.q then begin
+                     op^.q := ohp^.code^.q;
+                     end;
+               op := op^.next;
+               end; {while}
+            lp := lp^.next;
+            end; {while}
+         end; {AdjustControlFlow}
+
+
+         procedure UpdateLoopLists;
+
+         { Update not-yet-processed loops to include the new header	}
+         { block if appropriate.  Also update any additional loops with	}
+         { the same original header to now include all the nodes of the	}
+         { loop just processed, since their back edges will now go to	}
+         { the new header, which dominates the original header.		}
+
+         var
+            lp, lp2, lp3: loopPtr;	{used to trace loop list}
+
+         begin {UpdateLoopLists}
+         loops := llp^.next;
+         while loops <> nil do begin
+            if loops^.loop^.block = ohp then begin
+               				{Another loop with the same header.}
+               				{Nodes of llp^.loop must be added to it.}
+               				{They go after the original header.}
+               lp3 := loops^.loop;
+               lp := llp^.loop;
+               while lp <> nil do begin
+                  if lp^.block <> nhp then
+                     if not InLoop(lp^.block, loops^.loop) then begin
+                        new(lp2);
+                        lp2^.next := lp3^.next;
+                        lp2^.block := lp^.block;
+                        lp2^.exit := lp^.exit;
+                        lp3^.next := lp2;
+                        lp3 := lp2;
+                        end; {if}
+                  lp := lp^.next;
+                  end; {while}
+               end; {if}
+            lp := loops^.loop;		{Add nhp to other loops containing ohp}
+            while lp <> nil do begin
+               if lp^.block = ohp then begin
+                  new(lp2);
+                  lp2^.next := lp^.next;
+                  lp2^.block := lp^.block;
+                  lp2^.exit := lp^.exit;
+                  lp^.next := lp2;
+                  lp^.block := nhp;
+                  lp^.exit := false;
+                  lp := nil;
+                  end {if}
+               else
+                  lp := lp^.next;
+               end; {while}
+            loops := loops^.next;
+            end; {while}
+         end; {UpdateLoopLists}
+
+
+         procedure UpdateDominators;
+
+         { Set dominators of the new header block, and update		}
+         { dominators of other blocks to include it where appropriate.	}
+
+         var
+            bb: blockPtr;		{used to trace list of basic blocks}
+            dom: blockListPtr;		{used to trace dominator list}
+
+         begin {UpdateDominators}
+         dom := ohp^.dom;		{Set dominators of new header block}
+         while dom <> nil do begin
+            if dom^.dfn <> ohp^.dfn then
+               AddDominator(nhp^.dom, dom^.dfn);
+            dom := dom^.next;
+            end; {while}
+         AddDominator(nhp^.dom, nhp^.dfn);
+
+         bb := DAGBlocks;		{Add nhp to other loops' dominators}
+         while bb <> nil do begin
+            if MemberDFNList(ohp^.dfn, bb^.dom) then
+               AddDominator(bb^.dom, nhp^.dfn);
+            bb := bb^.next;
+            end; {while}
+         end; {UpdateDominators}
+
+
       begin {RemoveInvariants}
       CreateHeader;			{create a loop header block}
       icount := 0;			{find & remove all invariants}
@@ -4483,6 +4582,13 @@ var
          op2 := op3;
          end; {while}
       nhp^.code := op2;
+      					{adjust things to account for changes}
+      if nhp^.code <> nil then begin
+         Spin;
+         AdjustControlFlow;
+         UpdateLoopLists;
+         UpdateDominators;
+         end; {if}
       end; {RemoveInvariants}
 
 
@@ -4529,6 +4635,7 @@ var
    begin {LoopInvariantRemoval}
    Spin;
    FindLoops;				{find a list of natural loops}
+   fakeDFN := -1;
 
    llp := loops;			{scan the loops...}
    icount := 1;
