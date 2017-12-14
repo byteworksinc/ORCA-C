@@ -1,5 +1,6 @@
 ORCA/C 2.2.0 B2
 Copyright 1997, Byte Works Inc.
+Updated by Stephen Heumann and Kelvin Sherlock, 2017
 
 -- Change List --------------------------------------------------------------
 
@@ -21,7 +22,7 @@ Copyright 1997, Byte Works Inc.
             7.	Some new headers specified by recent C standards are added.
               	See "New Headers."
 
-            7.	Two new #pragma ignore bits are defined.  See "Compiler changes
+            8.	Two new #pragma ignore bits are defined.  See "Compiler changes
               	introduced in C 2.2.0".
 
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
@@ -50,13 +51,11 @@ Copyright 1997, Byte Works Inc.
 
 -- Known Issues -------------------------------------------------------------
 
-1.  The loop invariant removal optimization pass can generate bad code (e.g. creating infinite loops) in some cases.
+1.  The % operator will generally not work correctly when either operand is negative.  It may produce an incorrect result, or in certain scenarios it may give a compile-time or run-time error.
 
-2.  The % operator will generally not work correctly when either operand is negative.  It may produce an incorrect result, or in certain scenarios it may give a compile-time or run-time error.
+2.  Not all orderings of storage class specifiers, type qualifiers, and type specifiers are supported in declarations and type names.
 
-3.  Not all orderings of storage class specifiers, type qualifiers, and type specifiers are supported in declarations and type names.
-
-4.  ORCA/C fails to detect various error conditions for which the C standards require a diagnostic message to be issued.
+3.  ORCA/C fails to detect various error conditions for which the C standards require a diagnostic message to be issued.
 
 -- Manual Errata ------------------------------------------------------------
 
@@ -64,7 +63,7 @@ p. 40
 
 The description of the action function says it takes a single integer parameter.  Actually, it takes two parameters, as shown in the example on page 41.
 
-Both the description and the sample on page 41 indicate that the action procedure for an NDA should return void.  Actually, the action routine should return int, returning 0 if it handled the action and 1 if it did not.  The correct function looks like this:
+Both the description and the sample on page 41 indicate that the action procedure for an NDA should return void.  Actually, the action routine should return int, returning 1 if it handled the action and 0 if it did not.  The correct function looks like this:
 
 int Action (long param, int code)
 
@@ -131,10 +130,11 @@ The #pragma debug directive supports a new bit. If bit 15 is set, ORCA/C generat
 
 p. 258
 
-The #pragma ignore directive supports two new bits.
+The #pragma ignore directive supports three new bits.
 
-Bit 1 affects the interpretation of multi-character character constants.
-See "Multi-Character Character Constants," below.
+Bit 1 affects the interpretation of multi-character character constants.  See "Multi-Character Character Constants," below.
+
+Bit 2 controls whether spurious tokens are allowed after an #endif directive.  See "Compiler changes introduced in C 2.2.0," below.
 
 Bit 3 controls whether // comments are allowed.  If bit 3 is set, as in
 
@@ -259,7 +259,7 @@ The flexible array member does not contribute to the size of the struct as repor
 
 6.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
 
-7.  A new bit (bit 2, a value of 4) is introduced in #pragma ignore that permits spurious tokens to appear after the #endif directive.  If this bit is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
+7.  Two new bits are introduced in the #pragma ignore directive.  But 1 (a value of 2) affects the handling of multi-character character constants; it is described in the section below.  Bit 2 (a value of 4) controls whether spurious tokens are allowed to appear after the #endif directive.  If this bit is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
 
 (Kelvin Sherlock, Mike Westerfield)
 
@@ -542,9 +542,11 @@ int foo(int[42]);
 
 51.  An unlimited number of octal digits could be processed as part of an octal escape sequence in a character constant or string.  Octal escape sequences are now limited to a maximum of three octal digits, as required by the C standards.  (This partially reverts a change in ORCA/C 2.1.0, which should only have applied to hexadecimal escape sequences.)
 
-52. Fixed several bugs that could cause the loop invariant removal and common subexpression elimination optimizations to move code when it was invalid to do so.
+(Bug fixes below here were added in ORCA/C 2.2.0 B2.)
 
-(Soenke Behrens, Michael Guitton)
+52. Fixed several bugs that could cause invalid optimizations to be performed by the loop invariant removal optimization pass, and also one that affected common subexpression elimination.
+
+(Soenke Behrens, Michael Guitton, Dave Tribby)
 
 53. Added prototypes for internal functions called by macros in <stdio.h>, so they will not produce errors when certain #pragma lint options are used.
 
@@ -553,6 +555,18 @@ int foo(int[42]);
 54. Fixed several bugs that could cause invalid code to be generated for array indexing or pointer arithmetic in certain cases.
 
 (Kelvin Sherlock, Stephen Heumann)
+
+55. Prototypes for the library functions also defined as macros are now provided.  This ensures correct behavior when the macro is bypassed to access the library function.
+
+56. The setbuf macro could evaluate its second argument twice, which could cause incorrect behavior.  It has been removed in favor of just calling the library function.
+
+57. Correct code was not being generated when producing profiling code but not source-level debug code (e.g. by using "#pragma debug 4").  This could result in incorrect profiling results or other strange behavior.
+
+(Kelvin Sherlock)
+
+58. When a macro's own name was used within it, that token could be re-expanded later in some cases. That re-expansion is now blocked, consistent with the C standards.
+
+59. When zero was consecutively stored to two global or static variables, the second store might be omitted if using the native code peephole optimizer.  (This was a regression introduced in ORCA/C 2.2.0 B1.)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
