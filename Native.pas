@@ -1740,13 +1740,16 @@ var
 
          { kws }
          { stz $xx, stz $xx }
-         m_stz_abs, m_stz_absX, m_stz_dir, m_stz_dirX:
-            if npeep[ns].opcode = npeep[ns+1].opcode then begin
-               if npeep[ns].operand = npeep[ns+1].operand then begin
-                  Remove(ns+1)
-               end; {if}
-
-            end; {if}
+         m_stz_abs, m_stz_absX:
+            if npeep[ns].opcode = npeep[ns+1].opcode then
+               if npeep[ns].operand = npeep[ns+1].operand then
+                  if npeep[ns].name = npeep[ns+1].name then
+                     Remove(ns+1);
+         
+         m_stz_dir, m_stz_dirX:
+            if npeep[ns].opcode = npeep[ns+1].opcode then
+               if npeep[ns].operand = npeep[ns+1].operand then
+                  Remove(ns+1);
 
          otherwise: ;
 
