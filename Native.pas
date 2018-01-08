@@ -1744,12 +1744,14 @@ var
             if npeep[ns].opcode = npeep[ns+1].opcode then
                if npeep[ns].operand = npeep[ns+1].operand then
                   if npeep[ns].name = npeep[ns+1].name then
-                     Remove(ns+1);
+                     if not volatile then
+                        Remove(ns+1);
          
          m_stz_dir, m_stz_dirX:
             if npeep[ns].opcode = npeep[ns+1].opcode then
                if npeep[ns].operand = npeep[ns+1].operand then
-                  Remove(ns+1);
+                  if not volatile then
+                     Remove(ns+1);
 
          otherwise: ;
 
