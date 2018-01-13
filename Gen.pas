@@ -4081,10 +4081,12 @@ procedure GenTree {op: icptr};
       end {if}
    else if saveStack or (op^.q <> 0) then begin
       stackSaveDepth := stackSaveDepth - 1;
-      GenImplied(m_txy);
+      if not (op^.optype in [cgVoid,cgByte,cgUByte,cgWord,cgUWord]) then
+         GenImplied(m_txy);
       GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
       GenImplied(m_txs);
-      GenImplied(m_tyx);
+      if not (op^.optype in [cgVoid,cgByte,cgUByte,cgWord,cgUWord]) then
+         GenImplied(m_tyx);
       if stackSaveDepth <> 0 then begin
          GenImplied(m_ply);
          GenNative(m_sty_dir, direct, stackLoc, nil, 0);
@@ -4137,14 +4139,16 @@ procedure GenTree {op: icptr};
       end {if}
    else if saveStack or (op^.q <> 0) then begin
       stackSaveDepth := stackSaveDepth - 1;
-      GenImplied(m_tay);
-      GenNative(m_lda_dir, direct, stackLoc, nil, 0);
-      GenImplied(m_tcs);
+      if not (op^.optype in [cgVoid,cgByte,cgUByte,cgWord,cgUWord]) then
+         GenImplied(m_txy);
+      GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
+      GenImplied(m_txs);
+      if not (op^.optype in [cgVoid,cgByte,cgUByte,cgWord,cgUWord]) then
+         GenImplied(m_tyx);
       if stackSaveDepth <> 0 then begin
-         GenImplied(m_pla);
-         GenNative(m_sta_dir, direct, stackLoc, nil, 0);
+         GenImplied(m_ply);
+         GenNative(m_sty_dir, direct, stackLoc, nil, 0);
          end; {if}
-      GenImplied(m_tya);
       end; {else}
 
    {save the returned value}
