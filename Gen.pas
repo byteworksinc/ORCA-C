@@ -66,6 +66,7 @@ var
    gLong: longType;                     {info about last long value}
    namePushed: boolean;			{has a name been pushed in this proc?}
    skipLoad: boolean;			{skip load for a pc_lli, etc?}
+   stackSaveDepth: integer;		{nesting depth of saved stack positions}
 
                                         {stack frame locations}
                                         {---------------------}
@@ -4026,13 +4027,16 @@ procedure GenTree {op: icptr};
       lab1: integer;			{return point}
       lLong: longType;			{used to reserve gLong}
 
-   begin {GenCup}
+   begin {GenCui}
    {save the stack register}
    if saveStack or checkStack or (op^.q <> 0) then begin
-      GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
-      GenImplied(m_phx);
+      if stackSaveDepth <> 0 then begin
+         GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
+         GenImplied(m_phx);
+         end; {if}
       GenImplied(m_tsx);
       GenNative(m_stx_dir, direct, stackLoc, nil, 0);
+      stackSaveDepth := stackSaveDepth + 1;
       end; {if}
 
    {generate parameters}
@@ -4067,18 +4071,24 @@ procedure GenTree {op: icptr};
 
    if checkStack then begin
       {check the stack for errors}
+      stackSaveDepth := stackSaveDepth - 1;
       GenNative(m_ldy_dir, direct, stackLoc, nil, 0);
       GenCall(76);
-      GenImplied(m_ply);
-      GenNative(m_sty_dir, direct, stackLoc, nil, 0);
+      if stackSaveDepth <> 0 then begin
+         GenImplied(m_ply);
+         GenNative(m_sty_dir, direct, stackLoc, nil, 0);
+         end; {if}
       end {if}
    else if saveStack or (op^.q <> 0) then begin
+      stackSaveDepth := stackSaveDepth - 1;
       GenImplied(m_txy);
       GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
       GenImplied(m_txs);
       GenImplied(m_tyx);
-      GenImplied(m_ply);
-      GenNative(m_sty_dir, direct, stackLoc, nil, 0);
+      if stackSaveDepth <> 0 then begin
+         GenImplied(m_ply);
+         GenNative(m_sty_dir, direct, stackLoc, nil, 0);
+         end; {if}
       end; {else}
 
    {save the returned value}
@@ -4097,10 +4107,13 @@ procedure GenTree {op: icptr};
    begin {GenCup}
    {save the stack register}
    if saveStack or checkStack or (op^.q <> 0) then begin
-      GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
-      GenImplied(m_phx);
+      if stackSaveDepth <> 0 then begin
+         GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
+         GenImplied(m_phx);
+         end; {if}
       GenImplied(m_tsx);
       GenNative(m_stx_dir, direct, stackLoc, nil, 0);
+      stackSaveDepth := stackSaveDepth + 1;
       end; {if}
 
    {generate parameters}
@@ -4113,18 +4126,24 @@ procedure GenTree {op: icptr};
 
    {check the stack for errors}
    if checkStack then begin
+      stackSaveDepth := stackSaveDepth - 1;
       GenNative(m_ldy_dir, direct, stackLoc, nil, 0);
       GenCall(76);
-      GenImplied(m_ply);
-      GenNative(m_sty_dir, direct, stackLoc, nil, 0);
+      if stackSaveDepth <> 0 then begin
+         GenImplied(m_ply);
+         GenNative(m_sty_dir, direct, stackLoc, nil, 0);
+         end; {if}
       GenImplied(m_tay);
       end {if}
    else if saveStack or (op^.q <> 0) then begin
+      stackSaveDepth := stackSaveDepth - 1;
       GenImplied(m_tay);
       GenNative(m_lda_dir, direct, stackLoc, nil, 0);
       GenImplied(m_tcs);
-      GenImplied(m_pla);
-      GenNative(m_sta_dir, direct, stackLoc, nil, 0);
+      if stackSaveDepth <> 0 then begin
+         GenImplied(m_pla);
+         GenNative(m_sta_dir, direct, stackLoc, nil, 0);
+         end; {if}
       GenImplied(m_tya);
       end; {else}
 
@@ -5647,6 +5666,7 @@ parameterSize := 0;
 funLoc := 0;
 dworkLoc := 0;
 minSize := 1;
+stackSaveDepth := 0;
 while bk <> nil do begin 
    op := bk^.code;
    while op <> nil do begin
