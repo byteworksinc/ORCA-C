@@ -329,6 +329,7 @@ var
    symLength: integer;                  {length of debug symbol table}
    toolParms: boolean;                  {generate tool format paramaters?}
    volatile: boolean;			{has a volatile qualifier been used?}
+   hasVarargsCall: boolean;             {does current function call any varargs fns?}
    
                                         {desk accessory variables}
                                         {------------------------}

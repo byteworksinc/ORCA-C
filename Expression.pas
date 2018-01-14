@@ -2781,6 +2781,8 @@ var
             Gen1tName(pc_cup, ord(fType^.varargs and strictVararg),
                UsualUnaryConversions, fname);
             end; {else}
+         if fType^.varargs then
+            hasVarargsCall := true;
 	 end {if}
       else
 	 GenTool(pc_tl1, ftype^.toolNum, long(ftype^.ftype^.size).lsw,

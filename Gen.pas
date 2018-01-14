@@ -5679,7 +5679,7 @@ while bk <> nil do begin
       end; {while}
    bk := bk^.next;
    end; {while}
-if saveStack or checkStack or strictVararg then begin
+if saveStack or checkStack or (strictVararg and hasVarargsCall) then begin
    stackLoc := minSize;
    minSize := minSize + 2;
    localSize := localSize + 2;
