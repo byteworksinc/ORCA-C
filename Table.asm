@@ -15,7 +15,8 @@ root	start		dummy (.root) segment
 
 	end
 
-charKinds start 	character set
+! character set
+charKinds start
 	enum	(illegal,ch_special,ch_dash,ch_plus,ch_lt,ch_gt,ch_eq,ch_exc),0
 	enum	(ch_and,ch_bar,ch_dot,ch_white,ch_eol,ch_eof,ch_char,ch_string)
 	enum	(ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,letter,digit)
@@ -280,7 +281,8 @@ charKinds start 	character set
 	dc	i'illegal'	rub
 	end
 
-charSym	start		single character symbols
+! single character symbols
+charSym	start
 	enum	ident,0	identifiers
 !			constants
 	enum	(intconst,uintconst,longconst,ulongconst,doubleconst)
@@ -346,7 +348,8 @@ charSym	start		single character symbols
 	dc	i'0,0,0,0,0,0,0,0'					x-rub
 	end
 
-icp	start		in comming priority for expression
+! in comming priority for expression
+icp	start
 !			assumes notAnOperation = 200
 	dc	i1'200'	ident
 	dc	i1'200'	intconst
@@ -453,7 +456,8 @@ icp	start		in comming priority for expression
 	dc	i1'200'	macroParm
 	end
 
-iopcodes start		implied operand operation codes
+! implied operand operation codes
+iopcodes start
 
 	dc	i1'$18'	 clc
 	dc	i1'$D8'	 cld
@@ -501,7 +505,8 @@ iopcodes start		implied operand operation codes
 	dc	i1'$FB'	 xce
 	end
 
-isp	start		in stack priority for expression
+! in stack priority for expression
+isp	start
 	dc	i1'0'	ident
 	dc	i1'0'	intconst
 	dc	i1'0'	uintconst
@@ -607,7 +612,8 @@ isp	start		in stack priority for expression
 	dc	i1'0'	macroParm
 	end
 
-names	start		mini-assembler op code names
+! mini-assembler op code names
+names	start
 
 	dc	c'adcandaslbitcmpcopcpxcpydeceor'
 	dc	c'incjmljmpjsljsrldaldxldylsrora'
@@ -797,7 +803,8 @@ nopcodes start
 	dc	i1'0      ,0      ,0      ,0      ,0       '
 	end
 
-reservedWords start	reserved word names
+! reserved word names
+reservedWords start
 	str8	auto
 	str8	asm
 	str8	break
@@ -853,7 +860,8 @@ ropcodes start
 	dc	i1'$70'	 bvs
 	end
 
-wordHash start		reserved word hash table
+! reserved word hash table
+wordHash start
 
 	enum	ident,0	identifiers
 !			constants
