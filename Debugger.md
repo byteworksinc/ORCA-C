@@ -76,15 +76,17 @@ There is no operand for this instruction.  In assembly language, it looks like t
 
 ### Figure A-1:  Debugger Symbol Table Format
 
-    $00	Displacement to the end of the table
-    $02 Pointer to the next variable name. The name is stored in Pascal string format.
-    $06 Pointer to the variable's value. If the variable is an array, then this points to the first element.
-    $0a Address flag;  0 -> direct page, 1 -> long address
-    $0b Format of value; see table A-2
-    $0c Number of subscripts; 0 if not array
-    $0e Minimum subscript value
-    $12 Maximum subscript value
-    $16 Size of each element  
+    $00 Displacement to the end of the table
+    --- repeat for each variable
+    | $02 Pointer to the next variable name. The name is stored in Pascal string format.
+    | $06 Pointer to the variable's value. If the variable is an array, then this points to the first element.
+    | $0a Address flag;  0 -> direct page, 1 -> long address
+    | $0b Format of value; see table A-2
+    | $0c Number of subscripts; 0 if not array
+    | --- repeat for each array dimension
+    | | $0e Minimum subscript value
+    | | $12 Maximum subscript value
+    | | $16 Size of each element
 
 
 The following table shows the format used to store the variable’s current value:
