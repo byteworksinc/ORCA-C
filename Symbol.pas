@@ -982,6 +982,9 @@ var
 
       begin {ExpandStructType}
       ip := tp^.fieldList;
+      { fieldList is nil if this is a forward declared struct. }
+      if ip = nil then ip := defaultStruct^.fieldList;
+
       while ip <> nil do begin
          GenSymbol(ip, none);
          ip := ip^.next;
