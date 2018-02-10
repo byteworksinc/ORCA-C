@@ -48,14 +48,14 @@ The COP instruction is followed by the line number.  In assembly language, this 
 
 ## COP 03
 
-This instruction is used right after a subroutine is called, and marks entry into the subroutine.  The `COP` instruction is followed by the four byte address of the subroutine name, coded as a null terminated string (c-string).
+This instruction is used right after a subroutine is called, and marks entry into the subroutine.  The `COP` instruction is followed by the four byte address of the subroutine name, stored with a length-byte prefix (P-string format)
 
     	cop	$03
     	dc	a4'name'
     
     	...
     
-    name	dc	c'Subroutine Name',i1'0'
+    name	dc	i1'15',c'Subroutine Name'
 
 ## COP 04
 
@@ -78,7 +78,7 @@ There is no operand for this instruction.  In assembly language, it looks like t
 
     $00 Displacement to the end of the table
     --- repeat for each variable
-    | $02 Pointer to the next variable name. The name is stored in Pascal string format.
+    | $02 Pointer to the next variable name. The name is stored in P-string format.
     | $06 Pointer to the variable's value. If the variable is an array, then this points to the first element.
     | $0a Address flag;  0 -> direct page, 1 -> long address
     | $0b Format of value; see table A-2
@@ -117,14 +117,14 @@ The symbol table follows right after the `COP 05` instruction.
 
 `COP 06` is used at the start of all subroutines, right after the `COP 03` that marks the start of the subroutine.  (You can put the `COP 06` before or after any `COP 05`, so long as it comes before any `COP 00`, `COP 01` or `COP 02` instructions).  This instruction flags the source file for the subroutine, giving the debugger a chance to switch to the correct source file if it is not already being displayed.  You can also imbed other `COP 06` instructions inside of the subroutine if the subroutine spans several source files.
 
-The `COP 06` instruction is followed by the four-byte address of the full path name of the source file.  The path name is given as a C-string.  The ORCA/Debugger supports path names up to 255 characters long, and allows either / or : characters as separators.  Here’s what the instruction might look like in assembly language:
+The `COP 06` instruction is followed by the four-byte address of the full path name of the source file.  The path name is given as a P-string.  The ORCA/Debugger supports path names up to 255 characters long, and allows either / or : characters as separators.  Here’s what the instruction might look like in assembly language:
 
     	cop	$06
     	dc	a4'name'
     
     	...
     
-    name	dc	c'/hd/programs/source.pas',i1'0'
+    name	dc	i1'23',c'/hd/programs/source.pas'
 
 
 ## COP 07
