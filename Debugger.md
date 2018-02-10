@@ -93,25 +93,46 @@ The following table shows the format used to store the variable’s current valu
 
 ### Table A-2:  Debugger Symbol Table Format Codes
 
-    	Value	Format
-    	0	1-byte integer
-    	1	2-byte integer
-    	2	4-byte integer
-    	3	single-precision real
-    	4	double-precision real
-    	5	extended-precision real
-    	6	C-style string
-    	7	Pascal-style string
-    	8	character
-    	9	boolean
+    Value	Format
+    0   1-byte integer
+    1   2-byte integer
+    2   4-byte integer
+    3   single-precision real
+    4   double-precision real
+    5   extended-precision real
+    6   C-style string
+    7   Pascal-style string
+    8   character
+    9   boolean
+    10  8-byte SANE COMP
+    11  Pointer
+    12  Structure
+    13  Reference to previously defined structure
+    14  Object Pascal object
 
-
-The format code indicating a pointer to any of these types of values is obtained by `OR`ing the value’s format code with `$80`.
 
 One-byte integers default to unsigned, while two-byte and four-byte integers default to signed format.  `OR`ing the format code with `$40` reverses this default, giving signed one-byte integers or unsigned four-byte integers.  (The signed flag is not supported by PRIZM 1.1.3.)
 
-The symbol table follows right after the `COP 05` instruction.
+A pointer to a scalar type (1-10) is indicated by `OR`ing the value’s format code with `$80`.
 
+A pointer to a non-scalar type (11-14) is indicated by a type 11 pointer record, followed by the record(s) for the underlying type.
+
+Structures, records, and objects are indicated by a type 12 or 14 record, followed by one ore more field records. Field records are similar to variable fields, with a different interpretation of the value and address flag fields.
+
+    --- repeat for each field
+    | $00 Pointer to the next field name. The name is stored in P-string format.
+    | $04 Pointer to the field offset.
+    | $08 EOF flag;  0 -> last field, 1 -> more fields present
+    | $09 Format of value; see table A-2
+    | $0a Number of subscripts; 0 if not array
+    | --- repeat for each array dimension
+    | | $0c Minimum subscript value
+    | | $10 Maximum subscript value
+    | | $14 Size of each element
+
+After a record has been defined in the symbol table, it may be referred to with a type 13 reference.  The subscript field is used as an offset within the symbol table of the actual definition. This allows for recursive structures (such as linked lists) and also acts as a form of compression to reduces symbol table size.
+
+The symbol table follows right after the `COP 05` instruction.
 
 ## COP 06
 
@@ -140,3 +161,7 @@ Message 0 tells the debugger to start patching all debugger `COP` instructions w
 Message 1 tells the debugger to stop patching `COP` instructions, reversing the effect of message 0.  The `DebugNoFast` utility sends this message.
 
 Message 2 tells the debugger to treat the next `COP 00` as if it were a `COP 01`.  The `DebugBreak` utility sends this message.
+
+## COP 08
+
+`COP 08` provides access to a global symbol table. The format is identical to `COP 05`. 
