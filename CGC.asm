@@ -1,4 +1,4 @@
-	mcopy	cgc.macros
+         mcopy cgc.macros
 ****************************************************************
 *
 *  CnvSX - Convert floating point to SANE extended

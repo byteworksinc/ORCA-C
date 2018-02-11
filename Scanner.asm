@@ -66,30 +66,30 @@ lb2      iny                            next character
 *
 KeyPress start
 
-	KeyPressGS kpRec
-	lda	kpAvailable
-	beq	rts
-	ReadKeyGS rkRec
-	lda	rkKey
-	cmp	#'.'
-	bne	lb1
-	lda	rkModifiers
-	and	#$0100
-	beq	lb1
+         KeyPressGS kpRec
+         lda   kpAvailable
+         beq   rts
+         ReadKeyGS rkRec
+         lda   rkKey
+         cmp   #'.'
+         bne   lb1
+         lda   rkModifiers
+         and   #$0100
+         beq   lb1
          ph2   #4
          jsl   TermError
 
-lb1	lda	#1
-rts	rtl
+lb1      lda   #1
+rts      rtl
 
-kpRec	dc	i'3'
-kpKey	ds	2
-kpModifiers ds	2
-kpAvailable ds	2
+kpRec    dc    i'3'
+kpKey    ds    2
+kpModifiers ds 2
+kpAvailable ds 2
                   
-rkRec	dc	i'2'
-rkKey	ds	2
-rkModifiers ds	2
+rkRec    dc    i'2'
+rkKey    ds    2
+rkModifiers ds 2
          end
 
 ****************************************************************
@@ -103,15 +103,15 @@ rkModifiers ds	2
 *
 NextCh   start scanner
 eofChar  equ   0                        end of file character
-eolChar	equ	13	end of line character
+eolChar  equ   13                       end of line character
 
 stackFrameSize equ 14                   size of the work space
-maxPath	equ	255	max length of a path name
+maxPath  equ   255                      max length of a path name
 
 fp       equ   1                        file record pointer; work pointer
 p1       equ   5                        work pointer
 p2       equ   9
-cch	equ	13
+cch      equ   13
 
          enum  (illegal,ch_special,ch_dash,ch_plus,ch_lt,ch_gt,ch_eq,ch_exc),0
          enum  (ch_and,ch_bar,ch_dot,ch_white,ch_eol,ch_eof,ch_char,ch_string)
@@ -158,16 +158,16 @@ la2      anop
 !      ch := chr(eolChar);
 !      goto le2;
 !      end; {if}
-	lda	lastWasReturn
-	bne	la3
-	lda	#1
-	sta	lastWasReturn
+         lda   lastWasReturn
+         bne   la3
+         lda   #1
+         sta   lastWasReturn
          sta   needWriteLine
-	lda	#eolChar
-	sta	ch
-	brl	le2
+         lda   #eolChar
+         sta   ch
+         brl   le2
 !    ch := chr(eofChar);
-la3	stz   ch
+la3      stz   ch
 
 !    if needWriteLine then begin        {do eol processing}
 !       WriteLine;
@@ -195,8 +195,8 @@ lb3      anop
 !       {purge the current source file}
 !       with ffDCBGS do begin
 !          pCount := 5;
-	lda	#5
-	sta	ffDCBGS
+         lda   #5
+         sta   ffDCBGS
 !          action := 7;
          lda   #7
          sta   ffDCBGS+2
@@ -257,7 +257,7 @@ lb4      lda   [p1],Y
          ph4   fp
          jsl   ~Dispose
 !       includeCount := includeCount + 1;
-	inc	includeCount
+         inc   includeCount
 !       goto 1;
          brl   lab1
 !       end; {if}
@@ -345,15 +345,15 @@ lc1      move4 chPtr,p1
          lda   [p1]
          and   #$00FF
          cmp   #'*'
-	beq	lc1a
-	cmp	#'/'
+         beq   lc1a
+         cmp   #'/'
          jne   lc6
-	ldx	allowSlashSlashComments
-	jeq	lc6
+         ldx   allowSlashSlashComments
+         jeq   lc6
 !       cch := chr(chPtr^);
-lc1a	sta	cch
+lc1a     sta   cch
 !       chPtr := pointer(ord4(chPtr)+1);  {skip the '*' or '/'}
-	inc4  chPtr
+         inc4  chPtr
 !       done := false;
 !       repeat
 lc2      anop
@@ -366,23 +366,23 @@ lc2      anop
          cmp   eofPtr+2
          jeq   lc5
 !          else if (cch = '/') and (chPtr^ = return) then begin
-lc2a	lda	cch
-	cmp	#'/'
-	bne	lc2b
+lc2a     lda   cch
+         cmp   #'/'
+         bne   lc2b
 !             if charKinds[ord(ch)] = ch_eol then
 !                done := true
 !             else
 !                chPtr := pointer(ord4(chPtr)+1);
-	move4	chPtr,p1
-	lda	[p1]
-	and	#$00FF
+         move4 chPtr,p1
+         lda   [p1]
+         and   #$00FF
          asl   A
-	tax
-	lda	charKinds,X
-	cmp	#ch_eol
-	jeq	lc5
-	inc4	chPtr
-	bra	lc2
+         tax
+         lda   charKinds,X
+         cmp   #ch_eol
+         jeq   lc5
+         inc4  chPtr
+         bra   lc2
 !             end {else if}
 !          else begin
 !             ch := chr(chPtr^);          {check for terminating */}
@@ -551,7 +551,7 @@ db1      sta   p1
          stx   p1+2
          lda   [p1]
          and   #$00FF
-	cmp	#$07
+         cmp   #$07
          bne   db2
 !   debugType := break
          lda   #break

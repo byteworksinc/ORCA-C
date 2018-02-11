@@ -143,20 +143,20 @@ Out      start
 ****************************************************************
 *
 OutByte  private
-buffSize equ	16384	buffer size
+buffSize equ   16384                    buffer size
                                                    
          lda   objLen                   if objLen+segDisp+1 = buffSize then
          sec
          adc   segDisp
-	cmp	#buffSize
+         cmp   #buffSize
          blt   lb2
-	phx		   PurgeObjBuffer;
-	jsl	PurgeObjBuffer
-	plx
-	lda	objLen	   check for segment overflow
-	sec
-	adc	segDisp
-	cmp	#buffSize
+         phx                               PurgeObjBuffer;
+         jsl   PurgeObjBuffer
+         plx
+         lda   objLen                      check for segment overflow
+         sec
+         adc   segDisp
+         cmp   #buffSize
          bge   lb2a
 lb2      ph4   objPtr                   p := pointer(ord4(objPtr)+segDisp);
          tsc                            p^ := b;
@@ -169,18 +169,18 @@ lb2      ph4   objPtr                   p := pointer(ord4(objPtr)+segDisp);
          long  M
          inc   segDisp                  segDisp := segDisp+1;
 
-	pld
+         pld
          tsc
          clc
          adc   #4
          tcs
          rts
 
-lb2a     lda   #$1000	handle a segment buffer overflow
+lb2a     lda   #$1000                   handle a segment buffer overflow
          sta   segDisp
          ph2   #112
          jsl   Error
-	rts
+         rts
          end
 
 ****************************************************************
@@ -193,20 +193,20 @@ lb2a     lda   #$1000	handle a segment buffer overflow
 ****************************************************************
 *
 OutWord  private
-buffSize equ	16384	buffer size
+buffSize equ   16384                    buffer size
 
          lda   objLen                   if objLen+segDisp+2 = buffSize then
          sec
          adc   segDisp
-	cmp	#buffSize-1
+         cmp   #buffSize-1
          blt   lb2
-	phx		   PurgeObjBuffer;
-	jsl	PurgeObjBuffer
-	plx
-	lda	objLen	   check for segment overflow
-	sec
-	adc	segDisp
-	cmp	#buffSize-1
+         phx                               PurgeObjBuffer;
+         jsl   PurgeObjBuffer
+         plx
+         lda   objLen                      check for segment overflow
+         sec
+         adc   segDisp
+         cmp   #buffSize-1
          bge   lb3
 lb2      ph4   objPtr                   p := pointer(ord4(objPtr)+segDisp);
          tsc                            p^ := b;
@@ -229,6 +229,6 @@ lb2      ph4   objPtr                   p := pointer(ord4(objPtr)+segDisp);
 lb3      ph2   #112                     flag segment overflow error
          jsl   Error
          lda   #$1000
-	sta   segDisp
-	rts
+         sta   segDisp
+         rts
          end

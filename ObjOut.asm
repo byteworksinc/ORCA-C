@@ -151,12 +151,12 @@ OutByte  private CodeGen
          adc   segDisp+2
          and   #$FFFE
          beq   lb2
-	phx		   PurgeObjBuffer;
-	jsl	PurgeObjBuffer
-	plx
-	lda	objLen	   check for segment overflow
-	clc
-	adc	segDisp
+         phx                               PurgeObjBuffer;
+         jsl   PurgeObjBuffer
+         plx
+         lda   objLen                      check for segment overflow
+         clc
+         adc   segDisp
          lda   objLen+2
          adc   segDisp+2
          and   #$FFFE
@@ -177,19 +177,19 @@ lb2      anop                           carry must be clear
          long  M
          inc4  segDisp                  segDisp := segDisp+1;
 
-	pld
+         pld
          tsc
          clc
          adc   #4
          tcs
          rts
 
-lb2a     lda   #$8000	handle a segment overflow
+lb2a     lda   #$8000                   handle a segment overflow
          sta   segDisp
          stz   segDisp+2
          ph2   #112
          jsl   Error
-	rts
+         rts
          end
 
 ****************************************************************
@@ -210,12 +210,12 @@ OutWord  private CodeGen
          adc   segDisp+2
          and   #$FFFE
          beq   lb2
-	phx		   PurgeObjBuffer;
-	jsl	PurgeObjBuffer
-	plx
-	lda	objLen	   check for segment overflow
-	sec
-	adc	segDisp
+         phx                               PurgeObjBuffer;
+         jsl   PurgeObjBuffer
+         plx
+         lda   objLen                      check for segment overflow
+         sec
+         adc   segDisp
          lda   objLen+2
          adc   segDisp+2
          and   #$FFFE
@@ -244,7 +244,7 @@ lb2      anop                          carry must be clear
 lb3      ph2   #112                     flag segment overflow error
          jsl   Error
          lda   #$8000
-	sta	segDisp
+         sta   segDisp
          stz   segDisp+2
-	rts
+         rts
          end
