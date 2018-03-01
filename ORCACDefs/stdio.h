@@ -61,7 +61,7 @@ typedef struct __file {
                         *_end;          /* end of the file buffer */
    unsigned long        _size,          /* size of the file buffer */
                         _cnt;           /* # chars that can be read/written to buffer */
-   int                  _pbk[2];        /* put back buffer */
+   int                  _pbk;           /* put back buffer */
    unsigned int         _flag,          /* buffer flags */
                         _file;          /* GS/OS file ID */
    } FILE;
