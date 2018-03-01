@@ -849,6 +849,8 @@ var
    {    ip - identifier to generate				}
    {    storage - storage type; none for struct/union fields	}
 
+   label 1;
+
    var
       disp: integer;			{disp to symbol of same type}
 
@@ -1108,7 +1110,11 @@ var
                         if disp = noDisp then begin
         		   CnOut(12);
         		   CnOut2(0);
+                           		{update length of symbol table before  }
+                           		{handling any nested struct definitions}
+                           symLength := symLength+12;
                            ExpandStructType(ip^.itype);
+                           goto 1;
                            end {if}
                         else begin
         		   CnOut(13);
@@ -1117,7 +1123,7 @@ var
                         end;
          end; {case}
       symLength := symLength+12;	{update length of symbol table}
-      end; {if}
+1:    end; {if}
    end; {GenSymbol}
 
 
