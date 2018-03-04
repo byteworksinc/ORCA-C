@@ -1762,7 +1762,7 @@ var
 begin {GenNative}
 { writeln('GenNative: ',p_opcode:4, ', mode=', ord(p_mode):1,
    ' operand=', p_operand:1);      {debug}
-if npeephole then begin
+if npeephole and not (strictVararg and hasVarargsCall) then begin
    if (nnextspot = 1) and not (p_opcode in nleadOpcodes) then begin
       if p_opcode <> d_end then
          if registers then

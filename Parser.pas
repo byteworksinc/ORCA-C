@@ -3474,6 +3474,7 @@ if isFunction then begin
       else
          Gen2Name (dc_str, segType, 0, variable^.name);
       doingMain := variable^.name^ = 'main';
+      hasVarargsCall := false;
       firstCompoundStatement := true;
       Gen0 (dc_pin);
       if not isAsm then

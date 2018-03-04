@@ -2703,7 +2703,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      commonSubexpression := odd(val >> 4);
                      loopOptimizations := odd(val >> 5);
                      strictVararg := not odd(val >> 6);
-                     if saveStack or strictVararg then
+                     if saveStack then
                         npeepHole := false;
                      if token.kind <> eolsy then
                         Error(11);
