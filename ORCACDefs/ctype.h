@@ -27,6 +27,7 @@ extern char __ctype[],__ctype2[];
 #define __csym          0x01
 #define __csymf         0x02
 #define __octal         0x04
+#define __blank         0x08
 
 
 int             isalnum(int);
@@ -50,6 +51,7 @@ int             ispunct(int);
 int             isspace(int);
 int             isupper(int);
 int             isxdigit(int);
+int             isblank(int);
 #ifndef __KeepNamespacePure__
    int          toascii(int);
 #endif
@@ -76,6 +78,7 @@ int             isxdigit(int);
 #define isspace(c)      ((__ctype)[(c)+1] & __space)
 #define isupper(c)      ((__ctype)[(c)+1] & __upper)
 #define isxdigit(c)     ((__ctype)[(c)+1] & __hex)
+#define isblank(c)      ((__ctype2)[(c)+1] & __blank)
 #ifndef __KeepNamespacePure__
    #define toascii(c)      ((c) & 0x7F)
 #endif
