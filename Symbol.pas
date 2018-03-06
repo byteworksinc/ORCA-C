@@ -836,7 +836,7 @@ var
       tp1^.next := tpList;
       tpList := tp1;
       tp1^.tp := tp;
-      tp1^.disp := symLength;
+      tp1^.disp := symLength-12;
       end; {else}
    end; {GetTypeDisp}
 
@@ -848,8 +848,6 @@ var
    { parameters:						}
    {    ip - identifier to generate				}
    {    storage - storage type; none for struct/union fields	}
-
-   label 1;
 
    var
       disp: integer;			{disp to symbol of same type}
@@ -1094,6 +1092,7 @@ var
    if ip^.itype^.kind in
       [scalarType,arrayType,pointerType,enumType,structType,unionType]
       then begin
+      symLength := symLength+12;        {update length of symbol table}
       WriteName(ip);			{write the name field}
       WriteAddress(ip);			{write the address field}
       case ip^.itype^.kind of
@@ -1110,11 +1109,7 @@ var
                         if disp = noDisp then begin
         		   CnOut(12);
         		   CnOut2(0);
-                           		{update length of symbol table before  }
-                           		{handling any nested struct definitions}
-                           symLength := symLength+12;
                            ExpandStructType(ip^.itype);
-                           goto 1;
                            end {if}
                         else begin
         		   CnOut(13);
@@ -1122,8 +1117,7 @@ var
                            end; {else}
                         end;
          end; {case}
-      symLength := symLength+12;	{update length of symbol table}
-1:    end; {if}
+      end; {if}
    end; {GenSymbol}
 
 
