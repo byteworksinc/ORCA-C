@@ -146,6 +146,7 @@ int             scanf(const char *, ...);
 void            setbuf(FILE *, char *);
 int             setvbuf(FILE *, char *, int, size_t);
 int             sprintf(char *, const char *, ...);
+int             snprintf(char *, size_t, const char *, ...);
 int             sscanf(const char *, const char *, ...);
 FILE           *tmpfile(void);
 char           *tmpnam(char *);
@@ -153,5 +154,6 @@ int             ungetc(int c, FILE *);
 int             vfprintf(FILE *, const char *, __va_list);
 int             vprintf(const char *, __va_list);
 int             vsprintf(char *, const char *, __va_list);
+int             vsnprintf(char *, size_t, const char *, __va_list);
 
 #endif
