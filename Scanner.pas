@@ -610,6 +610,7 @@ if list or (numErr <> 0) then begin
         120: msg := @'non-static inline functions are not supported';
         121: msg := @'invalid digit for binary constant';
         122: msg := @'arithmetic is not allowed on a pointer to an incomplete or function type';
+        123: msg := @'array element type may not be an incomplete or function type';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

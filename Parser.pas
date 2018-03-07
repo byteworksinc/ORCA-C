@@ -3024,12 +3024,18 @@ var
       tp := v^.itype;                   {initialize the type pointer}
       while tp <> nil do begin          {check all types}
          if tp^.kind = arrayType then   {if it's an array with an unspecified  }
+            begin
             if tp^.elements = 0 then    { size and an unspecified size is not  }
                if not firstVariable then { allowed here, flag an error.         }
                   begin
                   Error(49);
                   goto 1;
                   end; {if}
+            if tp^.aType^.size = 0 then begin
+               Error(123);
+               goto 1;
+               end; {if}
+            end; {if}
          firstVariable := false;        {unspecified sizes are only allowed in }
                                         { the first subscript                  }
          case tp^.kind of               {next type...}
