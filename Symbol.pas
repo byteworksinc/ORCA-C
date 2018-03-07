@@ -448,6 +448,7 @@ procedure DoGlobals;
       size: longint;                    {size of the array}
       sp: identPtr;                     {pointer to a symbol table entry}
       tPtr: typePtr;                    {type of global array/struct/union}
+      msg: stringPtr;                   {error message ptr}
 
    begin {GenArrays}
    didOne := false;
@@ -502,6 +503,26 @@ procedure DoGlobals;
                   end {if}
                else begin
                   size := sp^.itype^.size;
+                  if size = 0 then begin
+                     if sp^.itype^.kind = arrayType then begin
+                                        {implicitly initialize with one element}
+                        size := sp^.itype^.aType^.size;
+                        end {if}
+                     else begin
+                        numErrors := numErrors+1;
+                        new(msg);
+                        msg^ := concat('The struct or union ''', sp^.name^,
+                           ''' has incomplete type that was never completed.');
+                        writeln('*** ', msg^);
+                        if terminalErrors then begin
+                           if enterEditor then
+                              ExitToEditor(msg, ord4(firstPtr)-ord4(bofPtr))
+                           else
+                              TermError(0);
+                           end; {if}
+                        liDCBGS.merrf := 16;
+                        end; {else}
+                     end; {if}
                   Gen2Name(dc_glb, long(size).lsw & $7FFF,
                      ord(sp^.storage = private), sp^.name);
         	  size := size & $FFFF8000;
@@ -567,6 +588,9 @@ procedure DoGlobals;
                      otherwise: Error(57);
                      end; {case}
                   end {if}
+               {else if sp^.itype^.size = 0 then begin
+                  Error(57);
+                  end {else if}
                else
                   Gen2Name(dc_glb, ord(sp^.itype^.size),
                      ord(sp^.storage = private), sp^.name);

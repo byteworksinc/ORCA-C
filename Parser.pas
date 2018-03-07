@@ -3592,7 +3592,8 @@ else {if not isFunction then} begin
             end; {if}
                                         {check to insure array sizes are specified}
          if storageClass <> typedefsy then
-            CheckArray(variable, (storageClass = externsy) or doingParameters);
+            CheckArray(variable,
+               (storageClass = externsy) or doingParameters or not doingFunction);
                                         {allocate space}
          if variable^.storage = stackFrame then begin
             variable^.lln := GetLocalLabel;
