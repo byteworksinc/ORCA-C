@@ -1342,7 +1342,6 @@ if space <> fieldListSpace then begin   {are we defining a function?}
       end {if}
    else if (itype^.kind in [structType,unionType]) and (itype^.fieldList = nil)
       and doingParameters then begin
-      isGlobal := true;
       useGlobalPool := true;
       end; {else if}
    if noDeclarations then begin         {if we need a symbol table, create it}
