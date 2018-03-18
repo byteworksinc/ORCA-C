@@ -1,10 +1,10 @@
-ORCA/C 2.2.0 B2
+ORCA/C 2.2.0 B3
 Copyright 1997, Byte Works Inc.
-Updated by Stephen Heumann and Kelvin Sherlock, 2017
+Updated by Stephen Heumann and Kelvin Sherlock, 2017-2018
 
 -- Change List --------------------------------------------------------------
 
-2.2.0 B2    1.	Bugs squashed.  See bug notes, below.
+2.2.0 B3    1.	Bugs squashed.  See bug notes, below.
 
             2.	New language features added (mainly features from C99).
               	See "Compiler changes introduced in C 2.2.0."
@@ -24,6 +24,11 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017
 
             8.	Two new #pragma ignore bits are defined.  See "Compiler changes
               	introduced in C 2.2.0".
+
+            9.	Stack repair code is now more efficient.
+            
+            10.	Some new library functions and features from C99 have been
+              	added.  See "Library Updates."
 
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
@@ -297,6 +302,37 @@ ORCA/C now includes three new headers specified by recent C standards.
 
 3.  The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  The macros provided generally conform to the C99 and C11 standards, but certain macros specified by the standards are not available due to ORCA/C limitations.  The functions that the standards specify should be declared in this header are also not available.
 
+
+Library Updates
+---------------
+ORCA/C now includes some new library functions and features specified by the C99 standard:
+
+1.  The isblank() function and macro have been added:
+
+#include <ctype.h>
+int isblank(int c);
+
+isblank returns non-zero if the argument is a standard blank character, and zero if it is not.  The argument must lie in the range -1 to 255, or the result is not valid.  The standard blank characters are space and horizontal tab.
+
+2.  The snprintf() and vsnprintf() functions have been added:
+
+#include <stdio.h>
+int snprintf(char * s, size_t n, const char * restrict, ...);
+
+#include <stdarg.h>
+#include <stdio.h>
+int vsnprintf(char * s, size_t n, const char * format, va_list arg);
+
+These are equivalent to sprintf and vsprintf, except that they take an additional argument giving the maximum number of characters to be written.  If n is 0, no characters are written.  Otherwise, at most n-1 characters are written based on the format string, followed by a terminating null character.  They return the number of characters (not including the terminating null character) that would have been written if there was no size limit.
+
+3.  The fprintf() and fscanf() families of functions have been updated to support some additional length modifiers and conversion specifiers:
+
+The length modifiers 'z', 't', and 'j' are now allowed in the format strings for the fprintf and fscanf families of functions.  They may be used with the 'd', 'i', 'o', 'u', 'x', 'X', or 'n' conversion specifiers.  These each correspond to integer types, as follows: 'z' to size_t or the corresponding signed integer type, 't' to ptrdiff_t or the corresponding unsigned integer type, and 'j' to intmax_t or uintmax_t.  (In ORCA/C, these are all 32-bit types.)  The corresponding argument must be an integer of an appropriate type, or a pointer to such an integer, as appropriate for the conversion specifier and function.
+
+The conversion specifiers 'F', 'a', and 'A' are now allowed in the format strings for the fscanf family of functions.  These are all equivalent to 'f'.
+
+The conversion specifier 'F' is now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.  The conversion specifiers 'a' and 'A' (both also used with floating-point numbers) are also recognized in the format strings for the fprintf family of functions, but they do not currently print the numbers in the hexadecimal format required by the C99 standard.
+
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
 The Default .h File
@@ -567,6 +603,58 @@ int foo(int[42]);
 58. When a macro's own name was used within it, that token could be re-expanded later in some cases. That re-expansion is now blocked, consistent with the C standards.
 
 59. When zero was consecutively stored to two global or static variables, the second store might be omitted if using the native code peephole optimizer.  (This was a regression introduced in ORCA/C 2.2.0 B1.)
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B3.)
+
+60. If two consecutive operations stored zero to the same volatile variable, one of the stores might be omitted if using the native code peephole optimizer.  (This was a regression introduced in ORCA/C 2.2.0 B1.)
+
+61. Invalid debug code was generated in some cases involving structs or unions.
+
+(Kelvin Sherlock)
+
+62. The definition of struct __file in <stdio.h> did not match that actually used by the ORCALib library binary.  This could cause problems with (non-portable) code that accesses the members of that structure.
+
+63. Parameters in a function prototype with previously-undeclared structure types would be entered in the global symbol table, which could cause incorrect behavior or error messages if the same name was used later.
+
+(Kelvin Sherlock)
+
+64. Tentative definitions of arrays (e.g. "int i[];" at file scope) are now allowed and handled as required by the C standards: such arrays will wind up having one element, initialized to 0, unless a subsequent non-tentative definition gives a size.  
+
+65. sys_nerr was 6; it should be 12.
+
+(Devin Reade)
+
+66. The function (but not the macro) for iscntrl() was misnamed isctrl().
+
+(Devin Reade)
+
+67. toupper() and tolower() were not correctly handling inputs of EOF (-1).
+
+(Kelvin Sherlock)
+
+68. The code to parse the command line into argv would mis-handle certain cases involving double-quoted arguments (such as double-quoted arguments containing only whitespace characters), which could lead to argv being corrupted.
+
+(Kelvin Sherlock)
+
+69. When argc==0 (as for S16 programs and various other cases), argv should be a valid pointer and argv[0] should be NULL.
+
+70. sprintf()/vsprintf() should write a terminating null character even if the string produced is empty.
+
+71. asctime() should correctly print dates in the years 1000 through 9999.
+
+(Steve Reeves)
+
+72. mktime() was treating the tm_yday field of struct tm as if it was indexed from 1 for January 1st.  In fact, it is the number of days since January 1st.
+
+(Steve Reeves)
+
+73. Calling system(NULL) should detect whether a command processor is present.
+
+(Philippe R Manet)
+
+74. strtol()/strtoul() should return LONG_MIN/LONG_MAX/ULONG_MAX for out-of-range values.
+
+(Devin Reade)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
