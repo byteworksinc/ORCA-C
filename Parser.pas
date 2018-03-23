@@ -7,6 +7,7 @@
 {                                                               }
 {  DoDeclaration - process a variable or function declaration   }
 {  DoStatement - process a statement from a function            }
+{  AutoInit - generate code to initialize an auto variable      }
 {  InitParser - initialize the parser                           }
 {  Match - insure that the next token is of the specified type  }
 {  TermParser - shut down the parser                            }
@@ -37,6 +38,14 @@ procedure DoDeclaration (doingPrototypes: boolean);
 procedure DoStatement;
 
 { process a statement from a function                           }
+
+
+procedure AutoInit (variable: identPtr);
+
+{ generate code to initialize an auto variable                  }
+{                                                               }
+{ parameters:                                                   }
+{       variable - the variable to initialize                   }
 
 
 procedure InitParser;
@@ -72,6 +81,7 @@ implementation
 
 const
    maxBitField = 32;                    {max # of bits in a bit field}
+   allowMixedDeclarations = true;
  
 type
 
@@ -145,7 +155,6 @@ var
    doingMain: boolean;                  {are we processing the main function?}
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
-   initializerList: identList;          {list of initialized identifiers}
    isForwardDeclared: boolean;          {is the field list component           }
                                         { referenceing a forward struct/union? }
    isFunction: boolean;                 {is the declaration a function?}
@@ -273,7 +282,6 @@ stPtr^.kind := compoundSt;
 if makeSymbols then			{create a symbol table}
    PushTable;
 stPtr^.doingDeclaration := true;        {allow declarations}
-initializerList := nil;                 {no initializers, yet}
 end; {CompoundStatement}
 
 
@@ -2432,10 +2440,6 @@ while iPtr <> nil do begin
 variable^.iPtr := jPtr;
 if errorFound then                      {eliminate bad initializers}
    variable^.state := defined;
-new(ip);                                {place the initializer in the list}
-ip^.next := initializerList;
-ip^.id := variable;
-initializerList := ip;
 useGlobalPool := luseGlobalPool;        {restore useGlobalPool}
 end; {Initializer}
 
@@ -3598,6 +3602,8 @@ else {if not isFunction then} begin
          if variable^.storage = stackFrame then begin
             variable^.lln := GetLocalLabel;
             Gen2(dc_loc, variable^.lln, long(variable^.itype^.size).lsw);
+            if variable^.state = initialized then
+               AutoInit(variable);      {initialize auto variable}
             end; {if}
          if (token.kind = commach) and (not doingPrototypes) then begin
             done := false;              {allow multiple variables on one line}
@@ -3646,300 +3652,14 @@ procedure DoStatement;
 
 { process a statement from a function                           }
 
-
-   procedure AutoInit;
-   
-   { initialize auto variables                                  }
-   
-   var
-      count: integer;                   {initializer counter}
-      ip: identPtr;                     {pointer to a symbol table entry}
-      lp1,lp2: identList;               {used to reverse, track the list}
-      iPtr: initializerPtr;             {pointer to the next initializer}
-
-
-      procedure Initialize (id: identPtr; disp: longint; itype: typePtr);
-
-      { initialize a variable                                   }
-      {                                                         }
-      { parameters:                                             }
-      {    id - pointer to the identifier                       }
-      {    disp - disp past the identifier to initialize        }
-      {    itype - type of the variable to initialize           }
-      {                                                         }
-      { variables:                                              }
-      {    count - number of times to re-use the initializer    }
-      {    ip - pointer to the initializer record to use        }
-
-      label 1;
-
-      var
-         elements: longint;             {# array elements}
-         fp: identPtr;                  {for tracing field lists}
-         size: integer;			{fill size}
-         union: boolean;                {are we doing a union?}
-
-                                        {bit field manipulation}
-                                        {----------------------}
-         bitcount: integer;             {# if bits so far}
-         bitsize,bitdisp: integer;      {defines size, location of a bit field}
-
-                                        {assignment conversion}
-                                        {---------------------}
-         tree: tokenPtr;                {expression tree}
-         val: longint;                  {constant expression value}
-         isConstant: boolean;           {is the expression a constant?}
-
-
-         procedure LoadAddress;
-
-         { Load the address of the operand                      }
-
-         begin {LoadAddress}
-         with id^ do                    {load the base address}
-            case storage of
-               stackFrame:     Gen2(pc_lda, lln, 0);
-               parameter:      if itype^.kind = arrayType then
-                                  Gen2t(pc_lod, pln, 0, cgULong)
-                               else
-                                  Gen2(pc_lda, pln, 0);
-               external,
-               global,
-               private:        Gen1Name(pc_lao, 0, name);
-               otherwise: ;
-               end; {case}
-         if disp <> 0 then
-            Gen1t(pc_inc, long(disp).lsw, cgULong)
-         end; {LoadAddress}
-
-
-         function ZeroFill (elements: longint; itype: typePtr;
-                            count: integer; iPtr: initializerPtr): boolean;
-
-         { See if an array can be zero filled				}
-         {								}
-         { parameters:							}
-         {    elements - elements in the array				}
-         {    itype - type of each array element			}
-         {    count - remaining initializer repititions			}
-         {    iPtr - initializer record					}
-
-         begin {ZeroFill}
-         ZeroFill := false;
-         if not iPtr^.isConstant then
-            if itype^.kind in [scalarType,enumType] then
-               if count >= elements then
-                  with iPtr^.itree^ do
-        	     if token.kind = intconst then
-                        if token.ival = 0 then
-                                        {don't call ~ZERO for very small arrays}
-                           if elements * itype^.size > 10 then
-                              ZeroFill := true;
-         end; {ZeroFill}
-
-
-      begin {Initialize}
-      case itype^.kind of
-
-         scalarType,pointerType,enumType,functionType: begin
-            LoadAddress;                {load the destination address}
-            doDispose := count = 1;     {generate the expression value}
-            tree := iptr^.itree;        {see if this is a constant}
-                                        {do assignment conversions}
-            while tree^.token.kind = castoper do
-               tree := tree^.left;
-            isConstant := tree^.token.class in [intConstant,longConstant];
-            if isConstant then
-               if tree^.token.class = intConstant then
-                  val := tree^.token.ival
-               else
-                  val := tree^.token.lval;
-
-{        if isConstant then
-            if tree^.token.class = intConstant then
-               Writeln('loc 2: bitsize = ', iPtr^.bitsize:1, '; ival = ', tree^.token.ival:1) {debug}
-{           else
-               Writeln('loc 2: bitsize = ', iPtr^.bitsize:1, '; lval = ', tree^.token.lval:1) {debug}
-{        else
-            Writeln('loc 2: bitsize = ', iPtr^.bitsize:1); {debug}
-
-            GenerateCode(iptr^.iTree);
-            AssignmentConversion(itype, expressionType, isConstant, val, true,
-               false);
-            case itype^.kind of         {save the value}
-               scalarType:
-                  if iptr^.bitsize <> 0 then
-                     Gen2t(pc_sbf, iptr^.bitdisp, iptr^.bitsize, itype^.basetype)
-                  else
-                     Gen0t(pc_sto, itype^.baseType);
-               enumType:
-                  Gen0t(pc_sto, cgWord);
-               pointerType,functionType:
-                  Gen0t(pc_sto, cgULong);
-               end; {case}
-            end;
-
-         arrayType: begin
-            if itype^.aType^.kind = scalarType then
-               if itype^.aType^.baseType in [cgByte,cgUByte] then
-                  if iPtr^.iTree^.token.kind = stringConst then begin
-                     GenLdcLong(itype^.elements);
-                     Gen0t(pc_stk, cgULong);
-                     GenS(pc_lca, iPtr^.iTree^.token.sval);
-                     Gen0t(pc_stk, cgULong);
-                     Gen0t(pc_bno, cgULong);
-                     LoadAddress;
-                     Gen0t(pc_stk, cgULong);
-                     Gen0t(pc_bno, cgULong);
-                     Gen1tName(pc_cup, 0, cgVoid, @'strncpy');
-                     iPtr := iPtr^.next;
-                     goto 1;
-                     end; {if}
-            elements := itype^.elements;
-            itype := itype^.atype;
-            if ZeroFill(elements, itype, count, iPtr) then begin
-               if itype^.kind = enumType then
-                  size := cgWordSize
-               else
-                  size := TypeSize(itype^.baseType);
-               size := size * long(elements).lsw;
-               LoadAddress;
-               Gen0t(pc_stk, cgULong);
-               Gen1t(pc_ldc, size, cgWord);
-               Gen0t(pc_stk, cgWord);
-               Gen0t(pc_bno, cgULong);
-               Gen1tName(pc_cup, 0, cgVoid, @'~ZERO');
-               disp := disp + size;
-               count := count - long(elements).lsw;
-               if count = 0 then begin
-                  iPtr := iPtr^.next;
-                  count := iPtr^.count;
-                  end; {if}
-               end {if}
-            else begin
-               while elements <> 0 do begin
-        	  Initialize(id, disp, itype);
-        	  if itype^.kind in [scalarType,pointerType,enumType] then begin
-                     count := count-1;
-                     if count = 0 then begin
-                	iPtr := iPtr^.next;
-                	count := iPtr^.count;
-                	end; {if}
-                     end; {if}
-        	  disp := disp+itype^.size;
-        	  elements := elements-1;
-        	  end; {while}
-               end; {else}
-1:          end;
-
-         structType,unionType: begin
-            if iPtr^.isStructOrUnion then begin
-               LoadAddress;             {load the destination address}
-               GenerateCode(iptr^.iTree); {load the stuct address}
-                                        {do the assignment}
-               AssignmentConversion(itype, expressionType, isConstant, val,
-                  true, false);
-               with expressionType^ do
-                  Gen2(pc_mov, long(size).msw, long(size).lsw);
-               Gen0t(pc_pop, UsualUnaryConversions);
-               end {if}
-            else begin
-               union := itype^.kind = unionType;
-               fp := itype^.fieldList;
-               bitsize := iPtr^.bitsize;
-               bitdisp := iPtr^.bitdisp;
-               bitcount := 0;
-               while fp <> nil do begin
-                  itype := fp^.itype;
-{                 writeln('Initialize:    disp = ',    disp:3, '; fp^.   Disp = ', fp^.disp:3, 'itype^.size = ', itype^.size:1); {debug}
-{                 writeln('            bitDisp = ', bitDisp:3, '; fp^.bitDisp = ', fp^.bitDisp:3); {debug}
-{                 writeln('            bitSize = ', bitSize:3, '; fp^.bitSize = ', fp^.bitSize:3); {debug}
-                  Initialize(id, disp, itype);
-                  if bitsize = 0 then begin
-                     if bitcount <> 0 then begin
-                        disp := disp + (bitcount+7) div 8;
-                        bitcount := 0;
-                        end {if}
-                     else if fp^.bitSize <> 0 then begin
-                        bitcount := 8;
-                        while (fp <> nil) and (bitcount > 0) do begin
-                           bitcount := bitcount - fp^.bitSize;
-                           if bitcount > 0 then
-                              if fp^.next <> nil then
-                                 if fp^.next^.bitSize <> 0 then
-                                    fp := fp^.next
-                        	 else
-                        	    bitcount := 0;
-                           end; {while}
-                        bitcount := 0;
-                        disp := disp + 1;
-                        end {else if}
-                     else
-                        disp := disp + itype^.size;
-                     end {if}
-                  else if fp^.bitSize = 0 then begin
-                     bitsize := 0;
-                     disp := disp + itype^.size;
-                     end {else if}
-                  else begin
-                     if bitsize + bitdisp < bitcount then
-                        disp := disp + (bitcount + 7) div 8;
-                     bitcount := bitsize + bitdisp;
-                     end; {else}
-                  if itype^.kind in [scalarType,pointerType,enumType] then begin
-                     count := count-1;
-                     if count = 0 then begin
-                        iPtr := iPtr^.next;
-                        count := iPtr^.count;
-                        bitsize := iPtr^.bitsize;
-                        bitdisp := iPtr^.bitdisp;
-                        end; {if}
-                     end; {if}
-                  if union then
-                     fp := nil
-                  else
-                     fp := fp^.next;
-                  end; {while}
-               end; {else}
-            end;
-
-         otherwise: Error(57);
-         end; {case}
-      end; {Initialize}
-
-
-   begin {AutoInit}
-   lp1 := nil;                          {reverse the list}
-   while initializerList <> nil do begin
-      lp2 := initializerList;
-      initializerList := lp2^.next;
-      lp2^.next := lp1;
-      lp1 := lp2;
-      end; {while}
-  while lp1 <> nil do begin             {initialize the variables}
-     ip := lp1^.id;
-     iPtr := ip^.iPtr;
-     count := iPtr^.count;
-     if ip^.class <> staticsy then
-        Initialize(ip, 0, ip^.itype);
-     lp2 := lp1;
-     lp1 := lp1^.next;
-     dispose(lp2);
-     end; {while}
-   end; {AutoInit}
-
-
 begin {DoStatement}
 case statementList^.kind of
 
    compoundSt: begin
       if token.kind = rbracech then begin
-         if statementList^.doingDeclaration then
-            if initializerList <> nil then
-               AutoInit;
          EndCompoundStatement;
          end {if}
-      else if (statementList^.doingDeclaration = true)
+      else if (statementList^.doingDeclaration or allowMixedDeclarations)
          and (token.kind in [autosy,externsy,registersy,staticsy,typedefsy,
                              unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
                              floatsy,doublesy,compsy,extendedsy,enumsy,
@@ -3954,8 +3674,6 @@ case statementList^.kind of
                Gen1Name(dc_sym, ord(doingMain), pointer(table));
                firstCompoundStatement := false;
                end; {if}
-            if initializerList <> nil then
-               AutoInit;
             end; {if}
          Statement;
          end; {else}
@@ -3982,6 +3700,276 @@ case statementList^.kind of
    otherwise: Error(57);
    end; {case}
 end; {DoStatement}
+
+
+procedure AutoInit {variable: identPtr};
+
+{ generate code to initialize an auto variable                  }
+{                                                               }
+{ parameters:                                                   }
+{       variable - the variable to initialize                   }
+
+var
+   count: integer;                      {initializer counter}
+   iPtr: initializerPtr;                {pointer to the next initializer}
+
+
+   procedure Initialize (id: identPtr; disp: longint; itype: typePtr);
+
+   { initialize a variable                                      }
+   {                                                            }
+   { parameters:                                                }
+   {    id - pointer to the identifier                          }
+   {    disp - disp past the identifier to initialize           }
+   {    itype - type of the variable to initialize              }
+   {                                                            }
+   { variables:                                                 }
+   {    count - number of times to re-use the initializer       }
+   {    ip - pointer to the initializer record to use           }
+
+   label 1;
+
+   var
+      elements: longint;                {# array elements}
+      fp: identPtr;                     {for tracing field lists}
+      size: integer;                    {fill size}
+      union: boolean;                   {are we doing a union?}
+
+                                        {bit field manipulation}
+                                        {----------------------}
+      bitcount: integer;                {# if bits so far}
+      bitsize,bitdisp: integer;         {defines size, location of a bit field}
+
+                                        {assignment conversion}
+                                        {---------------------}
+      tree: tokenPtr;                   {expression tree}
+      val: longint;                     {constant expression value}
+      isConstant: boolean;              {is the expression a constant?}
+
+
+      procedure LoadAddress;
+
+      { Load the address of the operand                         }
+
+      begin {LoadAddress}
+      with id^ do                       {load the base address}
+         case storage of
+            stackFrame:     Gen2(pc_lda, lln, 0);
+            parameter:      if itype^.kind = arrayType then
+                               Gen2t(pc_lod, pln, 0, cgULong)
+                            else
+                               Gen2(pc_lda, pln, 0);
+            external,
+            global,
+            private:        Gen1Name(pc_lao, 0, name);
+            otherwise: ;
+            end; {case}
+      if disp <> 0 then
+         Gen1t(pc_inc, long(disp).lsw, cgULong)
+      end; {LoadAddress}
+
+
+      function ZeroFill (elements: longint; itype: typePtr;
+                         count: integer; iPtr: initializerPtr): boolean;
+
+      { See if an array can be zero filled			}
+      {								}
+      { parameters:						}
+      {    elements - elements in the array			}
+      {    itype - type of each array element			}
+      {    count - remaining initializer repititions		}
+      {    iPtr - initializer record				}
+
+      begin {ZeroFill}
+      ZeroFill := false;
+      if not iPtr^.isConstant then
+         if itype^.kind in [scalarType,enumType] then
+            if count >= elements then
+               with iPtr^.itree^ do
+                  if token.kind = intconst then
+                     if token.ival = 0 then
+                                        {don't call ~ZERO for very small arrays}
+                        if elements * itype^.size > 10 then
+                           ZeroFill := true;
+      end; {ZeroFill}
+
+
+   begin {Initialize}
+   case itype^.kind of
+
+      scalarType,pointerType,enumType,functionType: begin
+         LoadAddress;                   {load the destination address}
+         doDispose := count = 1;        {generate the expression value}
+         tree := iptr^.itree;           {see if this is a constant}
+                                        {do assignment conversions}
+         while tree^.token.kind = castoper do
+            tree := tree^.left;
+         isConstant := tree^.token.class in [intConstant,longConstant];
+         if isConstant then
+            if tree^.token.class = intConstant then
+               val := tree^.token.ival
+            else
+               val := tree^.token.lval;
+
+{        if isConstant then
+            if tree^.token.class = intConstant then
+               Writeln('loc 2: bitsize = ', iPtr^.bitsize:1, '; ival = ', tree^.token.ival:1) {debug}
+{           else
+               Writeln('loc 2: bitsize = ', iPtr^.bitsize:1, '; lval = ', tree^.token.lval:1) {debug}
+{        else
+            Writeln('loc 2: bitsize = ', iPtr^.bitsize:1); {debug}
+
+         GenerateCode(iptr^.iTree);
+         AssignmentConversion(itype, expressionType, isConstant, val, true,
+            false);
+         case itype^.kind of            {save the value}
+            scalarType:
+               if iptr^.bitsize <> 0 then
+                  Gen2t(pc_sbf, iptr^.bitdisp, iptr^.bitsize, itype^.basetype)
+               else
+                  Gen0t(pc_sto, itype^.baseType);
+            enumType:
+               Gen0t(pc_sto, cgWord);
+            pointerType,functionType:
+               Gen0t(pc_sto, cgULong);
+            end; {case}
+         end;
+
+      arrayType: begin
+         if itype^.aType^.kind = scalarType then
+            if itype^.aType^.baseType in [cgByte,cgUByte] then
+               if iPtr^.iTree^.token.kind = stringConst then begin
+                  GenLdcLong(itype^.elements);
+                  Gen0t(pc_stk, cgULong);
+                  GenS(pc_lca, iPtr^.iTree^.token.sval);
+                  Gen0t(pc_stk, cgULong);
+                  Gen0t(pc_bno, cgULong);
+                  LoadAddress;
+                  Gen0t(pc_stk, cgULong);
+                  Gen0t(pc_bno, cgULong);
+                  Gen1tName(pc_cup, 0, cgVoid, @'strncpy');
+                  iPtr := iPtr^.next;
+                  goto 1;
+                  end; {if}
+         elements := itype^.elements;
+         itype := itype^.atype;
+         if ZeroFill(elements, itype, count, iPtr) then begin
+            if itype^.kind = enumType then
+               size := cgWordSize
+            else
+               size := TypeSize(itype^.baseType);
+            size := size * long(elements).lsw;
+            LoadAddress;
+            Gen0t(pc_stk, cgULong);
+            Gen1t(pc_ldc, size, cgWord);
+            Gen0t(pc_stk, cgWord);
+            Gen0t(pc_bno, cgULong);
+            Gen1tName(pc_cup, 0, cgVoid, @'~ZERO');
+            disp := disp + size;
+            count := count - long(elements).lsw;
+            if count = 0 then begin
+               iPtr := iPtr^.next;
+               count := iPtr^.count;
+               end; {if}
+            end {if}
+         else begin
+            while elements <> 0 do begin
+               Initialize(id, disp, itype);
+               if itype^.kind in [scalarType,pointerType,enumType] then begin
+                  count := count-1;
+                  if count = 0 then begin
+                     iPtr := iPtr^.next;
+                     count := iPtr^.count;
+                     end; {if}
+                  end; {if}
+               disp := disp+itype^.size;
+               elements := elements-1;
+               end; {while}
+            end; {else}
+1:          end;
+
+      structType,unionType: begin
+         if iPtr^.isStructOrUnion then begin
+            LoadAddress;                {load the destination address}
+            GenerateCode(iptr^.iTree);  {load the stuct address}
+                                        {do the assignment}
+            AssignmentConversion(itype, expressionType, isConstant, val,
+               true, false);
+            with expressionType^ do
+               Gen2(pc_mov, long(size).msw, long(size).lsw);
+            Gen0t(pc_pop, UsualUnaryConversions);
+            end {if}
+         else begin
+            union := itype^.kind = unionType;
+            fp := itype^.fieldList;
+            bitsize := iPtr^.bitsize;
+            bitdisp := iPtr^.bitdisp;
+            bitcount := 0;
+            while fp <> nil do begin
+               itype := fp^.itype;
+{              writeln('Initialize:    disp = ',    disp:3, '; fp^.   Disp = ', fp^.disp:3, 'itype^.size = ', itype^.size:1); {debug}
+{              writeln('            bitDisp = ', bitDisp:3, '; fp^.bitDisp = ', fp^.bitDisp:3); {debug}
+{              writeln('            bitSize = ', bitSize:3, '; fp^.bitSize = ', fp^.bitSize:3); {debug}
+               Initialize(id, disp, itype);
+               if bitsize = 0 then begin
+                  if bitcount <> 0 then begin
+                     disp := disp + (bitcount+7) div 8;
+                     bitcount := 0;
+                     end {if}
+                  else if fp^.bitSize <> 0 then begin
+                     bitcount := 8;
+                     while (fp <> nil) and (bitcount > 0) do begin
+                        bitcount := bitcount - fp^.bitSize;
+                        if bitcount > 0 then
+                           if fp^.next <> nil then
+                              if fp^.next^.bitSize <> 0 then
+                                 fp := fp^.next
+                              else
+                                 bitcount := 0;
+                        end; {while}
+                     bitcount := 0;
+                     disp := disp + 1;
+                     end {else if}
+                  else
+                     disp := disp + itype^.size;
+                  end {if}
+               else if fp^.bitSize = 0 then begin
+                  bitsize := 0;
+                  disp := disp + itype^.size;
+                  end {else if}
+               else begin
+                  if bitsize + bitdisp < bitcount then
+                     disp := disp + (bitcount + 7) div 8;
+                  bitcount := bitsize + bitdisp;
+                  end; {else}
+               if itype^.kind in [scalarType,pointerType,enumType] then begin
+                  count := count-1;
+                  if count = 0 then begin
+                     iPtr := iPtr^.next;
+                     count := iPtr^.count;
+                     bitsize := iPtr^.bitsize;
+                     bitdisp := iPtr^.bitdisp;
+                     end; {if}
+                  end; {if}
+               if union then
+                  fp := nil
+               else
+                  fp := fp^.next;
+               end; {while}
+            end; {else}
+         end;
+
+      otherwise: Error(57);
+      end; {case}
+   end; {Initialize}
+
+
+begin {AutoInit}
+iPtr := variable^.iPtr;
+count := iPtr^.count;
+if variable^.class <> staticsy then
+   Initialize(variable, 0, variable^.itype);
+end; {AutoInit}
 
 
 procedure InitParser;
