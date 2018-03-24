@@ -48,7 +48,7 @@ unit Expression;
 
 interface
 
-uses CCommon, Table, CGI, Scanner, Symbol, MM;
+uses CCommon, Table, CGI, Scanner, Symbol, MM, Printf;
 
 {$segment 'EXP'}
 
@@ -2621,7 +2621,9 @@ var
          parameters: parameterPtr;      {next prototyped parameter}
          pCount: integer;               {# of parameters prototyped}
          prototype: boolean;            {is the function prototyped?}
-         tp,ltp: tokenPtr;              {work pointers}
+         tp: tokenPtr;                  {work pointers}
+         fp, tfp: fmtArgPtr;
+         fmt: fmt_type;
 
 
          procedure Reverse;
@@ -2661,6 +2663,12 @@ var
       prototype := ftype^.prototyped;
       parameters := ftype^.parameterList;
       pCount := 1;
+      fmt := fmt_none;
+      fp := nil;
+
+      if ((lint & lintPrintf) <> 0) and fType^.varargs and not indirect then
+        fmt := FormatClassify(ftree^.id^.name^);
+
       while parameters <> nil do begin  {count the prototypes}
          pCount := pCount+1;
          parameters := parameters^.next;
@@ -2675,6 +2683,8 @@ var
          if (pCount > 0) or ((pCount <> 0) and not ftype^.varargs) then
             Error(85);
          end; {if}
+
+        tp := parms;
 
       {generate the parameters}
       numParms := 0;
@@ -2694,6 +2704,13 @@ var
         	  end {else if}
                else
         	  GenerateCode(tp^.middle);
+            if fmt <> fmt_none then begin
+                new(tfp);
+                tfp^.next := fp;
+                tfp^.tk := tp^.middle;
+                tfp^.ty := expressionType;
+                fp := tfp;
+            end;
             if prototype then begin
                if pCount = 0 then begin
                   if parameters <> nil then begin
@@ -2710,9 +2727,12 @@ var
                Gen0t(pc_bno, UsualUnaryConversions);
             numParms := numParms+1;
             end; {if}
-         ltp := tp;
          tp := tp^.right;
          end; {while}
+
+      if fmt <> fmt_none then FormatCheck(fmt, fp);
+
+
       doDispose := lDoDispose;
       if numParms = 0 then
          Gen0(pc_nop);
