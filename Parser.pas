@@ -82,6 +82,7 @@ implementation
 const
    maxBitField = 32;                    {max # of bits in a bit field}
    allowMixedDeclarations = true;
+   c99Scope = true;
  
 type
 
@@ -569,6 +570,8 @@ var
    stPtr^.doLab := lab;
    stPtr^.breakLab := 0;
    stPtr^.continueLab := 0;
+   if c99Scope then PushTable;
+   if c99Scope then PushTable;
    Statement;                           {process the first loop body statement}
    end; {DoStatement}
 
@@ -598,6 +601,7 @@ var
    stPtr^.continueLab := continueLab;
    stPtr^.breakLab := breakLab;
 
+   if c99Scope then PushTable;
    Match(lparench,13);                  {evaluate the start condition}
    if token.kind <> semicolonch then begin
       Expression(normalExpression, [semicolonch]);
@@ -639,6 +643,7 @@ var
    stPtr^.e3List := tl;                 {save the list}
    Match(rparench,12);                  {get the closing for loop paren}
 
+   if c99Scope then PushTable;
    Statement;                           {process the first loop body statement}
    end; {ForStatement}
 
@@ -654,6 +659,7 @@ var
  
    begin {IfStatement}
    NextToken;                           {skip the 'if' token}
+   if c99Scope then PushTable;
    Match(lparench, 13);                 {evaluate the condition}
    Expression(normalExpression, [rparench]);
    Match(rparench, 12);
@@ -667,6 +673,7 @@ var
    statementList := stPtr;
    stPtr^.kind := ifSt;
    stPtr^.ifLab := lab;
+   if c99Scope then PushTable;
    Statement;                           {process the 'true' statement}
    end; {IfStatement}
 
@@ -767,6 +774,7 @@ var
    stPtr^.breakLab := stPtr^.switchExit;
    stPtr^.switchList := nil;
    stPtr^.switchDefault := 0;
+   if c99Scope then PushTable;
    Match(lparench, 13);                 {evaluate the condition}
    Expression(normalExpression,[rparench]);
    Match(rparench, 12);
@@ -802,6 +810,7 @@ var
          Error(71);
       end; {case}
    Gen1(pc_ujp, stPtr^.switchLab);      {branch to the xjp instruction}
+   if c99Scope then PushTable;
    Statement;                           {process the loop body statement}
    end; {SwitchStatement}
 
@@ -828,11 +837,13 @@ var
    stPtr^.breakLab := endl;
    stPtr^.continueLab := top;
    Gen1(dc_lab, top);                   {define the top label}
+   if c99Scope then PushTable;
    Match(lparench, 13);                 {evaluate the condition}
    Expression(normalExpression, [rparench]);
    Match(rparench, 12);
    CompareToZero(pc_neq);               {evaluate the condition}
    Gen1(pc_fjp, endl);
+   if c99Scope then PushTable;
    Statement;                           {process the first loop body statement}
    end; {WhileStatement}
 
@@ -897,6 +908,7 @@ var
    stPtr: statementPtr;                 {work pointer}
 
 begin {EndDoStatement}
+if c99Scope then PopTable;
 stPtr := statementList;                 {get the statement record}
 if token.kind = whilesy then begin      {if a while clause exists, process it}
    NextToken;                           {skip the 'while' token}
@@ -915,6 +927,7 @@ if stPtr^.breakLab <> 0 then            {create the break label}
    Gen1(dc_lab, stPtr^.breakLab);
 statementList := stPtr^.next;           {pop the statement record}
 dispose(stPtr);
+if c99Scope then PopTable;
 end; {EndDoStatement}
 
 
@@ -927,6 +940,7 @@ var
    stPtr: statementPtr;                 {work pointer}
 
 begin {EndIfStatement}
+if c99Scope then PopTable;
 stPtr := statementList;                 {get the label to branch to}
 lab1 := stPtr^.ifLab;
 statementList := stPtr^.next;           {pop the statement record}
@@ -942,10 +956,13 @@ if token.kind = elsesy then begin       {if an else clause exists, process it}
    statementList := stPtr;
    stPtr^.kind := elseSt;
    stPtr^.elseLab := lab2;
+   if c99Scope then PushTable;
    Statement;                           {evaluate the else clause}
    end {if}
-else
+else begin
    Gen1(dc_lab, lab1);                  {create label for if to branch to}
+   if c99Scope then PopTable;
+   end; {else}
 end; {EndIfStatement}
 
 
@@ -957,10 +974,12 @@ var
    stPtr: statementPtr;                 {work pointer}
 
 begin {EndElseStatement}
+if c99Scope then PopTable;
 stPtr := statementList;                 {create the label to branch to}
 Gen1(dc_lab, stPtr^.elseLab);
 statementList := stPtr^.next;           {pop the statement record}
 dispose(stPtr);
+if c99Scope then PopTable;
 end; {EndElseStatement}
 
 
@@ -975,6 +994,7 @@ var
    lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
 
 begin {EndForStatement}
+if c99Scope then PopTable;
 stPtr := statementList;
 Gen1(dc_lab, stPtr^.continueLab);       {define the continue label}
 
@@ -1003,6 +1023,7 @@ Gen1(pc_ujp, stPtr^.forLoop);           {loop to the test}
 Gen1(dc_lab, stPtr^.breakLab);          {create the exit label}
 statementList := stPtr^.next;           {pop the statement record}
 dispose(stPtr);
+if c99Scope then PopTable;
 end; {EndForStatement}
 
 
@@ -1026,6 +1047,7 @@ var
    swPtr,swPtr2: switchPtr;             {switch label table list}
 
 begin {EndSwitchStatement}
+if c99Scope then PopTable;
 stPtr := statementList;                 {get the statement record}
 exitLab := stPtr^.switchExit;           {get the exit label}
 isLong := stPtr^.isLong;                {get the long flag}
@@ -1095,6 +1117,7 @@ else begin
 FreeTemp(stPtr^.ln, stPtr^.size);       {release temp variable}
 statementList := stPtr^.next;           {pop the statement record}
 dispose(stPtr);
+if c99Scope then PopTable;
 end; {EndSwitchStatement}
 
 
@@ -1106,11 +1129,13 @@ var
    stPtr: statementPtr;                 {work pointer}
 
 begin {EndWhileStatement}
+if c99Scope then PopTable;
 stPtr := statementList;                 {loop to the test}
 Gen1(pc_ujp, stPtr^.whileTop);
 Gen1(dc_lab, stPtr^.whileEnd);          {create the exit label}
 statementList := stPtr^.next;           {pop the statement record}
 dispose(stPtr);
+if c99Scope then PopTable;
 end; {EndWhileStatement}
 
 {-- Type declarations ------------------------------------------}
