@@ -89,6 +89,7 @@ const
    lintNoFnType         = $0002;        {flag functions with no type}
    lintNotPrototyped    = $0004;        {flag functions with no prototypes}
    lintPragmas          = $0008;        {flag unknown prototypes}
+   lintPrintf           = $0010;        {check printf/scanf format flags}
 
                                         {bit masks for GetLInfo flags}
                                         {----------------------------}

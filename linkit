@@ -14,5 +14,6 @@ obj/native
 obj/dag
 obj/gen
 obj/header
+obj/printf
 
 keep=16/cc

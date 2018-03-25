@@ -611,6 +611,8 @@ if list or (numErr <> 0) then begin
         121: msg := @'invalid digit for binary constant';
         122: msg := @'arithmetic is not allowed on a pointer to an incomplete or function type';
         123: msg := @'array element type may not be an incomplete or function type';
+        124: msg := @'invalid format string';
+        125: msg := @'format string is not a string literal';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

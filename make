@@ -42,6 +42,7 @@ if {#} == 0
      set dag dag
      set gen gen
      set header header
+     set printf printf
   end              
 
   Newer obj/cgc.a cgc.pas cgc.asm
@@ -152,6 +153,12 @@ if {#} == 0
      set header header
   end
 
+  Newer obj/printf.a printf.pas
+  if {status} != 0
+     set cc cc
+     set printf printf
+  end
+
 else
   for i
     set {i} {i}
@@ -175,8 +182,10 @@ if "{table}" == table
 end
 
 set list ""
-set list        "{ccommon} {mm} {cgi} {scanner} {symbol} {header} {expression}"
-set list {list} {cgc} {asm} {parser} {cc} {objout} {native} {gen} {dag}
+set list        {ccommon} {mm} {printf} {cgi} {scanner} {symbol} {header}
+set list {list} {expression} {cgc} {asm} {parser} {cc} {objout} {native}
+set list {list} {gen} {dag}
+
 if "{list}" != ""
    for i in {list}
       echo compile +t +e {i}.pas keep=obj/{i}
