@@ -3846,6 +3846,8 @@ var
 
 
    begin {Initialize}
+   while itype^.kind = definedType do
+      itype := itype^.dType;
    case itype^.kind of
 
       scalarType,pointerType,enumType,functionType: begin
