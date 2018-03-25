@@ -3677,11 +3677,19 @@ procedure DoStatement;
 
 { process a statement from a function                           }
 
+var
+   lToken: tokenType;                   {temporary copy of old token}
+   nToken: tokenType;                   {new token}
+   hasStatementNext: boolean;           {is a stmt next within a compound stmt?}
+   lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
+
 begin {DoStatement}
 case statementList^.kind of
 
    compoundSt: begin
+      hasStatementNext := true;
       if token.kind = rbracech then begin
+         hasStatementNext := false;
          EndCompoundStatement;
          end {if}
       else if (statementList^.doingDeclaration or allowMixedDeclarations)
@@ -3690,9 +3698,27 @@ case statementList^.kind of
                              floatsy,doublesy,compsy,extendedsy,enumsy,
                              structsy,unionsy,typedef,voidsy,volatilesy,
                              constsy])
-         then
-         DoDeclaration(false)
-      else begin
+         then begin
+         hasStatementNext := false;
+         if token.kind <> typedef then
+            DoDeclaration(false)
+         else begin
+            lToken := token;
+            lPrintMacroExpansions := printMacroExpansions; {inhibit token echo}
+            printMacroExpansions := false;
+            NextToken;
+            printMacroExpansions := lPrintMacroExpansions;
+            nToken := token;
+            PutBackToken(nToken, false);
+            token := lToken;
+            if nToken.kind <> colonch then
+               DoDeclaration(false)
+            else
+               hasStatementNext := true;
+            end {else}
+         end; {else if}
+         
+      if hasStatementNext then begin
          if statementList^.doingDeclaration then begin
             statementList^.doingDeclaration := false;
             if firstCompoundStatement then begin
