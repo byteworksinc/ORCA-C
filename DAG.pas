@@ -4347,7 +4347,9 @@ var
 		  optype: baseTypeEnum;		{type of the temp variable}
 
                begin {Remove}
-               if (op^.left <> nil) or (op^.right <> nil) then begin
+               if op^.opcode in [pc_pop,pc_str,pc_sro,pc_sto,pc_sbf] then
+                  {do nothing for now - would need special code to move these}
+               else if (op^.left <> nil) or (op^.right <> nil) then begin
         	  optype := TypeOf(op);		{create a temp label}
         	  loc := pointer(Calloc(sizeof(intermediate_code)));
         	  loc^.opcode := dc_loc;
@@ -4375,7 +4377,7 @@ var
         	  str^.left := op2;
         	  str^.next := loc^.next;	{insert the store in the basic block}
         	  loc^.next := str;
-                  end; {if}
+                  end; {else if}
                done := true;
                end; {Remove}
 
