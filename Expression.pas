@@ -2266,6 +2266,8 @@ var
    lexpressionType := expressionType;   {save the expression type}
 
    GenerateCode(tree);                  {get the type}
+   while expressionType^.kind = definedType do
+      expressionType := expressionType^.dType;
    ExpressionKind := expressionType^.kind;
 
    doDispose := ldoDispose;             {resore the volitile variables}
@@ -2853,7 +2855,10 @@ case tree^.token.kind of
       FunctionCall(tree);
 
    ident: begin
-      case tree^.id^.itype^.kind of                                        
+      tType := tree^.id^.itype;
+      while tType^.kind = definedType do
+         tType := tType^.dType;
+      case tType^.kind of                                        
 
          scalarType: begin
             LoadScalar(tree^.id);
@@ -2884,8 +2889,6 @@ case tree^.token.kind of
             Gen1t(pc_ldc, tree^.id^.itype^.eval, cgWord);  
             expressionType := wordPtr;
             end;
-
-         otherwise: ;
 
          end; {case}
       end;
