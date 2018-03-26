@@ -1569,9 +1569,7 @@ case op^.opcode of			{check for optimizations of this node}
                      end; {with}
                   opv := op^.right;
                   end; {if}
-               end {if}
-            else
-               op^.opcode := pc_neq;
+               end; {if}
             end; {if}
          end {if}
       else if op^.left^.opcode = pc_ldc then
