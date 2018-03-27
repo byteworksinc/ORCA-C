@@ -5091,7 +5091,7 @@ procedure GenTree {op: icptr};
    {if anything needs to be removed from the stack, move the return val}
    size := localSize + parameterSize;
    if parameterSize <> 0 then begin
-      if localSize > 254 then begin
+      if localSize > 253 then begin
          GenNative(m_ldx_imm, immediate, localSize+1, nil, 0);
          GenNative(m_lda_dirx, direct, 0, nil, 0);
          GenNative(m_ldy_dirx, direct, 1, nil, 0);
