@@ -1840,8 +1840,11 @@ case op^.opcode of			{check for optimizations of this node}
       end; {case pc_not}
 
    pc_pop: begin			{pc_pop}
-      if op^.left^.opcode = pc_cnv then
+      if op^.left^.opcode = pc_cnv then begin
+         fromtype.i := (op^.left^.q & $00F0) >> 4;
+         op^.optype := fromtype.optype;
          op^.left := op^.left^.left;
+         end; {if}
       opcode := op^.left^.opcode;
       if opcode = pc_cop then begin
          op^.left^.opcode := pc_str;
