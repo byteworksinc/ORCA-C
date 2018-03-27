@@ -1327,6 +1327,7 @@ case op^.opcode of			{check for optimizations of this node}
         	  op^.right := nil;
         	  end;
                end; {case}
+            op^.optype := cgWord;
             end {if}
          else if op^.right^.optype in [cgByte, cgUByte, cgWord, cgUWord] then begin
             if op^.right^.q = 1 then
@@ -1755,6 +1756,7 @@ case op^.opcode of			{check for optimizations of this node}
         	  op^.right := nil;
         	  end;
                end; {case}
+            op^.optype := cgWord;
             end {if}
          else if op^.right^.optype in [cgByte, cgUByte, cgWord, cgUWord] then begin
             if op^.right^.q = 0 then
