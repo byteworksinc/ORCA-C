@@ -3895,7 +3895,10 @@ procedure GenTree {op: icptr};
 	 lab1: integer;			{label number}
 
       begin {GenOp}
-      GenImplied(m_pla);
+      if gLong.where = A_X then
+         GenImplied(m_phx)
+      else
+         GenImplied(m_pla);
       if gLong.where = constant then begin
 	 GenNative(opi, immediate, long(gLong.lval).lsw, nil, 0);
 	 GenImplied(m_pha);
