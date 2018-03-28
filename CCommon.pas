@@ -929,7 +929,7 @@ var
 
 begin {TermError}
 case errnum of                          {print the error}
-   0 : ;
+   0 : msg := '' ;
    1 : msg := concat('Error reading ', sourceFileGS.theString.theString);
    2 : msg := concat('Error purging ', sourceFileGS.theString.theString);
    3 : msg := 'terminal compiler error';
@@ -941,7 +941,10 @@ case errnum of                          {print the error}
    9 : msg := concat('Error writing ', objFile.theString.theString);
    10: msg := 'ORCA/C requires version 2.0 or later of the shell';
    11: msg := 'The program is too large to compile to memory -- use Compile to Disk';
-   otherwise: Error(57);
+   otherwise: begin
+      msg := '';
+      Error(57);
+      end;
    end; {case}
 with ffDCBGS do begin			{purge the source file}
    pCount := 5;
