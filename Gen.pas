@@ -1893,13 +1893,13 @@ case op^.optype of
             else begin
                GenNative(m_ldx_imm, immediate, gLong.disp, nil, 0);
                if (not skipLoad) and (opcode in [pc_ili,pc_ild]) then
-                  GenNative(m_lda_dirX, direct, gLong.disp, nil, 0);
+                  GenNative(m_lda_dirX, direct, 0, nil, 0);
                if opcode in [pc_ili,pc_iil] then
-                  GenNative(m_inc_dirX, direct, gLong.disp, nil, 0)
+                  GenNative(m_inc_dirX, direct, 0, nil, 0)
                else
-                  GenNative(m_dec_dirX, direct, gLong.disp, nil, 0);
+                  GenNative(m_dec_dirX, direct, 0, nil, 0);
                if (not skipLoad) and (opcode in [pc_iil,pc_idl]) then
-                  GenNative(m_lda_dirX, direct, gLong.disp, nil, 0);
+                  GenNative(m_lda_dirX, direct, 0, nil, 0);
                end; {else}
             if short then
                GenNative(m_rep, immediate, 32, nil, 0);
