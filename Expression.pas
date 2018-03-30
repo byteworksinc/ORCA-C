@@ -2827,10 +2827,6 @@ var
    else if t1^.kind in [pointerType,arrayType] then begin
       if t2^.kind in [pointerType,arrayType] then begin
          if (t1^.ptype = voidPtr) or (t2^.ptype = voidPtr) then
-         else if t1^.kind = t2^.kind then begin
-            if not CompTypes(t1, t2) then
-               Error(47);
-            end {if}
          else if not CompTypes(t1^.ptype, t2^.ptype) then
             Error(47);
          t2 := ulongPtr;
@@ -3367,6 +3363,15 @@ case tree^.token.kind of
          else
             lType := lType^.pType;
          ChangePointer(pc_adl, lType^.size, et);
+         if expressionType^.kind = arrayType then begin
+            tType := pointer(Malloc(sizeof(typeRecord)));
+            tType^.size := cgLongSize;
+            tType^.saveDisp := 0;
+            tType^.isConstant := false;
+            tType^.kind := pointerType;
+            tType^.pType := expressionType^.aType;
+            expressionType := tType;
+            end; {if}
          end {if}
       else begin
 
@@ -3412,6 +3417,15 @@ case tree^.token.kind of
             {subtract a scalar from a pointer}
             ChangePointer(pc_sbl, size, UsualUnaryConversions);
          expressionType := lType;
+         if expressionType^.kind = arrayType then begin
+            tType := pointer(Malloc(sizeof(typeRecord)));
+            tType^.size := cgLongSize;
+            tType^.saveDisp := 0;
+            tType^.isConstant := false;
+            tType^.kind := pointerType;
+            tType^.pType := expressionType^.aType;
+            expressionType := tType;
+            end; {if}
          end {if}
       else begin
 
