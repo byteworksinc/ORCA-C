@@ -3746,19 +3746,25 @@ case optype of
         	  GenImplied(m_tdc);
         	  GenImplied(m_clc);
         	  GenNative(m_adc_imm, immediate, gLong.disp, nil, 0);
-        	  if not gLong.fixedDisp then begin
+                  if not gLong.fixedDisp then
                      GenNative(m_adc_s, direct, 1, nil, 0);
-                     GenImplied(m_ply);
-                     end; {if}
         	  GenNative(m_sta_dirX, direct, 0, nil, 0);
         	  GenNative(m_stz_dirX, direct, 2, nil, 0);
+                  if not gLong.fixedDisp then
+                     GenImplied(m_plx);
         	  end; {else}
 
             globalLabel: begin
                if not gLong.fixedDisp then
-        	  GenImplied(m_txa)
-               else if disp > 253 then
+                  GenImplied(m_txa);
+               if disp > 253 then begin
+                  if op^.opcode = pc_cop then
+                     if not gLong.fixedDisp then
+                        GenImplied(m_tay)
+                     else
+                        GenImplied(m_txy);
         	  GenNative(m_ldx_imm, immediate, disp, nil, 0);
+                  end; {if}
                if gLong.fixedDisp then
         	  GenNative(m_lda_imm, immediate, gLong.disp, gLong.lab, 0)
                else begin
@@ -3774,8 +3780,11 @@ case optype of
         	  GenNative(m_adc_imm, immediate, 0, nil, 0);
                if disp < 254 then
         	  GenNative(m_sta_dir, direct, disp+2, nil, 0)
-               else
+               else begin
         	  GenNative(m_sta_dirX, direct, 2, nil, 0);
+                  if op^.opcode = pc_cop then
+                     GenImplied(m_tyx);
+                  end; {else}
                end;
 
             constant:
