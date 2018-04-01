@@ -81,8 +81,6 @@ implementation
 
 const
    maxBitField = 32;                    {max # of bits in a bit field}
-   allowMixedDeclarations = true;
-   c99Scope = true;
  
 type
 

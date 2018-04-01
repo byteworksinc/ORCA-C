@@ -85,6 +85,9 @@ var
    allowSlashSlashComments: boolean;    {allow // comments?}
    allowTokensAfterEndif: boolean;      {allow tokens after #endif?}
    skipIllegalTokens: boolean;          {skip flagging illegal tokens in skipped code?}
+                                        {Note: The following two are set together}
+   allowMixedDeclarations: boolean;     {allow mixed declarations & stmts (C99)?}
+   c99Scope: boolean;                   {follow C99 rules for block scopes?}
 
 {---------------------------------------------------------------}
 
@@ -613,6 +616,7 @@ if list or (numErr <> 0) then begin
         123: msg := @'array element type may not be an incomplete or function type';
         124: msg := @'invalid format string';
         125: msg := @'format string is not a string literal';
+        126: msg := @'scope rules may not be changed within a function';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -2792,6 +2796,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     2 - allow long int character constants          }
                      {     4 - allow tokens after #endif                   }
                      {     8 - allow // comments                           }
+                     {    16 - allow mixed decls & use C99 scope rules     }
                      FlagPragmas(p_ignore);
                      NumericDirective;    
                      val := long(expressionValue).lsw;
@@ -2799,6 +2804,13 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      allowLongIntChar := odd(val >> 1);
                      allowTokensAfterEndif := odd(val >> 2);
                      allowSlashSlashComments := odd(val >> 3);
+                     allowMixedDeclarations := odd(val >> 4);
+                     if allowMixedDeclarations <> c99Scope then begin
+                        if doingFunction then
+                           Error(126)
+                        else
+                           c99Scope := allowMixedDeclarations;
+                        end; {if}
                      if token.kind <> eolsy then
                         Error(11);
                      end {else if}
@@ -3371,6 +3383,8 @@ skipIllegalTokens := false;		{flag illegal tokens in skipped code}
 allowLongIntChar := false;		{allow long int char constants}
 allowTokensAfterEndif := false;         {allow tokens after #endif}
 allowSlashSlashComments := true;		{allow // comments}
+allowMixedDeclarations := true;         {allow mixed declarations & stmts (C99)}
+c99Scope := true;                       {follow C99 rules for block scopes}
 foundFunction := false;                 {no functions found so far}
 fileList := nil;                        {no included files}
 gettingFileName := false;               {not in GetFileName}
