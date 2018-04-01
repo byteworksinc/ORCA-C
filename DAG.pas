@@ -2648,7 +2648,8 @@ var
       begin {Match}
       op2 := nil;			{check for an exact match}
       skip := false;
-      if CodesMatch(op, tree, true) then begin
+      if not (op^.opcode in [pc_str,pc_sro]) and CodesMatch(op, tree, true)
+         then begin
          if op = tree then
             op2 := tree
          else begin
@@ -2698,7 +2699,8 @@ var
    if op^.right <> nil then
       CheckTree(op^.right, bb);
    if op^.next = nil then		{look for a match to the current code}
-      if not (op^.opcode in [pc_cup,pc_cui,pc_tl1,pc_bno]) then begin
+      if not (op^.opcode in [pc_cup,pc_cui,pc_tl1,pc_bno,pc_pop,pc_sto,pc_sbf])
+         then begin
 	 op2 := nil;
 	 op3 := bb^.code;
 	 while (op2 = nil) and (op3 <> nil) do begin
