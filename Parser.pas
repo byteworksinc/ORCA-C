@@ -1844,6 +1844,8 @@ var
          end {if}
       else if tree^.token.kind = dotch then begin
          tp := Subscript(tree^.left);
+         while tp^.kind = definedType do
+            tp := tp^.dType;
          if tp^.kind in [structType,unionType] then begin
             DoSelection(tp, tree^.right, select);
             Subscript := expressionType;
