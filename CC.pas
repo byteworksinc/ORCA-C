@@ -115,7 +115,7 @@ while token.kind <> eofsy do begin      {compile the program}
                            structsy,unionsy,typedef,voidsy,inlinesy,volatilesy,
                            constsy,ident,asmsy,pascalsy,asmsy,segmentsy])
       then
-      DoDeclaration(false)
+      DoDeclaration(false, false)
    else begin
       Error(26);
       NextToken;

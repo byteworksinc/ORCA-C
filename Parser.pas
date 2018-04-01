@@ -27,12 +27,13 @@ uses CCommon, Table, MM, CGI, Scanner, Header, Symbol, Expression, Asm;
 
 {---------------------------------------------------------------}
 
-procedure DoDeclaration (doingPrototypes: boolean);
+procedure DoDeclaration (doingPrototypes, autoOrRegisterOnly: boolean);
 
 { process a variable or function declaration                    }
 {                                                               }
 { parameters:                                                   }
 {       doingPrototypes - are we processing a parameter list?   }
+{       autoOrRegisterOnly - limit storage classes allowed?     }
 
 
 procedure DoStatement;
@@ -601,11 +602,20 @@ var
 
    if c99Scope then PushTable;
    Match(lparench,13);                  {evaluate the start condition}
-   if token.kind <> semicolonch then begin
+   if allowMixedDeclarations
+      and (token.kind in [autosy,registersy,unsignedsy,signedsy,intsy,longsy,
+                      charsy,shortsy,floatsy,doublesy,compsy,extendedsy,enumsy,
+                      structsy,unionsy,typedef,voidsy,volatilesy,constsy,
+                      externsy,staticsy,typedefsy]) then begin
+      DoDeclaration(false, true)
+      end {if}
+   else if token.kind <> semicolonch then begin
       Expression(normalExpression, [semicolonch]);
       Gen0t(pc_pop, UsualUnaryConversions);
-      end; {if}
-   Match(semicolonch,22);
+      Match(semicolonch,22);
+      end {else if}
+   else
+      NextToken;
 
    Gen1(dc_lab, forLoop);               {this label points to the condition}
    if token.kind <> semicolonch then    {handle the loop test}
@@ -1385,7 +1395,7 @@ var
                                      typedef,voidsy,volatilesy,constsy])
                                      then begin
                      lLastParameter := lastParameter;
-                     DoDeclaration(true);
+                     DoDeclaration(true, false);
                      lastParameter := lLastParameter;
                      if protoType <> nil then begin
                         wp := pointer(Malloc(sizeof(parameterRecord)));
@@ -3002,7 +3012,7 @@ end; {TypeSpecifier}
 
 {-- Externally available subroutines ---------------------------}
 
-procedure DoDeclaration {doingPrototypes: boolean};
+procedure DoDeclaration {doingPrototypes, autoOrRegisterOnly: boolean};
 
 { process a variable or function declaration                    }
 {                                                               }
@@ -3272,6 +3282,9 @@ if token.kind in [autosy,externsy,registersy,staticsy,typedefsy] then begin
       end {if}
    else if storageClass in [staticsy,typedefsy] then
       useGlobalPool := true;
+   if autoOrRegisterOnly then
+      if not (storageClass in [autosy,registersy]) then
+         Error(127);
    NextToken;
    end; {if}
 isAsm := false;
@@ -3458,7 +3471,7 @@ if isFunction then begin
                             floatsy,doublesy,compsy,extendedsy,enumsy,
                             structsy,unionsy,typedef,voidsy,volatilesy,
                             constsy,ident]) then
-            DoDeclaration(false)
+            DoDeclaration(false, false)
          else begin
             Error(27);
             NextToken;
@@ -3701,7 +3714,7 @@ case statementList^.kind of
          then begin
          hasStatementNext := false;
          if token.kind <> typedef then
-            DoDeclaration(false)
+            DoDeclaration(false, false)
          else begin
             lToken := token;
             lPrintMacroExpansions := printMacroExpansions; {inhibit token echo}
@@ -3712,7 +3725,7 @@ case statementList^.kind of
             PutBackToken(nToken, false);
             token := lToken;
             if nToken.kind <> colonch then
-               DoDeclaration(false)
+               DoDeclaration(false, false)
             else
                hasStatementNext := true;
             end {else}

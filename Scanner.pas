@@ -617,6 +617,7 @@ if list or (numErr <> 0) then begin
         124: msg := @'invalid format string';
         125: msg := @'format string is not a string literal';
         126: msg := @'scope rules may not be changed within a function';
+        127: msg := @'illegal storage class for declaration in for loop';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
