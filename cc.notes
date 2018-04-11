@@ -239,7 +239,13 @@ New Language Features
 
 ORCA/C 2.2.0 adds support for several new C language features.  Most are features that were added in the C99 language standard.
 
-1.  (C99) ORCA/C now supports flexible array members, in which the last member of a struct may be declared with an incomplete array type, e.g.
+1.  (C99) Statements and declarations may now be mixed within a block; declarations are no longer required to come before statements.  The first clause of a for loop statement may also be a declaration (with auto or register storage class only).  Variables may only be referred to by name in code syntactically after their declaration, but their lifetime continues as long as control remains in the enclosing block scope, even if it returns to a point before the declaration.  Initializers for variables with automatic storage duration are evaluated whenever execution reaches the point where they appear in the code.
+
+In addition, the scope rules are changed so that each while, do, for, if, or switch statement introduces a new block scope corresponding to the statement, separate from the enclosing scope and ending at the end of the statement.  Each substatement of these statements also introduces its own new block scope corresponding to that substatement, separate from the enclosing scope associated with the while, do, for, if, or switch statement itself.  These rules ensure that a variable declared in the first clause of a for loop is local to that loop, but they can also affect other code by restricting the scope where an identifier is visible.  In certain unusual cases, this can change the semantics of a program that was valid under C89, potentially producing a compile error or causing unexpected behavior when it executes.
+
+These new rules for declaration placement and scopes are enabled by default, but they can be controlled by a new flag bit in the #pragma ignore directive.  Setting bit 4 (a value of 16) enables these new C99 features; clearing it disables them and returns to the older C89 rules.  
+
+2.  (C99) ORCA/C now supports flexible array members, in which the last member of a struct may be declared with an incomplete array type, e.g.
 
    struct S {
       int a;
@@ -248,23 +254,23 @@ ORCA/C 2.2.0 adds support for several new C language features.  Most are feature
    
 The flexible array member does not contribute to the size of the struct as reported by sizeof, but if such a struct is allocated in the heap, extra space may be allocated for the flexible array member, and elements of it up to the limit of the size allocated may be accessed.  (This feature was actually permitted "by accident" in previous versions of ORCA/C, but it is now a supported feature, and errors related to it are now detected.)
 
-2.  (C99) The value 0 will always be returned if execution reaches the end of the main function without encountering a return statement, provided main is declared as returning a value of type int.
+3.  (C99) The value 0 will always be returned if execution reaches the end of the main function without encountering a return statement, provided main is declared as returning a value of type int.
 
-3.  (C99) Enumeration specifiers may contain a trailing comma, e.g.
+4.  (C99) Enumeration specifiers may contain a trailing comma, e.g.
 
    enum color {black, purple, green, white,} pencolor;
    
 (Kelvin Sherlock)
 
-4.  (C99) Functions may be declared as "static inline".  These have the same semantics as other static functions.  The "inline" specifier suggests (but does not require) that calls to the function should be inlined or otherwise optimized.  ORCA/C currently does not inline these functions or apply any other special optimizations, but future versions might introduce such features.  Note that non-static inline functions are not currently supported.
+5.  (C99) Functions may be declared as "static inline".  These have the same semantics as other static functions.  The "inline" specifier suggests (but does not require) that calls to the function should be inlined or otherwise optimized.  ORCA/C currently does not inline these functions or apply any other special optimizations, but future versions might introduce such features.  Note that non-static inline functions are not currently supported.
 
-5.  Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+6.  Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
 
 (Kelvin Sherlock)
 
-6.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+7.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
 
-7.  Two new bits are introduced in the #pragma ignore directive.  But 1 (a value of 2) affects the handling of multi-character character constants; it is described in the section below.  Bit 2 (a value of 4) controls whether spurious tokens are allowed to appear after the #endif directive.  If this bit is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
+8.  Two more new bits are introduced in the #pragma ignore directive.  Bit 1 (a value of 2) affects the handling of multi-character character constants; it is described in the section below.  Bit 2 (a value of 4) controls whether spurious tokens are allowed to appear after the #endif directive.  If this bit is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
 
 (Kelvin Sherlock, Mike Westerfield)
 
@@ -327,7 +333,7 @@ These are equivalent to sprintf and vsprintf, except that they take an additiona
 
 3.  The fprintf() and fscanf() families of functions have been updated to support some additional length modifiers and conversion specifiers:
 
-The length modifiers 'z', 't', and 'j' are now allowed in the format strings for the fprintf and fscanf families of functions.  They may be used with the 'd', 'i', 'o', 'u', 'x', 'X', or 'n' conversion specifiers.  These each correspond to integer types, as follows: 'z' to size_t or the corresponding signed integer type, 't' to ptrdiff_t or the corresponding unsigned integer type, and 'j' to intmax_t or uintmax_t.  (In ORCA/C, these are all 32-bit types.)  The corresponding argument must be an integer of an appropriate type, or a pointer to such an integer, as appropriate for the conversion specifier and function.
+The length modifiers 'z', 't', and 'j', and 'hh' are now allowed in the format strings for the fprintf and fscanf families of functions.  They may be used with the 'd', 'i', 'o', 'u', 'x', 'X', or 'n' conversion specifiers.  These each correspond to integer types, as follows: 'z' to size_t or the corresponding signed integer type, 't' to ptrdiff_t or the corresponding unsigned integer type, 'j' to intmax_t or uintmax_t, and 'hh' to signed char or unsigned char.    The corresponding argument must be an integer of an appropriate type, or a pointer to such an integer, as appropriate for the conversion specifier and function.  (In the case of 'hh', arguments of character types will have been promoted to int according to the integer promotions, but their values should be within the range of signed char or unsigned char.)
 
 The conversion specifiers 'F', 'a', and 'A' are now allowed in the format strings for the fscanf family of functions.  These are all equivalent to 'f'.
 
@@ -655,6 +661,22 @@ int foo(int[42]);
 74. strtol()/strtoul() should return LONG_MIN/LONG_MAX/ULONG_MAX for out-of-range values.
 
 (Devin Reade)
+
+75. Fixed some bugs in code generation and optimization of expressions using the comma operator.
+
+76. Fixed some bugs that caused spurious errors when const-qualified struct or union types were used in certain ways.
+
+77. Fixed several bugs in intermediate code optimization that could cause invalid code to be generated for certain unusual (and mostly useless) expressions.
+
+78. Fixed several bugs that could cause invalid code to be generated in functions with 254 or more bytes of local variables.
+
+79. Fixed some cases where decay of array types to pointer types was not handled correctly.
+
+(Bugs in items 75-79 were identified using Csmith.)
+
+80. ORCA/C sometimes failed to initialize an error message being reported.
+
+(Kelvin Sherlock)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
