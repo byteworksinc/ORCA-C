@@ -1765,12 +1765,19 @@ var
       iPtr^.bitsize := 0;
       iPtr^.isStructOrUnion := false;
       iPtr^.iVal := bitvalue;
-      if bitcount > 16 then
-         iPtr^.itype := cgULong
-      else if bitcount > 8 then
+      if bitcount <= 8 then
+         iPtr^.itype := cgUByte
+      else if bitcount <= 16 then
          iPtr^.itype := cgUWord
-      else
-         iPtr^.itype := cgUByte;
+      else if bitcount > 24 then
+         iPtr^.itype := cgULong
+      else begin                        {3-byte bitfield: split into two parts}
+         iPtr^.itype := cgUWord;
+         iPtr^.iVal := bitvalue & $0000FFFF;
+         bitcount := bitcount - 16;
+         bitvalue := bitvalue >> 16;
+         InitializeBitField;
+         end;
       bitcount := 0;                    {reset the bit field values}
       bitvalue := 0;
       end; {if}
