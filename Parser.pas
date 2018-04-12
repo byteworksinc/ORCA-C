@@ -2384,6 +2384,13 @@ var
             and (token.kind <> rbracech) do begin
             if ip^.isForwardDeclared then
                ResolveForwardReference(ip);
+            if ip^.bitSize = 0 then
+               if bitCount > 0 then begin
+                  InitializeBitField;
+                  bitCount := (bitCount+7) div 8;
+                  count := count-bitCount;
+                  bitCount := 0;
+                  end; {if}
             InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false);
             if ip^.bitSize <> 0 then begin
                bitCount := bitCount + ip^.bitSize;
@@ -2393,11 +2400,6 @@ var
                   end; {if}
                end {if}
             else begin
-               if bitCount > 0 then begin
-                  bitCount := (bitCount+7) div 8;
-                  count := count-bitCount;
-                  bitCount := 0;
-                  end; {if}
                count := count-ip^.itype^.size;
                end; {else}
 {           writeln('Initializer: ', ip^.bitsize:10, ip^.bitdisp:10, bitCount:10); {debug}
