@@ -659,23 +659,6 @@ var
    ch: char;                            {work character}
    i: integer;                          {loop counter}
 
-
-   procedure PrintHexDigit(i: integer);
-
-   { Print a digit as a hex character                           }
-   {                                                            }
-   { Parameters:                                                }
-   {    i: value to print in least significant 4 bits           }
-
-   begin {PrintHexDigit}
-   i := i & $000F;
-   if i < 10 then
-      write(chr(i | ord('0')))
-   else
-      write(chr(i + ord('A') - 10));
-   end; {PrintHexDigit}
-
-
 begin {PrintToken}
 case token.kind of
    typedef,
@@ -693,12 +676,16 @@ case token.kind of
                      write('"');
                      for i := 1 to token.sval^.length do begin
                         ch := token.sval^.str[i];
-                        if ch in [' '..'~'] then
-                           write(ch)
+                        if ch in [' '..'~'] then begin
+                           if ch in ['"','\','?'] then
+                              write('\');
+                           write(ch);
+                           end {if}
                         else begin
-                           write('\x0');
-                           PrintHexDigit(ord(ch)>>4);
-                           PrintHexDigit(ord(ch));
+                           write('\');
+                           write((ord(ch)>>6):1);
+                           write(((ord(ch)>>3) & $0007):1);
+                           write((ord(ch) & $0007):1);
                            end; {else}
                         end; {for}
                      write('"');
