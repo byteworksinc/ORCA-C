@@ -1837,6 +1837,7 @@ var
    lReportEOL: boolean;                 {local copy of reportEOL}
    tSkipping: boolean;                  {temp copy of the skipping variable}
    val: integer;                        {expression value}
+   nextLineNumber: integer;             {number for next line}
 
 
    function Defined: boolean;
@@ -2546,6 +2547,7 @@ lReportEOL := reportEOL;                {we need to see eol's}
 reportEOL := true;
 tSkipping := skipping;                  {don't skip the directive name!}
 skipping := false;
+nextLineNumber := -1;
 NextCh;                                 {skip the '#' char}
 while charKinds[ord(ch)] = ch_white do  {skip white space}
    NextCh;
@@ -2626,13 +2628,11 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                   FlagPragmas(p_line);
                   NextToken;
                   if token.kind = intconst then begin
-                     lineNumber := token.ival;
+                     nextLineNumber := token.ival;
                      NextToken;
                      end {if}
                   else
                      Error(18);
-                  if lineNumber < 0 then
-                     lineNumber := 0;
                   if token.kind = stringconst then begin
                      LongToPString(
                         pointer(ord4(@sourceFileGS.theString)+1),
@@ -2857,6 +2857,8 @@ charKinds[ord('#')] := illegal;         {don't allow # as a token}
 reportEOL := lReportEOL;                {restore flags}
 printMacroExpansions := lPrintMacroExpansions;
 skipping := tskipping;
+if nextLineNumber >= 0 then
+   lineNumber := nextLineNumber;
 end; {PreProcess}
 
 {-- Externally available routines ------------------------------}
