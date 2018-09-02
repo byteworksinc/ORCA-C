@@ -51,7 +51,7 @@ const
    feature_hh = true;
    feature_ll = false;
    feature_s_long = false;
-   feature_n_size = false;
+   feature_n_size = true;
 
 type
    length_modifier = (default, h, hh, l, ll, j, z, t, ld);
@@ -246,7 +246,7 @@ var
 
    procedure expect_extended;
    { Verify the current argument is an extended*. }
-   { * or float or double since they're all passed as extended }
+   { * or float or double or comp since they're all passed as extended }
    var
       ty: typePtr;
 
@@ -254,12 +254,12 @@ var
    ty := popType;
    if ty <> nil then begin
       if (ty^.kind <> scalarType) or
-         not (ty^.baseType in [cgExtended, cgReal, cgDouble]) then begin
-         Warning(@'expected extended');
+         not (ty^.baseType in [cgExtended, cgReal, cgDouble, cgComp]) then begin
+         Warning(@'expected a floating-point value');
          end; {if}
       end {if}
    else begin
-      Warning(@'argument missing; expected extended');
+      Warning(@'argument missing; expected a floating-point value');
       end; {else}
    end; {expect_extended}
 
@@ -379,9 +379,20 @@ var
 
          case c of
 
-            '%': has_suppress := true;
+            '%': begin
+               if has_suppress or (has_length <> default) then
+                  Warning(@'invalid element in %% conversion specification');
+               has_suppress := true;
+               end;
 
-            'c', 'b', 's', '[' : begin
+            'b': begin
+               if has_length <> default then
+                  Warning(@'length modifier may not be used with %b');
+               expected := [cgByte, cgUByte];
+               name := @'char';
+               end;
+
+            'c', 's', '[' : begin
                { %ls, etc is a wchar_t *}
 
                expected := [cgByte, cgUByte];
@@ -392,9 +403,11 @@ var
                   name := @'wchar_t';
 
                   if not feature_s_long then
-                     Warning(@'%ls is not currently supported');
+                     Warning(@'%ls, %lc, or %l[ is not currently supported');
 
-                  end; {if}
+                  end {if}
+               else if has_length <> default then
+                  Warning(@'invalid length modifier');
 
                if c = '[' then state := st_set_1;
                end;
@@ -409,7 +422,16 @@ var
                      expected := [cgLong, cgULong];
                      name := @'long';
                      end;
+                  h: begin
+                     expected := [cgWord, cgUWord];
+                     name := @'short';
+                     end;
+                  default: begin
+                     expected := [cgWord, cgUWord];
+                     name := @'int';
+                     end;
                   otherwise: begin
+                     Warning(@'invalid length modifier');
                      expected := [cgWord, cgUWord];
                      name := @'int';
                      end;
@@ -417,7 +439,6 @@ var
                end;
 
             'n': begin
-               { ORCALib always treats n as int * }
                { n.b. - *n is  undefined; orcalib pops a parm but doesn't store.}
                { C99 - support for length modifiers }
                if has_suppress then Warning(@'behavior of %*n is undefined');
@@ -435,13 +456,24 @@ var
                      expected := [cgLong, cgULong];
                      name := @'long';
                      end;
+                  h: begin
+                     expected := [cgWord, cgUWord];
+                     name := @'short';
+                     end;
+                  default: begin
+                     expected := [cgWord, cgUWord];
+                     name := @'int';
+                     end;
                   otherwise: begin
+                     Warning(@'invalid length modifier');
                      expected := [cgWord, cgUWord];
                      name := @'int';
                      end;
                   end; {case}
                end;
             'p': begin
+               if has_length <> default then
+                  Warning(@'length modifier may not be used with %p');
                if not has_suppress then expect_pointer;
                has_suppress := true;
                end;
@@ -456,7 +488,12 @@ var
                         expected := [cgDouble];
                         name := @'double';
                         end;
+                     default: begin
+                        expected := [cgReal];
+                        name := @'float';
+                        end;
                      otherwise: begin
+                        Warning(@'invalid length modifier');
                         expected := [cgReal];
                         name := @'float';
                         end;
@@ -596,22 +633,36 @@ var
       state := st_text;
       if c in format_set then begin
          case c of
-            'p': expect_pointer;
+            'p': begin
+               if has_length <> default then
+                  Warning(@'length modifier may not be used with %p');
+               expect_pointer;
+               end;
 
              { %b: orca-specific - pascal string }
-            'b', 's':
+            'b': begin
+               if has_length <> default then
+                  Warning(@'length modifier may not be used with %b');
+               expect_pointer_to([cgByte, cgUByte], @'char');
+               end;
+            
+            's':
                if has_length = l then begin
                   if not feature_s_long then 
                      Warning(@'%ls is not currently supported');
 
                   expect_pointer_to([cgWord, cgUWord], @'wchar_t')
                   end {if}
-               else expect_pointer_to([cgByte, cgUByte], @'char');
+               else begin
+                  if has_length <> default then
+                     Warning(@'invalid length modifier');
+                  expect_pointer_to([cgByte, cgUByte], @'char');
+                  end; {else}
 
             'n': begin
 
                if (not feature_n_size) and (has_length <> default) then
-                  Warning(@'size modifier for %n is not currently supported');
+                  Warning(@'length modifier for %n is not currently supported');
 
                case has_length of
                   hh:
@@ -620,16 +671,24 @@ var
                   l, ll, j, z, t:
                         expect_pointer_to([cgLong, cgULong], @'long');
 
-                  otherwise:
+                  otherwise: begin
+                     if feature_n_size and (has_length = ld) then
+                        Warning(@'invalid length modifier');
                      expect_pointer_to([cgWord, cgUWord], @'int');
+                     end;
                   end; {case}
 
                end;
 
             'c':
                if has_length = l then begin
-                  if not feature_s_long then Warning(@'%lc is not currently supported');
+                  if not feature_s_long then
+                     Warning(@'%lc is not currently supported');
                   expect_int;
+                  end
+               else if has_length <> default then begin
+                  Warning(@'invalid length modifier');
+                  expect_char;
                   end
                else begin
                   expect_char;
@@ -640,13 +699,24 @@ var
                if has_length in [l, ll, j, z, t] then begin
                   expect_long;
                   end
+               else if has_length = ld then begin
+                  Warning(@'invalid length modifier');
+                  expect_int;
+                  end
                else begin
                   expect_int;
                   end;
 
-            'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G':
-                  expect_extended;
-            '%': ;
+            'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G': begin
+               if not (has_length in [l, ld, default]) then
+                  Warning(@'invalid length modifier');
+               expect_extended;
+               end;
+                  
+            '%': 
+               if has_flag or has_width or has_precision
+                  or (has_length <> default) then
+                  Warning(@'invalid element in %% conversion specification');
             end; {case}
          end {if}
       else WarningConversionChar(c);
