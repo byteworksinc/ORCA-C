@@ -65,6 +65,9 @@ type
 
    types = set of baseTypeEnum;
 
+function KeyPress: boolean; extern; {in Scanner.asm}
+
+
 
 function FormatClassify {fname: stringPtr): fmt_type};
 {
@@ -900,6 +903,13 @@ while head <> nil do begin
    dispose(head);
    head := args;
    end;
+
+{handle pauses}
+if ((error_count <> 0) and wait) or KeyPress then begin
+   DrawHourglass;
+   while not KeyPress do {nothing};               
+   ClearHourglass;
+   end; {if}
 end; {FormatCheck}
 
 end.
