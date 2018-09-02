@@ -126,7 +126,7 @@ var
    }
    var 
       i: integer;
-      c: char;
+      ch: char;
 
    begin {Warning}
    if error_count = 0 then begin
@@ -136,9 +136,28 @@ var
       if s <> nil then begin
          Write('   > "');
          for i := 1 to s^.length do begin
-            c := s^.str[i];
-            if (c = '"') or (ord(c) < $20) or (ord(c) > $7f) then c := '.';
-            Write(c);
+            ch := s^.str[i];
+            if ch in [' '..'~'] then begin
+               if ch in ['"','\','?'] then
+                  write('\');
+               write(ch);
+               end {if}
+            else
+               case ord(ch) of
+                  7: write('\a');
+                  8: write('\b');
+                  9: write('\t');
+                  10: write('\n');
+                  11: write('\v');
+                  12: write('\f');
+                  13: write('\r');
+                  otherwise: begin
+                     write('\');
+                     write((ord(ch)>>6):1);
+                     write(((ord(ch)>>3) & $0007):1);
+                     write((ord(ch) & $0007):1);
+                     end;
+                  end; {case}
             end; {for}
          WriteLn('"');
          end; {if}
@@ -146,10 +165,28 @@ var
    error_count := error_count + 1;
    Write('     ');
    if offset = 0 then
-      if s <> nil then
-         offset := s^.length + 1;
+      if s <> nil then begin
+         offset := s^.length;
+         write(' ');
+         end; {if}
    if offset > 0 then begin
-      for i := 1 to offset do Write(' ');
+      if s <> nil then begin
+         if offset > s^.length then
+            offset := s^.length;
+         for i := 1 to offset do begin
+            ch := s^.str[i];
+            if ch in [' '..'~'] then begin
+               if ch in ['"','\','?'] then
+                  write(' ');
+               write(' ');
+               end {if}
+            else
+               case ord(ch) of
+                  7,8,9,10,11,12,13: write('  ');
+                  otherwise: write('    ');
+                  end; {case}
+            end; {for}
+         end; {if}
       Write('^ ');
       end; {if}
    WriteLn(msg^);
