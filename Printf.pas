@@ -192,13 +192,14 @@ var
    WriteLn(msg^);
    end; {Warning}
 
+
    procedure WarningConversionChar(c: char);
    { Warn that a conversion character is invalid, eg %z }
    var
       msg: stringPtr;
 
    begin {WarningConversionChar}
-   if (ord(c) >= $20) and (ord(c) <= $7f) then begin
+   if (ord(c) >= $20) and (ord(c) < $7f) then begin
       new(msg);
       msg^ := concat('unknown conversion type character ''', c, ''' in format');
       Warning(msg);
@@ -206,6 +207,7 @@ var
       end {if}
    else Warning(@'unknown conversion type character in format');
    end; {WarningConversionChar}
+
 
    procedure WarningExtraArgs(i: integer);
    { Warn that too many arguments were provided }
@@ -249,6 +251,7 @@ var
       end; {else}
    end; {expect_long}
 
+
    procedure expect_int;
    var
       ty: typePtr;
@@ -284,6 +287,7 @@ var
       end; {else}
    end; {expect_char}
 
+
    procedure expect_extended;
    { Verify the current argument is an extended*. }
    { * or float or double or comp since they're all passed as extended }
@@ -303,6 +307,7 @@ var
       end; {else}
    end; {expect_extended}
 
+
    procedure expect_pointer;
    { Verify the current argument is a pointer of some sort. }
    var
@@ -311,7 +316,7 @@ var
    begin {expect_pointer}
    ty := popType;
    if ty <> nil then begin
-      if (ty^.kind <> pointerType) then begin
+      if not (ty^.kind in [pointerType,arrayType]) then begin
          Warning(@'expected pointer');
          end; {if}
       end {if}
@@ -319,6 +324,32 @@ var
       Warning(@'argument missing; expected pointer');
       end; {else}
    end; {expect_pointer}
+
+
+   procedure expect_pointer_to_pointer;
+   { Verify the current argument is a pointer to a pointer.}
+   var
+      ty: typePtr;
+      ok: boolean;
+
+   begin {expect_pointer_to_pointer}
+   ok := false;
+   ty := popType;
+
+   if ty <> nil then
+      if (ty^.kind = pointerType) or (ty^.kind = arrayType) then
+         if ty^.pType <> nil then
+            if ty^.pType^.kind = pointerType then
+               ok := true;
+
+   if not ok then begin
+      if ty = nil then
+         Warning(@'argument missing; expected pointer to a pointer')
+      else Warning(@'expected pointer to a pointer');
+      end; {if}
+
+   end; {expect_pointer_to_pointer}
+
 
    procedure expect_pointer_to(expected: types; name: stringPtr);
    { Verify the current argument is a pointer to the expected set.}
@@ -342,7 +373,6 @@ var
    ty := popType;
    baseTy := nil;
 
-
    if ty <> nil then
       if (ty^.kind = pointerType) or (ty^.kind = arrayType) then begin
          baseTy := ty^.pType;
@@ -350,7 +380,7 @@ var
             and (baseTy^.kind = scalarType)
             and (baseTy^.baseType in expected)
             then ok := true;
-            end; {if}
+         end; {if}
 
    if not ok then begin
       if ty = nil then
@@ -359,6 +389,7 @@ var
       end; {if}
 
    end; {expect_pointer_to}
+
 
    procedure do_length(c: char);
    { helper to process the length modifier }
@@ -514,7 +545,7 @@ var
             'p': begin
                if has_length <> default then
                   Warning(@'length modifier may not be used with %p');
-               if not has_suppress then expect_pointer;
+               if not has_suppress then expect_pointer_to_pointer;
                has_suppress := true;
                end;
             'a', 'A', 'f', 'F', 'g', 'G', 'e', 'E': begin

@@ -479,7 +479,7 @@ if list or (numErr <> 0) then begin
    if not wroteLine then begin
       write(lineNumber:4, ' ');         {write the line #}
       cp := firstPtr;                   {write the characters in the line}
-      while (cp <> eofPtr) and (cp^ <> RETURN) and (cp^ <> NEWLINE) do begin
+      while (cp <> eofPtr) and (charKinds[ord(cp^)] <> ch_eol) do begin
          write(chr(cp^));
          cp := pointer(ord4(cp) + 1);
          end; {while}
