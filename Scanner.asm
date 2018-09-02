@@ -171,12 +171,14 @@ la3      stz   ch
 
 !    if needWriteLine then begin        {do eol processing}
 !       WriteLine;
+!       wroteLine := false;
 !       lineNumber := lineNumber+1;
 !       firstPtr := chPtr;
 !       end; {if}
          lda   needWriteLine
          beq   lb1
          jsl   WriteLine
+         stz   wroteLine
          inc   lineNumber
          move4 chPtr,firstPtr
 lb1      anop
@@ -273,12 +275,14 @@ lb5      anop
 
 !    if needWriteLine then begin        {do eol processing}
 !       WriteLine;
+!       wroteLine := false;
 !       lineNumber := lineNumber+1;
 !       firstPtr := chPtr;
 !       end; {if}
          lda   needWriteLine
          beq   lb6
          jsl   WriteLine
+         stz   wroteLine
          inc   lineNumber
          move4 chPtr,firstPtr
 lb6      anop
@@ -392,6 +396,7 @@ lc2b     move4 chPtr,p1
          sta   ch
 !             if charKinds[ord(ch)] = ch_eol then begin
 !                WriteLine;
+!                wroteLine := false;
 !                lineNumber := lineNumber+1;
 !                firstPtr := pointer(ord4(chPtr)+1);
 !                end; {if}
@@ -401,6 +406,7 @@ lc2b     move4 chPtr,p1
          cmp   #ch_eol
          bne   lc3
          jsl   WriteLine
+         stz   wroteLine
          inc   lineNumber
          add4  chPtr,#1,firstPtr
 lc3      anop

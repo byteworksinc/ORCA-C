@@ -155,6 +155,8 @@ procedure TermScanner;
 
 { Shut down the scanner.                                        }
 
+procedure WriteLine;
+
 {---------------------------------------------------------------}
 
 implementation
@@ -240,6 +242,7 @@ var
    includeCount: 0..maxint;		{nested include files (for EndInclude)}
    macroFound: macroRecordPtr;          {last macro found by IsDefined}
    needWriteLine: boolean;              {is there a line that needs to be written?}
+   wroteLine: boolean;                  {has the current line already been written?}
    numErr: 0..maxErr;                   {number of errors in this line}
    oneStr: string[2];			{string form of __STDC__}
    ispstring: boolean;                  {is the current string a p-string?}
@@ -473,14 +476,16 @@ var
  
 begin {WriteLine}
 if list or (numErr <> 0) then begin
-   write(lineNumber:4, ' ');            {write the line #}
-   cp := firstPtr;                      {write the characters in the line}
-   while cp <> chPtr do begin
-     if cp^ <> RETURN then
-       write(chr(cp^));
-     cp := pointer(ord4(cp) + 1);
-     end; {while}
-   writeln;                             {write the end of line character}
+   if not wroteLine then begin
+      write(lineNumber:4, ' ');         {write the line #}
+      cp := firstPtr;                   {write the characters in the line}
+      while (cp <> eofPtr) and (cp^ <> RETURN) and (cp^ <> NEWLINE) do begin
+         write(chr(cp^));
+         cp := pointer(ord4(cp) + 1);
+         end; {while}
+      writeln;                          {write the end of line character}
+      wroteLine := true;
+      end; {if}
    for i := 1 to numErr do              {write any errors}
      with errors[i] do begin
        if line = lineNumber then begin
@@ -614,8 +619,8 @@ if list or (numErr <> 0) then begin
         121: msg := @'invalid digit for binary constant';
         122: msg := @'arithmetic is not allowed on a pointer to an incomplete or function type';
         123: msg := @'array element type may not be an incomplete or function type';
-        124: msg := @'invalid format string';
-        125: msg := @'format string is not a string literal';
+        124: msg := @'lint: invalid format string or arguments';
+        125: msg := @'lint: format string is not a string literal';
         126: msg := @'scope rules may not be changed within a function';
         127: msg := @'illegal storage class for declaration in for loop';
          otherwise: Error(57);
@@ -1780,6 +1785,7 @@ if gotName then begin			{read the file name from the line}
    if doInclude and progress then	{note our progress}
       writeln('Including ', workString);
    WriteLine;				{write the source line}
+   wroteLine := false;
    lineNumber := lineNumber+1;
    firstPtr := pointer(ord4(chPtr)+2);
    needWriteLine := false;
@@ -3400,6 +3406,7 @@ includeCount := 0;			{no pending calls to EndInclude}
 lint := 0;                              {turn off lint checks}
 ch := chr(RETURN);                      {set the initial character}
 needWriteLine := false;                 {no lines are pending}
+wroteLine := false;                     {current line has not been written}
 switchLanguages := false;               {not switching languages}
 lastWasReturn := false;                 {last char was not return}
 doingstring := false;                   {not doing a string}

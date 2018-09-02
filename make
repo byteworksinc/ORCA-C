@@ -114,6 +114,7 @@ if {#} == 0
      set parser parser
      set symbol symbol
      set header header
+     set printf printf
   end
 
   Newer obj/symbol.a symbol.pas symbol.print symbol.asm
@@ -157,6 +158,7 @@ if {#} == 0
   if {status} != 0
      set cc cc
      set printf printf
+     set expression expression
   end
 
 else
@@ -182,7 +184,7 @@ if "{table}" == table
 end
 
 set list ""
-set list        {ccommon} {mm} {printf} {cgi} {scanner} {symbol} {header}
+set list        {ccommon} {mm} {cgi} {scanner} {symbol} {header} {printf}
 set list {list} {expression} {cgc} {asm} {parser} {cc} {objout} {native}
 set list {list} {gen} {dag}
 

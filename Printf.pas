@@ -15,7 +15,7 @@ interface
 
 {$LibPrefix '0/obj/'}
 
-uses CCommon;
+uses CCommon, Scanner;
 
 {$segment 'PRINTF'}
 
@@ -64,9 +64,6 @@ type
       st_error);
 
    types = set of baseTypeEnum;
-
-procedure Error (err: integer); extern; {in scanner.pas}
-
 
 
 function FormatClassify {fname: stringPtr): fmt_type};
@@ -130,9 +127,11 @@ var
 
    begin {Warning}
    if error_count = 0 then begin
+      WriteLine;
       Error(124);
+      WriteLine;
       if s <> nil then begin
-         Write('     "');
+         Write('   > "');
          for i := 1 to s^.length do begin
             c := s^.str[i];
             if (c = '"') or (ord(c) < $20) or (ord(c) > $7f) then c := '.';
@@ -143,11 +142,13 @@ var
       end; {if}
    error_count := error_count + 1;
    Write('     ');
-   if offset <> 0 then begin
+   if offset = 0 then
+      if s <> nil then
+         offset := s^.length + 1;
+   if offset > 0 then begin
       for i := 1 to offset do Write(' ');
       Write('^ ');
       end; {if}
-   Write('Warning: ');
    WriteLn(msg^);
    end; {Warning}
 
@@ -159,11 +160,11 @@ var
    begin {WarningConversionChar}
    if (ord(c) >= $20) and (ord(c) <= $7f) then begin
       new(msg);
-      msg^ := concat('unknown conversion type character ''', c, ''' in format.');
+      msg^ := concat('unknown conversion type character ''', c, ''' in format');
       Warning(msg);
       dispose(msg);
       end {if}
-   else Warning(@'unknown conversion type character in format.');
+   else Warning(@'unknown conversion type character in format');
    end; {WarningConversionChar}
 
    procedure WarningExtraArgs(i: integer);
@@ -172,7 +173,7 @@ var
       msg: stringPtr;
    begin {WarningExtraArgs}
    new(msg);
-   msg^ := concat('extra arguments provided (', cnvis(i), ' expected).');
+   msg^ := concat('extra argument(s) provided (', cnvis(i), ' expected)');
    Warning(msg);
    dispose(msg);
    end; {WarningExtraArgs}
@@ -200,7 +201,7 @@ var
    ty := popType;
    if ty <> nil then begin
       if (ty^.kind <> scalarType) or (not (ty^.baseType in [cgLong, cgULong])) then begin
-         Warning(@'expected long int.');
+         Warning(@'expected long int');
          end; {if}
       end {if}
    else begin
@@ -217,11 +218,11 @@ var
    if ty <> nil then begin
       if (ty^.kind <> scalarType) or 
          not (ty^.baseType in [cgWord, cgUWord, cgByte, cgUByte]) then begin
-         Warning(@'expected int.');
+         Warning(@'expected int');
          end; {if}
       end {if}
    else begin
-      Warning(@'argument missing; expected int.');
+      Warning(@'argument missing; expected int');
       end; {else}
    end; {expect_int}
 
@@ -235,11 +236,11 @@ var
    if ty <> nil then begin
       if (ty^.kind <> scalarType) or 
          not (ty^.baseType in [cgWord, cgUWord, cgByte, cgUByte]) then begin
-         Warning(@'expected char.');
+         Warning(@'expected char');
          end; {if}
       end {if}
    else begin
-      Warning(@'argument missing; expected char.');
+      Warning(@'argument missing; expected char');
       end; {else}
    end; {expect_char}
 
@@ -254,11 +255,11 @@ var
    if ty <> nil then begin
       if (ty^.kind <> scalarType) or
          not (ty^.baseType in [cgExtended, cgReal, cgDouble]) then begin
-         Warning(@'expected extended.');
+         Warning(@'expected extended');
          end; {if}
       end {if}
    else begin
-      Warning(@'argument missing; expected extended.');
+      Warning(@'argument missing; expected extended');
       end; {else}
    end; {expect_extended}
 
@@ -271,11 +272,11 @@ var
    ty := popType;
    if ty <> nil then begin
       if (ty^.kind <> pointerType) then begin
-         Warning(@'expected pointer.');
+         Warning(@'expected pointer');
          end; {if}
       end {if}
    else begin
-      Warning(@'argument missing; expected pointer.');
+      Warning(@'argument missing; expected pointer');
       end; {else}
    end; {expect_pointer}
 
@@ -291,7 +292,7 @@ var
             msg: stringPtr;
          begin
          new(msg);
-         msg^ := concat(prefix^, name^, '.');
+         msg^ := concat(prefix^, name^);
          Warning(msg);
          dispose(msg);
          end; {error}
@@ -388,10 +389,10 @@ var
 
                if has_length = l then begin
                   expected := [cgWord, cgUWord];
-                  name := @'wchar';
+                  name := @'wchar_t';
 
                   if not feature_s_long then
-                     Warning(@'%ls not currently supported');
+                     Warning(@'%ls is not currently supported');
 
                   end; {if}
 
@@ -419,11 +420,11 @@ var
                { ORCALib always treats n as int * }
                { n.b. - *n is  undefined; orcalib pops a parm but doesn't store.}
                { C99 - support for length modifiers }
-               if has_suppress then Warning(@'*n is undefined.');
+               if has_suppress then Warning(@'behavior of %*n is undefined');
                has_suppress := false;
 
                if (not feature_n_size) and (has_length <> default) then
-                  Warning(@'size modifier for %n not currently supported.');
+                  Warning(@'size modifier for %n is not currently supported');
 
                case has_length of
                   hh: begin
@@ -529,7 +530,7 @@ var
                has_length := hh;
                state := st_format;
                if not feature_hh then
-                  Warning(@'hh modifier not currently supported');
+                  Warning(@'hh modifier is not currently supported');
                end {if}
             else do_scanf_format;
 
@@ -538,7 +539,7 @@ var
                has_length := ll;
                state := st_format;
                if not feature_ll then
-                  Warning(@'ll modifier not currently supported');
+                  Warning(@'ll modifier is not currently supported');
                end {if}
             else do_scanf_format;
 
@@ -561,7 +562,7 @@ var
       end; { for }
 
    if state <> st_text then
-      Warning(@'incomplete format specifier.');
+      Warning(@'incomplete format specifier');
 
    if args <> nil then begin
       offset := 0;
@@ -601,16 +602,16 @@ var
             'b', 's':
                if has_length = l then begin
                   if not feature_s_long then 
-                     Warning(@'%ls not currently supported.');
+                     Warning(@'%ls is not currently supported');
 
-                  expect_pointer_to([cgWord, cgUWord], @'wchar')
+                  expect_pointer_to([cgWord, cgUWord], @'wchar_t')
                   end {if}
                else expect_pointer_to([cgByte, cgUByte], @'char');
 
             'n': begin
 
                if (not feature_n_size) and (has_length <> default) then
-                  Warning(@'size modifier for %n not currently supported.');
+                  Warning(@'size modifier for %n is not currently supported');
 
                case has_length of
                   hh:
@@ -627,7 +628,7 @@ var
 
             'c':
                if has_length = l then begin
-                  if not feature_s_long then Warning(@'%lc not currently supported');
+                  if not feature_s_long then Warning(@'%lc is not currently supported');
                   expect_int;
                   end
                else begin
@@ -733,7 +734,7 @@ var
                has_length := hh;
                state := st_format;
                if not feature_hh then
-                  Warning(@'hh modifier not currently supported');
+                  Warning(@'hh modifier is not currently supported');
                end
             else do_printf_format;
 
@@ -742,7 +743,7 @@ var
                has_length := ll;
                state := st_format;
                if not feature_ll then
-                  Warning(@'ll modifier not currently supported');
+                  Warning(@'ll modifier is not currently supported');
                end
             else do_printf_format;
 
@@ -755,7 +756,7 @@ var
       end; { for i }
 
    if state <> st_text then
-      Warning(@'incomplete format specifier.');
+      Warning(@'incomplete format specifier');
 
    if args <> nil then begin
       offset := 0;
