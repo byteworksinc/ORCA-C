@@ -860,7 +860,7 @@ var
       if (tk <> nil) and (tk^.token.kind = stringconst) then
          get_format_string := tk^.token.sval
       else
-         Error(125);
+         {Error(125) - disabled for now};
       end; {if}
       { no format string -> Error(85) }
    end; {get_format_string}
