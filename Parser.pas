@@ -41,12 +41,13 @@ procedure DoStatement;
 { process a statement from a function                           }
 
 
-procedure AutoInit (variable: identPtr);
+procedure AutoInit (variable: identPtr; line: integer);
 
 { generate code to initialize an auto variable                  }
 {                                                               }
 { parameters:                                                   }
 {       variable - the variable to initialize                   }
+{       line - line number (used for debugging)                 }
 
 
 procedure InitParser;
@@ -3051,6 +3052,7 @@ var
    tp: typePtr;                         {for tracing type lists}
    tk: tokenType;                       {work token}
    typeFound: boolean;                  {has some type specifier been found?}
+   startLine: integer;                  {line where this declaration starts}
 
 
    procedure CheckArray (v: identPtr; firstVariable: boolean);
@@ -3263,6 +3265,7 @@ if doingPrototypes then                 {prototypes implies a parm list}
 else
    lastParameter := nil;                {init parm list if we're not doing prototypes}
 isFunction := false;                    {assume it's not a function}
+startLine := lineNumber;
 if not doingFunction then               {handle any segment statements}
    while token.kind = segmentsy do
       SegmentStatement;
@@ -3650,7 +3653,7 @@ else {if not isFunction then} begin
             variable^.lln := GetLocalLabel;
             Gen2(dc_loc, variable^.lln, long(variable^.itype^.size).lsw);
             if variable^.state = initialized then
-               AutoInit(variable);      {initialize auto variable}
+               AutoInit(variable, startLine);   {initialize auto variable}
             end; {if}
          if (token.kind = commach) and (not doingPrototypes) then begin
             done := false;              {allow multiple variables on one line}
@@ -3775,12 +3778,13 @@ case statementList^.kind of
 end; {DoStatement}
 
 
-procedure AutoInit {variable: identPtr};
+procedure AutoInit {variable: identPtr, line: integer};
 
 { generate code to initialize an auto variable                  }
 {                                                               }
 { parameters:                                                   }
 {       variable - the variable to initialize                   }
+{       line - line number (used for debugging)                 }
 
 var
    count: integer;                      {initializer counter}
@@ -4042,8 +4046,16 @@ var
 begin {AutoInit}
 iPtr := variable^.iPtr;
 count := iPtr^.count;
-if variable^.class <> staticsy then
+if variable^.class <> staticsy then begin
+   if traceBack or debugFlag then
+      if nameFound or debugFlag then
+         if (statementList <> nil) and not statementList^.doingDeclaration then
+            if lastLine <> line then begin
+               lastLine := line;
+               Gen2(pc_lnm, line, ord(debugType));
+               end; {if}
    Initialize(variable, 0, variable^.itype);
+   end; {if}
 end; {AutoInit}
 
 
