@@ -25,9 +25,12 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2018
             8.	Two new #pragma ignore bits are defined.  See "Compiler changes
               	introduced in C 2.2.0".
 
-            9.	Stack repair code is now more efficient.
+            9.	A new #pragma lint bit is defined for checking *printf() and
+              	*scanf() format strings and arguments.  See "Format Checking." 
+
+            10.	Stack repair code is now more efficient.
             
-            10.	Some new library functions and features from C99 have been
+            11.	Some new library functions and features from C99 have been
               	added.  See "Library Updates."
 
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
@@ -133,6 +136,10 @@ p. 256
 
 The #pragma debug directive supports a new bit. If bit 15 is set, ORCA/C generates inline function names for use with assembly-level debugging tools.  See "Inline Function Names," below.
 
+p. 257
+
+The #pragma expand directive has been changed to use three-digit octal escape sequences (rather than hexadecimal ones) in strings it outputs.  (This ensures that subsequent characters in the string cannot be interpreted as part of the escape sequence.)
+
 p. 258
 
 The #pragma ignore directive supports three new bits.
@@ -148,6 +155,12 @@ Bit 3 controls whether // comments are allowed.  If bit 3 is set, as in
 ORCA/C supports // comments.  If bit 3 is clear, ORCA/C does not support // comments, which are not actually allowed in ANSI C89 programs.
 
 See "// Comments," below, for a complete description of // comments.
+
+p. 259
+
+The #pragma lint directive supports a new bit.  If bit 4 (a value of 16) is set, the compiler will check if the format strings passed to the fprintf() and fscanf() families of functions are valid, and if the number and types of arguments passed to them match what the format strings call for.  See "Format Checking," below.
+
+Also, note that the conditions detected by lint checks 1 and 2 are errors under C99 and later C standards.  Thus, to make ORCA/C conform as closely as possible to those standards, at least "#pragma lint 3" should be used.
 
 p. 263
 
@@ -199,6 +212,14 @@ The documentation states assert() writes to stdout.  Beginning with ORCA/C 2.1, 
 p. 353
 
 The discussion of _exit() should note that the _exit() function is an extension to ANSI C.
+
+p. 356
+
+The fprintf() family of functions has been updated to support several new features specified by C99.  Also, the snprintf() and vsnprintf() functions have been added.  See "Library Updates," below.
+
+p. 367
+
+The fscanf() family of functions has been updated to support several new features specified by C99.  See "Library Updates," below.
 
 p. 375
 
@@ -293,6 +314,16 @@ Inline Function Names
 ORCA/C now supports recording the names of functions using the inline name format documented in Apple IIGS Technical Note #103.  This allows assembly-level debugging tools such as GSBug and Nifty List to display the names of functions in an ORCA/C program while debugging it.  To enable generation of inline function names, set #pragma debug bit 15 (a value of 0x8000).
 
 Note that inline function names are unrelated to the other types of debug code that ORCA/C can generate.  In particular, inline function names are not needed for source-level debugging using the desktop development environment or other compatible source-level debuggers, although it is not harmful to enable both types of debugging information at the same time.
+
+(Kelvin Sherlock)
+
+
+Format Checking
+---------------
+
+ORCA/C now supports a new #pragma lint bit to enable checking of the format strings passed to the fprintf() and fscanf() families of functions.  If #pragma lint bit 4 (a value of 16) is set, the compiler will check if the format strings passed to those functions are valid, and if the number and types of arguments passed to them match what the format strings call for.
+
+If these lint checks detect any errors, they will produce the error message "lint: invalid format string or arguments," followed by more detailed information about the problem(s) found.
 
 (Kelvin Sherlock)
 
@@ -677,6 +708,10 @@ int foo(int[42]);
 80. ORCA/C sometimes failed to initialize an error message being reported.
 
 (Kelvin Sherlock)
+
+81. The #line directive was setting the number for the current line, rather than the following one.
+
+82. Output from #pragma expand could contain string literals that were invalid or did not represent the same strings as those in the original program code.  In order to fix this problem, #pragma expand has been changed to use three-digit octal escape sequences (rather than hexadecimal ones) in strings it outputs.  (This ensures that subsequent characters in the string cannot be interpreted as part of the escape sequence.)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
