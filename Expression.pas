@@ -1278,12 +1278,16 @@ var
                                  ival := ival | $FF00;
                               end; {with}
                         end {if}
-                     else if baseType in [cgUByte,cgUWord] then begin
+                     else if baseType = cgUWord then begin
                         op^.token.kind := uintConst;         
                         op^.token.class := intConstant;
                         op^.token.ival := long(op1).lsw;
-                        if baseType = cgUByte then
-                           op^.token.ival := op^.token.ival & $00FF;
+                        end {else if}
+                     else if baseType = cgUByte then begin
+                        op^.token.kind := intConst;         
+                        op^.token.class := intConstant;
+                        op^.token.ival := long(op1).lsw;
+                        op^.token.ival := op^.token.ival & $00FF;
                         end {else if}
                      else if baseType = cgLong then begin
                         op^.token.kind := longConst;
