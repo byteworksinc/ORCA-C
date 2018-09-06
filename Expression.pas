@@ -1126,6 +1126,20 @@ var
                                 end;
                   otherwise: Error(57);
                   end; {case}
+               if ((lint & lintOverflow) <> 0) then begin
+                  if op^.token.kind in [plusch,minusch,asteriskch,slashch] then
+                     if ekind = intConst then
+                        if op1 <> long(op1).lsw then
+                           Error(128);
+                  if op^.token.kind in [ltltop,gtgtop] then begin
+                     if ekind in [intConst,uintConst] then
+                        if (op2 < 0) or (op2 > 15) then
+                           Error(130);
+                     if ekind in [longConst,ulongConst] then
+                        if (op2 < 0) or (op2 > 31) then
+                           Error(130);
+                     end; {if}
+                  end; {if}
                op^.token.kind := ekind;
                if ekind in [longconst,ulongconst] then begin
                   op^.token.lval := op1;
@@ -2847,6 +2861,54 @@ var
    end; {CompareCompatible}
 
 
+   procedure CheckDivByZero (var divisor: tokenType; opType: typePtr);
+
+   { Check for division by (constant) zero.                     }
+   {                                                            }
+   { parameters:                                                }
+   {    divisor - token for divisor                             }
+   {    opType - type of the result of the operation            }
+
+   begin {CheckDivByZero}
+   if opType^.kind = scalarType then
+      if opType^.baseType in [cgByte,cgWord,cgUByte,cgUWord,cgLong,cgULong] then
+         if ((divisor.class = intConstant) and (divisor.ival = 0))
+            or ((divisor.class = longConstant) and (divisor.lval = 0))
+            or ((divisor.class = doubleConstant) and (divisor.rval = 0.0)) then
+            Error(129);
+   end; {CheckDivByZero}
+
+
+   procedure CheckShiftOverflow (var shiftCountTok: tokenType; opType: typePtr);
+
+   { Check for invalid (too large or negative) shift count.     }
+   {                                                            }
+   { parameters:                                                }
+   {    shiftCountTok - token for shift count                   }
+   {    opType - type of the result of the operation            }
+
+   var
+      shiftCount: longint;
+
+   begin {CheckShiftOverflow}
+   if shiftCountTok.class = intConstant then
+      shiftCount := shiftCountTok.ival
+   else if shiftCountTok.class = longConstant then
+      shiftCount := shiftCountTok.lval
+   else
+      shiftCount := 0;
+
+   if (shiftCount <> 0) and (opType^.kind = scalarType) then begin
+      if opType^.baseType in [cgByte,cgWord,cgUByte,cgUWord] then
+         if (shiftCount < 0) or (shiftCount > 15) then
+            Error(130);
+      if opType^.baseType in [cgLong,cgULong] then
+         if (shiftCount < 0) or (shiftCount > 31) then
+            Error(130);
+      end; {if}
+   end; {CheckShiftOverflow}
+
+
 begin {GenerateCode}
 lastwasconst := false;
 case tree^.token.kind of
@@ -3165,6 +3227,12 @@ case tree^.token.kind of
 
          otherwise: Error(57);
          end; {case}
+      if ((lint & lintOverflow) <> 0) then begin
+         if tree^.token.kind in [slasheqop,percenteqop] then
+            CheckDivByZero(tree^.right^.token, lType)
+         else if tree^.token.kind in [ltlteqop,gtgteqop] then
+            CheckShiftOverflow(tree^.right^.token, lType);
+         end; {if}
       AssignmentConversion(lType,expressionType,false,0,true,true);
       if doingScalar then begin
          if kind = pointerType then
@@ -3320,6 +3388,8 @@ case tree^.token.kind of
             error(66);
          end; {case}
       expressionType := lType;
+      if ((lint & lintOverflow) <> 0) then
+         CheckShiftOverflow(tree^.right^.token, expressionType);
       end; {case ltltop}
 
    gtgtop: begin                        {>>}
@@ -3346,6 +3416,8 @@ case tree^.token.kind of
             error(66);
          end; {case}
       expressionType := lType;
+      if ((lint & lintOverflow) <> 0) then
+         CheckShiftOverflow(tree^.right^.token, expressionType);
       end; {case gtgtop}
 
    plusch: begin                        {+}
@@ -3485,6 +3557,8 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
+      if ((lint & lintOverflow) <> 0) then
+         CheckDivByZero(tree^.right^.token, expressionType);
       end; {case slashch}
 
    percentch: begin                     {%}
@@ -3503,6 +3577,8 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
+      if ((lint & lintOverflow) <> 0) then
+         CheckDivByZero(tree^.right^.token, expressionType);
       end; {case percentch}
 
    eqeqop,                              {==}

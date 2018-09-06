@@ -88,8 +88,9 @@ const
    lintUndefFn          = $0001;        {flag use of undefined functions}
    lintNoFnType         = $0002;        {flag functions with no type}
    lintNotPrototyped    = $0004;        {flag functions with no prototypes}
-   lintPragmas          = $0008;        {flag unknown prototypes}
+   lintPragmas          = $0008;        {flag unknown pragmas}
    lintPrintf           = $0010;        {check printf/scanf format flags}
+   lintOverflow         = $0020;        {check for overflows}
 
                                         {bit masks for GetLInfo flags}
                                         {----------------------------}

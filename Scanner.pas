@@ -623,6 +623,9 @@ if list or (numErr <> 0) then begin
         125: msg := @'lint: format string is not a string literal';
         126: msg := @'scope rules may not be changed within a function';
         127: msg := @'illegal storage class for declaration in for loop';
+        128: msg := @'lint: integer overflow in expression';
+        129: msg := @'lint: division by zero';
+        130: msg := @'lint: invalid shift count';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
