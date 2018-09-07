@@ -25,8 +25,8 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2018
             8.	Two new #pragma ignore bits are defined.  See "Compiler changes
               	introduced in C 2.2.0".
 
-            9.	A new #pragma lint bit is defined for checking *printf() and
-              	*scanf() format strings and arguments.  See "Format Checking." 
+            9.	Two new #pragma lint bits are defined.  See "Format Checking"
+              	and "Checking for Undefined Behavior in Computations."
 
             10.	Stack repair code is now more efficient.
             
@@ -158,7 +158,11 @@ See "// Comments," below, for a complete description of // comments.
 
 p. 259
 
-The #pragma lint directive supports a new bit.  If bit 4 (a value of 16) is set, the compiler will check if the format strings passed to the fprintf() and fscanf() families of functions are valid, and if the number and types of arguments passed to them match what the format strings call for.  See "Format Checking," below.
+The #pragma lint directive supports two new bits.
+
+If bit 4 (a value of 16) is set, the compiler will check if the format strings passed to the fprintf() and fscanf() families of functions are valid, and if the number and types of arguments passed to them match what the format strings call for.  See "Format Checking," below.
+
+If bit 5 (a value of 32) is set, the compiler will check for several situations in computations that give rise to undefined behavior under the C standards.  See "Checking for Undefined Behavior in Computations," below.
 
 Also, note that the conditions detected by lint checks 1 and 2 are errors under C99 and later C standards.  Thus, to make ORCA/C conform as closely as possible to those standards, at least "#pragma lint 3" should be used.
 
@@ -173,6 +177,10 @@ p. 289
 Unions can be initialized by a brace-enclosed expression giving the initializer value for the first element of the union, or by an expression of the appropriate union type.  The non-standard construct of initializing the first element of a union with a non-brace-enclosed initializer is no longer supported.  The supported alternative is simply to enclose the initializer in braces, e.g.
 
    union nums {float f; int i;} x = {0.0};
+
+p. 311
+
+If integer overflow occurs during signed integer multiplication, the resulting value is not predictable.  Contrary to what the description in the manual implies, it will not necessarily be the low-order bits from the true product of the operands.
 
 p. 321
 
@@ -326,6 +334,20 @@ ORCA/C now supports a new #pragma lint bit to enable checking of the format stri
 If these lint checks detect any errors, they will produce the error message "lint: invalid format string or arguments," followed by more detailed information about the problem(s) found.
 
 (Kelvin Sherlock)
+
+
+Checking for Undefined Behavior in Computations
+-----------------------------------------------
+
+ORCA/C now supports a new #pragma lint bit to enable checking for several situations in arithmetic computations or bit manipulation that give rise to undefined behavior according to the C standards.  These are generally indicative of bugs, or (in code ported from other platforms) of assumptions that types have larger ranges than they do in ORCA/C.
+
+These checks are enabled if #pragma lint bit 5 (a value of 32) is set.  They currently check for the following conditions:
+
+- Integer overflow from arithmetic in constant expressions of type int.
+- Integer division by the constant zero (or remainder from such division).
+- Invalid constant shift counts (negative, or >= the width of the type).
+
+(Stephen Heumann)
 
 
 New Headers
@@ -712,6 +734,8 @@ int foo(int[42]);
 81. The #line directive was setting the number for the current line, rather than the following one.
 
 82. Output from #pragma expand could contain string literals that were invalid or did not represent the same strings as those in the original program code.  In order to fix this problem, #pragma expand has been changed to use three-digit octal escape sequences (rather than hexadecimal ones) in strings it outputs.  (This ensures that subsequent characters in the string cannot be interpreted as part of the escape sequence.)
+
+83. Constant expressions cast to char or unsigned char could be treated as if their type promoted to unsigned int rather than int.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
