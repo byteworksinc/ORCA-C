@@ -489,8 +489,17 @@ if list or (numErr <> 0) then begin
    for i := 1 to numErr do              {write any errors}
      with errors[i] do begin
        if line = lineNumber then begin
-         for cl := 1 to col+4 do
+         write('     ');
+         if lineNumber >= 10000 then
            write(' ');
+         cp := firstPtr;
+         for cl := 1 to col-1 do begin
+           if cp^ = HT then
+             write(chr(HT))
+           else
+             write(' ');
+           cp := pointer(ord4(cp) + 1);
+           end; {for}
          write('^ ');
          end {if}
        else
