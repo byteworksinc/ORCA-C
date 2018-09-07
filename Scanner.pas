@@ -630,8 +630,12 @@ if list or (numErr <> 0) then begin
          end; {case}
        writeln(msg^);
        if terminalErrors then begin
-          if enterEditor then
-             ExitToEditor(msg, ord4(firstPtr)+col-ord4(bofPtr)-1)
+          if enterEditor then begin
+             if line = lineNumber then
+                ExitToEditor(msg, ord4(firstPtr)+col-ord4(bofPtr)-1)
+             else
+                ExitToEditor(msg, ord4(firstPtr)-ord4(bofPtr)-1);
+             end {if}
           else
              TermError(0);
           end; {if}
