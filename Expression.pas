@@ -3098,6 +3098,9 @@ case tree^.token.kind of
       else
          kind := lType^.kind;
       GenerateCode(tree^.right);
+      if expressionType^.kind <> scalarType then
+         if tree^.token.kind in [pluseqop,minuseqop] then
+            Error(66);
       if tree^.token.kind in [gtgteqop,ltlteqop] then
          if kind = scalarType then
             if expressionType^.kind = scalarType then begin
@@ -3330,7 +3333,9 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       lType := expressionType;
       GenerateCode(tree^.right);
-      case UsualBinaryConversions(lType) of
+      if (lType^.kind <> scalarType) or (expressionType^.kind <> scalarType) then
+         Error(66)
+      else case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_bxr);
          cgLong,cgULong:
@@ -3344,7 +3349,9 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       lType := expressionType;
       GenerateCode(tree^.right);
-      case UsualBinaryConversions(lType) of
+      if (lType^.kind <> scalarType) or (expressionType^.kind <> scalarType) then
+         Error(66)
+      else case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_bor);
          cgLong,cgULong:
@@ -3358,7 +3365,9 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       lType := expressionType;
       GenerateCode(tree^.right);
-      case UsualBinaryConversions(lType) of
+      if (lType^.kind <> scalarType) or (expressionType^.kind <> scalarType) then
+         Error(66)
+      else case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_bnd);
          cgLong,cgULong:
@@ -3370,6 +3379,8 @@ case tree^.token.kind of
 
    ltltop: begin                        {<<}
       GenerateCode(tree^.left);
+      if (expressionType^.kind <> scalarType) then
+         error(66);
       et := UsualUnaryConversions;
       lType := expressionType;
       GenerateCode(tree^.right);
@@ -3394,6 +3405,8 @@ case tree^.token.kind of
 
    gtgtop: begin                        {>>}
       GenerateCode(tree^.left);
+      if (expressionType^.kind <> scalarType) then
+         error(66);
       et := UsualUnaryConversions;
       lType := expressionType;
       GenerateCode(tree^.right);
@@ -3430,6 +3443,8 @@ case tree^.token.kind of
       lType := expressionType;
       GenerateCode(tree^.right);
       if lType^.kind in [arrayType,pointerType] then begin
+         if expressionType^.kind <> scalarType then
+            error(66);
 
          {pointer addition}
          et := UsualUnaryConversions;
@@ -3506,7 +3521,9 @@ case tree^.token.kind of
       else begin
 
          {scalar subtraction}
-         case UsualBinaryConversions(lType) of
+         if expressionType^.kind <> scalarType then
+            error(66)
+         else case UsualBinaryConversions(lType) of
             cgByte,cgUByte,cgWord,cgUWord:
                Gen0(pc_sbi);
             cgLong,cgULong:
@@ -3523,7 +3540,9 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       lType := expressionType;
       GenerateCode(tree^.right);
-      case UsualBinaryConversions(lType) of
+      if (lType^.kind <> scalarType) or (expressionType^.kind <> scalarType) then
+         Error(66)
+      else case UsualBinaryConversions(lType) of
          cgByte,cgWord:
             Gen0(pc_mpi);
          cgUByte,cgUWord:
@@ -3543,7 +3562,9 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       lType := expressionType;
       GenerateCode(tree^.right);
-      case UsualBinaryConversions(lType) of
+      if (lType^.kind <> scalarType) or (expressionType^.kind <> scalarType) then
+         Error(66)
+      else case UsualBinaryConversions(lType) of
          cgByte,cgWord:
             Gen0(pc_dvi);
          cgUByte,cgUWord:
@@ -3565,7 +3586,9 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       lType := expressionType;
       GenerateCode(tree^.right);
-      case UsualBinaryConversions(lType) of
+      if (lType^.kind <> scalarType) or (expressionType^.kind <> scalarType) then
+         Error(66)
+      else case UsualBinaryConversions(lType) of
          cgByte,cgWord:
             Gen0(pc_mod);
          cgUByte,cgUWord:
@@ -3617,7 +3640,9 @@ case tree^.token.kind of
 
    uminus: begin                        {unary -}
       GenerateCode(tree^.left);
-      case UsualUnaryConversions of
+      if expressionType^.kind <> scalarType then
+         error(66)
+      else case UsualUnaryConversions of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_ngi);
          cgLong,cgULong:
@@ -3631,7 +3656,9 @@ case tree^.token.kind of
 
    tildech: begin                       {~}
       GenerateCode(tree^.left);
-      case UsualUnaryConversions of
+      if expressionType^.kind <> scalarType then
+         error(66)
+      else case UsualUnaryConversions of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_bnt);
          cgLong,cgULong:
