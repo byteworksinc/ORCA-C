@@ -635,6 +635,7 @@ if list or (numErr <> 0) then begin
         128: msg := @'lint: integer overflow in expression';
         129: msg := @'lint: division by zero';
         130: msg := @'lint: invalid shift count';
+        131: msg := @'numeric constant is too long';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3000,7 +3001,7 @@ var
          c2 := chr(ord(c2) & $5F);
       stringIndex := stringIndex+1;
       if stringIndex > 255 then begin
-         FlagError(6);
+         FlagError(131);
          stringIndex := 1;
          end; {if}
       numString[stringIndex] := c2;
@@ -3098,7 +3099,7 @@ if isReal then begin                    {convert a real constant}
    token.kind := doubleConst;
    token.class := doubleConstant;
    if stringIndex > 80 then begin
-      FlagError(6);
+      FlagError(131);
       token.rval := 0.0;
       end {if}
    else
