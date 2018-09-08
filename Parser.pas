@@ -2784,9 +2784,7 @@ case token.kind of
       NextToken;
       CheckConst;
       typeSpec := longPtr;
-      if token.kind in [intsy,floatsy] then begin
-         if token.kind = floatsy then
-            typeSpec := doublePtr;
+      if token.kind = intsy then begin
          NextToken;
          CheckConst;
          end {if}
