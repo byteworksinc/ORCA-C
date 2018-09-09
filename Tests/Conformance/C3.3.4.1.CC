@@ -8,7 +8,7 @@ main ()
    char str[80], fname[20] = "C3.3.4.1.CC";
 
 #line 10
-   if (__LINE__ != 11)
+   if (__LINE__ != 10)
        goto Fail;
 
    strcpy(str, __FILE__);
