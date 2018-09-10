@@ -21,7 +21,8 @@
 #define EINVAL                  6       /* Invalid argument */
 #define EBADF                   7       /* bad file descriptor */
 #define EMFILE                  8       /* too many files are open */
-#define EACCESS                 9       /* access bits prevent the operation */
+#define EACCES                  9       /* access bits prevent the operation */
+#define EACCESS                 9       /* alias for EACCES */
 #define EEXIST                  10      /* the file exists */
 #define ENOSPC                  11      /* the file is too large */
 
