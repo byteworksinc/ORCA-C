@@ -48,6 +48,7 @@ void           *calloc(size_t, size_t);
 div_t           div(int, int);
 void            exit(int);
 void            _exit(int);
+void            _Exit(int);
 void            free(void *);
 char           *getenv(const char *);
 long            labs(long);
