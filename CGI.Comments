@@ -449,10 +449,10 @@
 {  value being loaded.						}
 {                                                               }
 {                                                               }
-{  pc_mod - integer modulus                                     }
-{  pc_uim - unsigned integer modulus                            }
-{  pc_mdl - long modulus                                        }
-{  pc_ulm - unsigned long modulus                               }
+{  pc_mod - integer remainder                                   }
+{  pc_uim - unsigned integer modulus/remainder                  }
+{  pc_mdl - long remainder                                      }
+{  pc_ulm - unsigned long modulus/remainder                     }
 {                                                               }
 {  Gen0(pc_mod)         cgByte,cgWord                           }
 {  Gen0(pc_uim)         cgUByte,cgUWord                         }
@@ -460,9 +460,9 @@
 {  Gen0(pc_ulm)         cgULong                                 }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
-{  removed and a molulus operation is performed.  The result is }
-{  placed back on the stack.  The result, like the arguments,   }
-{  is an integer.                                               }
+{  removed and the remainder after division is calculated.      }
+{  The result is placed back on the stack.  The result, like    }
+{  the arguments, is an integer.                                }
 {                                                               }
 {                                                               }
 {  pc_mpi - integer multiply                                    }

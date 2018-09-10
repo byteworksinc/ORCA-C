@@ -1980,6 +1980,7 @@ case callNum of
    75: sp := @'~COPYBF';
    76: sp := @'~STACKERR';              {CC}
    77: sp := @'~LOADSTRUCT';            {CC}
+   78: sp := @'~DIV4';                  {CC}
    otherwise:
       Error(cge1);
    end; {case}

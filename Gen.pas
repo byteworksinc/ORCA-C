@@ -3890,6 +3890,7 @@ procedure GenTree {op: icptr};
 
    var
       nd: icptr;			{for swapping left/right children}
+      lab1,lab2: integer;		{label numbers}
 
 
       procedure GenOp (ops, opi: integer);
@@ -3899,9 +3900,6 @@ procedure GenTree {op: icptr};
       { parameters:						}
       {    ops - stack version of operation			}
       {    opi - immediate version of operation			}
-
-      var
-	 lab1: integer;			{label number}
 
       begin {GenOp}
       if gLong.where = A_X then
@@ -3932,6 +3930,8 @@ procedure GenTree {op: icptr};
       op^.left := op^.right;
       op^.right := nd;
       end; {if}
+   if op^.opcode = pc_mdl then
+      GenImplied(m_phd);		{reserve stack space}
    gLong.preference := onStack;
    GenTree(op^.left);
    if op^.opcode in [pc_blr,pc_blx,pc_bal] then begin
@@ -3961,9 +3961,32 @@ procedure GenTree {op: icptr};
       pc_dvl: GenCall(43);
 
       pc_mdl: begin
-              GenCall(44);
+              lab1 := GenLabel;
+              lab2 := GenLabel;
+              				{stash high word of dividend (for sign)}
+              GenNative(m_lda_s, direct, 7, nil, 0);
+              GenNative(m_sta_s, direct, 9, nil, 0);
+              GenCall(78);		{call ~DIV4}
+              GenImplied(m_ply);	{ignore quotient}
               GenImplied(m_ply);
-              GenImplied(m_ply);
+              GenImplied(m_pla);	{get remainder (always positive or 0)}
+              GenImplied(m_plx);
+              GenImplied(m_ply);	{if dividend was negative...}
+              GenNative(m_bpl, relative, lab1, nil, 0);
+              GenImplied(m_clc);	{  negate remainder}
+              GenNative(m_eor_imm, immediate, -1, nil, 0);
+              GenNative(m_adc_imm, immediate, 1, nil, 0);
+              GenImplied(m_tay);
+              GenImplied(m_txa);
+              GenNative(m_eor_imm, immediate, -1, nil, 0);
+              GenNative(m_adc_imm, immediate, 0, nil, 0);
+              GenImplied(m_pha);
+              GenImplied(m_phy);
+              GenNative(m_bra, relative, lab2, nil, 0);
+              GenLab(lab1);
+              GenImplied(m_phx);
+              GenImplied(m_pha);
+              GenLab(lab2);
               end;
 
       pc_mpl: GenCall(42);
@@ -4175,6 +4198,7 @@ procedure GenTree {op: icptr};
 
    var
       opcode: pcodes;			{temp storage}
+      lab1: integer;			{label number}
 
    begin {GenDviMod}
    if Complex(op^.right) then begin
@@ -4194,8 +4218,17 @@ procedure GenTree {op: icptr};
       LoadX(op^.right);
       end; {else}
    opcode := op^.opcode;
-   if opcode = pc_mod then
-      GenCall(27)
+   if opcode = pc_mod then begin
+      lab1 := GenLabel;
+      GenImplied(m_pha);		{stash away dividend (for sign)}
+      GenCall(26);			{call ~DIV2}
+      GenImplied(m_txa);		{get remainder (always positive or 0)}
+      GenImplied(m_ply);		{if dividend was negative...}
+      GenNative(m_bpl, relative, lab1, nil, 0);
+      GenNative(m_eor_imm, immediate, -1, nil, 0);  {...negate remainder}
+      GenImplied(m_ina);
+      GenLab(lab1);
+      end {if}
    else if opcode = pc_dvi then
       GenCall(26)
    else {if opcode in [pc_udi,pc_uim] then} begin
