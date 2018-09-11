@@ -1666,7 +1666,8 @@ var
                Remove(ns);
                end; {if}
 
-         m_plx:
+         {disabled - can generate bad code if the x value is used}
+         {m_plx:
             if npeep[ns+1].opcode = m_pha then begin
                opcode := m_sta_s;
                mode := direct;
