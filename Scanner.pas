@@ -469,7 +469,7 @@ procedure WriteLine;
 {   chPtr - points to the end of line character                 }
 
 var
-   cl: 0..maxint;                       {column number loop index}
+   cl: integer;                         {column number loop index}
    cp: ptr;                             {work pointer}
    i: 1..maxErr;                        {error loop index}
    msg: stringPtr;                      {pointer to the error message}
