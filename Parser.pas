@@ -2184,6 +2184,7 @@ var
       ip: identPtr;                     {for tracing field lists}
       kind: typeKind;                   {base type of an initializer}
       ktp: typePtr;			{array type with definedTypes removed}
+      lPrintMacroExpansions: boolean;   {local copy of printMacroExpansions}
 
 
       procedure Fill (count: longint; tp: typePtr);
@@ -2388,10 +2389,21 @@ var
          count := tp^.size;
          ip := tp^.fieldList;
          bitCount := 0;
-         while (ip <> nil) and (ip^.itype^.size > 0) 
-            and (token.kind <> rbracech) do begin
+         lPrintMacroExpansions := printMacroExpansions;
+         while (ip <> nil) and (ip^.itype^.size > 0) do begin
             if ip^.isForwardDeclared then
                ResolveForwardReference(ip);
+            if token.kind = rbracech then begin {initialize this field to 0}
+               printMacroExpansions := false;   {inhibit token echo}
+               PutBackToken(token, false);
+               PutBackToken(token, false);
+               token.kind := intconst;
+               token.class := intConstant;
+               token.ival := 0;
+               PutBackToken(token, false);
+               token.kind := lbracech;
+               token.class := reservedSymbol;
+               end; {if}
             if ip^.bitSize = 0 then
                if bitCount > 0 then begin
                   InitializeBitField;
@@ -2419,7 +2431,7 @@ var
                if ip <> nil then
                   NextToken;
                end {if}
-            else
+            else if token.kind <> rbracech then
                ip := nil;
             end; {while}
          if bitCount > 0 then begin
@@ -2429,7 +2441,9 @@ var
             bitCount := 0;
             end; {if}
          if count > 0 then
-            Fill(count, bytePtr);
+            if variable^.storage in [external,global,private] then
+               Fill(count, bytePtr);
+         printMacroExpansions := lPrintMacroExpansions;
          end {if}
       else                              {struct/union assignment initializer}
          GetInitializerValue(tp, bitsize, bitdisp);
@@ -3809,6 +3823,7 @@ var
       fp: identPtr;                     {for tracing field lists}
       size: integer;                    {fill size}
       union: boolean;                   {are we doing a union?}
+      startDisp,endDisp: longint;       {disp at start/end of struct/union}
 
                                         {bit field manipulation}
                                         {----------------------}
@@ -3966,6 +3981,8 @@ var
 1:          end;
 
       structType,unionType: begin
+         startDisp := disp;
+         endDisp := disp + itype^.size;
          if iPtr^.isStructOrUnion then begin
             LoadAddress;                {load the destination address}
             GenerateCode(iptr^.iTree);  {load the stuct address}
@@ -3979,18 +3996,17 @@ var
          else begin
             union := itype^.kind = unionType;
             fp := itype^.fieldList;
-            bitsize := iPtr^.bitsize;
-            bitdisp := iPtr^.bitdisp;
-            bitcount := 0;
             while fp <> nil do begin
                itype := fp^.itype;
+               disp := startDisp + fp^.disp;
+               bitdisp := fp^.bitdisp;
+               bitsize := fp^.bitsize;
 {              writeln('Initialize:    disp = ',    disp:3, '; fp^.   Disp = ', fp^.disp:3, 'itype^.size = ', itype^.size:1); {debug}
 {              writeln('            bitDisp = ', bitDisp:3, '; fp^.bitDisp = ', fp^.bitDisp:3); {debug}
 {              writeln('            bitSize = ', bitSize:3, '; fp^.bitSize = ', fp^.bitSize:3); {debug}
                Initialize(id, disp, itype);
                if bitsize = 0 then begin
                   if bitcount <> 0 then begin
-                     disp := disp + (bitcount+7) div 8;
                      bitcount := 0;
                      end {if}
                   else if fp^.bitSize <> 0 then begin
@@ -4005,18 +4021,12 @@ var
                                  bitcount := 0;
                         end; {while}
                      bitcount := 0;
-                     disp := disp + 1;
-                     end {else if}
-                  else
-                     disp := disp + itype^.size;
+                     end; {else if}
                   end {if}
                else if fp^.bitSize = 0 then begin
                   bitsize := 0;
-                  disp := disp + itype^.size;
                   end {else if}
                else begin
-                  if bitsize + bitdisp < bitcount then
-                     disp := disp + (bitcount + 7) div 8;
                   bitcount := bitsize + bitdisp;
                   end; {else}
                if itype^.kind in [scalarType,pointerType,enumType] then begin
@@ -4034,6 +4044,7 @@ var
                   fp := fp^.next;
                end; {while}
             end; {else}
+         disp := endDisp;
          end;
 
       otherwise: Error(57);
