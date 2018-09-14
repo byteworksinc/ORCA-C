@@ -404,7 +404,8 @@ begin {NeedsCondition}
 NeedsCondition := opcode in
    [pc_and,pc_ior,pc_cui,pc_cup,pc_lor,pc_lnd,pc_ldl,pc_lil,pc_lld,
     pc_lli,pc_gil,pc_gli,pc_gdl,pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,
-    pc_cop,pc_cpo,pc_cpi,pc_dvi,pc_mpi,pc_adi,pc_sbi,pc_mod,pc_bno];
+    pc_cop,pc_cpo,pc_cpi,pc_dvi,pc_mpi,pc_adi,pc_sbi,pc_mod,pc_bno,
+    pc_udi,pc_uim,pc_umi];
 end; {NeedsCondition}
 
 
@@ -5448,9 +5449,7 @@ procedure GenTree {op: icptr};
    lab2 := GenLabel;
    lab3 := GenLabel;
    GenTree(op^.left);
-   if op^.left^.opcode in
-      [pc_and,pc_ior,pc_cui,pc_cup,pc_lor,pc_lnd,pc_ldl,pc_lil,pc_lld,
-       pc_lli,pc_gil,pc_gli,pc_gdl,pc_gld] then
+   if NeedsCondition(op^.left^.opcode) then
       GenImplied(m_tax);
    GenNative(m_beq, relative, lab1, nil, 0);
    GenNative(m_brl, longrelative, lab2, nil, 0);
