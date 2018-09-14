@@ -1531,6 +1531,7 @@ const
 
 var
    i,j: integer;			{string index & loop vars}
+   tempString: stringPtr;
 
 
    procedure Expand (var name: pString);
@@ -1706,20 +1707,23 @@ else begin
 
       {expand a macro to create a <filename> form name}
       NextToken;
-      workString[0] := chr(0);
+      new(tempString);
+      tempString^[0] := chr(0);
       while
          (token.class in [reservedWord,intconstant,longconstant,doubleconstant])
          or (token.kind in [dotch,ident]) do begin
          if token.kind = ident then
-            workstring := concat(workstring, token.name^)
+            tempString^ := concat(tempString^, token.name^)
          else if token.kind = dotch then
-            workstring := concat(workstring, '.')
+            tempString^ := concat(tempString^, '.')
          else if token.class = reservedWord then
-            workstring := concat(workstring, reservedWords[token.kind])
+            tempString^ := concat(tempString^, reservedWords[token.kind])
          else {if token.class in [intconst,longconst,doubleconst] then}
-            workstring := concat(workstring, token.numstring^);
+            tempString^ := concat(tempString^, token.numstring^);
          NextToken;
          end; {while}
+      workString := tempString^;
+      dispose(tempString);
       CheckDelimiters(workString);
       if mustExist then begin
 	 if not GetLibraryName(workString) then
