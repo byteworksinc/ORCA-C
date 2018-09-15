@@ -59,11 +59,9 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2018
 
 -- Known Issues -------------------------------------------------------------
 
-1.  The % operator will generally not work correctly when either operand is negative.  It may produce an incorrect result, or in certain scenarios it may give a compile-time or run-time error.
+1.  Not all orderings of storage class specifiers, type qualifiers, and type specifiers are supported in declarations and type names.
 
-2.  Not all orderings of storage class specifiers, type qualifiers, and type specifiers are supported in declarations and type names.
-
-3.  ORCA/C fails to detect various error conditions for which the C standards require a diagnostic message to be issued.
+2.  ORCA/C fails to detect various error conditions for which the C standards require a diagnostic message to be issued.
 
 -- Manual Errata ------------------------------------------------------------
 
@@ -142,7 +140,7 @@ The #pragma expand directive has been changed to use three-digit octal escape se
 
 p. 258
 
-The #pragma ignore directive supports three new bits.
+The #pragma ignore directive supports four new bits.
 
 Bit 1 affects the interpretation of multi-character character constants.  See "Multi-Character Character Constants," below.
 
@@ -155,6 +153,8 @@ Bit 3 controls whether // comments are allowed.  If bit 3 is set, as in
 ORCA/C supports // comments.  If bit 3 is clear, ORCA/C does not support // comments, which are not actually allowed in ANSI C89 programs.
 
 See "// Comments," below, for a complete description of // comments.
+
+Bit 4 controls whether C99-style scope rules are followed and whether mixed statements and declarations are allowed in blocks.  See "Compiler changes introduced in C 2.2.0," below.
 
 p. 259
 
@@ -284,7 +284,7 @@ These new rules for declaration placement and scopes are enabled by default, but
       int a;
       int b[];
    };
-   
+
 The flexible array member does not contribute to the size of the struct as reported by sizeof, but if such a struct is allocated in the heap, extra space may be allocated for the flexible array member, and elements of it up to the limit of the size allocated may be accessed.  (This feature was actually permitted "by accident" in previous versions of ORCA/C, but it is now a supported feature, and errors related to it are now detected.)
 
 3.  (C99) The value 0 will always be returned if execution reaches the end of the main function without encountering a return statement, provided main is declared as returning a value of type int.
@@ -395,6 +395,13 @@ The length modifiers 'z', 't', and 'j', and 'hh' are now allowed in the format s
 The conversion specifiers 'F', 'a', and 'A' are now allowed in the format strings for the fscanf family of functions.  These are all equivalent to 'f'.
 
 The conversion specifier 'F' is now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.  The conversion specifiers 'a' and 'A' (both also used with floating-point numbers) are also recognized in the format strings for the fprintf family of functions, but they do not currently print the numbers in the hexadecimal format required by the C99 standard.
+
+4. The _Exit() function has been added:
+
+#include <stdlib.h>
+void _Exit(int status);
+
+This exits the program without calling functions registered with atexit() and possibly without doing other clean-up operations.  In ORCA/C, it is functionally identical to _exit().
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
@@ -748,6 +755,27 @@ int foo(int[42]);
 85. Errors displayed for source lines indented with tabs would typically appear to be at the wrong position (depending on how the console in use displays tabs).
 
 86. The LDBL_* values in <float.h> were all wrong.  They specified values for the double format, not the SANE extended format actually used for long double.  Most of them have now been corrected; however, LDBL_MAX and LDBL_MIN are still incorrect, because ORCA/C internally represents floating-point constants in the double format, which is not capable of holding the proper values for them.
+
+87. perror() should write only a single new-line.  Also, it should not write the prefix string, colon and space if the prefix string pointer is NULL or if it points to an empty string.
+
+88. The % operator would generally not work correctly if either operand was negative.  It could produce an incorrect result, or in certain scenarios give a compile-time or run-time error.  It now gives correct results as defined by the C standards, such that (a/b)*b + a%b equals a (provided that b is not 0 and a/b is representable in the type used for the operation).
+
+(Devin Reade)
+
+89. The div() and ldiv() functions could also give incorrect remainders: in some cases where one or both of the arguments were negative, the remainder would have the wrong sign.  This has been corrected; these functions now also generate correct remainder values, consistent with what the % operator now produces.
+
+90. strtol() and strtoul() incorrectly considered it an error for the string to start with "0X" or "0x" if the base parameter was something other than 0 or 16.
+
+91. Including system headers named via macros, as in the following example, did not work properly:
+
+   #define STDIO_H <stdio.h>
+   #include STDIO_H
+
+92. The ?: operator could sometimes evaluate the wrong branch when certain kinds of expressions were used as the condition.
+
+93. Fixed several issues where initializers of structs or unions (or arrays containing structs or unions) might not be processed correctly.
+
+94. const-qualified struct or union types were not being recorded properly in .sym files.  This could lead to spurious errors or other problems when the .sym files were used.  This bug has now been fixed, and .sym files created by older versions of ORCA/C will automatically be ignored and regenerated.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
