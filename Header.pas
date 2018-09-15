@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 2;                  {version number of .sym file format}
+   symFileVersion = 3;                  {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1647,6 +1647,7 @@ var
             1: begin			{read a type displacement}
                tdisp := typeDispList;
                disp := ReadLong;
+               tp := nil;
                while tdisp <> nil do
         	  if tdisp^.saveDisp = disp then begin
                      tp := tdisp^.tPtr;
@@ -1654,6 +1655,11 @@ var
                      end {if}
         	  else 
                      tdisp := tdisp^.next;
+               if tp = nil then begin
+                  PurgeSymbols;
+                  DestroySymbolFile;
+                  TermError(12);
+                  end; {if}
                end; {case 1}
 
             2: tp := bytePtr;
@@ -1876,6 +1882,11 @@ if not ignoreSymbols then begin
             end; {while}
 	 DisposeTypeDispList;
 	 saveSource := false;
+         if ord4(symPtr) > ord4(symEndPtr) then begin
+            PurgeSymbols;
+            DestroySymbolFile;
+            TermError(12);
+            end; {if}
 	 end {if}
       else begin
 	 PurgeSymbols;			{no file found}
