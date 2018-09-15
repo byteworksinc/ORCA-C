@@ -2211,20 +2211,28 @@ var
       else if tp^.kind = structType then begin
 
          {fill a structure}
-         i := count;
-         while i <> 0 do begin
-            ip := tp^.fieldList;
-            while ip <> nil do begin
-               Fill(1, ip^.iType);
-               ip := ip^.next;
+         if variable^.storage in [external,global,private] then
+            Fill(count * tp^.size, bytePtr)
+         else begin
+            i := count;
+            while i <> 0 do begin
+               ip := tp^.fieldList;
+               while ip <> nil do begin
+                  Fill(1, ip^.iType);
+                  ip := ip^.next;
+                  end; {while}
+               i := i-1;
                end; {while}
-            i := i-1;
-            end; {while}
+            end; {else}
          end {else if}
-      else if tp^.kind = unionType then
+      else if tp^.kind = unionType then begin
 
          {fill a union}
-         Fill(count, tp^.fieldList^.iType)
+         if variable^.storage in [external,global,private] then
+            Fill(count * tp^.size, bytePtr)
+         else
+            Fill(count, tp^.fieldList^.iType);
+         end {else if}
       else
 
          {fill a single value}
