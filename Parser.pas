@@ -3030,6 +3030,7 @@ if isconstant then begin                {handle a constant type}
          size := typeSpec^.size;
          kind := definedType;
          dType := typeSpec;
+         saveDisp := 0;
          end; {with}
       end {if}
    else
