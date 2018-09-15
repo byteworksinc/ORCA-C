@@ -7,7 +7,7 @@ void main(void)
 {
 int i;
 
-i = 4%(-1);
+i = 4%0;
 
 printf("Failed Deviance Test 7.6.1.3\n");
 }
