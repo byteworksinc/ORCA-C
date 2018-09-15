@@ -1625,7 +1625,7 @@ case op^.opcode of			{check for optimizations of this node}
    pc_mdl: begin			{pc_mdl}
       if op^.right^.opcode = pc_ldc then 
          if op^.left^.opcode = pc_ldc then 
-            if op^.right^.lval <> 0 then begin
+            if (op^.left^.lval >= 0) and (op^.right^.lval > 0) then begin
                op^.left^.lval := op^.left^.lval mod op^.right^.lval;
                opv := op^.left;
                end; {if}
@@ -1634,7 +1634,7 @@ case op^.opcode of			{check for optimizations of this node}
    pc_mod: begin			{pc_mod}
       if op^.right^.opcode = pc_ldc then 
          if op^.left^.opcode = pc_ldc then 
-            if op^.right^.q <> 0 then begin
+            if (op^.left^.q >= 0) and (op^.right^.q > 0) then begin
                op^.left^.q := op^.left^.q mod op^.right^.q;
                opv := op^.left;
                end; {if}
