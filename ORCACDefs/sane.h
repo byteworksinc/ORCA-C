@@ -260,12 +260,12 @@ Extended  inf (void) ;
 Extended  pi (void) ;
 /* returns pi */
 
-extern pascal void SANEBootInit() inline(0x010A,dispatcher);
-extern pascal void SANEStartUp() inline(0x020A,dispatcher);
-extern pascal void SANEShutDown() inline(0x030A,dispatcher);
-extern pascal Word SANEVersion() inline(0x040A,dispatcher);
-extern pascal void SANEReset() inline(0x050A,dispatcher);
-extern pascal Word SANEStatus() inline(0x060A,dispatcher);
+extern pascal void SANEBootInit(void) inline(0x010A,dispatcher);
+extern pascal void SANEStartUp(Word) inline(0x020A,dispatcher);
+extern pascal void SANEShutDown(void) inline(0x030A,dispatcher);
+extern pascal Word SANEVersion(void) inline(0x040A,dispatcher);
+extern pascal void SANEReset(void) inline(0x050A,dispatcher);
+extern pascal Word SANEStatus(void) inline(0x060A,dispatcher);
 extern pascal void SANEFP816() inline(0x090A,dispatcher);
 extern pascal void SANEDecStr816() inline(0x0A0A,dispatcher);
 extern pascal void SANEElems816() inline(0x0B0A,dispatcher);
