@@ -1376,7 +1376,8 @@ var
          if token.kind in               {see if we are doing a prototyped list}
             [autosy,externsy,registersy,staticsy,typedefsy,unsignedsy,intsy,
              longsy,charsy,shortsy,floatsy,doublesy,compsy,extendedsy,voidsy,
-             enumsy,structsy,unionsy,typedef,signedsy,constsy] then begin
+             enumsy,structsy,unionsy,typedef,signedsy,constsy,volatilesy]
+            then begin
 
             {handle a prototype variable list}
             numberOfParameters := 0;    {don't allow K&R parm declarations}
