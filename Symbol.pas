@@ -875,6 +875,7 @@ var
 
    var
       disp: integer;			{disp to symbol of same type}
+      tPtr: typePtr;
 
 
       procedure WriteAddress (ip: identPtr);
@@ -979,8 +980,11 @@ var
       {    subscripts - number of subscript fields		}
 
       begin {WritePointerType}
-      case tp^.ptype^.kind of
-         scalarType:	WriteScalarType(tp^.ptype, $80, subscripts);
+      tp := tp^.ptype;
+      while tp^.kind = definedType do
+         tp := tp^.dType;
+      case tp^.kind of
+         scalarType:	WriteScalarType(tp, $80, subscripts);
          enumType,
          functionType:  WriteScalarType(wordPtr, $80, subscripts);
          otherwise:	begin
@@ -1035,6 +1039,8 @@ var
          count := count+1;
          tp2 := tp2^.aType;
          end; {while}
+      while tp2^.kind = definedType do
+         tp2 := tp2^.dType;         
       if tp2^.kind = scalarType then	{write the type code}
          if tp2^.baseType in [cgByte,cgUByte] then begin
             count := count-1;
@@ -1082,25 +1088,28 @@ var
 	 disp: integer;			{disp to symbol of same type}
 
       begin {ExpandPointerType}
-      if tp^.ptype^.kind in [pointerType,arrayType,structType,unionType] then
+      tp := tp^.ptype;
+      while tp^.kind = definedType do
+         tp := tp^.dType;
+      if tp^.kind in [pointerType,arrayType,structType,unionType] then
          begin
          symLength := symLength+12;
          CnOut2(0); CnOut2(0);
          CnOut2(0); CnOut2(0);
          CnOut(0);
-	 case tp^.ptype^.kind of
+	 case tp^.kind of
             pointerType:	begin
-         		   	WritePointerType(tp^.ptype, 0);
-                           	ExpandPointerType(tp^.ptype);
+         		   	WritePointerType(tp, 0);
+                           	ExpandPointerType(tp);
                            	end;
-            arrayType:		WriteArrays(tp^.ptype);
+            arrayType:		WriteArrays(tp);
             structType,
             unionType:		begin
-				disp := GetTypeDisp(tp^.ptype);
+				disp := GetTypeDisp(tp);
                                 if disp = noDisp then begin
         		   	   CnOut(12);
         		   	   CnOut2(0);
-                           	   ExpandStructType(tp^.ptype);
+                           	   ExpandStructType(tp);
                                    end {if}
                                 else begin
         		   	   CnOut(13);
@@ -1113,27 +1122,30 @@ var
 
 
    begin {GenSymbol}
-   if ip^.itype^.kind in
+   tPtr := ip^.itype;
+   while tPtr^.kind = definedType do
+      tPtr := tPtr^.dType;
+   if tPtr^.kind in
       [scalarType,arrayType,pointerType,enumType,structType,unionType]
       then begin
       symLength := symLength+12;        {update length of symbol table}
       WriteName(ip);			{write the name field}
       WriteAddress(ip);			{write the address field}
-      case ip^.itype^.kind of
-         scalarType:	WriteScalarType(ip^.itype, 0, 0);
+      case tPtr^.kind of
+         scalarType:	WriteScalarType(tPtr, 0, 0);
          enumType:	WriteScalarType(wordPtr, 0, 0);
          pointerType:	begin
-         		WritePointerType(ip^.itype, 0);
-                        ExpandPointerType(ip^.itype);
+         		WritePointerType(tPtr, 0);
+                        ExpandPointerType(tPtr);
                         end;
-         arrayType:	WriteArrays(ip^.itype);
+         arrayType:	WriteArrays(tPtr);
          structType,
          unionType:	begin
-			disp := GetTypeDisp(ip^.itype);
+			disp := GetTypeDisp(tPtr);
                         if disp = noDisp then begin
         		   CnOut(12);
         		   CnOut2(0);
-                           ExpandStructType(ip^.itype);
+                           ExpandStructType(tPtr);
                            end {if}
                         else begin
         		   CnOut(13);
