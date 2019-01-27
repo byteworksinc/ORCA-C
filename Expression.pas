@@ -1963,10 +1963,10 @@ var
    tp: baseTypeEnum;                    {base type}
 
 begin {LoadScalar}
-if id^.itype^.kind = pointerType then
-   tp := cgULong
-else
-   tp := id^.itype^.baseType;
+if id^.itype^.kind = scalarType then
+   tp := id^.itype^.baseType
+else {if id^.itype^.kind in [pointerType,arrayType] then}
+   tp := cgULong;
 case id^.storage of
    stackFrame, parameter:
       Gen2t(pc_lod, id^.lln, 0, tp);
@@ -2521,7 +2521,7 @@ var
                goto 1;
                end; {if}
             end {if}
-         else {if iType^.kind = pointerType then} begin
+         else {if iType^.kind in [pointerType,arrayType] then} begin
             lSize := iType^.pType^.size;
             if lSize = 0 then
                Error(122);
