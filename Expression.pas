@@ -1199,13 +1199,8 @@ var
                   plusch      : rop1 := rop1 + rop2;                    {+}
                   minusch     : rop1 := rop1 - rop2;                    {-}
                   asteriskch  : rop1 := rop1 * rop2;                    {*}
-                  slashch     : begin                                   {/}
-                                if rop2 = 0.0 then begin
-                                   Error(109);
-                                   rop2 := 1.0;
-                                   end; {if}
-                                rop1 := rop1 / rop2;
-                                end;
+                  slashch     : rop1 := rop1 / rop2;                    {/}
+
                   otherwise   : Error(66);              {illegal operation}
                   end; {case}
                if ekind = intconst then begin
