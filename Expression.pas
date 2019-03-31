@@ -837,6 +837,7 @@ var
          end; {else}
       end {if id = nill}
    else if id^.itype^.kind = enumConst then begin
+      stack^.token.class := intConstant;
       stack^.token.kind := intconst;
       stack^.token.ival := id^.itype^.eval;
       end; {else if}
