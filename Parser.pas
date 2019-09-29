@@ -11,7 +11,7 @@
 {  InitParser - initialize the parser                           }
 {  Match - insure that the next token is of the specified type  }
 {  TermParser - shut down the parser                            }
-{  TypeSpecifier - handle a type specifier                      }
+{  DeclarationSpecifiers - handle a type specifier              }
 {                                                               }
 {---------------------------------------------------------------}
 
@@ -2531,12 +2531,11 @@ Match(semicolonch, 22);
 end; {DoStaticAssert}
 
 
-procedure TypeSpecifier (doingFieldList,isConstant: boolean);
+procedure DeclarationSpecifiers (isConstant: boolean);
 
-{ handle a type specifier                                       }
+{ handle declaration specifiers or a specifier-qualifier list   }
 {                                                               }
 { parameters:                                                   }
-{       doingFieldList - are we processing a field list?        }
 {       isConstant - did we already find a constsy?             }
 {                                                               }
 { outputs:                                                      }
@@ -2604,7 +2603,7 @@ var
          goto 1;
          end; {if}
       typeSpec := wordPtr;              {default type specifier is an integer}
-      TypeSpecifier(true,false);        {get the type specifier}
+      DeclarationSpecifiers(false);     {get the specifier-qualifier list}
       if not skipDeclarator then
          repeat                         {declare the variables...}
             if didFlexibleArray then
@@ -2732,7 +2731,7 @@ var
    end; {CheckConst}
 
 
-begin {TypeSpecifier}
+begin {DeclarationSpecifiers}
 isForwardDeclared := false;             {not doing a forward reference (yet)}
 skipDeclarator := false;                {declarations are required (so far)}
 CheckConst;
@@ -3061,7 +3060,7 @@ if isconstant then begin                {handle a constant type}
    tPtr^.isConstant := true;
    typeSpec := tPtr;
    end; {if}
-end; {TypeSpecifier}
+end; {DeclarationSpecifiers}
 
 
 {-- Externally available subroutines ---------------------------}
@@ -3366,7 +3365,7 @@ if token.kind in                        {handle a TypeSpecifier/declarator}
    extendedsy,voidsy,enumsy,structsy,unionsy,typedef,volatilesy,constsy] then
    begin
    typeFound := true;
-   TypeSpecifier(false,foundConstsy);
+   DeclarationSpecifiers(foundConstsy);
    if not skipDeclarator then begin
       variable := nil;
       Declarator(typeSpec, variable, variableSpace, doingPrototypes);
@@ -3898,7 +3897,7 @@ var
 begin {TypeName}
 {read and process the type specifier}
 typeSpec := wordPtr;
-TypeSpecifier(false,false);
+DeclarationSpecifiers(false);
 
 {handle the abstract-declarator part}
 tl := nil;                              {no types so far}

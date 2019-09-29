@@ -43,6 +43,8 @@
 {  expressionType - the type of the expression                  }
 {  expressionTree - for non-constant initializers               }
 {  isConstant - is the initializer expression conastant?        }
+{  typeSpec - type given by the last declaration specifiers,    }
+{          specifier-qualifier list, or type name evaluated     }
 {                                                               }
 {  External Subroutines:                                        }
 {                                                               }
@@ -60,8 +62,6 @@
 {  StopSpin - Stop the spinner					}
 {  SystemError - intercept run time compiler errors             }
 {  TermError - flag a terminal error                            }
-{  typeSpec - type of the last type specifier evaluated by      }
-{       TypeSpecifier                                           }
 {                                                               }
 {---------------------------------------------------------------}
 
