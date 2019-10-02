@@ -2545,7 +2545,7 @@ procedure DeclarationSpecifiers (isConstant: boolean);
 {               declarator                                      }
 {       typespec - type specifier                               }
 
-label 1,2;
+label 1,2,3;
 
 var
    done: boolean;                       {for loop termination}
@@ -2560,6 +2560,9 @@ var
    ttoken: tokenType;                   {temp variable for struct name}
    lUseGlobalPool: boolean;             {local copy of useGlobalPool}
    globalStruct: boolean;               {did we force global pool use?}
+   
+   typeSpecifiers: tokenSet;            {set of tokens specifying the type}
+   typeDone: boolean;                   {no more type specifiers can be accepted}
 
  
    procedure FieldList (tp: typePtr; kind: typeKind);
@@ -2731,255 +2734,229 @@ var
    end; {CheckConst}
 
 
-begin {DeclarationSpecifiers}
-isForwardDeclared := false;             {not doing a forward reference (yet)}
-skipDeclarator := false;                {declarations are required (so far)}
-CheckConst;
-case token.kind of
-   unsignedsy: begin                    {unsigned}
-      NextToken;
-      CheckConst;
-      if token.kind = shortsy then begin
-         NextToken;
-         CheckConst;
-         if token.kind = intsy then begin
-            NextToken;
-            CheckConst;
-            end; {if}
-         typeSpec := uWordPtr;
-         end {if}
-      else if token.kind = longsy then begin
-         NextToken;
-         CheckConst;
-         if token.kind = intsy then begin
-            NextToken;
-            CheckConst;
-            end; {if}
-         typeSpec := uLongPtr;
-         end {else if}
-      else if token.kind = charsy then begin
-         NextToken;
-         CheckConst;
-         typeSpec := uBytePtr;
-         end {else if}
-      else if token.kind = intsy then begin
-         NextToken;
-         CheckConst;
-	 if unix_1 then
-            typeSpec := uLongPtr
-	 else
-            typeSpec := uWordPtr;
-         end {else if}
-      else begin
-         CheckConst;
-	 if unix_1 then
-            typeSpec := uLongPtr
-	 else
-            typeSpec := uWordPtr;
-         end; {else if}
-      end;
+   procedure ResolveType;
 
-   signedsy: begin                      {signed}
-      NextToken;
-      CheckConst;
-      if token.kind = shortsy then begin
-         NextToken;
-         CheckConst;
-         if token.kind = intsy then begin
-            NextToken;
-            CheckConst;
-            end; {if}
-         typeSpec := wordPtr;
-         end {if}
-      else if token.kind = longsy then begin
-         NextToken;
-         CheckConst;
-         if token.kind = intsy then begin
-            NextToken;
-            CheckConst;
-            end; {if}
-         typeSpec := longPtr;
-         end {else if}
-      else if token.kind = intsy then begin
-         NextToken;
-         CheckConst;
-	 if unix_1 then
-            typeSpec := longPtr
-	 else
-            typeSpec := wordPtr;
-         end {else if}
-      else if token.kind = charsy then begin
-         NextToken;
-         CheckConst;
-         typeSpec := bytePtr;
-         end; {else if}
-      end;
+   { Resolve a set of type specifier keywords to a type         }
 
-   intsy: begin                         {int}
-      NextToken;
-      CheckConst;
+   begin {ResolveType}
+   {See C17 6.7.2}
+   if typeSpecifiers = [voidsy] then
+      typeSpec := voidPtr
+   else if typeSpecifiers = [charsy] then
+      typeSpec := uBytePtr
+   else if typeSpecifiers = [signedsy,charsy] then
+      typeSpec := bytePtr
+   else if typeSpecifiers = [unsignedsy,charsy] then
+      typeSpec := uBytePtr
+   else if (typeSpecifiers = [shortsy])
+      or (typeSpecifiers = [signedsy,shortsy])
+      or (typeSpecifiers = [shortsy,intsy])
+      or (typeSpecifiers = [signedsy,shortsy,intsy]) then
+      typeSpec := wordPtr
+   else if (typeSpecifiers = [unsignedsy,shortsy])
+      or (typeSpecifiers = [unsignedsy,shortsy,intsy]) then
+      typeSpec := uWordPtr
+   else if (typeSpecifiers = [intsy])
+      or (typeSpecifiers = [signedsy])
+      or (typeSpecifiers = [signedsy,intsy]) then begin
       if unix_1 then
          typeSpec := longPtr
       else
          typeSpec := wordPtr;
-      end;
+      end {else if}
+   else if (typeSpecifiers = [unsignedsy])
+      or (typeSpecifiers = [unsignedsy,intsy]) then begin
+      if unix_1 then
+         typeSpec := uLongPtr
+      else
+         typeSpec := uWordPtr;
+      end {else if}
+   else if (typeSpecifiers = [longsy])
+      or (typeSpecifiers = [signedsy,longsy])
+      or (typeSpecifiers = [longsy,intsy])
+      or (typeSpecifiers = [signedsy,longsy,intsy]) then
+      typeSpec := longPtr
+   else if (typeSpecifiers = [unsignedsy,longsy])
+      or (typeSpecifiers = [unsignedsy,longsy,intsy]) then
+      typeSpec := uLongPtr
+   else if typeSpecifiers = [floatsy] then
+      typeSpec := realPtr
+   else if typeSpecifiers = [doublesy] then
+      typeSpec := doublePtr
+   else if typeSpecifiers = [longsy,doublesy] then
+      typeSpec := extendedPtr
+   else if typeSpecifiers = [compsy] then
+      typeSpec := compPtr
+   else if typeSpecifiers = [extendedsy] then
+      typeSpec := extendedPtr
+   else
+      Error(9);
+   end; {ResolveType}
 
-   longsy: begin                        {long}
-      NextToken;
-      CheckConst;
-      typeSpec := longPtr;
-      if token.kind = intsy then begin
-         NextToken;
+
+begin {DeclarationSpecifiers}
+isForwardDeclared := false;             {not doing a forward reference (yet)}
+skipDeclarator := false;                {declarations are required (so far)}
+typeSpecifiers := [];
+typeDone := false;
+while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
+   doublesy,voidsy,compsy,extendedsy,enumsy,structsy,unionsy,typedef,
+   constsy,volatilesy] do begin
+   case token.kind of
+      constsy,volatilesy:
          CheckConst;
-         end {if}
-      else if token.kind = doublesy then begin
-         typeSpec := extendedPtr;
+
+      unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,voidsy,
+      compsy,extendedsy: begin
+         if typeDone then
+            Error(9)
+         else if token.kind in typeSpecifiers then begin
+            if (token.kind = longsy)
+               and (typeSpecifiers <= [signedsy,unsignedsy,longsy,intsy]) then
+               Error(134)
+            else
+               Error(9);
+            end {if}
+         else begin
+            typeSpecifiers := typeSpecifiers + [token.kind];
+            ResolveType;
+            end; {else}
          NextToken;
-         CheckConst;
-         end; {else if}
-      end;
+         end;
 
-   charsy: begin                        {char}
-      NextToken;
-      CheckConst;
-      typeSpec := uBytePtr;
-      end;
-
-   shortsy: begin                       {short}
-      NextToken;
-      CheckConst;
-      if token.kind = intsy then begin
-         NextToken;
-         CheckConst;
-         end; {if}
-      typeSpec := wordPtr;
-      end;
-
-   floatsy: begin                       {float}
-      NextToken;
-      CheckConst;
-      typeSpec := realPtr;
-      end;
-
-   doublesy: begin                      {double}
-      NextToken;
-      CheckConst;
-      typeSpec := doublePtr;
-      end;
-
-   compsy: begin                        {comp}
-      NextToken;
-      CheckConst;
-      typeSpec := compPtr;
-      end;
-
-   extendedsy: begin                    {extended}
-      NextToken;
-      CheckConst;
-      typeSpec := extendedPtr;
-      end;
-
-   voidsy: begin                        {void}
-      NextToken;
-      CheckConst;
-      typeSpec := voidPtr;
-      end;
-
-   enumsy: begin                        {enum}
-      NextToken;                        {skip the 'enum' token}
-      if token.kind = ident then begin  {handle a type definition}
-         variable := FindSymbol(token, tagSpace, true, true);
-         ttoken := token;
-         NextToken;
-         if variable <> nil then
-            if variable^.itype^.kind = enumType then
-               if token.kind <> lbracech then
-                  goto 1;
-         tPtr := pointer(Malloc(sizeof(typeRecord)));
-         tPtr^.size := cgWordSize;
-         tPtr^.saveDisp := 0;
-         tPtr^.isConstant := false;
-         tPtr^.kind := enumType;
-         variable :=
-            NewSymbol(ttoken.name, tPtr, storageClass, tagSpace, defined);
-         CheckConst;
-         end {if}
-      else if token.kind <> lbracech then
-         Error(9);
-      enumVal := 0;                     {set the default value}
-      if token.kind = lbracech then begin
-         NextToken;                     {skip the '{'}
-         repeat                         {declare the enum constants}
+      enumsy: begin                     {enum}
+         if typeDone or (typeSpecifiers <> []) then
+            Error(9);
+         NextToken;                     {skip the 'enum' token}
+         if token.kind = ident then begin {handle a type definition}
+            variable := FindSymbol(token, tagSpace, true, true);
+            ttoken := token;
+            NextToken;
+            if variable <> nil then
+               if variable^.itype^.kind = enumType then
+                  if token.kind <> lbracech then
+                     goto 1;
             tPtr := pointer(Malloc(sizeof(typeRecord)));
             tPtr^.size := cgWordSize;
             tPtr^.saveDisp := 0;
             tPtr^.isConstant := false;
-            tPtr^.kind := enumConst;
-            if token.kind = ident then begin
-               variable :=
-                  NewSymbol(token.name, tPtr, ident, variableSpace, defined);
-               NextToken;
-               end {if}
-            else
-               Error(9);
-            if token.kind = eqch then begin {handle explicit enumeration values}
-               NextToken;
-               Expression(arrayExpression,[commach,rbracech]);
-               enumVal := long(expressionValue).lsw;
-               if enumVal <> expressionValue then
-                  Error(6);
-               end; {if}
-            tPtr^.eval := enumVal;      {set the enumeration constant value}
-            enumVal := enumVal+1;       {inc the default enumeration value}
-            if token.kind = commach then {next enumeration...}
-               begin
-               done := false;
-               NextToken;
-               {kws -- allow trailing , in enum }
-               { C99 6.7.2.2 Enumeration specifiers }
-               if token.kind = rbracech then done := true;
-               end {if}
-            else
-               done := true;
-         until done or (token.kind = eofsy);
-         if token.kind = rbracech then
-            NextToken
-         else begin
-            Error(23);
-            SkipStatement;
-            end; {else}
-         end; {if}
-1:    skipDeclarator := token.kind = semicolonch;
-      end;
-  
-   structsy,                            {struct}
-   unionsy: begin                       {union}
-      globalStruct := false;            {we didn't make it global}
-      if token.kind = structsy then     {set the type kind to use}
-         tKind := structType
-      else
-         tKind := unionType;
-      structPtr := nil;                 {no record, yet}
-      structTypePtr := defaultStruct;   {use int as a default type}
-      NextToken;                        {skip 'struct' or 'union'}
-      if token.kind in [ident,typedef]  {if there is a struct name then...}
-         then begin
-					{look up the name}
-         structPtr := FindSymbol(token, tagSpace, true, true);
-         ttoken := token;               {record the structure name}
-         NextToken;                     {skip the structure name}
-         if structPtr = nil then begin  {if the name hasn't been defined then...}
-            if token.kind <> lbracech then
-               structPtr := FindSymbol(ttoken, tagSpace, false, true);
-            if structPtr <> nil then
-               structTypePtr := structPtr^.itype
-            else begin
-               isForwardDeclared := true;
-               globalStruct := doingParameters and (token.kind <> lbracech);
-               if globalStruct then begin
-                  lUseGlobalPool := useGlobalPool;
-                  useGlobalPool := true;
+            tPtr^.kind := enumType;
+            variable :=
+               NewSymbol(ttoken.name, tPtr, storageClass, tagSpace, defined);
+            CheckConst;
+            end {if}
+         else if token.kind <> lbracech then
+            Error(9);
+         enumVal := 0;                  {set the default value}
+         if token.kind = lbracech then begin
+            NextToken;                  {skip the '{'}
+            repeat                      {declare the enum constants}
+               tPtr := pointer(Malloc(sizeof(typeRecord)));
+               tPtr^.size := cgWordSize;
+               tPtr^.saveDisp := 0;
+               tPtr^.isConstant := false;
+               tPtr^.kind := enumConst;
+               if token.kind = ident then begin
+                  variable :=
+                     NewSymbol(token.name, tPtr, ident, variableSpace, defined);
+                  NextToken;
+                  end {if}
+               else
+                  Error(9);
+               if token.kind = eqch then begin {handle explicit enumeration values}
+                  NextToken;
+                  Expression(arrayExpression,[commach,rbracech]);
+                  enumVal := long(expressionValue).lsw;
+                  if enumVal <> expressionValue then
+                     Error(6);
                   end; {if}
+               tPtr^.eval := enumVal;   {set the enumeration constant value}
+               enumVal := enumVal+1;    {inc the default enumeration value}
+               if token.kind = commach then {next enumeration...}
+                  begin
+                  done := false;
+                  NextToken;
+                  {kws -- allow trailing , in enum }
+                  { C99 6.7.2.2 Enumeration specifiers }
+                  if token.kind = rbracech then done := true;
+                  end {if}
+               else
+                  done := true;
+            until done or (token.kind = eofsy);
+            if token.kind = rbracech then
+               NextToken
+            else begin
+               Error(23);
+               SkipStatement;
+               end; {else}
+            end; {if}
+1:       skipDeclarator := token.kind = semicolonch;
+         typeDone := true;
+         end;
+  
+      structsy,                         {struct}
+      unionsy: begin                    {union}
+         if typeDone or (typeSpecifiers <> []) then
+            Error(9);
+         globalStruct := false;         {we didn't make it global}
+         if token.kind = structsy then  {set the type kind to use}
+            tKind := structType
+         else
+            tKind := unionType;
+         structPtr := nil;              {no record, yet}
+         structTypePtr := defaultStruct; {use int as a default type}
+         NextToken;                     {skip 'struct' or 'union'}
+         if token.kind in [ident,typedef] {if there is a struct name then...}
+            then begin
+                                        {look up the name}
+            structPtr := FindSymbol(token, tagSpace, true, true);
+            ttoken := token;            {record the structure name}
+            NextToken;                  {skip the structure name}
+            if structPtr = nil then begin {if the name hasn't been defined then...}
+               if token.kind <> lbracech then
+                  structPtr := FindSymbol(ttoken, tagSpace, false, true);
+               if structPtr <> nil then
+                  structTypePtr := structPtr^.itype
+               else begin
+                  isForwardDeclared := true;
+                  globalStruct := doingParameters and (token.kind <> lbracech);
+                  if globalStruct then begin
+                     lUseGlobalPool := useGlobalPool;
+                     useGlobalPool := true;
+                     end; {if}
+                  structTypePtr := pointer(Calloc(sizeof(typeRecord)));
+                 {structTypePtr^.size := 0;}
+                 {structTypePtr^.saveDisp := 0;}
+                 {structTypePtr^.isConstant := false;}
+                  structTypePtr^.kind := tkind;
+                 {structTypePtr^.fieldList := nil;}
+                 {structTypePtr^.sName := nil;}
+                  structPtr := NewSymbol(ttoken.name, structTypePtr, ident,
+                     tagSpace, defined);
+                  structTypePtr^.sName := structPtr^.name;
+                  end;
+               end {if}
+                                        {the name has been defined, so...}
+            else if structPtr^.itype^.kind <> tKind then begin
+               Error(42);               {it's an error if it's not a struct}
+               structPtr := nil;
+               end {else}
+            else begin                  {record the existing structure type}
+               structTypePtr := structPtr^.itype;
+               CheckConst;
+               end; {else}
+            end {if}
+         else if token.kind <> lbracech then
+            Error(9);                   {its an error if there's no name or struct}
+2:       if token.kind = lbracech then  {handle a structure definition...}
+            begin                       {error if we already have one!}
+            if (structTypePtr <> defaultStruct)
+               and (structTypePtr^.fieldList <> nil) then begin
+               Error(53);
+               structPtr := nil;
+               end; {if}
+            NextToken;                  {skip the '{'}
+            if structTypePtr = defaultStruct then begin
                structTypePtr := pointer(Calloc(sizeof(typeRecord)));
               {structTypePtr^.size := 0;}
               {structTypePtr^.saveDisp := 0;}
@@ -2987,64 +2964,36 @@ case token.kind of
                structTypePtr^.kind := tkind;
               {structTypePtr^.fieldList := nil;}
               {structTypePtr^.sName := nil;}
-               structPtr := NewSymbol(ttoken.name, structTypePtr, ident,
-                  tagSpace, defined);
-               structTypePtr^.sName := structPtr^.name;
-               end;
-            end {if}
-                                        {the name has been defined, so...}
-         else if structPtr^.itype^.kind <> tKind then begin
-            Error(42);			{it's an error if it's not a struct}
-            structPtr := nil;
-            end {else}
-         else begin                     {record the existing structure type}
-            structTypePtr := structPtr^.itype;
-            CheckConst;
-            end; {else}
-         end {if}
-      else if token.kind <> lbracech then
-         Error(9);                      {its an error if there's no name or struct}
-2:    if token.kind = lbracech then     {handle a structure definition...}
-         begin                          {error if we already have one!}
-         if (structTypePtr <> defaultStruct)
-            and (structTypePtr^.fieldList <> nil) then begin
-            Error(53);
-            structPtr := nil;
+               end; {if}
+            if structPtr <> nil then
+               structPtr^.itype := structTypePtr;
+            FieldList(structTypePtr,tKind); {define the fields}
+            if token.kind = rbracech then {insist on a closing rbrace}
+               NextToken
+            else begin
+               Error(23);
+               SkipStatement;
+               end; {else}
             end; {if}
-         NextToken;                     {skip the '{'}
-         if structTypePtr = defaultStruct then begin
-            structTypePtr := pointer(Calloc(sizeof(typeRecord)));
-           {structTypePtr^.size := 0;}
-           {structTypePtr^.saveDisp := 0;}
-           {structTypePtr^.isConstant := false;}
-            structTypePtr^.kind := tkind;
-           {structTypePtr^.fieldList := nil;}
-           {structTypePtr^.sName := nil;}
-            end; {if}
-         if structPtr <> nil then
-            structPtr^.itype := structTypePtr;
-         FieldList(structTypePtr,tKind); {define the fields}
-         if token.kind = rbracech then  {insist on a closing rbrace}
-            NextToken
-         else begin
-            Error(23);
-            SkipStatement;
-            end; {else}
-         end; {if}
-      if globalStruct then
-         useGlobalPool := lUseGlobalPool;
-      typeSpec := structTypePtr;
-      skipDeclarator := token.kind = semicolonch;
-      end;
+         if globalStruct then
+            useGlobalPool := lUseGlobalPool;
+         typeSpec := structTypePtr;
+         skipDeclarator := token.kind = semicolonch;
+         typeDone := true;
+         end;
  
-   typedef: begin                       {named type definition}
-      typeSpec := token.symbolPtr^.itype;
-      NextToken;
-      end;
-
-   otherwise: ;
-   end; {case}
-
+      typedef: begin                    {named type definition}
+         if (typeSpecifiers = []) and not typeDone then begin
+            typeSpec := token.symbolPtr^.itype;
+            NextToken;
+            typeDone := true;
+            end {if}
+         else                           {interpret as declarator, not type specifier}
+            goto 3;
+         end;
+      end; {case}
+   end; {while}
+3:
 if isconstant then begin                {handle a constant type}
    new(tPtr);
    if typeSpec^.kind in [structType,unionType] then begin
