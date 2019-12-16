@@ -2531,6 +2531,11 @@ var
             end {if}
          else
             op2 := op3^.left;
+         if op2 = nil then begin
+            op2 := pointer(Calloc(sizeof(intermediate_code)));
+            op2^.opcode := pc_nop;
+            op2^.optype := cgWord;
+            end; {if}
          op1^.left := op3;			{place in the new location}
          end; {Combine}
 
