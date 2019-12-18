@@ -154,7 +154,7 @@ else if (op1 <> nil) and (op2 <> nil) then
       if op1^.q = op2^.q then
          if op1^.r = op2^.r then
             if op1^.s = op2^.s then
-               if op1^.lab^ = op2^.lab^ then
+               if (op1^.lab = op2^.lab) or (op1^.lab^ = op2^.lab^) then
                   if OpsEqual(op1, op2) then
                      if op1^.optype = op2^.optype then
                         case op1^.optype of
@@ -768,23 +768,28 @@ case op^.opcode of			{check for optimizations of this node}
          opv := op^.left;
          end {if}
       else begin
+         done := false;
          if op^.left^.opcode = pc_ldc then
             ReverseChildren(op);
          if op^.right^.opcode = pc_ldc then begin
             lval := op^.right^.lval;
-            if lval = 0 then
-               opv := op^.left
+            if lval = 0 then begin
+               opv := op^.left;
+               done := true;
+               end {if}
             else if (lval >= 0) and (lval <= maxint) then begin
                op^.opcode := pc_inc;
                op^.optype := cgLong;
                op^.q := ord(lval);
                op^.right := nil;
+               done := true;
                end {else if}
             else if (lval > -maxint) and (lval < 0) then begin
                op^.opcode := pc_dec;
                op^.optype := cgLong;
                op^.q := -ord(lval); 
                op^.right := nil;
+               done := true;
                end; {else if}
             end {if}
          else if CodesMatch(op^.left, op^.right, false) then
@@ -796,10 +801,11 @@ case op^.opcode of			{check for optimizations of this node}
                   optype := cgLong;
                   end; {with}
                op^.opcode := pc_sll;
+               done := true;
                end; {if}
-         if op^.right^.opcode in [pc_lao,pc_lda,pc_ixa] then
+         if not done and (op^.right^.opcode in [pc_lao,pc_lda,pc_ixa]) then
             ReverseChildren(op);
-         if op^.left^.opcode in [pc_lao,pc_lda,pc_ixa] then
+         if not done and (op^.left^.opcode in [pc_lao,pc_lda,pc_ixa]) then
             if op^.right^.opcode = pc_sll then begin
                if op^.right^.right^.opcode = pc_ldc then
                   if (op^.right^.right^.lval & $FFFF8000) = 0 then
