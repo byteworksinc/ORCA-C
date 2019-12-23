@@ -874,12 +874,17 @@ var
       if stack = nil then begin
          Error(36);
          errorFound := true;
-         Pop := nil;
-         end {if}
-      else begin
-         Pop := stack;
-         stack := stack^.next;
-         end; {else}
+         new(stack);                    {synthesize the missing token}
+         stack^.token.class := intConstant;
+         stack^.token.kind := intconst;
+         stack^.token.ival := 0;
+         stack^.next := nil;
+         stack^.left := nil;
+         stack^.middle := nil;
+         stack^.right := nil;
+         end; {if}
+      Pop := stack;
+      stack := stack^.next;
       end; {Pop}
 
 
