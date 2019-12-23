@@ -3255,7 +3255,8 @@ var
    new(dp);
    dp^.last := nil;
    dp^.next := dom;
-   dom^.last := dp;
+   if dom <> nil then
+      dom^.last := dp;
    dom := dp;
    dp^.dfn := dfn;
    end; {AddDominator}
