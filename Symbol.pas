@@ -1352,7 +1352,7 @@ lUseGlobalPool := useGlobalPool;
 tk.name := name;
 tk.symbolPtr := nil;
 if space <> fieldListSpace then begin   {are we defining a function?}
-   if itype^.kind = functionType then begin
+   if (itype <> nil) and (itype^.kind = functionType) then begin
       isGlobal := true;
       useGlobalPool := true;
       if class in [autosy, ident] then
@@ -1376,8 +1376,8 @@ if space <> fieldListSpace then begin   {are we defining a function?}
             end; {if}
          end; {if}
       end {if}
-   else if (itype^.kind in [structType,unionType]) and (itype^.fieldList = nil)
-      and doingParameters then begin
+   else if (itype <> nil) and (itype^.kind in [structType,unionType])
+      and (itype^.fieldList = nil) and doingParameters then begin
       useGlobalPool := true;
       end; {else if}
    if noDeclarations then begin         {if we need a symbol table, create it}
