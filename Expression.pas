@@ -3874,7 +3874,7 @@ procedure Expression {kind: expressionKind; stopSym: tokenSet};
 {       realExpressionValue - value of a real constant          }
 {               expression                                      }
 {       expressionValue - value of a constant expression        }
-{       expressionType - type of the constant expression        }
+{       expressionType - type of the expression                 }
 
 label 1;
 
@@ -3891,7 +3891,9 @@ if kind = normalExpression then begin   {generate code from the expression tree}
    if not errorFound then begin
       doDispose := true;
       GenerateCode(tree);
-      end; {if}
+      end {if}
+   else
+      expressionType := wordPtr;        {set default type in case of error}
    end {if}
 else begin                              {record the expression for an initializer}
    initializerTree := tree;
@@ -3899,6 +3901,7 @@ else begin                              {record the expression for an initialize
    if errorFound then begin
       DisposeTree(initializerTree);
       initializerTree := nil;
+      expressionType := wordPtr;        {set default type in case of error}
       end {if}
    else begin
       ldoDispose := doDispose;          {find the expression type}
