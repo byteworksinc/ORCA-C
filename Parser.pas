@@ -3826,7 +3826,7 @@ var
    {    count - number of times to re-use the initializer       }
    {    ip - pointer to the initializer record to use           }
 
-   label 1;
+   label 1,2;
 
    var
       elements: longint;                {# array elements}
@@ -3900,9 +3900,11 @@ var
    case itype^.kind of
 
       scalarType,pointerType,enumType,functionType: begin
+         tree := iptr^.itree;           
+         if tree = nil then goto 2;     {don't generate code in error case}
          LoadAddress;                   {load the destination address}
          doDispose := count = 1;        {generate the expression value}
-         tree := iptr^.itree;           {see if this is a constant}
+                                        {see if this is a constant}
                                         {do assignment conversions}
          while tree^.token.kind = castoper do
             tree := tree^.left;
@@ -3935,7 +3937,7 @@ var
             pointerType,functionType:
                Gen0t(pc_sto, cgULong);
             end; {case}
-         end;
+2:       end;
 
       arrayType: begin
          if itype^.aType^.kind = scalarType then
