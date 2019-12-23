@@ -1617,8 +1617,8 @@ if checkParms then begin                {check for parameter type conflicts}
       end; {with}
    end {if}
 else if doingParameters then
-   if pfunc^.itype^.prototyped then
-      if not doingPrototypes then
+   if not doingPrototypes then
+      if pfunc^.itype^.prototyped then
          if tPtr^.kind in
             [enumConst,structType,unionType,definedType,pointerType]
             then Error(50);
