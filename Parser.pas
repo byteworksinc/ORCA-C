@@ -3971,7 +3971,8 @@ var
             count := count - long(elements).lsw;
             if count = 0 then begin
                iPtr := iPtr^.next;
-               count := iPtr^.count;
+               if iPtr <> nil then
+                  count := iPtr^.count;
                end; {if}
             end {if}
          else begin
@@ -3981,7 +3982,8 @@ var
                   count := count-1;
                   if count = 0 then begin
                      iPtr := iPtr^.next;
-                     count := iPtr^.count;
+                     if iPtr <> nil then
+                        count := iPtr^.count;
                      end; {if}
                   end; {if}
                disp := disp+itype^.size;
@@ -4043,9 +4045,11 @@ var
                   count := count-1;
                   if count = 0 then begin
                      iPtr := iPtr^.next;
-                     count := iPtr^.count;
-                     bitsize := iPtr^.bitsize;
-                     bitdisp := iPtr^.bitdisp;
+                     if iPtr <> nil then begin
+                        count := iPtr^.count;
+                        bitsize := iPtr^.bitsize;
+                        bitdisp := iPtr^.bitdisp;
+                        end; {if}
                      end; {if}
                   end; {if}
                if union then
