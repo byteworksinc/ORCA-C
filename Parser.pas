@@ -3940,6 +3940,8 @@ var
 2:       end;
 
       arrayType: begin
+         elements := itype^.elements;
+         if elements = 0 then goto 1;   {don't init flexible array member}
          if itype^.aType^.kind = scalarType then
             if itype^.aType^.baseType in [cgByte,cgUByte] then
                if iPtr^.iTree^.token.kind = stringConst then begin
@@ -3955,7 +3957,6 @@ var
                   iPtr := iPtr^.next;
                   goto 1;
                   end; {if}
-         elements := itype^.elements;
          itype := itype^.atype;
          if ZeroFill(elements, itype, count, iPtr) then begin
             if itype^.kind = enumType then
