@@ -2535,7 +2535,7 @@ var
                   Gen0(pc_adl)
                else
                   Gen0(pc_sbl);
-               with tree^.left^.id^ do
+               with tree^.id^ do
                   case storage of
                      stackFrame, parameter:
                         Gen2t(pc_cop, lln, 0, cgULong);
