@@ -2405,9 +2405,11 @@ var
 
    else if ExpressionKind(tree) in [arrayType,pointerType] then
       GenerateCode(tree)
-   else
+   else begin
+      expressionType := wordPtr;        {set default type in case of error}
       if doDispose then                 {prevent spurious errors}
          Error(78);
+      end; {else}
 1:
    end; {LoadAddress}
 
