@@ -321,6 +321,16 @@ procedure StartInclude (name: gsosOutStringPtr); extern;
 {       file.							}
 {    2. From Header.pas						}
 
+
+procedure TermHeader; extern;
+
+{ Stop processing the header file				}
+{								}
+{ Note: This is called when the first code-generating		}
+{    subroutine is found, and again when the compile ends.  It	}
+{    closes any open symbol file, and should take no action if	}
+{    called twice.						}
+
 {-- Scanner support --------------------------------------------}
 
 procedure CheckDelimiters (var name: pString);
@@ -1234,6 +1244,9 @@ else
    fp^.lineNumber := lineNumber+1;
 if OpenFile(true, default) then begin	{open a new file and proceed from there}
    lineNumber := 1;
+   if ifList <> nil then
+      if fp^.next = nil then
+         TermHeader;
    StartInclude(@includeFileGS);
    end {if}
 else begin				{handle a file name error}
