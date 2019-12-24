@@ -1391,6 +1391,7 @@ if macro^.readOnly then begin           {handle special macros}
          token.sval := dateStr;
          tokenStart := @dateStr^.str;
          tokenEnd := pointer(ord4(tokenStart)+dateStr^.length);
+         TermHeader;                    {Don't save stale value in sym file}
          end;                                   
 
       4: begin                          {__TIME__}
@@ -1400,6 +1401,7 @@ if macro^.readOnly then begin           {handle special macros}
          token.sval := timeStr;
          tokenStart := @timeStr^.str;
          tokenEnd := pointer(ord4(tokenStart)+timeStr^.length);
+         TermHeader;                    {Don't save stale value in sym file}
          end;
 
       5: begin                          {__STDC__}
