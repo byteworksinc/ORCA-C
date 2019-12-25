@@ -2015,8 +2015,9 @@ var
 2:    DisposeTree(initializerTree);
       end {if}
    else begin
-      if (tp^.kind = pointerType)
-         or ((tp^.kind = scalarType) and (tp^.baseType in [cgLong,cgULong]))
+      if ((tp^.kind = pointerType)
+         or ((tp^.kind = scalarType) and (tp^.baseType in [cgLong,cgULong])))
+         and (bitsize = 0)
          then begin
          iPtr^.iType := ccPointer;
          if variable^.storage in [external,global,private] then begin
