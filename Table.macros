@@ -17,8 +17,8 @@
          MEND
 
          MACRO
-&LAB     STR8  &STR
+&LAB     STR14 &STR
 &LAB     DC    I1'L:A&SYSCNT'
 A&SYSCNT DC    C'&STR'
-         DS    8-L:A&SYSCNT
+         DS    14-L:A&SYSCNT
          MEND

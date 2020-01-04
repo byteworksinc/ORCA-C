@@ -723,14 +723,16 @@ case token.kind of
                      write('"');
                      end;
 
+   _Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy,
+   _Genericsy,_Imaginarysy,_Noreturnsy,_Static_assertsy,_Thread_localsy,
    autosy,asmsy,breaksy,casesy,charsy,
    continuesy,constsy,compsy,defaultsy,dosy,
    doublesy,elsesy,enumsy,externsy,extendedsy,
    floatsy,forsy,gotosy,ifsy,intsy,
-   inlinesy,longsy,pascalsy,registersy,returnsy,
-   shortsy,sizeofsy,staticsy,structsy,switchsy,
-   segmentsy,signedsy,typedefsy,unionsy,unsignedsy,
-   voidsy,volatilesy,whilesy:
+   inlinesy,longsy,pascalsy,registersy,restrictsy,
+   returnsy,shortsy,sizeofsy,staticsy,structsy,
+   switchsy,segmentsy,signedsy,typedefsy,unionsy,
+   unsignedsy,voidsy,volatilesy,whilesy:
                      write(reservedWords[token.kind]);
 
    tildech,questionch,lparench,rparench,lbrackch,rbrackch,lbracech,
@@ -3641,9 +3643,9 @@ if expandMacros then                    {handle macro expansions}
          end;
       end; {if}
                                         {see if it's a reserved word}
-if workString[1] in ['a'..'g','i','l','p','r'..'w'] then
-   for rword := wordHash[ord(workString[1])-ord('a')] to
-      pred(wordHash[ord(succ(workString[1]))-ord('a')]) do
+if workString[1] in ['_','a'..'g','i','l','p','r'..'w'] then
+   for rword := wordHash[ord(workString[1])-ord('_')] to
+      pred(wordHash[ord(succ(workString[1]))-ord('_')]) do
       if reservedWords[rword] = workString then begin
          token.kind := rword;
          token.class := reservedWord;

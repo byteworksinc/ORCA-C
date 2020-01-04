@@ -286,14 +286,16 @@ charSym  start                          single character symbols
          enum  (intconst,uintconst,longconst,ulongconst,doubleconst)
          enum  stringconst
 !                                       reserved words
+         enum  (_Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy)
+         enum  (_Genericsy,_Imaginarysy,_Noreturnsy,_Static_assertsy,_Thread_localsy)
          enum  (autosy,asmsy,breaksy,casesy,charsy)
          enum  (continuesy,constsy,compsy,defaultsy,dosy)
          enum  (doublesy,elsesy,enumsy,externsy,extendedsy)
          enum  (floatsy,forsy,gotosy,ifsy,intsy)
-         enum  (inlinesy,longsy,pascalsy,registersy,returnsy)
-         enum  (shortsy,sizeofsy,staticsy,structsy,switchsy)
-         enum  (segmentsy,signedsy,typedefsy,unionsy,unsignedsy)
-         enum  (voidsy,volatilesy,whilesy)
+         enum  (inlinesy,longsy,pascalsy,registersy,restrictsy)
+         enum  (returnsy,shortsy,sizeofsy,staticsy,structsy)
+         enum  (switchsy,segmentsy,signedsy,typedefsy,unionsy)
+         enum  (unsignedsy,voidsy,volatilesy,whilesy)
 !                                       reserved symbols
          enum  (excch,percentch,carotch,andch,asteriskch)
          enum  (minusch,plusch,eqch,tildech,barch)
@@ -355,6 +357,16 @@ icp      start                          in comming priority for expression
          dc    i1'200'                  ulongconst
          dc    i1'200'                  doubleconst
          dc    i1'200'                  stringconst
+         dc    i1'200'                  _Alignassy
+         dc    i1'200'                  _Alignofsy
+         dc    i1'200'                  _Atomicsy
+         dc    i1'200'                  _Boolsy
+         dc    i1'200'                  _Complexsy
+         dc    i1'200'                  _Genericsy
+         dc    i1'200'                  _Imaginarysy
+         dc    i1'200'                  _Noreturnsy
+         dc    i1'200'                  _Static_assertsy
+         dc    i1'200'                  _Thread_localsy
          dc    i1'200'                  autosy
          dc    i1'200'                  asmsy
          dc    i1'200'                  breaksy
@@ -379,6 +391,7 @@ icp      start                          in comming priority for expression
          dc    i1'200'                  longsy
          dc    i1'200'                  pascalsy
          dc    i1'200'                  registersy
+         dc    i1'200'                  restrictsy
          dc    i1'200'                  returnsy
          dc    i1'200'                  shortsy
          dc    i1'16'                   sizeofsy
@@ -509,6 +522,16 @@ isp      start                          in stack priority for expression
          dc    i1'0'                    ulongconst
          dc    i1'0'                    doubleconst
          dc    i1'0'                    stringconst
+         dc    i1'0'                    _Alignassy
+         dc    i1'0'                    _Alignofsy
+         dc    i1'0'                    _Atomicsy
+         dc    i1'0'                    _Boolsy
+         dc    i1'0'                    _Complexsy
+         dc    i1'0'                    _Genericsy
+         dc    i1'0'                    _Imaginarysy
+         dc    i1'0'                    _Noreturnsy
+         dc    i1'0'                    _Static_assertsy
+         dc    i1'0'                    _Thread_localsy
          dc    i1'0'                    autosy
          dc    i1'0'                    asmsy
          dc    i1'0'                    breaksy
@@ -533,6 +556,7 @@ isp      start                          in stack priority for expression
          dc    i1'0'                    longsy
          dc    i1'0'                    pascalsy
          dc    i1'0'                    registersy
+         dc    i1'0'                    restrictsy
          dc    i1'0'                    returnsy
          dc    i1'0'                    shortsy
          dc    i1'16'                   sizeofsy
@@ -798,44 +822,55 @@ nopcodes start
          end
 
 reservedWords start                     reserved word names
-         str8  auto
-         str8  asm
-         str8  break
-         str8  case
-         str8  char
-         str8  continue
-         str8  const
-         str8  comp
-         str8  default
-         str8  do
-         str8  double
-         str8  else
-         str8  enum
-         str8  extern
-         str8  extended
-         str8  float
-         str8  for
-         str8  goto
-         str8  if
-         str8  int
-         str8  inline
-         str8  long
-         str8  pascal
-         str8  register
-         str8  return
-         str8  short
-         str8  sizeof
-         str8  static
-         str8  struct
-         str8  switch
-         str8  segment
-         str8  signed
-         str8  typedef
-         str8  union
-         str8  unsigned
-         str8  void
-         str8  volatile
-         str8  while
+         str14  _Alignas
+         str14  _Alignof
+         str14  _Atomic
+         str14  _Bool
+         str14  _Complex
+         str14  _Generic
+         str14  _Imaginary
+         str14  _Noreturn
+         str14  _Static_assert
+         str14  _Thread_local
+         str14  auto
+         str14  asm
+         str14  break
+         str14  case
+         str14  char
+         str14  continue
+         str14  const
+         str14  comp
+         str14  default
+         str14  do
+         str14  double
+         str14  else
+         str14  enum
+         str14  extern
+         str14  extended
+         str14  float
+         str14  for
+         str14  goto
+         str14  if
+         str14  int
+         str14  inline
+         str14  long
+         str14  pascal
+         str14  register
+         str14  restrict
+         str14  return
+         str14  short
+         str14  sizeof
+         str14  static
+         str14  struct
+         str14  switch
+         str14  segment
+         str14  signed
+         str14  typedef
+         str14  union
+         str14  unsigned
+         str14  void
+         str14  volatile
+         str14  while
          end
 
 ropcodes start
@@ -860,15 +895,18 @@ wordHash start                          reserved word hash table
          enum  (intconst,uintconst,longconst,ulongconst,doubleconst)
          enum  stringconst
 !                                       reserved words
+         enum  (_Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy)
+         enum  (_Genericsy,_Imaginarysy,_Noreturnsy,_Static_assertsy,_Thread_localsy)
          enum  (autosy,asmsy,breaksy,casesy,charsy)
          enum  (continuesy,constsy,compsy,defaultsy,dosy)
          enum  (doublesy,elsesy,enumsy,externsy,extendedsy)
          enum  (floatsy,forsy,gotosy,ifsy,intsy)
-         enum  (inlinesy,longsy,pascalsy,registersy,returnsy)
-         enum  (shortsy,sizeofsy,staticsy,structsy,switchsy)
-         enum  (segmentsy,signedsy,typedefsy,unionsy,unsignedsy)
-         enum  (voidsy,volatilesy,whilesy,succwhilesy)
+         enum  (inlinesy,longsy,pascalsy,registersy,restrictsy)
+         enum  (returnsy,shortsy,sizeofsy,staticsy,structsy)
+         enum  (switchsy,segmentsy,signedsy,typedefsy,unionsy)
+         enum  (unsignedsy,voidsy,volatilesy,whilesy,succwhilesy)
 
+         dc    i'_Alignassy,autosy'
          dc    i'autosy,breaksy,casesy,defaultsy,elsesy,floatsy'
          dc    i'gotosy,ifsy,ifsy,longsy,longsy,longsy'
          dc    i'pascalsy,pascalsy,pascalsy,pascalsy,registersy,registersy'

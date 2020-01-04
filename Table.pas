@@ -20,8 +20,8 @@ var
                                         {----------------}
    charKinds: array[minChar..maxChar] of charEnum; {character kinds}
    charSym: array[minChar..maxChar] of tokenEnum; {symbols for single char symbols}
-   reservedWords: array[autosy..whilesy] of string[8]; {reserved word strings}
-   wordHash: array[0..23] of tokenEnum; {for hashing reserved words}
+   reservedWords: array[_Alignassy..whilesy] of string[14]; {reserved word strings}
+   wordHash: array[0..25] of tokenEnum; {for hashing reserved words}
 
                                         {from ASM.PAS}
                                         {------------}

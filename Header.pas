@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 3;                  {version number of .sym file format}
+   symFileVersion = 4;                  {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
