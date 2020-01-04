@@ -113,7 +113,8 @@ while token.kind <> eofsy do begin      {compile the program}
                            unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
                            floatsy,doublesy,compsy,extendedsy,enumsy,
                            structsy,unionsy,typedef,voidsy,inlinesy,volatilesy,
-                           constsy,ident,asmsy,pascalsy,asmsy,segmentsy])
+                           constsy,ident,asmsy,pascalsy,asmsy,segmentsy,
+                           _Static_assertsy])
       then
       DoDeclaration(false, false)
    else begin

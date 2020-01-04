@@ -607,7 +607,7 @@ var
       and (token.kind in [autosy,registersy,unsignedsy,signedsy,intsy,longsy,
                       charsy,shortsy,floatsy,doublesy,compsy,extendedsy,enumsy,
                       structsy,unionsy,typedef,voidsy,volatilesy,constsy,
-                      externsy,staticsy,typedefsy]) then begin
+                      externsy,staticsy,typedefsy,_Static_assertsy]) then begin
       DoDeclaration(false, true)
       end {if}
    else if token.kind <> semicolonch then begin
@@ -2513,6 +2513,25 @@ useGlobalPool := luseGlobalPool;        {restore useGlobalPool}
 end; {Initializer}
 
 
+procedure DoStaticAssert;
+
+{ process a static assertion                                    }
+
+begin {DoStaticAssert}
+NextToken;
+Match(lparench, 13);
+Expression(arrayExpression, [commach]);
+if (expressionType = nil) or (expressionType^.kind <> scalarType) then
+   Error(18)
+else if expressionValue = 0 then
+   Error(132);
+Match(commach, 86);
+Match(stringconst, 83);
+Match(rparench, 12);
+Match(semicolonch, 22);
+end; {DoStaticAssert}
+
+
 procedure TypeSpecifier {doingFieldList,isConstant: boolean};
 
 { handle a type specifier                                       }
@@ -2551,7 +2570,9 @@ var
    {                                                             }
    { parameters                                                  }
    {     tp - place to store the type pointer                    }
- 
+
+   label 1;
+
    var
       bitDisp: integer;                 {current bit disp}
       disp: longint;                    {current byte disp}
@@ -2575,15 +2596,14 @@ var
    maxDisp := 0;
    didFlexibleArray := false;
    fl := nil;                           {nothing in the field list, yet}
-                                        {check for no declarations}
-   if not (token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
-      floatsy,doublesy,compsy,extendedsy,enumsy,structsy,unionsy,typedefsy,
-      typedef,voidsy,constsy,volatilesy]) then
-      Error(26);
                                         {while there are entries in the field list...}
-   while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
+1: while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
       doublesy,compsy,extendedsy,enumsy,structsy,unionsy,typedefsy,typedef,
-      voidsy,constsy,volatilesy] do begin
+      voidsy,constsy,volatilesy,_Static_assertsy] do begin
+      if token.kind = _Static_assertsy then begin
+         DoStaticAssert;
+         goto 1;
+         end; {if}
       typeSpec := wordPtr;              {default type specifier is an integer}
       TypeSpecifier(true,false);        {get the type specifier}
       if not skipDeclarator then
@@ -2689,7 +2709,9 @@ var
       else
          tp^.size := maxDisp;
       tp^.fieldList := ufl;
-      end; {if}
+      end {if}
+   else
+      Error(26);                        {error if no named declarations}
    storageClass := lStorageClass;       {restore default storage class}
    isForwardDeclared := lisForwardDeclared; {restore the forward flag}
    doingParameters := ldoingParameters; {restore the parameters flag}
@@ -3052,7 +3074,7 @@ procedure DoDeclaration {doingPrototypes, autoOrRegisterOnly: boolean};
 { parameters:                                                   }
 {       doingPrototypes - are we processing a parameter list?   }
 
-label 1,2,3;
+label 1,2,3,4;
 
 var
    done: boolean;                       {for loop termination}
@@ -3279,6 +3301,10 @@ var
 
 
 begin {DoDeclaration}
+if token.kind = _Static_assertsy then begin
+   DoStaticAssert;
+   goto 4;
+   end; {if}
 lDoingParameters := doingParameters;    {record the status}
 noFDefinitions := false;                {are function definitions inhibited?}
 typeFound := false;                     {no explicit type found, yet}
@@ -3718,6 +3744,7 @@ else {if not isFunction then} begin
 doingParameters := lDoingParameters;    {restore the status}
 useGlobalPool := lUseGlobalPool;
 inhibitHeader := false;
+4:
 end; {DoDeclaration}
 
 
@@ -3745,7 +3772,7 @@ case statementList^.kind of
                              unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
                              floatsy,doublesy,compsy,extendedsy,enumsy,
                              structsy,unionsy,typedef,voidsy,volatilesy,
-                             constsy])
+                             constsy,_Static_assertsy])
          then begin
          hasStatementNext := false;
          if token.kind <> typedef then

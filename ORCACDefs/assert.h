@@ -14,10 +14,17 @@
 #undef assert
 #endif
 
-extern void __assert(char *, int, char *);
-
 #ifndef NDEBUG
 #define assert(expression) (expression) ? ((void) 0) : (__assert(__FILE__, __LINE__, #expression))
 #else
 #define assert(expression)  ((void) 0)
+#endif
+
+#ifndef __assert__
+#define __assert__
+
+extern void __assert(char *, int, char *);
+
+#define static_assert _Static_assert
+
 #endif
