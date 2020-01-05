@@ -191,7 +191,8 @@ type
    charEnum =                           {character kinds}
       (illegal,ch_special,ch_dash,ch_plus,ch_lt,ch_gt,ch_eq,ch_exc,
        ch_and,ch_bar,ch_dot,ch_white,ch_eol,ch_eof,ch_char,ch_string,
-       ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,letter,digit);
+       ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,ch_colon,
+       letter,digit);
 
    tokenSet = set of tokenEnum;
    tokenClass = (reservedWord,reservedSymbol,identifier,intConstant,longConstant,
@@ -202,7 +203,7 @@ type
       numString: stringPtr;             {chars in number (macros only)}
       case class: tokenClass of         {token info}
          reservedWord  : ();
-         reservedSymbol: ();
+         reservedSymbol: (isDigraph: boolean);
          identifier    : (name: stringPtr;
                           symbolPtr: identPtr);
          intConstant   : (ival: integer);

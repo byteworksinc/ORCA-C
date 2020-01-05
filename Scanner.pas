@@ -736,8 +736,7 @@ case token.kind of
    unsignedsy,voidsy,volatilesy,whilesy:
                      write(reservedWords[token.kind]);
 
-   tildech,questionch,lparench,rparench,lbrackch,rbrackch,lbracech,
-   rbracech,commach,semicolonch,colonch,poundch:
+   tildech,questionch,lparench,rparench,commach,semicolonch,colonch:
                      begin
                      for i := minChar to maxChar do
                         if charSym[i] = token.kind then begin
@@ -745,6 +744,31 @@ case token.kind of
                            goto 1;
                            end; {if}
                      end;
+
+   lbrackch:         if not token.isDigraph then
+                        write('[')
+                     else
+                        write('<:');
+
+   rbrackch:         if not token.isDigraph then
+                        write(']')
+                     else
+                        write(':>');
+
+   lbracech:         if not token.isDigraph then
+                        write('{')
+                     else
+                        write('<%');
+
+   rbracech:         if not token.isDigraph then
+                        write('}')
+                     else
+                        write('%>');
+
+   poundch:          if not token.isDigraph then
+                        write('#')
+                     else
+                        write('%:');
 
    minusch:          write('-');
 
@@ -2580,7 +2604,6 @@ reportEOL := true;
 tSkipping := skipping;                  {don't skip the directive name!}
 skipping := false;
 nextLineNumber := -1;
-NextCh;                                 {skip the '#' char}
 while charKinds[ord(ch)] = ch_white do  {skip white space}
    NextCh;
 if ch in ['a','d','e','i','l','p','u','w'] then begin
@@ -3671,7 +3694,7 @@ procedure NextToken;
 
 { Read the next token from the file.                            }
 
-label 1,2,3,4;
+label 1,2,3,4,5;
 
 type
    three = (s100,s1000,s4000);          {these declarations are used for a}
@@ -3701,6 +3724,7 @@ var
    tPtr: tokenListRecordPtr;            {for removing tokens from putback buffer}
    tToken: tokenType;                   {for merging tokens}
    sPtr,tsPtr: gstringPtr;              {for forming string constants}
+   lLastWasReturn: boolean;             {local copy of lastWasReturn}
 
 
    function EscapeCh: integer;
@@ -3899,11 +3923,13 @@ if tokenList <> nil then begin          {get a token put back by a macro}
          end; {if}
    goto 2;
    end; {if}
-                                        {skip white space}
+5:                                      {skip white space}
 while charKinds[ord(ch)] in [illegal,ch_white,ch_eol] do begin
    if charKinds[ord(ch)] = illegal then begin
-      if (ch = '#') and (lastWasReturn or (token.kind = eolsy)) then
+      if (ch = '#') and (lastWasReturn or (token.kind = eolsy)) then begin
+         NextCh;                        {skip the '#' char}
          PreProcess                     {call the preprocessor}
+         end {if}
       else begin
          tokenLine := lineNumber;       {record a # token}
          tokenColumn := ord(ord4(chPtr)-ord4(firstPtr));
@@ -3941,6 +3967,7 @@ case charKinds[ord(ch)] of
 
    ch_special  : begin
       token.kind := charSym[ord(ch)];
+      token.isDigraph := false;
       NextCh;
       end;
 
@@ -3949,6 +3976,7 @@ case charKinds[ord(ch)] of
 
    ch_pound : begin                     {tokens that start with '#'}
       NextCh;
+      token.isDigraph := false;
       if ch = '#' then begin
          token.kind := poundpoundop;
          NextCh;
@@ -4002,6 +4030,16 @@ case charKinds[ord(ch)] of
          end
       else if ch = '=' then begin
          token.kind := lteqop;
+         NextCh;
+         end
+      else if ch = ':' then begin
+         token.kind := lbrackch;        { <: digraph }
+         token.isDigraph := true;
+         NextCh;
+         end
+      else if ch = '%' then begin
+         token.kind := lbracech;        { <% digraph }
+         token.isDigraph := true;
          NextCh;
          end
       else
@@ -4075,11 +4113,33 @@ case charKinds[ord(ch)] of
          token.kind := barch;
       end;
 
-   ch_percent: begin                      {tokens that start with '%'}
+   ch_percent: begin                    {tokens that start with '%'}
+      lLastWasReturn := lastWasReturn or (token.kind = eolsy);
       NextCh;
       if ch = '=' then begin
          token.kind := percenteqop;
          NextCh;
+         end
+      else if ch = '>' then begin
+         token.kind := rbracech;        {%> digraph}
+         token.isDigraph := true;
+         NextCh;
+         end
+      else if ch = ':' then begin
+         NextCh;
+         token.isDigraph := true;
+         if (ch = '%') and (chPtr <> eofPtr) and (chr(chPtr^) = ':') then begin
+            token.kind := poundpoundop; {%:%: digraph}
+            NextCh;
+            NextCh;
+            end
+         else begin
+            token.kind := poundch;      {%: digraph}
+            if lLastWasReturn then begin
+               PreProcess;
+               goto 5;
+               end;
+            end;
          end
       else
          token.kind := percentch;
@@ -4122,6 +4182,17 @@ case charKinds[ord(ch)] of
          NextCh;
          token.kind := dotch;
          end; {else}
+      end;
+
+   ch_colon : begin                     {tokens that start with ':'}
+      NextCh;
+      if ch = '>' then begin
+         token.kind := rbrackch;        {:> digraph}
+         token.isDigraph := true;
+         NextCh;
+         end
+      else
+         token.kind := colonch;
       end;
 
    ch_char  : CharConstant;		{character constants}

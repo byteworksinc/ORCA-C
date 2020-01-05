@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 4;                  {version number of .sym file format}
+   symFileVersion = 5;                  {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -717,6 +717,9 @@ procedure EndInclude {chPtr: ptr};
                 		WriteByte(ord(token.ispstring));
                 		end;
             macroParameter:	WriteWord(token.pnum);
+            reservedSymbol:	if token.kind in [lbracech,rbracech,lbrackch,
+                                   rbrackch,poundch,poundpoundop] then 
+                                   WriteByte(ord(token.isDigraph));
 	    otherwise:	;
 	    end; {case}
 	 end; {WriteToken}
@@ -1321,6 +1324,9 @@ var
                 	        token.ispstring := ReadByte <> 0;
                 	        end;
          macroParameter:	token.pnum := ReadWord;
+         reservedSymbol:	if token.kind in [lbracech,rbracech,lbrackch,
+                                   rbrackch,poundch,poundpoundop] then 
+                                   token.isDigraph := boolean(ReadByte);
 	 otherwise:		;
 	 end; {case}
       end; {ReadToken}
