@@ -647,6 +647,7 @@ if list or (numErr <> 0) then begin
         130: msg := @'lint: invalid shift count';
         131: msg := @'numeric constant is too long';
         132: msg := @'static assertion failed';
+        133: msg := @'incomplete or function types may not be used here';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

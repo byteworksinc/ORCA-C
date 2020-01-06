@@ -576,6 +576,7 @@ label 1,2,3;
 var
    done,done2: boolean;                 {for loop termination}
    doingSizeof: boolean;                {used to test for a sizeof operator}
+   doingAlignof: boolean;               {used to test for an _Alignof operator}
    expectingTerm: boolean;              {should the next token be a term?}
    opStack: tokenPtr;                   {operation stack}
    parenCount: integer;                 {# of open parenthesis}
@@ -1228,6 +1229,7 @@ var
       opplusplus,                       {postfix ++}
       opminusminus,                     {postfix --}
       sizeofsy,                         {sizeof}
+      _Alignofsy,                       {_Alignof (erroneous uses)}
       castoper,                         {(type)}
       typedef,                          {(type-name)}
       tildech,                          {~}
@@ -1254,6 +1256,15 @@ var
                end; {else}
             op^.left := nil;
             end {if sizeofsy}
+        
+         else if op^.token.kind = _Alignofsy then begin
+            {error case: operand of _Alignof is not a parenthesized type-name}
+            Error(36);
+            op^.token.kind := ulongConst;
+            op^.token.class := longConstant;
+            op^.token.lval := 1;
+            dispose(op^.left);
+            end {else if _Alignofsy} 
 
          else if op^.token.kind = castoper then begin
             class := op^.left^.token.class;
@@ -1486,7 +1497,7 @@ var
                if token.kind = constsy then
                   tp^.isConstant := true
                else {if token.kind = volatilesy then}
-                  if not doingSizeof then
+                  if not (doingSizeof or doingAlignof) then
                      volatile := true;
                NextToken;
                end; {while}
@@ -1659,11 +1670,14 @@ if token.kind in startExpression then begin
             doublesy,compsy,extendedsy,voidsy,enumsy,structsy,unionsy,
             typedef,constsy,volatilesy,signedsy] then begin
             doingSizeof := false;
+            doingAlignof := false;
             if opStack <> nil then
                if opStack^.token.kind = sizeofsy then
-                  doingSizeof := true;
+                  doingSizeof := true
+               else if opStack^.token.kind = _Alignofsy then
+                  doingAlignof := true;
             TypeName;
-            if doingSizeof then begin
+            if doingSizeof or doingAlignof then begin
 
                {handle a sizeof operator}
                op := opStack;
@@ -1676,10 +1690,13 @@ if token.kind in startExpression then begin
                sp^.right := nil;
                sp^.token.kind := ulongconst;
                sp^.token.class := longConstant;
-               sp^.token.lval := typeSpec^.size;
+               if doingSizeof then
+                  sp^.token.lval := typeSpec^.size
+               else {if doingAlignof then}
+                  sp^.token.lval := 1;
                with typeSpec^ do
                   if (size = 0) or ((kind = arrayType) and (elements = 0)) then
-                     Error(49);
+                     Error(133);
                sp^.next := stack;
                stack := sp;
                expectingTerm := false;
@@ -1743,7 +1760,7 @@ if token.kind in startExpression then begin
                   errorFound := true;
                   end; {if}
             if token.kind in         {make sure we get what we want}
-               [plusplusop,minusminusop,sizeofsy,tildech,excch,
+               [plusplusop,minusminusop,sizeofsy,_Alignofsy,tildech,excch,
                 uasterisk,uminus,uand] then begin
                if not expectingTerm then begin
                   Error(38);
@@ -3999,7 +4016,7 @@ startTerm := [ident,intconst,uintconst,longconst,ulongconst,doubleconst,
               stringconst];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
-              plusplusop,minusminusop,typedef];
+              plusplusop,minusminusop,typedef,_Alignofsy];
 end; {InitExpression}
 
 end.

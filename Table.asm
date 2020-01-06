@@ -359,7 +359,7 @@ icp      start                          in comming priority for expression
          dc    i1'200'                  doubleconst
          dc    i1'200'                  stringconst
          dc    i1'200'                  _Alignassy
-         dc    i1'200'                  _Alignofsy
+         dc    i1'16'                   _Alignofsy
          dc    i1'200'                  _Atomicsy
          dc    i1'200'                  _Boolsy
          dc    i1'200'                  _Complexsy
@@ -524,7 +524,7 @@ isp      start                          in stack priority for expression
          dc    i1'0'                    doubleconst
          dc    i1'0'                    stringconst
          dc    i1'0'                    _Alignassy
-         dc    i1'0'                    _Alignofsy
+         dc    i1'16'                   _Alignofsy
          dc    i1'0'                    _Atomicsy
          dc    i1'0'                    _Boolsy
          dc    i1'0'                    _Complexsy
