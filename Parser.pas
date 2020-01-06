@@ -41,6 +41,14 @@ procedure DoStatement;
 { process a statement from a function                           }
 
 
+procedure TypeName;
+
+{ process a type name (used for casts and sizeof/_Alignof)      }
+{                                                               }
+{ outputs:                                                      }
+{       typeSpec - pointer to the type                          }
+
+
 procedure AutoInit (variable: identPtr; line: integer);
 
 { generate code to initialize an auto variable                  }
@@ -67,15 +75,6 @@ procedure Match (kind: tokenEnum; err: integer);
 procedure TermParser;
 
 { shut down the parser                                          }
-
-
-procedure TypeSpecifier (doingFieldList,isConstant: boolean);
-
-{ handle a type specifier                                       }
-{                                                               }
-{ parameters:                                                   }
-{       doingFieldList - are we processing a field list?        }
-{       isConstant - did we already find a constsy?             }
 
 {---------------------------------------------------------------}
 
@@ -2532,7 +2531,7 @@ Match(semicolonch, 22);
 end; {DoStaticAssert}
 
 
-procedure TypeSpecifier {doingFieldList,isConstant: boolean};
+procedure TypeSpecifier (doingFieldList,isConstant: boolean);
 
 { handle a type specifier                                       }
 {                                                               }
@@ -3746,6 +3745,173 @@ useGlobalPool := lUseGlobalPool;
 inhibitHeader := false;
 4:
 end; {DoDeclaration}
+
+
+procedure TypeName;
+
+{ process a type name (used for casts and sizeof/_Alignof)      }
+{                                                               }
+{ outputs:                                                      }
+{         typeSpec - pointer to the type                        }
+
+var
+   tl,tp: typePtr;                      {for creating/reversing the type list}
+
+
+   procedure AbstractDeclarator;
+
+   { process an abstract declarator                             }
+   {                                                            }
+   { abstract-declarator:                                       }
+   {    empty-abstract-declarator                               }
+   {    nonempty-abstract-declarator                            }
+
+
+      procedure NonEmptyAbstractDeclarator;
+
+      { process a nonempty abstract declarator                  }
+      {                                                         }
+      { nonempty-abstract-declarator:                           }
+      {    ( nonempty-abstract-declarator )                     }
+      {    abstract-declarator ( )                              }
+      {    abstract-declaraotr [ expression OPT ]               }
+      {    * abstract-declarator                                }
+
+      var
+         pcount: integer;               {paren counter}
+         tp: typePtr;                   {work pointer}
+
+      begin {NonEmptyAbstractDeclarator}
+      if token.kind = lparench then begin
+         NextToken;
+         if token.kind = rparench then begin
+
+            {create a function type}
+            tp := pointer(Calloc(sizeof(typeRecord)));
+            {tp^.size := 0;}
+            {tp^.saveDisp := 0;}
+            {tp^.isConstant := false;}
+            tp^.kind := functionType;
+            {tp^.varargs := false;}
+            {tp^.prototyped := false;}
+            {tp^.overrideKR := false;}
+            {tp^.parameterList := nil;}
+            {tp^.isPascal := false;}
+            {tp^.toolNum := 0;}
+            {tp^.dispatcher := 0;}
+            tp^.fType := tl;
+            tl := tp;
+            NextToken;
+            end {if}
+         else begin
+
+            {handle a perenthesized type}
+            if not (token.kind in [lparench,asteriskch,lbrackch]) then
+               begin
+               Error(82);
+               while not (token.kind in
+                  [eofsy,lparench,asteriskch,lbrackch,rparench]) do
+                  NextToken;
+               end; {if}
+            if token.kind in [lparench,asteriskch,lbrackch] then
+               NonEmptyAbstractDeclarator;
+            Match(rparench,12);
+            end; {else}
+         end {if token.kind = lparench}
+      else if token.kind = asteriskch then begin
+
+         {create a pointer type}
+         NextToken;
+         tp := pointer(Malloc(sizeof(typeRecord)));
+         tp^.size := cgLongSize;
+         tp^.saveDisp := 0;
+         tp^.isConstant := false;
+         tp^.kind := pointerType;
+         while token.kind in [constsy,volatilesy] do begin
+            if token.kind = constsy then
+               tp^.isConstant := true
+            else {if token.kind = volatilesy then}
+               volatile := true;
+            NextToken;
+            end; {while}
+         AbstractDeclarator;
+         tp^.fType := tl;
+         tl := tp;
+         end {else if token.kind = asteriskch}
+      else {if token.kind = lbrackch then} begin
+
+         {create an array type}
+         NextToken;
+         if token.kind = rbrackch then
+            expressionValue := 0
+         else begin
+            Expression(arrayExpression, [rbrackch]);
+            if expressionValue <= 0 then begin
+               Error(45);
+               expressionValue := 1;
+               end; {if}
+            end; {else}
+         tp := pointer(Malloc(sizeof(typeRecord)));
+         tp^.saveDisp := 0;
+         tp^.kind := arrayType;
+         tp^.elements := expressionValue;
+         tp^.fType := tl;
+         tl := tp;
+         Match(rbrackch,24);
+         end; {else}
+
+      if token.kind = lparench then begin
+         {create a function type}
+         NextToken;
+         pcount := 1;
+         while (token.kind <> eofsy) and (pcount <> 0) do begin
+            if token.kind = rparench then
+               pcount := pcount-1
+            else if token.kind = lparench then
+               pcount := pcount+1;
+            NextToken;
+            end; {while}
+         tp := pointer(Calloc(sizeof(typeRecord)));
+         {tp^.size := 0;}
+         {tp.saveDisp := 0;}
+         {tp^.isConstant := false;}
+         tp^.kind := functionType;
+         {tp^.varargs := false;}
+         {tp^.prototyped := false;}
+         {tp^.overrideKR := false;}
+         {tp^.parameterList := nil;}
+         {tp^.isPascal := false;}
+         {tp^.toolNum := 0;}
+         {tp^.dispatcher := 0;}
+         tp^.fType := tl;
+         tl := tp;
+         end; {if}
+      end; {NonEmptyAbstractDeclarator}
+
+
+   begin {AbstractDeclarator}
+   while token.kind in [lparench,asteriskch,lbrackch] do
+      NonEmptyAbstractDeclarator;
+   end; {AbstractDeclarator}
+
+
+begin {TypeName}
+{read and process the type specifier}
+typeSpec := wordPtr;
+TypeSpecifier(false,false);
+
+{handle the abstract-declarator part}
+tl := nil;                              {no types so far}
+AbstractDeclarator;                     {create the type list}
+while tl <> nil do begin                {reverse the list & compute array sizes}
+   tp := tl^.aType;                     {NOTE: assumes aType, pType and fType overlap in typeRecord}
+   tl^.aType := typeSpec;
+   if tl^.kind = arrayType then
+      tl^.size := tl^.elements * typeSpec^.size;
+   typeSpec := tl;
+   tl := tp;
+   end; {while}
+end; {TypeName}
 
 
 procedure DoStatement;
