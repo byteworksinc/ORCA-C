@@ -2719,21 +2719,6 @@ var
    end; {FieldList}
 
 
-   procedure CheckConst;
-
-   { Check the token to see if it is a const or volatile        }
-
-   begin {CheckConst}
-   while token.kind in [constsy,volatilesy] do begin
-      if token.kind = constsy then
-         isConstant := true
-      else
-         volatile := true;
-      NextToken;
-      end; {while}
-   end; {CheckConst}
-
-
    procedure ResolveType;
 
    { Resolve a set of type specifier keywords to a type         }
@@ -2803,9 +2788,18 @@ while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
    doublesy,voidsy,compsy,extendedsy,enumsy,structsy,unionsy,typedef,
    constsy,volatilesy] do begin
    case token.kind of
-      constsy,volatilesy:
-         CheckConst;
+      {type qualifiers}
+      constsy: begin
+         isConstant := true;
+         NextToken;
+         end;
 
+      volatilesy: begin
+         volatile := true;
+         NextToken;
+         end;
+
+      {type specifiers}
       unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,voidsy,
       compsy,extendedsy: begin
          if typeDone then
@@ -2843,7 +2837,6 @@ while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
             tPtr^.kind := enumType;
             variable :=
                NewSymbol(ttoken.name, tPtr, storageClass, tagSpace, defined);
-            CheckConst;
             end {if}
          else if token.kind <> lbracech then
             Error(9);
@@ -2943,7 +2936,6 @@ while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
                end {else}
             else begin                  {record the existing structure type}
                structTypePtr := structPtr^.itype;
-               CheckConst;
                end; {else}
             end {if}
          else if token.kind <> lbracech then
