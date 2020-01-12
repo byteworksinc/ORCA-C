@@ -639,7 +639,7 @@ names    start                          mini-assembler op code names
          dc    c'peapeireprolrorsbcsepstastxsty'
          dc    c'stztrbtsb'
          dc    c'dcbdcwdcl'
-         dc    c'brk'
+         dc    c'brkwdm'
          dc    c'mvnmvp'
          dc    c'bccbcsbeqbmibnebplbrabrlperbvc'
          dc    c'bvs'

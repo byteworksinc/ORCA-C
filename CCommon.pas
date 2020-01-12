@@ -355,7 +355,7 @@ type
 
              o_dcb,o_dcw,o_dcl,
 
-             o_brk,
+             o_brk,o_wdm,
 
              o_mvn,o_mvp,
 

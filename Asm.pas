@@ -584,6 +584,13 @@ while not (token.kind in [rbracech,eofsy]) do begin
       code^.s := 0;
       end {if opc = o_brk}
 
+   {handle the wdm instruction (treated as having a one-byte operand)}
+   else if opc = o_wdm then begin
+      Exp([semicolonch], true);
+      code^.r := ord(direct);
+      code^.s := $42;
+      end {if opc = o_wdm}
+
    {handle moves}
    else if opc in [o_mvn,o_mvp] then begin
       if opc = o_mvn then
