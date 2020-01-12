@@ -178,6 +178,13 @@ var
    storageClass: tokenEnum;             {storage class of the declaration}
 {  typeSpec: typePtr;    (in CCommon)   {type specifier}
 
+                                        {syntactic classes of tokens}
+                                        {---------------------------}
+{  specifierQualifierListElement: tokenSet; (in CCommon)}
+   declarationSpecifiersElement: tokenSet;
+   declarationStart: tokenSet;
+   structDeclarationStart: tokenSet;
+
 {-- Parser Utility Procedures ----------------------------------}
 
 procedure Match {kind: tokenEnum; err: integer};
@@ -1277,10 +1284,7 @@ var
             cp^.next := cpList;
             cpList := cp;
             cp^.isConstant := false;
-            while token.kind in
-               [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
-                doublesy,compsy,extendedsy,voidsy,enumsy,structsy,unionsy,
-                volatilesy,constsy] do begin
+            while token.kind in [_Alignassy..whilesy] do begin
                if token.kind = constsy then
                   cpList^.isConstant := true
                else if token.kind = volatilesy then
@@ -2598,9 +2602,7 @@ var
    didFlexibleArray := false;
    fl := nil;                           {nothing in the field list, yet}
                                         {while there are entries in the field list...}
-1: while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
-      doublesy,compsy,extendedsy,enumsy,structsy,unionsy,typedefsy,typedef,
-      voidsy,constsy,volatilesy,_Static_assertsy] do begin
+1: while token.kind in structDeclarationStart do begin
       if token.kind = _Static_assertsy then begin
          DoStaticAssert;
          goto 1;
@@ -2774,6 +2776,10 @@ var
       typeSpec := compPtr
    else if typeSpecifiers = [extendedsy] then
       typeSpec := extendedPtr
+   else if typeSpecifiers = [_Boolsy] then begin
+      Error(135);
+      typeSpec := wordPtr;
+      end {else if}
    else
       Error(9);
    end; {ResolveType}
@@ -2784,9 +2790,7 @@ isForwardDeclared := false;             {not doing a forward reference (yet)}
 skipDeclarator := false;                {declarations are required (so far)}
 typeSpecifiers := [];
 typeDone := false;
-while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
-   doublesy,voidsy,compsy,extendedsy,enumsy,structsy,unionsy,typedef,
-   constsy,volatilesy] do begin
+while token.kind in specifierQualifierListElement do begin
    case token.kind of
       {type qualifiers}
       constsy: begin
@@ -2799,9 +2803,26 @@ while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
          NextToken;
          end;
 
+      restrictsy:
+         NextToken;
+
+      _Atomicsy: begin
+         Error(137);
+         NextToken;
+         if token.kind = lparench then begin
+            {_Atomic(typename) as type specifier}
+            if typeDone then
+               Error(9);
+            NextToken;
+            TypeName;
+            Match(rparench, 12);
+            end; {if}
+            typeDone := true;
+         end;
+
       {type specifiers}
       unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,voidsy,
-      compsy,extendedsy: begin
+      compsy,extendedsy,_Boolsy: begin
          if typeDone then
             Error(9)
          else if token.kind in typeSpecifiers then begin
@@ -2815,6 +2836,11 @@ while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
             typeSpecifiers := typeSpecifiers + [token.kind];
             ResolveType;
             end; {else}
+         NextToken;
+         end;
+
+      _Complexsy,_Imaginarysy: begin
+         Error(136);
          NextToken;
          end;
 
@@ -2982,6 +3008,27 @@ while token.kind in [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,
             end {if}
          else                           {interpret as declarator, not type specifier}
             goto 3;
+         end;
+
+      {alignment specifier}
+      _Alignassy: begin
+         NextToken;
+         Match(lparench, 13);
+         if token.kind in specifierQualifierListElement then begin
+            TypeName;
+            {TODO}
+            end {if}
+         else begin
+            Expression(arrayExpression, [rparench]);
+            if (expressionValue <> 0) and (expressionValue <> 1) then
+               Error(138);
+            end;
+         Match(rparench, 12);
+         end;
+
+      otherwise: begin
+         Error(57);
+         NextToken;
          end;
       end; {case}
    end; {while}
@@ -3301,9 +3348,8 @@ while token.kind in [pascalsy,asmsy,inlinesy] do begin
    end; {while}
 lisPascal := isPascal;
 typeSpec := wordPtr;                    {default type specifier is an integer}
-if token.kind in                        {handle a TypeSpecifier/declarator}
-   [unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,compsy,
-   extendedsy,voidsy,enumsy,structsy,unionsy,typedef,volatilesy,constsy] then
+                                        {handle a TypeSpecifier/declarator}
+if token.kind in specifierQualifierListElement then
    begin
    typeFound := true;
    DeclarationSpecifiers(foundConstsy);
@@ -4223,6 +4269,13 @@ procedure InitParser;
 
 { Initialize the parser                                         }
 
+var
+   typeSpecifierStart: tokenSet;
+   storageClassSpecifiers: tokenSet;
+   typeQualifiers: tokenSet;
+   functionSpecifiers: tokenSet;
+   alignmentSpecifiers: tokenSet;
+
 begin {InitParser}
 doingFunction := false;                 {not doing a function (yet)}
 doingParameters := false;               {not processing parameters}
@@ -4230,6 +4283,34 @@ lastLine := 0;                          {no pc_lnm generated yet}
 nameFound := false;                     {no pc_nam generated yet}
 statementList := nil;                   {no open statements}
 codegenStarted := false;                {code generator is not started}
+
+                                        {init syntactic classes of tokens}
+                                        {See C17 section 6.7 ff.}
+typeSpecifierStart := 
+   [voidsy,charsy,shortsy,intsy,longsy,floatsy,doublesy,signedsy,unsignedsy,
+    extendedsy,compsy,_Boolsy,_Complexsy,_Imaginarysy,_Atomicsy,
+    structsy,unionsy,enumsy,typedef];
+
+storageClassSpecifiers :=
+   [typedefsy,externsy,staticsy,_Thread_localsy,autosy,registersy];
+
+typeQualifiers :=
+   [constsy,volatilesy,restrictsy,_Atomicsy];
+
+functionSpecifiers := [inlinesy,_Noreturnsy,pascalsy,asmsy];
+
+alignmentSpecifiers := [_Alignassy];
+
+declarationSpecifiersElement := typeSpecifierStart + storageClassSpecifiers
+   + typeQualifiers + functionSpecifiers + alignmentSpecifiers;
+
+declarationStart :=
+   declarationSpecifiersElement + [_Static_assertsy,segmentsy];
+
+specifierQualifierListElement := 
+   typeSpecifierStart + typeQualifiers + alignmentSpecifiers;
+
+structDeclarationStart := specifierQualifierListElement + [_Static_assertsy];
 end; {InitParser}
 
 

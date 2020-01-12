@@ -502,6 +502,10 @@ var
    useGlobalPool: boolean;              {use global (or local) string pool?}
    wait: boolean;                       {wait for keypress after errors?}
 
+                                        {syntactic classes of tokens}
+                                        {---------------------------}
+   specifierQualifierListElement: tokenSet;
+
 {---------------------------------------------------------------}
 
                                         {ORCA Shell and ProDOS}

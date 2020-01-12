@@ -1496,9 +1496,7 @@ if token.kind in startExpression then begin
             goto 1;
             end; {if}
          NextToken;
-         if token.kind in [unsignedsy,intsy,longsy,charsy,shortsy,floatsy,
-            doublesy,compsy,extendedsy,voidsy,enumsy,structsy,unionsy,
-            typedef,constsy,volatilesy,signedsy] then begin
+         if token.kind in specifierQualifierListElement then begin
             doingSizeof := false;
             doingAlignof := false;
             if opStack <> nil then
