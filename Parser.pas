@@ -2568,6 +2568,9 @@ var
    typeSpecifiers: tokenSet;            {set of tokens specifying the type}
    typeDone: boolean;                   {no more type specifiers can be accepted}
 
+   myIsForwardDeclared: boolean;        {value of isForwardDeclared to generate}
+   mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
+   myTypeSpec: typePtr;                 {value of typeSpec to generate}
  
    procedure FieldList (tp: typePtr; kind: typeKind);
  
@@ -2728,57 +2731,57 @@ var
    begin {ResolveType}
    {See C17 6.7.2}
    if typeSpecifiers = [voidsy] then
-      typeSpec := voidPtr
+      myTypeSpec := voidPtr
    else if typeSpecifiers = [charsy] then
-      typeSpec := uBytePtr
+      myTypeSpec := uBytePtr
    else if typeSpecifiers = [signedsy,charsy] then
-      typeSpec := bytePtr
+      myTypeSpec := bytePtr
    else if typeSpecifiers = [unsignedsy,charsy] then
-      typeSpec := uBytePtr
+      myTypeSpec := uBytePtr
    else if (typeSpecifiers = [shortsy])
       or (typeSpecifiers = [signedsy,shortsy])
       or (typeSpecifiers = [shortsy,intsy])
       or (typeSpecifiers = [signedsy,shortsy,intsy]) then
-      typeSpec := wordPtr
+      myTypeSpec := wordPtr
    else if (typeSpecifiers = [unsignedsy,shortsy])
       or (typeSpecifiers = [unsignedsy,shortsy,intsy]) then
-      typeSpec := uWordPtr
+      myTypeSpec := uWordPtr
    else if (typeSpecifiers = [intsy])
       or (typeSpecifiers = [signedsy])
       or (typeSpecifiers = [signedsy,intsy]) then begin
       if unix_1 then
-         typeSpec := longPtr
+         myTypeSpec := longPtr
       else
-         typeSpec := wordPtr;
+         myTypeSpec := wordPtr;
       end {else if}
    else if (typeSpecifiers = [unsignedsy])
       or (typeSpecifiers = [unsignedsy,intsy]) then begin
       if unix_1 then
-         typeSpec := uLongPtr
+         myTypeSpec := uLongPtr
       else
-         typeSpec := uWordPtr;
+         myTypeSpec := uWordPtr;
       end {else if}
    else if (typeSpecifiers = [longsy])
       or (typeSpecifiers = [signedsy,longsy])
       or (typeSpecifiers = [longsy,intsy])
       or (typeSpecifiers = [signedsy,longsy,intsy]) then
-      typeSpec := longPtr
+      myTypeSpec := longPtr
    else if (typeSpecifiers = [unsignedsy,longsy])
       or (typeSpecifiers = [unsignedsy,longsy,intsy]) then
-      typeSpec := uLongPtr
+      myTypeSpec := uLongPtr
    else if typeSpecifiers = [floatsy] then
-      typeSpec := realPtr
+      myTypeSpec := realPtr
    else if typeSpecifiers = [doublesy] then
-      typeSpec := doublePtr
+      myTypeSpec := doublePtr
    else if typeSpecifiers = [longsy,doublesy] then
-      typeSpec := extendedPtr
+      myTypeSpec := extendedPtr
    else if typeSpecifiers = [compsy] then
-      typeSpec := compPtr
+      myTypeSpec := compPtr
    else if typeSpecifiers = [extendedsy] then
-      typeSpec := extendedPtr
+      myTypeSpec := extendedPtr
    else if typeSpecifiers = [_Boolsy] then begin
       Error(135);
-      typeSpec := wordPtr;
+      myTypeSpec := wordPtr;
       end {else if}
    else
       Error(9);
@@ -2786,8 +2789,9 @@ var
 
 
 begin {DeclarationSpecifiers}
-isForwardDeclared := false;             {not doing a forward reference (yet)}
-skipDeclarator := false;                {declarations are required (so far)}
+myTypeSpec := typeSpec;
+myIsForwardDeclared := false;           {not doing a forward reference (yet)}
+mySkipDeclarator := false;              {declarations are required (so far)}
 typeSpecifiers := [];
 typeDone := false;
 while token.kind in specifierQualifierListElement do begin
@@ -2811,10 +2815,11 @@ while token.kind in specifierQualifierListElement do begin
          NextToken;
          if token.kind = lparench then begin
             {_Atomic(typename) as type specifier}
-            if typeDone then
+            if typeDone or (typeSpecifiers <> []) then
                Error(9);
             NextToken;
             TypeName;
+            myTypeSpec := typeSpec;
             Match(rparench, 12);
             end; {if}
             typeDone := true;
@@ -2909,7 +2914,7 @@ while token.kind in specifierQualifierListElement do begin
                SkipStatement;
                end; {else}
             end; {if}
-1:       skipDeclarator := token.kind = semicolonch;
+1:       mySkipDeclarator := token.kind = semicolonch;
          typeDone := true;
          end;
   
@@ -2937,7 +2942,7 @@ while token.kind in specifierQualifierListElement do begin
                if structPtr <> nil then
                   structTypePtr := structPtr^.itype
                else begin
-                  isForwardDeclared := true;
+                  myIsForwardDeclared := true;
                   globalStruct := doingParameters and (token.kind <> lbracech);
                   if globalStruct then begin
                      lUseGlobalPool := useGlobalPool;
@@ -2995,14 +3000,14 @@ while token.kind in specifierQualifierListElement do begin
             end; {if}
          if globalStruct then
             useGlobalPool := lUseGlobalPool;
-         typeSpec := structTypePtr;
-         skipDeclarator := token.kind = semicolonch;
+         myTypeSpec := structTypePtr;
+         mySkipDeclarator := token.kind = semicolonch;
          typeDone := true;
          end;
  
       typedef: begin                    {named type definition}
          if (typeSpecifiers = []) and not typeDone then begin
-            typeSpec := token.symbolPtr^.itype;
+            myTypeSpec := token.symbolPtr^.itype;
             NextToken;
             typeDone := true;
             end {if}
@@ -3016,7 +3021,9 @@ while token.kind in specifierQualifierListElement do begin
          Match(lparench, 13);
          if token.kind in specifierQualifierListElement then begin
             TypeName;
-            {TODO}
+            with typeSpec^ do
+               if (size = 0) or ((kind = arrayType) and (elements = 0)) then
+                  Error(133);
             end {if}
          else begin
             Expression(arrayExpression, [rparench]);
@@ -3033,6 +3040,9 @@ while token.kind in specifierQualifierListElement do begin
       end; {case}
    end; {while}
 3:
+isForwardDeclared := myIsForwardDeclared;
+skipDeclarator := mySkipDeclarator;
+typeSpec := myTypeSpec;
 if isconstant then begin                {handle a constant type}
    new(tPtr);
    if typeSpec^.kind in [structType,unionType] then begin
