@@ -39,6 +39,7 @@ typedef struct {long quot,rem;} ldiv_t;
 
 int             abs(int);
 void            abort(void);
+void           *aligned_alloc(size_t, size_t);
 int             atexit(void (*__func)(void));
 double          atof(const char *);
 int             atoi(const char *);

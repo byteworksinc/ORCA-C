@@ -24,6 +24,8 @@ typedef long ptrdiff_t;
 typedef unsigned long size_t;
 #endif
 
+typedef long max_align_t;
+
 typedef unsigned short wchar_t;
 
 #define offsetof(type,member) ((size_t) (&(((type *)0L)->member)))
