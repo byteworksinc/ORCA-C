@@ -177,6 +177,7 @@ var
                                         {-------------------------------------}
    storageClass: tokenEnum;             {storage class of the declaration}
 {  typeSpec: typePtr;    (in CCommon)   {type specifier}
+   functionSpecifiers: tokenSet;        {function specifiers in the declaration}
 
                                         {syntactic classes of tokens}
                                         {---------------------------}
@@ -2535,12 +2536,13 @@ Match(semicolonch, 22);
 end; {DoStaticAssert}
 
 
-procedure DeclarationSpecifiers (isConstant: boolean);
+procedure DeclarationSpecifiers (isConstant: boolean; allowedTokens: tokenSet);
 
 { handle declaration specifiers or a specifier-qualifier list   }
 {                                                               }
 { parameters:                                                   }
 {       isConstant - did we already find a constsy?             }
+{       allowedTokens - specifiers/qualifiers that can be used  }
 {                                                               }
 { outputs:                                                      }
 {       isForwardDeclared - is the field list component         }
@@ -2548,6 +2550,7 @@ procedure DeclarationSpecifiers (isConstant: boolean);
 {       skipDeclarator - for enum,struct,union with no          }
 {               declarator                                      }
 {       typespec - type specifier                               }
+{       functionSpecifiers - function specifiers in this decl.  }
 
 label 1,2,3;
 
@@ -2571,6 +2574,7 @@ var
    myIsForwardDeclared: boolean;        {value of isForwardDeclared to generate}
    mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
    myTypeSpec: typePtr;                 {value of typeSpec to generate}
+   myFunctionSpecifiers: tokenSet;      {function specifiers in this declaration}
  
    procedure FieldList (tp: typePtr; kind: typeKind);
  
@@ -2611,7 +2615,7 @@ var
          goto 1;
          end; {if}
       typeSpec := wordPtr;              {default type specifier is an integer}
-      DeclarationSpecifiers(false);     {get the specifier-qualifier list}
+      DeclarationSpecifiers(false,specifierQualifierListElement);
       if not skipDeclarator then
          repeat                         {declare the variables...}
             if didFlexibleArray then
@@ -2792,10 +2796,17 @@ begin {DeclarationSpecifiers}
 myTypeSpec := typeSpec;
 myIsForwardDeclared := false;           {not doing a forward reference (yet)}
 mySkipDeclarator := false;              {declarations are required (so far)}
+myFunctionSpecifiers := [];
 typeSpecifiers := [];
 typeDone := false;
-while token.kind in specifierQualifierListElement do begin
+while token.kind in allowedTokens do begin
    case token.kind of
+      {function specifiers}
+      inlinesy,_Noreturnsy,asmsy,pascalsy: begin
+         myFunctionSpecifiers := myFunctionSpecifiers + [token.kind];
+         NextToken;
+         end;
+
       {type qualifiers}
       constsy: begin
          isConstant := true;
@@ -3043,6 +3054,7 @@ while token.kind in specifierQualifierListElement do begin
 isForwardDeclared := myIsForwardDeclared;
 skipDeclarator := mySkipDeclarator;
 typeSpec := myTypeSpec;
+functionSpecifiers := myFunctionSpecifiers;
 if isconstant then begin                {handle a constant type}
    new(tPtr);
    if typeSpec^.kind in [structType,unionType] then begin
@@ -3344,25 +3356,18 @@ if token.kind in [autosy,externsy,registersy,staticsy,typedefsy] then begin
          Error(127);
    NextToken;
    end; {if}
-isAsm := false;
-isPascal := false;
-isInline := false;
-while token.kind in [pascalsy,asmsy,inlinesy] do begin
-   if token.kind = pascalsy then
-      isPascal := true
-   else if token.kind = asmsy then
-      isAsm := true
-   else {if token.kind = inlinesy then}
-      isInline := true;
-   NextToken;
-   end; {while}
-lisPascal := isPascal;
 typeSpec := wordPtr;                    {default type specifier is an integer}
                                         {handle a TypeSpecifier/declarator}
-if token.kind in specifierQualifierListElement then
+if token.kind in 
+   specifierQualifierListElement+[inlinesy,_Noreturnsy,pascalsy,asmsy] then
    begin
    typeFound := true;
-   DeclarationSpecifiers(foundConstsy);
+   DeclarationSpecifiers(foundConstsy,
+      specifierQualifierListElement+[inlinesy,_Noreturnsy,pascalsy,asmsy]);
+   isPascal := pascalsy in functionSpecifiers;
+   isAsm := asmsy in functionSpecifiers;
+   isInline := inlinesy in functionSpecifiers;
+   lisPascal := isPascal;
    if not skipDeclarator then begin
       variable := nil;
       Declarator(typeSpec, variable, variableSpace, doingPrototypes);
@@ -3379,6 +3384,10 @@ if token.kind in specifierQualifierListElement then
       end; {if}
    end {if}
 else begin
+   isAsm := false;
+   isPascal := false;
+   isInline := false;
+   lisPascal := isPascal;
    variable := nil;
    Declarator (typeSpec, variable, variableSpace, doingPrototypes);
    if variable = nil then begin
@@ -3894,7 +3903,7 @@ var
 begin {TypeName}
 {read and process the type specifier}
 typeSpec := wordPtr;
-DeclarationSpecifiers(false);
+DeclarationSpecifiers(false,specifierQualifierListElement);
 
 {handle the abstract-declarator part}
 tl := nil;                              {no types so far}
