@@ -109,13 +109,7 @@ NextToken;                              {get the first token in the program}
 while token.kind <> eofsy do begin      {compile the program}
    if doingFunction then
       DoStatement
-   else if (token.kind in [autosy,externsy,registersy,staticsy,typedefsy,
-                           unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
-                           floatsy,doublesy,compsy,extendedsy,enumsy,
-                           structsy,unionsy,typedef,voidsy,inlinesy,volatilesy,
-                           constsy,ident,asmsy,pascalsy,asmsy,segmentsy,
-                           _Static_assertsy])
-      then
+   else if token.kind in topLevelDeclarationStart then
       DoDeclaration(false)
    else begin
       Error(26);

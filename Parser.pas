@@ -182,8 +182,9 @@ var
                                         {syntactic classes of tokens}
                                         {---------------------------}
 {  specifierQualifierListElement: tokenSet; (in CCommon)}
+{  topLevelDeclarationStart: tokenSet; (in CCommon)}
+   localDeclarationStart: tokenSet;
    declarationSpecifiersElement: tokenSet;
-   declarationStart: tokenSet;
    structDeclarationStart: tokenSet;
 
 {-- Parser Utility Procedures ----------------------------------}
@@ -610,11 +611,7 @@ var
 
    if c99Scope then PushTable;
    Match(lparench,13);                  {evaluate the start condition}
-   if allowMixedDeclarations
-      and (token.kind in [autosy,registersy,unsignedsy,signedsy,intsy,longsy,
-                      charsy,shortsy,floatsy,doublesy,compsy,extendedsy,enumsy,
-                      structsy,unionsy,typedef,voidsy,volatilesy,constsy,
-                      externsy,staticsy,typedefsy,_Static_assertsy]) then begin
+   if allowMixedDeclarations and (token.kind in localDeclarationStart) then begin
       doingForLoopClause1 := true;
       DoDeclaration(false);
       doingForLoopClause1 := false;
@@ -1379,12 +1376,8 @@ var
                token.class := reservedSymbol;
                end; {else}
             end; {if}
-         if token.kind in               {see if we are doing a prototyped list}
-            [autosy,externsy,registersy,staticsy,typedefsy,unsignedsy,intsy,
-             longsy,charsy,shortsy,floatsy,doublesy,compsy,extendedsy,voidsy,
-             enumsy,structsy,unionsy,typedef,signedsy,constsy,volatilesy]
-            then begin
-
+                                        {see if we are doing a prototyped list}
+         if token.kind in declarationSpecifiersElement then begin
             {handle a prototype variable list}
             numberOfParameters := 0;    {don't allow K&R parm declarations}
             luseGlobalPool := useGlobalPool; {use global memory}
@@ -1396,12 +1389,7 @@ var
             with tPtr2^ do begin
                prototyped := true;      {it is prototyped}
                repeat                   {collect the declarations}
-                  if (token.kind in [autosy,externsy,registersy,staticsy,
-                                     typedefsy,unsignedsy,signedsy,intsy,longsy,
-                                     charsy,shortsy,floatsy,doublesy,compsy,
-                                     extendedsy,enumsy,structsy,unionsy,
-                                     typedef,voidsy,volatilesy,constsy])
-                                     then begin
+                  if token.kind in declarationSpecifiersElement then begin
                      lLastParameter := lastParameter;
                      DoDeclaration(true);
                      lastParameter := lLastParameter;
@@ -3519,11 +3507,7 @@ if isFunction then begin
                                         {declare the parameters}
       lp := lastParameter;              {(save now; it's volatile)}
       while not (token.kind in [lbracech,eofsy]) do
-         if (token.kind in [autosy,externsy,registersy,staticsy,typedefsy,
-                            unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
-                            floatsy,doublesy,compsy,extendedsy,enumsy,
-                            structsy,unionsy,typedef,voidsy,volatilesy,
-                            constsy,ident]) then
+         if token.kind in declarationSpecifiersElement then
             DoDeclaration(false)
          else begin
             Error(27);
@@ -3927,11 +3911,7 @@ case statementList^.kind of
          EndCompoundStatement;
          end {if}
       else if (statementList^.doingDeclaration or allowMixedDeclarations)
-         and (token.kind in [autosy,externsy,registersy,staticsy,typedefsy,
-                             unsignedsy,signedsy,intsy,longsy,charsy,shortsy,
-                             floatsy,doublesy,compsy,extendedsy,enumsy,
-                             structsy,unionsy,typedef,voidsy,volatilesy,
-                             constsy,_Static_assertsy])
+         and (token.kind in localDeclarationStart)
          then begin
          hasStatementNext := false;
          if token.kind <> typedef then
@@ -4312,13 +4292,16 @@ alignmentSpecifiers := [_Alignassy];
 declarationSpecifiersElement := typeSpecifierStart + storageClassSpecifiers
    + typeQualifiers + functionSpecifiers + alignmentSpecifiers;
 
-declarationStart :=
-   declarationSpecifiersElement + [_Static_assertsy,segmentsy];
-
 specifierQualifierListElement := 
    typeSpecifierStart + typeQualifiers + alignmentSpecifiers;
 
 structDeclarationStart := specifierQualifierListElement + [_Static_assertsy];
+
+topLevelDeclarationStart :=
+   declarationSpecifiersElement + [ident,segmentsy,_Static_assertsy];
+
+localDeclarationStart :=
+   declarationSpecifiersElement + [_Static_assertsy] - [asmsy];
 end; {InitParser}
 
 

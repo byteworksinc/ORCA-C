@@ -505,6 +505,7 @@ var
                                         {syntactic classes of tokens}
                                         {---------------------------}
    specifierQualifierListElement: tokenSet;
+   topLevelDeclarationStart: tokenSet;
 
 {---------------------------------------------------------------}
 
