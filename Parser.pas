@@ -164,6 +164,7 @@ var
    skipDeclarator: boolean;             {for enum,struct,union with no declarator}
    statementList: statementPtr;         {list of open statements}
    savedVolatile: boolean;              {saved copy of volatile}
+   doingForLoopClause1: boolean;        {doing the first clause of a for loop?}
 
                                         {parameter processing variables}
                                         {------------------------------}
@@ -615,7 +616,9 @@ var
                       charsy,shortsy,floatsy,doublesy,compsy,extendedsy,enumsy,
                       structsy,unionsy,typedef,voidsy,volatilesy,constsy,
                       externsy,staticsy,typedefsy,_Static_assertsy]) then begin
-      DoDeclaration(false, true)
+      doingForLoopClause1 := true;
+      DoDeclaration(false, true);
+      doingForLoopClause1 := false;
       end {if}
    else if token.kind <> semicolonch then begin
       Expression(normalExpression, [semicolonch]);
@@ -2801,6 +2804,41 @@ typeSpecifiers := [];
 typeDone := false;
 while token.kind in allowedTokens do begin
    case token.kind of
+      {storage class specifiers}
+      autosy,externsy,registersy,staticsy,typedefsy: begin
+         if storageClass <> ident then begin
+            if typeDone or (typeSpecifiers <> []) then
+               Error(9)
+            else
+               Error(26);
+            end; {if}
+         storageClass := token.kind;
+         if not doingFunction then
+            if token.kind = autosy then
+               Error(62);
+         if doingParameters then begin
+            if token.kind <> registersy then
+               Error(87);
+            end {if}
+         else if storageClass in [staticsy,typedefsy] then begin
+            {Error if we may have allocated type info in local pool.}
+            {This should not come up with current use of MM pools.  }
+            if not useGlobalPool then
+               if typeDone then
+                  Error(57);
+            useGlobalPool := true;
+            end; {else if}
+         if doingForLoopClause1 then
+            if not (storageClass in [autosy,registersy]) then
+               Error(127);
+         NextToken;
+         end;
+
+      _Thread_localsy: begin
+         Error(139);
+         NextToken;
+         end;
+
       {function specifiers}
       inlinesy,_Noreturnsy,asmsy,pascalsy: begin
          myFunctionSpecifiers := myFunctionSpecifiers + [token.kind];
@@ -3337,33 +3375,13 @@ if token.kind in [constsy,volatilesy]   {handle leading constsy, volatile}
       NextToken;
       end; {while}
    end; {if}
-storageClass := ident;                  {handle a StorageClassSpecifier}
 lUseGlobalPool := useGlobalPool;
-if token.kind in [autosy,externsy,registersy,staticsy,typedefsy] then begin
-   typeFound := true;
-   storageClass := token.kind;
-   if not doingFunction then
-      if token.kind = autosy then
-         Error(62);
-   if doingParameters then begin
-      if token.kind <> registersy then
-         Error(87);
-      end {if}
-   else if storageClass in [staticsy,typedefsy] then
-      useGlobalPool := true;
-   if autoOrRegisterOnly then
-      if not (storageClass in [autosy,registersy]) then
-         Error(127);
-   NextToken;
-   end; {if}
+storageClass := ident;
 typeSpec := wordPtr;                    {default type specifier is an integer}
                                         {handle a TypeSpecifier/declarator}
-if token.kind in 
-   specifierQualifierListElement+[inlinesy,_Noreturnsy,pascalsy,asmsy] then
-   begin
+if token.kind in declarationSpecifiersElement then begin
    typeFound := true;
-   DeclarationSpecifiers(foundConstsy,
-      specifierQualifierListElement+[inlinesy,_Noreturnsy,pascalsy,asmsy]);
+   DeclarationSpecifiers(foundConstsy, declarationSpecifiersElement);
    isPascal := pascalsy in functionSpecifiers;
    isAsm := asmsy in functionSpecifiers;
    isInline := inlinesy in functionSpecifiers;
@@ -4302,6 +4320,7 @@ lastLine := 0;                          {no pc_lnm generated yet}
 nameFound := false;                     {no pc_nam generated yet}
 statementList := nil;                   {no open statements}
 codegenStarted := false;                {code generator is not started}
+doingForLoopClause1 := false;           {not doing a for loop}
 
                                         {init syntactic classes of tokens}
                                         {See C17 section 6.7 ff.}

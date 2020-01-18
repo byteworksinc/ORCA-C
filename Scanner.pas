@@ -653,6 +653,7 @@ if list or (numErr <> 0) then begin
         136: msg := @'complex or imaginary types are not supported by ORCA/C';
         137: msg := @'atomic types are not supported by ORCA/C';
         138: msg := @'unsupported alignment';
+        139: msg := @'thread-local storage is not supported by ORCA/C';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
