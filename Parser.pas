@@ -3368,35 +3368,16 @@ lUseGlobalPool := useGlobalPool;
 storageClass := ident;
 typeSpec := wordPtr;                    {default type specifier is an integer}
                                         {handle a TypeSpecifier/declarator}
-if token.kind in declarationSpecifiersElement then begin
+if token.kind in declarationSpecifiersElement then
    typeFound := true;
-   DeclarationSpecifiers(declarationSpecifiersElement);
-   isPascal := pascalsy in functionSpecifiers;
-   isAsm := asmsy in functionSpecifiers;
-   isInline := inlinesy in functionSpecifiers;
-   lisPascal := isPascal;
-   if not skipDeclarator then begin
-      variable := nil;
-      Declarator(typeSpec, variable, variableSpace, doingPrototypes);
-      if variable = nil then begin
-         inhibitHeader := false;
-         if token.kind = semicolonch then
-            NextToken
-         else begin
-            Error(22);
-            SkipStatement;
-            end; {else}
-         goto 1;
-         end; {if}
-      end; {if}
-   end {if}
-else begin
-   isAsm := false;
-   isPascal := false;
-   isInline := false;
-   lisPascal := isPascal;
+DeclarationSpecifiers(declarationSpecifiersElement);
+isPascal := pascalsy in functionSpecifiers;
+isAsm := asmsy in functionSpecifiers;
+isInline := inlinesy in functionSpecifiers;
+lisPascal := isPascal;
+if not skipDeclarator then begin
    variable := nil;
-   Declarator (typeSpec, variable, variableSpace, doingPrototypes);
+   Declarator(typeSpec, variable, variableSpace, doingPrototypes);
    if variable = nil then begin
       inhibitHeader := false;
       if token.kind = semicolonch then
@@ -3407,7 +3388,7 @@ else begin
          end; {else}
       goto 1;
       end; {if}
-   end;
+   end; {if}
 isPascal := lisPascal;
 
 {make sure variables have some type info}
