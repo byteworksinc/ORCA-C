@@ -27,13 +27,12 @@ uses CCommon, Table, MM, CGI, Scanner, Header, Symbol, Expression, Asm;
 
 {---------------------------------------------------------------}
 
-procedure DoDeclaration (doingPrototypes, autoOrRegisterOnly: boolean);
+procedure DoDeclaration (doingPrototypes: boolean);
 
 { process a variable or function declaration                    }
 {                                                               }
 { parameters:                                                   }
 {       doingPrototypes - are we processing a parameter list?   }
-{       autoOrRegisterOnly - limit storage classes allowed?     }
 
 
 procedure DoStatement;
@@ -617,7 +616,7 @@ var
                       structsy,unionsy,typedef,voidsy,volatilesy,constsy,
                       externsy,staticsy,typedefsy,_Static_assertsy]) then begin
       doingForLoopClause1 := true;
-      DoDeclaration(false, true);
+      DoDeclaration(false);
       doingForLoopClause1 := false;
       end {if}
    else if token.kind <> semicolonch then begin
@@ -1404,7 +1403,7 @@ var
                                      typedef,voidsy,volatilesy,constsy])
                                      then begin
                      lLastParameter := lastParameter;
-                     DoDeclaration(true, false);
+                     DoDeclaration(true);
                      lastParameter := lLastParameter;
                      if protoType <> nil then begin
                         wp := pointer(Malloc(sizeof(parameterRecord)));
@@ -2539,12 +2538,11 @@ Match(semicolonch, 22);
 end; {DoStaticAssert}
 
 
-procedure DeclarationSpecifiers (isConstant: boolean; allowedTokens: tokenSet);
+procedure DeclarationSpecifiers (allowedTokens: tokenSet);
 
 { handle declaration specifiers or a specifier-qualifier list   }
 {                                                               }
 { parameters:                                                   }
-{       isConstant - did we already find a constsy?             }
 {       allowedTokens - specifiers/qualifiers that can be used  }
 {                                                               }
 { outputs:                                                      }
@@ -2573,6 +2571,8 @@ var
    
    typeSpecifiers: tokenSet;            {set of tokens specifying the type}
    typeDone: boolean;                   {no more type specifiers can be accepted}
+   
+   isConstant: boolean;                 {did we find a constsy?}
 
    myIsForwardDeclared: boolean;        {value of isForwardDeclared to generate}
    mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
@@ -2618,7 +2618,7 @@ var
          goto 1;
          end; {if}
       typeSpec := wordPtr;              {default type specifier is an integer}
-      DeclarationSpecifiers(false,specifierQualifierListElement);
+      DeclarationSpecifiers(specifierQualifierListElement);
       if not skipDeclarator then
          repeat                         {declare the variables...}
             if didFlexibleArray then
@@ -2802,6 +2802,7 @@ mySkipDeclarator := false;              {declarations are required (so far)}
 myFunctionSpecifiers := [];
 typeSpecifiers := [];
 typeDone := false;
+isConstant := false;
 while token.kind in allowedTokens do begin
    case token.kind of
       {storage class specifiers}
@@ -3113,7 +3114,7 @@ end; {DeclarationSpecifiers}
 
 {-- Externally available subroutines ---------------------------}
 
-procedure DoDeclaration {doingPrototypes, autoOrRegisterOnly: boolean};
+procedure DoDeclaration {doingPrototypes: boolean};
 
 { process a variable or function declaration                    }
 {                                                               }
@@ -3124,7 +3125,6 @@ label 1,2,3,4;
 
 var
    done: boolean;                       {for loop termination}
-   foundConstsy: boolean;               {did we find a constsy?}
    fName: stringPtr;                    {for forming uppercase names}
    i: integer;                          {loop variable}
    isAsm: boolean;                      {has the asm modifier been used?}
@@ -3354,7 +3354,6 @@ if token.kind = _Static_assertsy then begin
 lDoingParameters := doingParameters;    {record the status}
 noFDefinitions := false;                {are function definitions inhibited?}
 typeFound := false;                     {no explicit type found, yet}
-foundConstsy := false;                  {did not find a constsy}
 if doingPrototypes then                 {prototypes implies a parm list}
    doingParameters := true
 else
@@ -3365,23 +3364,13 @@ if not doingFunction then               {handle any segment statements}
    while token.kind = segmentsy do
       SegmentStatement;
 inhibitHeader := true;			{block imbedded includes in headers}
-if token.kind in [constsy,volatilesy]   {handle leading constsy, volatile}
-   then begin
-   while token.kind in [constsy,volatilesy] do begin
-      if token.kind = constsy then
-         foundConstsy := true
-      else
-         volatile := true;
-      NextToken;
-      end; {while}
-   end; {if}
 lUseGlobalPool := useGlobalPool;
 storageClass := ident;
 typeSpec := wordPtr;                    {default type specifier is an integer}
                                         {handle a TypeSpecifier/declarator}
 if token.kind in declarationSpecifiersElement then begin
    typeFound := true;
-   DeclarationSpecifiers(foundConstsy, declarationSpecifiersElement);
+   DeclarationSpecifiers(declarationSpecifiersElement);
    isPascal := pascalsy in functionSpecifiers;
    isAsm := asmsy in functionSpecifiers;
    isInline := inlinesy in functionSpecifiers;
@@ -3554,7 +3543,7 @@ if isFunction then begin
                             floatsy,doublesy,compsy,extendedsy,enumsy,
                             structsy,unionsy,typedef,voidsy,volatilesy,
                             constsy,ident]) then
-            DoDeclaration(false, false)
+            DoDeclaration(false)
          else begin
             Error(27);
             NextToken;
@@ -3921,7 +3910,7 @@ var
 begin {TypeName}
 {read and process the type specifier}
 typeSpec := wordPtr;
-DeclarationSpecifiers(false,specifierQualifierListElement);
+DeclarationSpecifiers(specifierQualifierListElement);
 
 {handle the abstract-declarator part}
 tl := nil;                              {no types so far}
@@ -3965,7 +3954,7 @@ case statementList^.kind of
          then begin
          hasStatementNext := false;
          if token.kind <> typedef then
-            DoDeclaration(false, false)
+            DoDeclaration(false)
          else begin
             lToken := token;
             lPrintMacroExpansions := printMacroExpansions; {inhibit token echo}
@@ -3976,7 +3965,7 @@ case statementList^.kind of
             PutBackToken(nToken, false);
             token := lToken;
             if nToken.kind <> colonch then
-               DoDeclaration(false, false)
+               DoDeclaration(false)
             else
                hasStatementNext := true;
             end {else}
