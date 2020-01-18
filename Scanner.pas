@@ -111,6 +111,13 @@ procedure Error (err: integer);
 { err - error number                                            }
 
 
+procedure UnexpectedTokenError (expectedToken: tokenEnum);
+
+{ flag an error for an unexpected token                         }
+{                                                               }
+{ expectedToken - what was expected                             }
+
+
 procedure InitScanner (start, endPtr: ptr);
 
 { initialize the scanner                                        }
@@ -654,6 +661,7 @@ if list or (numErr <> 0) then begin
         137: msg := @'atomic types are not supported by ORCA/C';
         138: msg := @'unsupported alignment';
         139: msg := @'thread-local storage is not supported by ORCA/C';
+        140: msg := @'unexpected token';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -2973,6 +2981,33 @@ end; {Error}
 {writeln('Error ', err:1, ' flagged at location ', loc:1);
 Error(err);
 end; {Error2}
+
+
+procedure UnexpectedTokenError {expectedToken: tokenEnum};
+
+{ flag an error for an unexpected token                         }
+{                                                               }
+{ expectedToken - what was expected                             }
+
+begin {UnexpectedTokenError}
+case expectedToken of
+   ident:       Error(9);
+   rparench:    Error(12);
+   lparench:    Error(13);
+   gtch:        Error(15);
+   intconst:    Error(18);
+   semicolonch: Error(22);
+   rbracech:    Error(23);
+   rbrackch:    Error(24);
+   lbracech:    Error(27);
+   colonch:     Error(29);
+   whilesy:     Error(30);
+   stringconst: Error(83);
+   commach:     Error(86);
+   dotch:       Error(89);
+   otherwise:   Error(140);
+   end; {case}
+end; {UnexpectedTokenError}
 
 
 procedure DoNumber {scanWork: boolean};

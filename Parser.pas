@@ -2526,12 +2526,15 @@ Match(semicolonch, 22);
 end; {DoStaticAssert}
 
 
-procedure DeclarationSpecifiers (allowedTokens: tokenSet);
+procedure DeclarationSpecifiers (allowedTokens: tokenSet;
+   expectedNext: tokenEnum);
 
 { handle declaration specifiers or a specifier-qualifier list   }
 {                                                               }
 { parameters:                                                   }
 {       allowedTokens - specifiers/qualifiers that can be used  }
+{       expectedNext - token usually expected after declaration }
+{               specifiers (used for error messages only)       }
 {                                                               }
 { outputs:                                                      }
 {       isForwardDeclared - is the field list component         }
@@ -2606,7 +2609,7 @@ var
          goto 1;
          end; {if}
       typeSpec := wordPtr;              {default type specifier is an integer}
-      DeclarationSpecifiers(specifierQualifierListElement);
+      DeclarationSpecifiers(specifierQualifierListElement, ident);
       if not skipDeclarator then
          repeat                         {declare the variables...}
             if didFlexibleArray then
@@ -2779,7 +2782,7 @@ var
       myTypeSpec := wordPtr;
       end {else if}
    else
-      Error(9);
+      UnexpectedTokenError(expectedNext);
    end; {ResolveType}
 
 
@@ -2797,7 +2800,7 @@ while token.kind in allowedTokens do begin
       autosy,externsy,registersy,staticsy,typedefsy: begin
          if storageClass <> ident then begin
             if typeDone or (typeSpecifiers <> []) then
-               Error(9)
+               UnexpectedTokenError(expectedNext)
             else
                Error(26);
             end; {if}
@@ -2854,7 +2857,7 @@ while token.kind in allowedTokens do begin
          if token.kind = lparench then begin
             {_Atomic(typename) as type specifier}
             if typeDone or (typeSpecifiers <> []) then
-               Error(9);
+               UnexpectedTokenError(expectedNext);
             NextToken;
             TypeName;
             myTypeSpec := typeSpec;
@@ -2867,13 +2870,13 @@ while token.kind in allowedTokens do begin
       unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,voidsy,
       compsy,extendedsy,_Boolsy: begin
          if typeDone then
-            Error(9)
+            UnexpectedTokenError(expectedNext)
          else if token.kind in typeSpecifiers then begin
             if (token.kind = longsy)
                and (typeSpecifiers <= [signedsy,unsignedsy,longsy,intsy]) then
                Error(134)
             else
-               Error(9);
+               UnexpectedTokenError(expectedNext);
             end {if}
          else begin
             typeSpecifiers := typeSpecifiers + [token.kind];
@@ -2889,7 +2892,7 @@ while token.kind in allowedTokens do begin
 
       enumsy: begin                     {enum}
          if typeDone or (typeSpecifiers <> []) then
-            Error(9);
+            UnexpectedTokenError(expectedNext);
          NextToken;                     {skip the 'enum' token}
          if token.kind = ident then begin {handle a type definition}
             variable := FindSymbol(token, tagSpace, true, true);
@@ -2959,7 +2962,7 @@ while token.kind in allowedTokens do begin
       structsy,                         {struct}
       unionsy: begin                    {union}
          if typeDone or (typeSpecifiers <> []) then
-            Error(9);
+            UnexpectedTokenError(expectedNext);
          globalStruct := false;         {we didn't make it global}
          if token.kind = structsy then  {set the type kind to use}
             tKind := structType
@@ -3358,7 +3361,7 @@ typeSpec := wordPtr;                    {default type specifier is an integer}
                                         {handle a TypeSpecifier/declarator}
 if token.kind in declarationSpecifiersElement then
    typeFound := true;
-DeclarationSpecifiers(declarationSpecifiersElement);
+DeclarationSpecifiers(declarationSpecifiersElement, ident);
 isPascal := pascalsy in functionSpecifiers;
 isAsm := asmsy in functionSpecifiers;
 isInline := inlinesy in functionSpecifiers;
@@ -3875,7 +3878,7 @@ var
 begin {TypeName}
 {read and process the type specifier}
 typeSpec := wordPtr;
-DeclarationSpecifiers(specifierQualifierListElement);
+DeclarationSpecifiers(specifierQualifierListElement, rparench);
 
 {handle the abstract-declarator part}
 tl := nil;                              {no types so far}
