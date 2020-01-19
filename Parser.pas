@@ -1289,6 +1289,8 @@ var
                   cpList^.isConstant := true
                else if token.kind = volatilesy then
                   volatile := true
+               else if token.kind = restrictsy then
+                  {always allowed for now (not recorded as part of the type)}
                else
                   Error(9);
                NextToken;
