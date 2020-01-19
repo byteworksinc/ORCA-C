@@ -2864,6 +2864,10 @@ while token.kind in allowedTokens do begin
 
       restrictsy: begin
          myDeclarationModifiers := myDeclarationModifiers + [token.kind];
+         if typeDone or (typeSpecifiers <> []) then
+            if (myTypeSpec^.kind <> pointerType)
+               or (myTypeSpec^.pType^.kind = functionType) then
+               Error(143);
          NextToken;
          end;
 
@@ -2896,6 +2900,10 @@ while token.kind in allowedTokens do begin
                UnexpectedTokenError(expectedNext);
             end {if}
          else begin
+            if restrictsy in myDeclarationModifiers then begin
+               myDeclarationModifiers := myDeclarationModifiers - [restrictsy];
+               Error(143);
+               end; {if}
             typeSpecifiers := typeSpecifiers + [token.kind];
             ResolveType;
             end; {else}
@@ -2909,7 +2917,9 @@ while token.kind in allowedTokens do begin
 
       enumsy: begin                     {enum}
          if typeDone or (typeSpecifiers <> []) then
-            UnexpectedTokenError(expectedNext);
+            UnexpectedTokenError(expectedNext)
+         else if restrictsy in myDeclarationModifiers then
+            Error(143);
          NextToken;                     {skip the 'enum' token}
          if token.kind = ident then begin {handle a type definition}
             variable := FindSymbol(token, tagSpace, true, true);
@@ -2979,7 +2989,9 @@ while token.kind in allowedTokens do begin
       structsy,                         {struct}
       unionsy: begin                    {union}
          if typeDone or (typeSpecifiers <> []) then
-            UnexpectedTokenError(expectedNext);
+            UnexpectedTokenError(expectedNext)
+         else if restrictsy in myDeclarationModifiers then
+            Error(143);
          globalStruct := false;         {we didn't make it global}
          if token.kind = structsy then  {set the type kind to use}
             tKind := structType
@@ -3066,6 +3078,10 @@ while token.kind in allowedTokens do begin
       typedef: begin                    {named type definition}
          if (typeSpecifiers = []) and not typeDone then begin
             myTypeSpec := token.symbolPtr^.itype;
+            if restrictsy in myDeclarationModifiers then
+               if (myTypeSpec^.kind <> pointerType)
+                  or (myTypeSpec^.pType^.kind = functionType) then
+                  Error(143);
             NextToken;
             typeDone := true;
             end {if}
