@@ -3122,6 +3122,7 @@ var
    i: integer;                          {loop variable}
    isAsm: boolean;                      {has the asm modifier been used?}
    isInline: boolean;                   {has the inline specifier been used?}
+   isNoreturn: boolean;                 {has the _Noreturn specifier been used?}
    lDoingParameters: boolean;           {local copy of doingParameters}
    lisPascal: boolean;                  {local copy of isPascal}
    lp,tlp,tlp2: identPtr;               {for tracing parameter list}
@@ -3367,6 +3368,7 @@ DeclarationSpecifiers(declarationSpecifiersElement, ident);
 isPascal := pascalsy in functionSpecifiers;
 isAsm := asmsy in functionSpecifiers;
 isInline := inlinesy in functionSpecifiers;
+isNoreturn := _Noreturnsy in functionSpecifiers;
 lisPascal := isPascal;
 if not skipDeclarator then begin
    variable := nil;
@@ -3657,6 +3659,8 @@ else {if not isFunction then} begin
             end; {if}
          if isInline then
             Error(119);
+         if isNoreturn then
+            Error(141);
          if token.kind = eqch then begin
             if storageClass = typedefsy then
                Error(52);
