@@ -177,7 +177,9 @@ var
                                         {-------------------------------------}
    storageClass: tokenEnum;             {storage class of the declaration}
 {  typeSpec: typePtr;    (in CCommon)   {type specifier}
-   functionSpecifiers: tokenSet;        {function specifiers in the declaration}
+   declarationModifiers: tokenSet;      {all storage class specifiers, type }
+                                        {qualifiers, function specifiers, & }
+                                        {alignment specifiers in declaration}
 
                                         {syntactic classes of tokens}
                                         {---------------------------}
@@ -2544,7 +2546,9 @@ procedure DeclarationSpecifiers (allowedTokens: tokenSet;
 {       skipDeclarator - for enum,struct,union with no          }
 {               declarator                                      }
 {       typespec - type specifier                               }
-{       functionSpecifiers - function specifiers in this decl.  }
+{       declarationModifiers - all storage class specifiers,    }
+{               type qualifiers, function specifiers, and       }
+{               alignment specifiers in this declaration        }
 
 label 1,2,3;
 
@@ -2570,7 +2574,7 @@ var
    myIsForwardDeclared: boolean;        {value of isForwardDeclared to generate}
    mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
    myTypeSpec: typePtr;                 {value of typeSpec to generate}
-   myFunctionSpecifiers: tokenSet;      {function specifiers in this declaration}
+   myDeclarationModifiers: tokenSet;    {all modifiers in this declaration}
  
    procedure FieldList (tp: typePtr; kind: typeKind);
  
@@ -2592,6 +2596,7 @@ var
       maxDisp: longint;                 {for determining union sizes}
       variable: identPtr;               {variable being defined}
       didFlexibleArray: boolean;        {have we seen a flexible array member?}
+      alignmentSpecified: boolean;      {was alignment explicitly specified?}
  
    begin {FieldList}
    ldoingParameters := doingParameters; {allow fields in K&R dec. area}
@@ -2612,6 +2617,7 @@ var
          end; {if}
       typeSpec := wordPtr;              {default type specifier is an integer}
       DeclarationSpecifiers(specifierQualifierListElement, ident);
+      alignmentSpecified := _Alignassy in declarationModifiers;
       if not skipDeclarator then
          repeat                         {declare the variables...}
             if didFlexibleArray then
@@ -2664,6 +2670,8 @@ var
                      [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
                   or (expressionValue > tPtr^.size*8) then
                   Error(115);
+               if alignmentSpecified then
+                  Error(142);
                end {if}
             else if variable <> nil then begin
                if bitdisp <> 0 then begin
@@ -2792,7 +2800,7 @@ begin {DeclarationSpecifiers}
 myTypeSpec := typeSpec;
 myIsForwardDeclared := false;           {not doing a forward reference (yet)}
 mySkipDeclarator := false;              {declarations are required (so far)}
-myFunctionSpecifiers := [];
+myDeclarationModifiers := [];
 typeSpecifiers := [];
 typeDone := false;
 isConstant := false;
@@ -2800,6 +2808,7 @@ while token.kind in allowedTokens do begin
    case token.kind of
       {storage class specifiers}
       autosy,externsy,registersy,staticsy,typedefsy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          if storageClass <> ident then begin
             if typeDone or (typeSpecifiers <> []) then
                UnexpectedTokenError(expectedNext)
@@ -2829,31 +2838,37 @@ while token.kind in allowedTokens do begin
          end;
 
       _Thread_localsy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          Error(139);
          NextToken;
          end;
 
       {function specifiers}
       inlinesy,_Noreturnsy,asmsy,pascalsy: begin
-         myFunctionSpecifiers := myFunctionSpecifiers + [token.kind];
+         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          NextToken;
          end;
 
       {type qualifiers}
       constsy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          isConstant := true;
          NextToken;
          end;
 
       volatilesy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          volatile := true;
          NextToken;
          end;
 
-      restrictsy:
+      restrictsy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          NextToken;
+         end;
 
       _Atomicsy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          Error(137);
          NextToken;
          if token.kind = lparench then begin
@@ -3060,6 +3075,7 @@ while token.kind in allowedTokens do begin
 
       {alignment specifier}
       _Alignassy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          NextToken;
          Match(lparench, 13);
          if token.kind in specifierQualifierListElement then begin
@@ -3086,7 +3102,7 @@ while token.kind in allowedTokens do begin
 isForwardDeclared := myIsForwardDeclared;
 skipDeclarator := mySkipDeclarator;
 typeSpec := myTypeSpec;
-functionSpecifiers := myFunctionSpecifiers;
+declarationModifiers := myDeclarationModifiers;
 if isconstant then begin                {handle a constant type}
    new(tPtr);
    if typeSpec^.kind in [structType,unionType] then begin
@@ -3123,6 +3139,7 @@ var
    isAsm: boolean;                      {has the asm modifier been used?}
    isInline: boolean;                   {has the inline specifier been used?}
    isNoreturn: boolean;                 {has the _Noreturn specifier been used?}
+   alignmentSpecified: boolean;         {was an alignment explicitly specified?}
    lDoingParameters: boolean;           {local copy of doingParameters}
    lisPascal: boolean;                  {local copy of isPascal}
    lp,tlp,tlp2: identPtr;               {for tracing parameter list}
@@ -3365,10 +3382,11 @@ typeSpec := wordPtr;                    {default type specifier is an integer}
 if token.kind in declarationSpecifiersElement then
    typeFound := true;
 DeclarationSpecifiers(declarationSpecifiersElement, ident);
-isPascal := pascalsy in functionSpecifiers;
-isAsm := asmsy in functionSpecifiers;
-isInline := inlinesy in functionSpecifiers;
-isNoreturn := _Noreturnsy in functionSpecifiers;
+isPascal := pascalsy in declarationModifiers;
+isAsm := asmsy in declarationModifiers;
+isInline := inlinesy in declarationModifiers;
+isNoreturn := _Noreturnsy in declarationModifiers;
+alignmentSpecified := _Alignassy in declarationModifiers;
 lisPascal := isPascal;
 if not skipDeclarator then begin
    variable := nil;
@@ -3417,6 +3435,8 @@ if isFunction then begin
    if isInline then
       if storageClass <> staticsy then
          Error(120);
+   if alignmentSpecified then
+      Error(142);
    if isPascal then begin		{reverse prototyped parameters}
       p1 := fnType^.parameterList;
       if p1 <> nil then begin
@@ -3640,6 +3660,9 @@ if isFunction then begin
 {handle a variable declaration}
 else {if not isFunction then} begin
    noFDefinitions := true;
+   if alignmentSpecified then
+      if storageClass in [typedefsy,registersy] then
+         Error(142);
    if not SkipDeclarator then
       repeat
          if isPascal then begin
@@ -3885,6 +3908,11 @@ begin {TypeName}
 {read and process the type specifier}
 typeSpec := wordPtr;
 DeclarationSpecifiers(specifierQualifierListElement, rparench);
+
+{_Alignas is not allowed in most uses of type names.            }
+{It would be allowed in compound literals, if we supported them.}
+if _Alignassy in declarationModifiers then
+   Error(142);
 
 {handle the abstract-declarator part}
 tl := nil;                              {no types so far}

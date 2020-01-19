@@ -663,6 +663,7 @@ if list or (numErr <> 0) then begin
         139: msg := @'thread-local storage is not supported by ORCA/C';
         140: msg := @'unexpected token';
         141: msg := @'_Noreturn specifier is only allowed on functions';
+        142: msg := @'_Alignas may not be used in this declaration or type name';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
