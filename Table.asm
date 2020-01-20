@@ -19,7 +19,7 @@ charKinds start                         character set
          enum  (illegal,ch_special,ch_dash,ch_plus,ch_lt,ch_gt,ch_eq,ch_exc),0
          enum  (ch_and,ch_bar,ch_dot,ch_white,ch_eol,ch_eof,ch_char,ch_string)
          enum  (ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,ch_colon)
-         enum  (letter,digit)
+         enum  (ch_backslash,letter,digit)
 
 ! STANDARD
          dc    i'ch_eof'                nul
@@ -114,7 +114,7 @@ charKinds start                         character set
          dc    i'letter'                Y
          dc    i'letter'                Z
          dc    i'ch_special'            [
-         dc    i'illegal'               \
+         dc    i'ch_backslash'          \
          dc    i'ch_special'            ]
          dc    i'ch_carot'              ^
          dc    i'letter'                _

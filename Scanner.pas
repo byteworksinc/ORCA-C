@@ -264,6 +264,7 @@ var
    tokenExpandEnabled: boolean;         {can token be macro expanded? (only for ident)}
    versionStrL: longStringPtr;          {macro version string}
    workString: pstring;                 {for building strings and identifiers}
+   ucnString: string[10];               {string of a UCN}
 
 {-- External procedures; see expresssion evaluator for notes ---}
 
@@ -670,6 +671,7 @@ if list or (numErr <> 0) then begin
         146: msg := @'Unicode character cannot be represented in execution character set';
         147: msg := @'lint: not all parameters were declared with a type';
         148: msg := @'all parameters must have a complete type';
+        149: msg := @'invalid universal character name for use in an identifier';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3319,18 +3321,28 @@ function UniversalCharacterName : ucsCodePoint;
 {  The current character should be the 'u' or 'U'.            }
 {                                                             }
 {  Returns the code point value of the UCN.                   }
+{                                                             }
+{  Globals:                                                   }
+{     ucnString - string representation of this UCN           }
 
 var
    digits: integer;                     {number of hex digits (4 or 8)}
    codePoint: longint;                  {the code point specified by this UCN}
    dig: 0..15;                          {value of a hex digit}
+   i: integer;                          {index for recording UCN string}
 
 begin {UniversalCharacterName}
+i := 1;
+ucnString[i] := '\';
+i := i + 1;
+
 codePoint := 0;
 if ch = 'u' then
    digits := 4
 else {if ch = 'U' then}
    digits := 8;
+ucnString[i] := ch;
+i := i + 1;
 NextCh;
 
 while digits > 0 do begin
@@ -3342,25 +3354,39 @@ while digits > 0 do begin
          dig := ord(ch)-ord('A')+10;
          end; {else}
       codePoint := (codePoint << 4) | dig;
+      ucnString[i] := ch;
+      i := i + 1;
       NextCh;
       digits := digits - 1;
       end {while}
    else begin
       Error(145);
-      codePoint := ord('$');
+      codePoint := $0000C0;
       digits := 0;
       end; {else}
    end; {while}
+
+ucnString[0] := chr(i - 1);
 
 if (codePoint < 0) or (codePoint > maxUCSCodePoint)
    or ((codePoint >= $00D800) and (codePoint <= $00DFFF))
    or ((codePoint < $A0) and not (ord(codePoint) in [$24,$40,$60]))
    then begin
    Error(145);
-   UniversalCharacterName := ord('$');
+   UniversalCharacterName := $0000C0;
    end {if}
 else
    UniversalCharacterName := codePoint;
+
+{Normalize UCN string to shorter form for codepoints that fit in 16 bits}
+if (ord(ucnString[0]) = 10) and (codePoint <= $00FFFF) then begin
+   ucnString[2] := 'u';
+   ucnString[3] := ucnString[7];
+   ucnString[4] := ucnString[8];
+   ucnString[5] := ucnString[9];
+   ucnString[6] := ucnString[10];
+   ucnString[0] := chr(6);
+   end; {if}
 end; {UniversalCharacterName}
 
 
@@ -3816,7 +3842,7 @@ type
 var
    done: boolean;                       {loop termination}
    expandEnabled: boolean;              {can a token be expanded?}
-   i: 0..maxint;                        {loop/index counter}
+   i,j: 0..maxint;                      {loop/index counter}
    inhibit: boolean;                    {inhibit macro expansion?}
    lExpandMacros: boolean;              {local copy of expandMacros}
    lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
@@ -3826,6 +3852,8 @@ var
    tToken: tokenType;                   {for merging tokens}
    sPtr,tsPtr: gstringPtr;              {for forming string constants}
    lLastWasReturn: boolean;             {local copy of lastWasReturn}
+   codePoint: ucsCodePoint;             {Unicode code point from UCN}
+   chFromUCN: integer;                  {character given by UCN (converted)}
 
 
    function EscapeCh: integer;
@@ -4361,16 +4389,38 @@ case charKinds[ord(ch)] of
       token.sval^.str[i+1] := chr(0);   {add null in case the string is extended}
       end;
 
-   letter: begin                         {reserved words and identifiers}
+   letter,ch_backslash: begin           {reserved words and identifiers}
       token.kind := ident;
       token.class := identifier;
       token.name := @workString;
       tokenExpandEnabled := true;
       i := 0;
-      while charKinds[ord(ch)] in [letter,digit] do begin
+      while charKinds[ord(ch)] in [letter,digit,ch_backslash] do begin
          i := i+1;
-         workString[i] := ch;
-         NextCh;
+         if ch = '\' then begin
+            NextCh;
+            if ch in ['u','U'] then begin
+               codePoint := UniversalCharacterName;
+               if not ValidUCNForIdentifier(codePoint, i=1) then
+                  Error(149);
+               chFromUCN := ConvertUCSToMacRoman(codePoint);
+               if chFromUCN >= 0 then
+                  workString[i] := chr(chFromUCN)
+               else begin
+                  for j := 1 to ord(ucnString[0]) do
+                     workString[i+j-1] := ucnString[j];
+                  i := i + ord(ucnString[0]) - 1;
+                  end; {else}
+               end {if}
+            else begin
+               Error(1);
+               workString[i] := '?';
+               end; {else}
+            end {if}
+         else begin
+            workString[i] := ch;
+            NextCh;
+            end; {if}
          end; {while}
       workString[0] := chr(i);
       CheckIdentifier;

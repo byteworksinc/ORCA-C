@@ -348,6 +348,8 @@ and may appear wherever a declaration can (including inside and outside function
 
 These behave the same as the existing tokens [, ], {, }, #, and ## (respectively), apart from their spelling.
 
+15. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In a string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  For ORCA/C the source and execution character sets are both considered to be Mac OS Roman, the character set used in the IIGS desktop environment.
+
 
 Multi-Character Character Constants
 -----------------------------------

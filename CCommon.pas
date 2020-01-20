@@ -192,7 +192,7 @@ type
       (illegal,ch_special,ch_dash,ch_plus,ch_lt,ch_gt,ch_eq,ch_exc,
        ch_and,ch_bar,ch_dot,ch_white,ch_eol,ch_eof,ch_char,ch_string,
        ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,ch_colon,
-       letter,digit);
+       ch_backslash,letter,digit);
 
    tokenSet = set of tokenEnum;
    tokenClass = (reservedWord,reservedSymbol,identifier,intConstant,longConstant,
