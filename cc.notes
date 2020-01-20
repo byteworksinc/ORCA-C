@@ -272,13 +272,30 @@ New Language Features
 
 ORCA/C 2.2.0 adds support for several new C language features.  Most are features that were added in the C99 language standard.
 
-1.  (C99) Statements and declarations may now be mixed within a block; declarations are no longer required to come before statements.  The first clause of a for loop statement may also be a declaration (with auto or register storage class only).  Variables may only be referred to by name in code syntactically after their declaration, but their lifetime continues as long as control remains in the enclosing block scope, even if it returns to a point before the declaration.  Initializers for variables with automatic storage duration are evaluated whenever execution reaches the point where they appear in the code.
+1.  (C99 and C11) ORCA/C now recognizes the new keywords added in C99 and C11.  These are:
+
+   _Alignas
+   _Alignof
+   _Atomic
+   _Bool
+   _Complex
+   _Generic
+   _Imaginary
+   _Noreturn
+   _Static_assert
+   _Thread_local
+   restrict
+   inline (already treated as a keyword by ORCA/C)
+
+Of these, _Atomic, _Bool, _Complex, _Generic, _Imaginary, and _Thread_local are recognized as keywords, but the corresponding language features are not yet supported, and any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
+
+2.  (C99) Statements and declarations may now be mixed within a block; declarations are no longer required to come before statements.  The first clause of a for loop statement may also be a declaration (with auto or register storage class only).  Variables may only be referred to by name in code syntactically after their declaration, but their lifetime continues as long as control remains in the enclosing block scope, even if it returns to a point before the declaration.  Initializers for variables with automatic storage duration are evaluated whenever execution reaches the point where they appear in the code.
 
 In addition, the scope rules are changed so that each while, do, for, if, or switch statement introduces a new block scope corresponding to the statement, separate from the enclosing scope and ending at the end of the statement.  Each substatement of these statements also introduces its own new block scope corresponding to that substatement, separate from the enclosing scope associated with the while, do, for, if, or switch statement itself.  These rules ensure that a variable declared in the first clause of a for loop is local to that loop, but they can also affect other code by restricting the scope where an identifier is visible.  In certain unusual cases, this can change the semantics of a program that was valid under C89, potentially producing a compile error or causing unexpected behavior when it executes.
 
 These new rules for declaration placement and scopes are enabled by default, but they can be controlled by a new flag bit in the #pragma ignore directive.  Setting bit 4 (a value of 16) enables these new C99 features; clearing it disables them and returns to the older C89 rules.  
 
-2.  (C99) ORCA/C now supports flexible array members, in which the last member of a struct may be declared with an incomplete array type, e.g.
+3.  (C99) ORCA/C now supports flexible array members, in which the last member of a struct may be declared with an incomplete array type, e.g.
 
    struct S {
       int a;
@@ -287,25 +304,43 @@ These new rules for declaration placement and scopes are enabled by default, but
 
 The flexible array member does not contribute to the size of the struct as reported by sizeof, but if such a struct is allocated in the heap, extra space may be allocated for the flexible array member, and elements of it up to the limit of the size allocated may be accessed.  (This feature was actually permitted "by accident" in previous versions of ORCA/C, but it is now a supported feature, and errors related to it are now detected.)
 
-3.  (C99) The value 0 will always be returned if execution reaches the end of the main function without encountering a return statement, provided main is declared as returning a value of type int.
+4.  (C99) The value 0 will always be returned if execution reaches the end of the main function without encountering a return statement, provided main is declared as returning a value of type int.
 
-4.  (C99) Enumeration specifiers may contain a trailing comma, e.g.
+5.  (C99) Enumeration specifiers may contain a trailing comma, e.g.
 
    enum color {black, purple, green, white,} pencolor;
    
 (Kelvin Sherlock)
 
-5.  (C99) Functions may be declared as "static inline".  These have the same semantics as other static functions.  The "inline" specifier suggests (but does not require) that calls to the function should be inlined or otherwise optimized.  ORCA/C currently does not inline these functions or apply any other special optimizations, but future versions might introduce such features.  Note that non-static inline functions are not currently supported.
+6.  (C99) Functions may be declared as "static inline".  These have the same semantics as other static functions.  The "inline" specifier suggests (but does not require) that calls to the function should be inlined or otherwise optimized.  ORCA/C currently does not inline these functions or apply any other special optimizations, but future versions might introduce such features.  Note that non-static inline functions are not currently supported.
 
-6.  Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+7.  Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
 
 (Kelvin Sherlock)
 
-7.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+8.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
 
-8.  Two more new bits are introduced in the #pragma ignore directive.  Bit 1 (a value of 2) affects the handling of multi-character character constants; it is described in the section below.  Bit 2 (a value of 4) controls whether spurious tokens are allowed to appear after the #endif directive.  If this bit is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
+9.  Two more new bits are introduced in the #pragma ignore directive.  Bit 1 (a value of 2) affects the handling of multi-character character constants; it is described in the section below.  Bit 2 (a value of 4) controls whether spurious tokens are allowed to appear after the #endif directive.  If this bit is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
 
 (Kelvin Sherlock, Mike Westerfield)
+
+10. (C11) The _Alignof operator and _Alignas declaration specifier are now supported.  An expression "_Alignof(type-name)" gives the alignment of the specified type.  In a declaration, an alignment specifier "_Alignas(type-name)" or "_Alignas(constant-expression)" specifies the required alignment for the object being declared.  In ORCA/C, the alignment of all object types is 1, and that is the only alignment value supported.  (As such, these features are not particularly useful in ORCA/C-specific code, but they may be used to control alignment in portable programs.)
+
+11. (C11) The _Noreturn function specifier may be used in function declarations.  It indicates that the function does not return to its caller.  This serves as documentation to the user.  It could potentially also enable optimizations, although ORCA/C does not currently perform any optimizations based on it.
+
+12. (C11) Static assertions are now supported.  These have the form
+
+   _Static_assert ( constant-expression , string-literal ) ;
+
+and may appear wherever a declaration can (including inside and outside functions).  They serve as assertions evaluated at compilation time, which will fail and abort compilation if the constant expression evaluates to 0.  The string literal can contain an error message describing the problem.
+
+13. (C99) The "restrict" type qualifier is now supported.  This qualifier on object pointer types requires that all accesses to the pointed-to object must directly or indirectly use the value of that particular pointer.  For example, if a function takes two pointer parameters that are both restrict-qualified, this asserts that during any execution of the function, if an object is accessed through one of those pointer parameters, it is not also accessed through the other; the values passed at call sites must be such that this will be the case.  Using "restrict" could potentially enable greater optimization possibilities, but ORCA/C does not currently perform any optimizations based on it.
+
+14. (C95) Digraphs are now supported. These are alternative tokens that are equivalent to certain tokens that may be difficult to type or display in some situations (e.g. on the IIgs text screen with certain language settings).  Specifically, the following six tokens are now supported:
+
+   <: :> <% %> %: %:%:
+
+These behave the same as the existing tokens [, ], {, }, #, and ## (respectively), apart from their spelling.
 
 
 Multi-Character Character Constants
@@ -365,6 +400,10 @@ ORCA/C now includes three new headers specified by recent C standards.
 
 3.  The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  The macros provided generally conform to the C99 and C11 standards, but certain macros specified by the standards are not available due to ORCA/C limitations.  The functions that the standards specify should be declared in this header are also not available.
 
+4. The <stdalign.h> header defines the macros "alignas" for _Alignas and "alignof" for _Alignof.  It complies with the C11 standard.
+
+5. The <stdnoreturn.h> header defines the macro "noreturn" for _Noreturn.  It complies with the C11 standard.
+
 
 Library Updates
 ---------------
@@ -402,6 +441,13 @@ The conversion specifier 'F' is now allowed in the format strings for the fprint
 void _Exit(int status);
 
 This exits the program without calling functions registered with atexit() and possibly without doing other clean-up operations.  In ORCA/C, it is functionally identical to _exit().
+
+5. The aligned_alloc function has beed added:
+
+#include <stdlib.h>
+void *aligned_alloc(size_t alignment, size_t size);
+
+This is equivalent to malloc, except that it specifies an alignment for the block of memory to be allocated.  In ORCA/C, the only supported alignment value is 1 (which is the alignment of all object types).
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
