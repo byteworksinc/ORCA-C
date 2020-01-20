@@ -668,6 +668,8 @@ if list or (numErr <> 0) then begin
         144: msg := @'generic selection expressions are not supported by ORCA/C';
         145: msg := @'invalid universal character name';
         146: msg := @'Unicode character cannot be represented in execution character set';
+        147: msg := @'lint: not all parameters were declared with a type';
+        148: msg := @'all parameters must have a complete type';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

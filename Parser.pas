@@ -3560,19 +3560,28 @@ if isFunction then begin
          begin
          tlp := lp;
          while tlp <> nil do begin
-            if tlp^.itype = nil then
+            if tlp^.itype = nil then begin
                tlp^.itype := wordPtr;
+               if (lint & lintNoFnType) <> 0 then
+                  if (lint & lintNotPrototyped) = 0 then
+                     Error(147);        {C99+ require K&R params to be declared}
+               end; {if}
             tlp := tlp^.pnext;
             end; {while}
          end; {if}
       tlp := lp;			{make sure all parameters have an}
-      while tlp <> nil do		{ identifier			 }
+      while tlp <> nil do begin		{ identifier and a complete type }
          if tlp^.name^ = '?' then begin
             Error(113);
             tlp := nil;
             end {if}
-         else
+         else begin
+            if tlp^.itype^.size = 0 then
+               if not (tlp^.itype^.kind in [arrayType,functionType]) then
+                  Error(148);
             tlp := tlp^.pnext;
+            end; {else}
+         end; {while}
       doingParameters := false;
       fName := variable^.name;          {skip if this is not needed for a      }
       if doingPartial then              { partial compile                      }
