@@ -913,3 +913,22 @@ wordHash start                          reserved word hash table
          dc    i'pascalsy,pascalsy,pascalsy,pascalsy,registersy,registersy'
          dc    i'shortsy,typedefsy,unionsy,voidsy,whilesy,succwhilesy'
          end
+
+macRomanToUCS start
+         dc    i2'$00C4, $00C5, $00C7, $00C9, $00D1, $00D6, $00DC, $00E1'
+         dc    i2'$00E0, $00E2, $00E4, $00E3, $00E5, $00E7, $00E9, $00E8'
+         dc    i2'$00EA, $00EB, $00ED, $00EC, $00EE, $00EF, $00F1, $00F3'
+         dc    i2'$00F2, $00F4, $00F6, $00F5, $00FA, $00F9, $00FB, $00FC'
+         dc    i2'$2020, $00B0, $00A2, $00A3, $00A7, $2022, $00B6, $00DF'
+         dc    i2'$00AE, $00A9, $2122, $00B4, $00A8, $2260, $00C6, $00D8'
+         dc    i2'$221E, $00B1, $2264, $2265, $00A5, $00B5, $2202, $2211'
+         dc    i2'$220F, $03C0, $222B, $00AA, $00BA, $03A9, $00E6, $00F8'
+         dc    i2'$00BF, $00A1, $00AC, $221A, $0192, $2248, $2206, $00AB'
+         dc    i2'$00BB, $2026, $00A0, $00C0, $00C3, $00D5, $0152, $0153'
+         dc    i2'$2013, $2014, $201C, $201D, $2018, $2019, $00F7, $25CA'
+         dc    i2'$00FF, $0178, $2044, $00A4, $2039, $203A, $FB01, $FB02'
+         dc    i2'$2021, $00B7, $201A, $201E, $2030, $00C2, $00CA, $00C1'
+         dc    i2'$00CB, $00C8, $00CD, $00CE, $00CF, $00CC, $00D3, $00D4'
+         dc    i2'$F8FF, $00D2, $00DA, $00DB, $00D9, $0131, $02C6, $02DC'
+         dc    i2'$00AF, $02D8, $02D9, $02DA, $00B8, $02DD, $02DB, $02C7'
+         end

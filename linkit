@@ -15,5 +15,6 @@ obj/dag
 obj/gen
 obj/header
 obj/printf
+obj/charset
 
 keep=16/cc

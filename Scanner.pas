@@ -29,7 +29,7 @@ interface
 
 {$LibPrefix '0/obj/'}
 
-uses CCommon, Table, CGI, MM;
+uses CCommon, Table, CGI, MM, Charset;
 
 {$segment 'SCANNER'}
 
@@ -666,6 +666,8 @@ if list or (numErr <> 0) then begin
         142: msg := @'_Alignas may not be used in this declaration or type name';
         143: msg := @'only object pointer types may be restrict-qualified';
         144: msg := @'generic selection expressions are not supported by ORCA/C';
+        145: msg := @'invalid universal character name';
+        146: msg := @'Unicode character cannot be represented in execution character set';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3309,6 +3311,57 @@ if scanWork then                        {make sure we read all characters}
 end; {DoNumber}
 
 
+function UniversalCharacterName : ucsCodePoint;
+
+{  Scan a universal character name.                           }
+{  The current character should be the 'u' or 'U'.            }
+{                                                             }
+{  Returns the code point value of the UCN.                   }
+
+var
+   digits: integer;                     {number of hex digits (4 or 8)}
+   codePoint: longint;                  {the code point specified by this UCN}
+   dig: 0..15;                          {value of a hex digit}
+
+begin {UniversalCharacterName}
+codePoint := 0;
+if ch = 'u' then
+   digits := 4
+else {if ch = 'U' then}
+   digits := 8;
+NextCh;
+
+while digits > 0 do begin
+   if ch in ['0'..'9','a'..'f','A'..'F'] then begin
+      if ch in ['0'..'9'] then
+         dig := ord(ch) & $0F
+      else begin
+         ch := chr(ord(ch)&$5F);
+         dig := ord(ch)-ord('A')+10;
+         end; {else}
+      codePoint := (codePoint << 4) | dig;
+      NextCh;
+      digits := digits - 1;
+      end {while}
+   else begin
+      Error(145);
+      codePoint := ord('$');
+      digits := 0;
+      end; {else}
+   end; {while}
+
+if (codePoint < 0) or (codePoint > maxUCSCodePoint)
+   or ((codePoint >= $00D800) and (codePoint <= $00DFFF))
+   or ((codePoint < $A0) and not (ord(codePoint) in [$24,$40,$60]))
+   then begin
+   Error(145);
+   UniversalCharacterName := ord('$');
+   end {if}
+else
+   UniversalCharacterName := codePoint;
+end; {UniversalCharacterName}
+
+
 procedure InitScanner {start, end: ptr};
 
 { initialize the scanner                                        }
@@ -3790,12 +3843,14 @@ var
       dig: 0..15;                       {value of a hex digit}
       skipChar: boolean;                {get next char when done?}
       val: 0..4095;                     {hex escape code value (scaled to 0..255)}
+      codePoint: ucsCodePoint;          {code point given by UCN}
+      chFromUCN: integer;               {character given by UCN (converted)}
 
    begin {EscapeCh}
 1: skipChar := true;
    if ch = '\' then begin
       NextCh;
-      if ch in ['0'..'7','a','b','t','n','v','f','p','r','x'] then
+      if ch in ['0'..'7','a','b','t','n','v','f','p','r','x','u','U'] then
          case ch of
             '0','1','2','3','4','5','6','7': begin
                val := 0;
@@ -3834,6 +3889,17 @@ var
                   end; {while}
                skipChar := false;
                EscapeCh := val & $FF;
+               end;
+            'u','U': begin
+               codePoint := UniversalCharacterName;
+               chFromUCN := ConvertUCSToMacRoman(codePoint);
+               skipChar := false;
+               if chFromUCN >= 0 then
+                  EscapeCh := chFromUCN
+               else begin
+                  EscapeCh := 0;
+                  Error(146);
+                  end; {else}
                end;
             otherwise: Error(57);
             end {case}

@@ -43,6 +43,7 @@ if {#} == 0
      set gen gen
      set header header
      set printf printf
+     set charset charset
   end              
 
   Newer obj/cgc.a cgc.pas cgc.asm
@@ -134,6 +135,7 @@ if {#} == 0
      set expression expression
      set parser parser
      set scanner scanner
+     set charset charset
   end
 
   Newer obj/dag.a dag.pas
@@ -161,6 +163,13 @@ if {#} == 0
      set expression expression
   end
 
+  Newer obj/charset.a charset.pas
+  if {status} != 0
+     set cc cc
+     set scanner scanner
+     set charset charset
+  end
+
 else
   for i
     set {i} {i}
@@ -184,9 +193,9 @@ if "{table}" == table
 end
 
 set list ""
-set list        {ccommon} {mm} {cgi} {scanner} {symbol} {header} {printf}
-set list {list} {expression} {cgc} {asm} {parser} {cc} {objout} {native}
-set list {list} {gen} {dag}
+set list        {ccommon} {mm} {cgi} {charset} {scanner} {symbol} {header}
+set list {list} {printf} {expression} {cgc} {asm} {parser} {cc}
+set list {list} {objout} {native} {gen} {dag}
 
 if "{list}" != ""
    for i in {list}

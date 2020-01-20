@@ -38,6 +38,9 @@ var
    icp: array[tokenEnum] of byte;       {in-commong priorities}
    isp: array[tokenEnum] of byte;       {in-stack priorities}
 
+                                        {from Charset.pas}
+                                        {----------------}
+   macRomanToUCS: array[$80..$FF] of integer; {mapping from MacRoman charset to UCS}
 implementation
 
 end.
