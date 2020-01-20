@@ -1,12 +1,12 @@
-ORCA/C 2.2.0 B3
+ORCA/C 2.2.0 B4
 Copyright 1997, Byte Works Inc.
-Updated by Stephen Heumann and Kelvin Sherlock, 2017-2018
+Updated by Stephen Heumann and Kelvin Sherlock, 2017-2020
 
 -- Change List --------------------------------------------------------------
 
-2.2.0 B3    1.	Bugs squashed.  See bug notes, below.
+2.2.0 B4    1.	Bugs squashed.  See bug notes, below.
 
-            2.	New language features added (mainly features from C99).
+            2.	New language features added (mainly features from C99 and C11).
               	See "Compiler changes introduced in C 2.2.0."
 
             3.	Some optimization passes have small improvements.
@@ -101,6 +101,12 @@ The sample SYSTABS line at the top of the page should start
 p. 107
 
 The table shows the language number for C as 7.  It should be 8.
+
+p. 233
+
+Several new reserved words (keywords) added in the C99 or C11 standards are now supported.  For information on what these are and how they are used, see "Compiler changes introduced in C 2.2.0," below.
+
+Certain alternate reserved symbols known as digraphs are now supported.  See "Compiler changes introduced in C 2.2.0," below.
 
 p. 237
 
@@ -287,7 +293,7 @@ ORCA/C 2.2.0 adds support for several new C language features.  Most are feature
    restrict
    inline (already treated as a keyword by ORCA/C)
 
-Of these, _Atomic, _Bool, _Complex, _Generic, _Imaginary, and _Thread_local are recognized as keywords, but the corresponding language features are not yet supported, and any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
+Of these, _Atomic, _Bool, _Complex, _Generic, _Imaginary, and _Thread_local are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
 
 2.  (C99) Statements and declarations may now be mixed within a block; declarations are no longer required to come before statements.  The first clause of a for loop statement may also be a declaration (with auto or register storage class only).  Variables may only be referred to by name in code syntactically after their declaration, but their lifetime continues as long as control remains in the enclosing block scope, even if it returns to a point before the declaration.  Initializers for variables with automatic storage duration are evaluated whenever execution reaches the point where they appear in the code.
 
@@ -464,7 +470,7 @@ When ORCA/C looks for the defaults.h file, it behaves almost as if your program 
 
 The only differences are that the file doesn't have to exist (and if it doesn't no error is generated), the line is never shown in your source file, and the line number counter is not incremented.
 
-You can put absolutely anything you like in this file.  The intent is to use it for pragmas or other preprocessor directives that you would like to become defaults for all of your programs, but there is no restruction that prevents you from putting other things in the file.
+You can put absolutely anything you like in this file.  The intent is to use it for pragmas or other preprocessor directives that you would like to become defaults for all of your programs, but there is no restriction that prevents you from putting other things in the file.
 
 WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym files are created by the compiler to make recompiling programs faster.  They need to be recreated with the new information from the defaults.h file, but the compiler will not notice the presense of the defaults.h file if it is compiling a .sym file created with a previous version of the compiler.
 
@@ -536,7 +542,7 @@ Contrary to all common sense, the ANSI standard says this statement is legal IF 
 
 Beginning with ORCA/C 2.1, this statement will work.  Note that in keeping with the ANSI standard, this call and others like it only work if the function is properly defined with a prototyped variable argument parameter list.
 
-There are two undesireable side effects, though.  First, all function calls to a variable argument function are surrounded by extra stack repair code, even if you set optimization bit 3.  (This bit turns off stack repair code.)  This increases code size and slows a program down.  Sometimes these changes are noticeable, or even dramatic.  Second, native code peephole optimization is always disabled when stack repair code is in use, so you loose another optimization if you do not use this one.
+There are two undesirable side effects, though.  First, all function calls to a variable argument function are surrounded by extra stack repair code, even if you set optimization bit 3.  (This bit turns off stack repair code.)  This increases code size and slows a program down.  Sometimes these changes are noticeable, or even dramatic.  Second, native code peephole optimization is always disabled when stack repair code is in use, so you loose another optimization if you do not use this one.
 
 Turning this optimization on means ORCA/C is no longer strictly in compliance with the ANSI standard.  For strict compliance, you should leave stack repair code on for variable argument functions.  You also need to disable stack repair code in any user-defined function that uses the va_arg() function, since this function is not compatible with stack repair code.  For strict compliance, then, use at least
 
@@ -822,6 +828,43 @@ int foo(int[42]);
 93. Fixed several issues where initializers of structs or unions (or arrays containing structs or unions) might not be processed correctly.
 
 94. const-qualified struct or union types were not being recorded properly in .sym files.  This could lead to spurious errors or other problems when the .sym files were used.  This bug has now been fixed, and .sym files created by older versions of ORCA/C will automatically be ignored and regenerated.
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B4.)
+
+95. const-qualified struct types were not being represented properly in debugger symbol tables.
+
+(Kelvin Sherlock)
+
+96. Some operations on function parameters declared with array types could give spurious errors.
+
+(Kelvin Sherlock)
+
+97. Floating point division by 0.0 is now consistently allowed.  It can be used to generate infinities, consistent with the principles of IEEE/SANE arithmetic.
+
+(Kelvin Sherlock)
+
+98. Some uses of enum constants in integer constant expressions could give spurious errors or generate bad code.
+
+99. Common subexpression elimination could cause a crash or a spurious error in certain rare circumstances.
+
+100. Fixed various cases where code in ORCA/C might dereference null pointers.  Some of these could potentially lead to spurious errors, memory trashing, or possibly crashes.
+
+101. Incrementing or decrementing pointers to types with a size of 64 KiB or larger would generally not work correctly (even with the large memory model).
+
+102. Invalid sym files could be generated if an #include was encountered within the scope of an #if or #ifdef in the main source file, leading to spurious "type conflict" errors on subsequent compilations.
+
+103. In certain very obscure circumstances, stale values of __DATE__ or __TIME__ could be stored in the sym file and used on subsequent compilations.
+
+104. Initializing bitfields of type long could lead to a spurious "compiler error" (and memory trashing).
+
+105. The WDM instruction is now supported in the mini-assembler.  It is treated as taking a one-byte numeric operand.
+
+107. Declaration specifiers (storage class specifiers, type specifiers, type qualifiers, function specifiers, and alignment specifiers) can now appear in any order within a declaration or type name.
+
+108. Prototyped function parameter types can now begin with "volatile".
+
+109. strtoul() should return 0 when given an empty string.  It now does, and also sets errno to EINVAL in that case.
+(This was a regression introduced in ORCA/C 2.2.0 B3.)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
