@@ -1436,6 +1436,11 @@ if token.kind in startExpression then begin
 
             {handle a complex operand}
             DoOperand
+         else if token.kind = _Genericsy then begin
+            Error(144);
+            Skip;
+            goto 1;
+            end
          else begin
             {handle a constant operand}
             new(sp);
@@ -3841,7 +3846,7 @@ procedure InitExpression;
 
 begin {InitExpression}
 startTerm := [ident,intconst,uintconst,longconst,ulongconst,doubleconst,
-              stringconst];
+              stringconst,_Genericsy];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
               plusplusop,minusminusop,typedef,_Alignofsy];

@@ -665,6 +665,7 @@ if list or (numErr <> 0) then begin
         141: msg := @'_Noreturn specifier is only allowed on functions';
         142: msg := @'_Alignas may not be used in this declaration or type name';
         143: msg := @'only object pointer types may be restrict-qualified';
+        144: msg := @'generic selection expressions are not supported by ORCA/C';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
