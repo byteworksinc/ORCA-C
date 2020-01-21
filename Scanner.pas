@@ -1363,37 +1363,35 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
       parmEnd := nil;
       repeat
          done := true;
-         if token.kind <> rparench then begin
-            parenCount := 0;
-            paramCount := paramCount+1;
-            new(newParm);
-            newParm^.next := nil;
-            if parmEnd = nil then
-               parms := newParm
-            else
-               parmEnd^.next := newParm;
-            parmEnd := newParm;
-            newParm^.tokens := nil;
-            while (token.kind <> eofsy)
-               and ((parenCount <> 0)
-               or (not (token.kind in [rparench,commach]))) do begin
-               new(tPtr);
-               tPtr^.next := newParm^.tokens;
-               newParm^.tokens := tPtr;
-               tPtr^.token := token;
-               tPtr^.tokenStart := tokenStart;
-               tPtr^.tokenEnd := tokenEnd;
-               tPtr^.expandEnabled := tokenExpandEnabled;
-               if token.kind = lparench then
-                  parenCount := parenCount+1
-               else if token.kind = rparench then
-                  parenCount := parenCount-1;
-               NextToken;
-               end; {while}
-            if token.kind = commach then begin
-               NextToken;
-               done := false;
-               end; {if}
+         parenCount := 0;
+         paramCount := paramCount+1;
+         new(newParm);
+         newParm^.next := nil;
+         if parmEnd = nil then
+            parms := newParm
+         else
+            parmEnd^.next := newParm;
+         parmEnd := newParm;
+         newParm^.tokens := nil;
+         while (token.kind <> eofsy)
+            and ((parenCount <> 0)
+            or (not (token.kind in [rparench,commach]))) do begin
+            new(tPtr);
+            tPtr^.next := newParm^.tokens;
+            newParm^.tokens := tPtr;
+            tPtr^.token := token;
+            tPtr^.tokenStart := tokenStart;
+            tPtr^.tokenEnd := tokenEnd;
+            tPtr^.expandEnabled := tokenExpandEnabled;
+            if token.kind = lparench then
+               parenCount := parenCount+1
+            else if token.kind = rparench then
+               parenCount := parenCount-1;
+            NextToken;
+            end; {while}
+         if token.kind = commach then begin
+            NextToken;
+            done := false;
             end; {if}
       until done;
       if paramCount <> macro^.parameters then
@@ -1501,6 +1499,8 @@ else begin
             {handle macro stringization}
             if stringization then begin
                tcPtr := pptr^.tokens;
+               if tcPtr = nil then
+                  BuildStringToken(nil, 0);
                while tcPtr <> nil do begin
                   if tcPtr^.token.kind = stringconst then
                      BuildStringToken(@tcPtr^.token.sval^.str,
@@ -1516,6 +1516,16 @@ else begin
             {expand a macro parameter}
             else begin
                tcPtr := pptr^.tokens;
+               if tcPtr = nil then begin
+                  if tlPtr^.next <> nil then
+                     if tlPtr^.next^.token.kind = poundpoundop then
+                        tlPtr^.next := tlPtr^.next^.next;                  
+                  if lastPtr <> nil then
+                     if lastPtr^.token.kind = poundpoundop then
+                        if tokenList <> nil then
+                           if tokenList^.token.kind = poundpoundop then
+                              tokenList := tokenList^.next;
+                  end; {if}
                while tcPtr <> nil do begin
                   tokenStart := tcPtr^.tokenStart;
                   tokenEnd := tcPtr^.tokenEnd;
