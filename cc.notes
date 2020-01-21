@@ -30,8 +30,8 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2020
 
             10.	Stack repair code is now more efficient.
             
-            11.	Some new library functions and features from C99 have been
-              	added.  See "Library Updates."
+            11.	Some new library functions and features from C99 and C11 have
+               	been added.  See "Library Updates."
 
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
@@ -104,6 +104,8 @@ The table shows the language number for C as 7.  It should be 8.
 
 p. 233
 
+Identifiers may now contain universal character names, a type of escape sequence that can denote a Unicode character.  See "Compiler changes introduced in C 2.2.0," below.
+
 Several new reserved words (keywords) added in the C99 or C11 standards are now supported.  For information on what these are and how they are used, see "Compiler changes introduced in C 2.2.0," below.
 
 Certain alternate reserved symbols known as digraphs are now supported.  See "Compiler changes introduced in C 2.2.0," below.
@@ -115,6 +117,10 @@ ORCA/C now supports character constants containing multiple characters.  See "Mu
 p. 238
 
 The limit on the total length of string constants in a single function has been raised to 12500 characters.
+
+p. 239
+
+String and character constants may now contain universal character names, a type of escape sequence that can denote a Unicode character.  See "Compiler changes introduced in C 2.2.0," below.
 
 p. 240
 
@@ -177,6 +183,10 @@ p. 263
 1. The discussion of NDAs is on page 40, not page 58.
 
 2. There is a new optimization bit for #pragma optimize.  See #pragma optimize, below.
+
+p. 275
+
+Several new declaration specifiers from C99 and C11 are now supported.  For details, see "Compiler changes introduced in C 2.2.0," below.
 
 p. 277
 
@@ -350,6 +360,8 @@ These behave the same as the existing tokens [, ], {, }, #, and ## (respectively
 
 15. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In a string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  For ORCA/C the source and execution character sets are both considered to be Mac OS Roman, the character set used in the IIGS desktop environment.
 
+16. (C99) Any or all of the arguments to a function-like macro can be empty.  (This happened to work previously in some cases but not others.)
+
 
 Multi-Character Character Constants
 -----------------------------------
@@ -415,7 +427,7 @@ ORCA/C now includes three new headers specified by recent C standards.
 
 Library Updates
 ---------------
-ORCA/C now includes some new library functions and features specified by the C99 standard:
+ORCA/C now includes some new library functions and features specified by the C99 and C11 standards:
 
 1.  The isblank() function and macro have been added:
 
@@ -439,7 +451,7 @@ These are equivalent to sprintf and vsprintf, except that they take an additiona
 
 The length modifiers 'z', 't', and 'j', and 'hh' are now allowed in the format strings for the fprintf and fscanf families of functions.  They may be used with the 'd', 'i', 'o', 'u', 'x', 'X', or 'n' conversion specifiers.  These each correspond to integer types, as follows: 'z' to size_t or the corresponding signed integer type, 't' to ptrdiff_t or the corresponding unsigned integer type, 'j' to intmax_t or uintmax_t, and 'hh' to signed char or unsigned char.    The corresponding argument must be an integer of an appropriate type, or a pointer to such an integer, as appropriate for the conversion specifier and function.  (In the case of 'hh', arguments of character types will have been promoted to int according to the integer promotions, but their values should be within the range of signed char or unsigned char.)
 
-The conversion specifiers 'F', 'a', and 'A' are now allowed in the format strings for the fscanf family of functions.  These are all equivalent to 'f'.
+The conversion specifiers 'F', 'a', and 'A' are now allowed in the format strings for the fscanf family of functions.  These are all equivalent to 'f' (but none of them accept numbers in the hexadecimal format allowed by C99).
 
 The conversion specifier 'F' is now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.  The conversion specifiers 'a' and 'A' (both also used with floating-point numbers) are also recognized in the format strings for the fprintf family of functions, but they do not currently print the numbers in the hexadecimal format required by the C99 standard.
 
@@ -865,10 +877,13 @@ int foo(int[42]);
 
 108. Prototyped function parameter types can now begin with "volatile".
 
-109. strtoul() should return 0 when given an empty string.  It now does, and also sets errno to EINVAL in that case.
-(This was a regression introduced in ORCA/C 2.2.0 B3.)
+109. strtoul() should return 0 when given an empty string.  It now does, and also sets errno to EINVAL in that case.  (This was a regression introduced in ORCA/C 2.2.0 B3.)
 
-110. Any or all of the arguments to a function-like macro can be empty, as specified in the C99 and later standards.  (Empty macro arguments previously worked in some cases, but gave errors or non-standard behavior in others.)
+110. strtok() might not always return NULL after having reached the end of the string.  (This depended on the contents of memory location 0.)
+
+111. The fscanf() family of functions might corrupt the stack if a scan error occurred and certain conversion specifiers containing the % character in a scanset (e.g. %4[%]) appeared as subsequent elements in the format string.
+
+(Kelvin Sherlock)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
