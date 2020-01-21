@@ -4282,6 +4282,8 @@ case charKinds[ord(ch)] of
          token.isDigraph := true;
          if (ch = '%') and (chPtr <> eofPtr) and (chr(chPtr^) = ':') then begin
             token.kind := poundpoundop; {%:%: digraph}
+            if charKinds[ord('#')] = illegal then
+               Error(1);
             NextCh;
             NextCh;
             end
