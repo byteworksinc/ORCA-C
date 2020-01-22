@@ -418,7 +418,7 @@ ORCA/C now includes three new headers specified by recent C standards.
 
 2.  The <stdint.h> header defines various integer types with certain sizes and properties, as well as macros related to integer types.  It largely complies with the C99 and C11 standards, but is missing 64-bit integer types because ORCA/C does not currently support them.  For the same reason, intmax_t and uintmax_t are 32-bit types, even though C99 and C11 require them to be 64-bit or larger types.
 
-3.  The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  The macros provided generally conform to the C99 and C11 standards, but certain macros specified by the standards are not available due to ORCA/C limitations.  The functions that the standards specify should be declared in this header are also not available.
+3.  The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  The macros provided generally conform to the C99 and C11 standards, but the functions that the standards specify should be declared in this header are not available.
 
 4. The <stdalign.h> header defines the macros "alignas" for _Alignas and "alignof" for _Alignof.  It complies with the C11 standard.
 

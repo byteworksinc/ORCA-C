@@ -11,9 +11,9 @@
  * Note: The format specifier macros defined here generally comply with the
  * C99 and C11 standards, except that those associated with intmax_t and
  * uintmax_t correspond to their non-standard definitions as 32-bit types.
- * fscanf macros for 8-bit types are not defined because ORCA/C's fscanf
- * implementation currently does not support them.  The functions that the
- * standards specify should be declared in this header are also not available.
+ * 
+ * The functions that the standards specify should be declared in this header
+ * are not available.
  */
 
 #ifndef __inttypes__
@@ -99,8 +99,10 @@
 
 /* fscanf macros for signed integers */
 
+#define SCNd8           "hhd"   /* int8_t */
 #define SCNd16          "hd"    /* int16_t */
 #define SCNd32          "ld"    /* int32_t */
+#define SCNdLEAST8      "hhd"   /* int_least8_t */
 #define SCNdLEAST16     "hd"    /* int_least16_t */
 #define SCNdLEAST32     "ld"    /* int_least32_t */
 #define SCNdFAST8       "hd"    /* int_fast8_t */
@@ -109,8 +111,10 @@
 #define SCNdMAX         "ld"    /* intmax_t */
 #define SCNdPTR         "ld"    /* intptr_t */
 
+#define SCNi8           "hhi"   /* int8_t */
 #define SCNi16          "hi"    /* int16_t */
 #define SCNi32          "li"    /* int32_t */
+#define SCNiLEAST8      "hhi"   /* int_least8_t */
 #define SCNiLEAST16     "hi"    /* int_least16_t */
 #define SCNiLEAST32     "li"    /* int_least32_t */
 #define SCNiFAST8       "hi"    /* int_fast8_t */
@@ -121,8 +125,10 @@
 
 /* fscanf macros for unsigned integers */
 
+#define SCNo8           "hho"   /* uint8_t */
 #define SCNo16          "ho"    /* uint16_t */
 #define SCNo32          "lo"    /* uint32_t */
+#define SCNoLEAST8      "hho"   /* uint_least8_t */
 #define SCNoLEAST16     "ho"    /* uint_least16_t */
 #define SCNoLEAST32     "lo"    /* uint_least32_t */
 #define SCNoFAST8       "ho"    /* uint_fast8_t */
@@ -131,8 +137,10 @@
 #define SCNoMAX         "lo"    /* uintmax_t */
 #define SCNoPTR         "lo"    /* uintptr_t */
 
+#define SCNu8           "hhu"   /* uint8_t */
 #define SCNu16          "hu"    /* uint16_t */
 #define SCNu32          "lu"    /* uint32_t */
+#define SCNuLEAST8      "hhu"   /* uint_least8_t */
 #define SCNuLEAST16     "hu"    /* uint_least16_t */
 #define SCNuLEAST32     "lu"    /* uint_least32_t */
 #define SCNuFAST8       "hu"    /* uint_fast8_t */
@@ -141,8 +149,10 @@
 #define SCNuMAX         "lu"    /* uintmax_t */
 #define SCNuPTR         "lu"    /* uintptr_t */
 
+#define SCNx8           "hhx"   /* uint8_t */
 #define SCNx16          "hx"    /* uint16_t */
 #define SCNx32          "lx"    /* uint32_t */
+#define SCNxLEAST8      "hhx"   /* uint_least8_t */
 #define SCNxLEAST16     "hx"    /* uint_least16_t */
 #define SCNxLEAST32     "lx"    /* uint_least32_t */
 #define SCNxFAST8       "hx"    /* uint_fast8_t */
