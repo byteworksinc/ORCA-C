@@ -903,6 +903,14 @@ int foo(int[42]);
 
 (Sheppy)
 
+113. strtol(), atoi(), and atol() would accept numbers with extra white space and/or an additional plus sign after the initial sign, e.g. "- +53".
+
+114. strtoul() will now accept numbers with a leading minus sign.  This causes the value to be negated in the unsigned long type before being returned.
+
+115. strtol() and strtoul() did not always set the end pointer to the right value in error cases.  Now they do: if there was a sequence of the expected numeric form, then they fully parse that sequence and give a pointer past the end of it, even if the number was out of range.  If there was not a sequence of the expected form, they give the starting pointer that was passed in to them.
+
+116. strtol() now accepts "-2147483648" or equivalent in other bases (i.e. LONG_MIN) as a valid input, and does not set errno in this case.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
