@@ -237,9 +237,17 @@ Beginning with ORCA/C 2.1, assert() prints a string that includes the assertion 
 
 The documentation states assert() writes to stdout.  Beginning with ORCA/C 2.1, it writes to stderr.
 
+p. 344
+
+The atexit() function actually returns zero if the function is registered successfully, and a non-zero value if there is not enough memory to satisfy the request (the reverse of what the manual says).
+
 p. 353
 
 The discussion of _exit() should note that the _exit() function is an extension to ANSI C.
+
+p. 354
+
+The discussion of abort() should note that it will call raise(SIGABRT) before exiting.  Accordingly, if a SIGABRT handler was previously registered via a call to signal(), it will be executed.
 
 p. 356
 
@@ -455,12 +463,18 @@ The conversion specifiers 'F', 'a', and 'A' are now allowed in the format string
 
 The conversion specifier 'F' is now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.  The conversion specifiers 'a' and 'A' (both also used with floating-point numbers) are also recognized in the format strings for the fprintf family of functions, but they do not currently print the numbers in the hexadecimal format required by the C99 standard.
 
-4. The _Exit() function has been added:
+4. The _Exit(), quick_exit(), and at_quick_exit() functions have been added:
 
 #include <stdlib.h>
-void _Exit(int status);
+_Noreturn void _Exit(int status);
+_Noreturn void quick_exit(int status);
+int at_quick_exit(void (*func)(void));
 
-This exits the program without calling functions registered with atexit() and possibly without doing other clean-up operations.  In ORCA/C, it is functionally identical to _exit().
+_Exit() exits the program without calling functions registered with atexit() and possibly without doing other clean-up operations.  In ORCA/C, it is functionally identical to _exit().
+
+quick_exit() calls any functions registered with at_quick_exit(), then exits the program in the same way as _Exit().
+
+at_quick_exit() registers a function to be called by quick_exit().  It works similarly to atexit(), except that it maintains a separate list of functions that are called only if the program exits via quick_exit().  It returns zero if the function is registered successfully, and a non-zero value if there is not enough memory to satisfy the request.
 
 5. The aligned_alloc function has beed added:
 
@@ -884,6 +898,10 @@ int foo(int[42]);
 111. The fscanf() family of functions might corrupt the stack if a scan error occurred and certain conversion specifiers containing the % character in a scanset (e.g. %4[%]) appeared as subsequent elements in the format string.
 
 (Kelvin Sherlock)
+
+112. If #pragma rtl was used, the exit() family of functions would still try to exit the program via a GS/OS Quit call instead of an RTL.
+
+(Sheppy)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
