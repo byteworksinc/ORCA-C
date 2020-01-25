@@ -675,7 +675,7 @@ if list or (numErr <> 0) then begin
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
-       if terminalErrors then begin
+       if terminalErrors and (numErrors <> 0) then begin
           if enterEditor then begin
              if line = lineNumber then
                 ExitToEditor(msg, ord4(firstPtr)+col-ord4(bofPtr)-1)
@@ -2765,6 +2765,11 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
 		     FlagPragmas(p_lint);
                      NumericDirective;   
                      lint := long(expressionValue).lsw;
+                     lintIsError := true;
+                     if token.kind = semicolonch then begin
+                        NumericDirective;
+                        lintIsError := expressionValue <> 0;
+                        end; {if}
                      if token.kind <> eolsy then
                         Error(11);
                      goto 2;
@@ -2974,19 +2979,26 @@ procedure Error {err: integer};
 { err - error number                                            }
 
 begin {Error}
+if lintIsError or not (err in [51,104,105,110,124,125,128,129,130,147])
+   then begin
+   if (numErr <> maxErr) or (numErrors = 0) then
+      numErrors := numErrors+1;
+   liDCBGS.merrf := 16;
+   end {if}
+else
+   TermHeader;
 if numErr = maxErr then                 {set the error number}
    errors[maxErr].num := 4
 else begin
    numErr := numErr+1;
-   numErrors := numErrors+1;
-   liDCBGS.merrf := 16;
    errors[numErr].num := err;
    end; {else}
 with errors[numErr] do begin            {record the position of the error}
    line := tokenLine;
    col := tokenColumn;
    end; {with}
-codeGeneration := false;		{inhibit code generation}
+if numErrors <> 0 then
+   codeGeneration := false;		{inhibit code generation}
 end; {Error}
 
 
@@ -3611,6 +3623,7 @@ lastWasReturn := false;                 {last char was not return}
 doingstring := false;                   {not doing a string}
 doingPPExpression := false;             {not doing a preprocessor expression}
 unix_1 := false;			{int is 16 bits}
+lintIsError := true;                    {lint messages are considered errors}
 
 new(mp);                                {__LINE__}
 mp^.name := @'__LINE__';

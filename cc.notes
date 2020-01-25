@@ -170,7 +170,9 @@ Bit 4 controls whether C99-style scope rules are followed and whether mixed stat
 
 p. 259
 
-The #pragma lint directive supports two new bits.
+The #pragma lint directive can now optionally treat messages from lint checks as warnings rather than errors.  To make it work this way, add ";0" after the integer value indicating the lint checks to perform.
+
+In addition, two new types of lint checks are now available:
 
 If bit 4 (a value of 16) is set, the compiler will check if the format strings passed to the fprintf() and fscanf() families of functions are valid, and if the number and types of arguments passed to them match what the format strings call for.  See "Format Checking," below.
 
@@ -369,6 +371,12 @@ These behave the same as the existing tokens [, ], {, }, #, and ## (respectively
 15. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In a string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  For ORCA/C the source and execution character sets are both considered to be Mac OS Roman, the character set used in the IIGS desktop environment.
 
 16. (C99) Any or all of the arguments to a function-like macro can be empty.  (This happened to work previously in some cases but not others.)
+
+17. The #pragma lint directive can now optionally be configured to perform its checks but treat any messages produced as warnings rather than errors, so that they do not cause compilation to fail.  To make it work this way, add ";0" after the integer value indicating the checks to perform.  For example, you can use
+
+   #pragma lint -1;0
+
+to perform all lint checks but treat them as warnings rather than errors.
 
 
 Multi-Character Character Constants

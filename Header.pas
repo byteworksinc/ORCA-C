@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 5;                  {version number of .sym file format}
+   symFileVersion = 6;                  {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -823,7 +823,10 @@ procedure EndInclude {chPtr: ptr};
                         | (ord(checkStack) << 4)
                         | (ord(debugStrFlag) << 15));
 
-                  p_lint: WriteWord(lint);
+                  p_lint: begin
+                     WriteWord(lint);
+                     WriteByte(ord(lintIsError));
+                     end;
 
                   p_memorymodel: WriteByte(ord(smallMemoryModel));
 
@@ -1456,7 +1459,10 @@ var
             debugStrFlag := odd(val >> 15);
             end;
 
-         p_lint: lint := ReadWord;
+         p_lint: begin
+            lint := ReadWord;
+            lintIsError := boolean(ReadByte);
+            end;
 
          p_memorymodel: smallMemoryModel := boolean(ReadByte);
 

@@ -501,6 +501,7 @@ var
    unix_1: boolean;			{is int 32 bits? (or 16 bits)}
    useGlobalPool: boolean;              {use global (or local) string pool?}
    wait: boolean;                       {wait for keypress after errors?}
+   lintIsError: boolean;                {treat lint messages as errors?}
 
                                         {syntactic classes of tokens}
                                         {---------------------------}
