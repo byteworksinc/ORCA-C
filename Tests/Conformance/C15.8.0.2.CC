@@ -39,20 +39,24 @@ void main (void)
    if (strPtr != &string [36])
        goto Fail;
 
+   errno = 0;
    L1 = strtol (strPtr, &strPtr, 16);
    if (errno != ERANGE)
        goto Fail;
 
+   errno = 0;
    UL1 = strtoul (strPtr, &strPtr, 16);
-   if (errno != ERANGE)
+   if (errno != EINVAL)
        goto Fail;
 
+   errno = 0;
    L1 = strtol ("zz", &strPtr, 0);
-   if (errno != ERANGE)
+   if (errno != EINVAL)
        goto Fail;
 
+   errno = 0;
    UL1 = strtoul ("xx", &strPtr, 0);
-   if (errno != ERANGE)
+   if (errno != EINVAL)
        goto Fail;
 
    printf ("Passed Conformance Test 15.8.0.2\n");
