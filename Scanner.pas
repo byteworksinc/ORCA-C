@@ -1394,6 +1394,10 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
             done := false;
             end; {if}
       until done;
+      if paramCount = 1 then
+         if macro^.parameters = 0 then
+            if parms^.tokens = nil then
+               paramCount := 0;
       if paramCount <> macro^.parameters then
          Error(14);
       if token.kind <> rparench then begin  {insist on a closing ')'}
