@@ -766,7 +766,7 @@ case p_opcode of
    m_and_s,m_asl_a,m_dea,m_eor_abs,m_eor_dir,m_eor_imm,m_eor_s,m_lda_absx,
    m_lda_dirx,m_lda_indl,m_lda_indly,m_lda_longx,m_lda_s,m_lsr_a,m_ora_abs,
    m_ora_dir,m_ora_dirX,m_ora_imm,m_ora_long,m_ora_longX,m_ora_s,m_pla,
-   m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,m_tdc,m_tsc,m_tsb_dir,m_tsb_abs:
+   m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,m_tdc,m_tsc:
       aRegister.condition := regUnknown;
 
    m_ldy_absX,m_ldy_dirX,m_ply:
@@ -777,11 +777,8 @@ case p_opcode of
 
    m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvs,m_clc,m_cmp_abs,
    m_cmp_dir,m_cmp_imm,m_cmp_s,m_cpx_imm,m_jml,m_pha,m_phb,m_phd,
-   m_phx,m_phy,m_plb,m_pld,m_rtl,m_rts,m_sec,m_sta_absX,
-   m_sta_dir,m_sta_dirX,m_sta_indl,m_sta_indlY,m_sta_longX,
-   m_sta_s,m_stx_dir,m_sty_dir,m_sty_dirX,m_stz_abs,m_stz_absX,
-   m_stz_dir,m_stz_dirX,m_tcs,m_tcd,d_add,d_pin,m_pei_dir,m_cpx_abs,
-   m_cpx_dir,m_cmp_dirx,m_php,m_plp,m_cop,d_wrd:   ;
+   m_phx,m_phy,m_plb,m_pld,m_rtl,m_rts,m_sec,m_tcs,m_tcd,d_add,d_pin,
+   m_pei_dir,m_cpx_abs,m_cpx_dir,m_cmp_dirx,m_php,m_plp,m_cop,d_wrd:   ;
 
    m_pea: begin
       if aRegister.condition = regImmediate then
@@ -813,7 +810,38 @@ case p_opcode of
          end; {if}
       end;
 
-   m_dec_abs,m_inc_abs,m_sta_abs,m_stx_abs,m_sty_abs,m_sta_long: begin
+   m_sta_s: begin
+      if aRegister.condition = regLocal then
+         aRegister.condition := regUnknown;
+      if xRegister.condition = regLocal then
+         xRegister.condition := regUnknown;
+      if yRegister.condition = regLocal then
+         yRegister.condition := regUnknown;
+      end;
+
+   m_sta_indl,m_sta_indlY: begin
+      if aRegister.condition <> regImmediate then
+         aRegister.condition := regUnknown;
+      if xRegister.condition <> regImmediate then
+         xRegister.condition := regUnknown;
+      if yRegister.condition <> regImmediate then
+         yRegister.condition := regUnknown;
+      end;
+
+   m_sta_absX,m_stz_absX,m_sta_longX: begin
+      if aRegister.condition = regAbsolute then
+         if aRegister.lab = p_name then
+            aRegister.condition := regUnknown;
+      if xRegister.condition = regAbsolute then
+         if xRegister.lab = p_name then
+            xRegister.condition := regUnknown;
+      if yRegister.condition = regAbsolute then
+         if yRegister.lab = p_name then
+            yRegister.condition := regUnknown;
+      end;
+
+   m_dec_abs,m_inc_abs,m_sta_abs,m_stx_abs,m_sty_abs,m_sta_long,m_stz_abs,
+   m_tsb_abs: begin
       if aRegister.condition = regAbsolute then
          if aRegister.lab = p_name then
             if aRegister.value = p_operand then
@@ -831,15 +859,30 @@ case p_opcode of
                   yRegister.condition := regUnknown;
       end;
 
-   m_dec_dir,m_dec_dirX,m_inc_dir,m_inc_dirX: begin
+   m_dec_dir,m_inc_dir,m_tsb_dir,m_sta_dir,m_stx_dir,m_sty_dir,m_stz_dir: begin
       if aRegister.condition = regLocal then
          if aRegister.value = p_operand then
-            aRegister.condition := regUnknown;
+            if p_opcode <> m_sta_dir then
+               aRegister.condition := regUnknown;
       if xRegister.condition = regLocal then
          if xRegister.value = p_operand then
-            xRegister.condition := regUnknown;
+            if p_opcode <> m_stx_dir then
+               xRegister.condition := regUnknown;
       if yRegister.condition = regLocal then
          if yRegister.value = p_operand then
+            if p_opcode <> m_sty_dir then
+               yRegister.condition := regUnknown;
+      end;
+
+   m_dec_dirX,m_inc_dirX,m_sta_dirX,m_sty_dirX,m_stz_dirX: begin
+      if aRegister.condition = regLocal then
+         if aRegister.value >= p_operand-1 then
+            aRegister.condition := regUnknown;
+      if xRegister.condition = regLocal then
+         if xRegister.value >= p_operand-1 then
+            xRegister.condition := regUnknown;
+      if yRegister.condition = regLocal then
+         if yRegister.value >= p_operand-1 then
             yRegister.condition := regUnknown;
       end;
 
