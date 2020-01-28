@@ -2679,11 +2679,11 @@ var
                   variable^.disp := disp;
                   variable^.bitdisp := bitdisp;
                   variable^.bitsize := long(expressionValue).lsw;
-                  bitdisp := bitdisp+long(expressionValue).lsw;
                   tPtr := variable^.itype;
                   end {if}
                else
                   tPtr := typeSpec;
+               bitdisp := bitdisp+long(expressionValue).lsw;
                if (tPtr^.kind <> scalarType)
                   or not (tPtr^.baseType in
                      [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
