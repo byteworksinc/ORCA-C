@@ -1896,6 +1896,25 @@ var
 
 
    begin {GetInitializerValue}
+   if token.kind in [dotch,lbrackch] then begin
+      {designated initializer: give error and skip over it}
+      Error(150);
+      while token.kind in [dotch,lbrackch] do begin
+         if token.kind = lbrackch then begin
+            NextToken;
+            Expression(arrayExpression, [rbrackch]);
+            if token.kind = rbrackch then
+               NextToken;
+            end {if}
+         else {if token.kind = dotch then} begin
+            NextToken;
+            if token.kind in [ident,typedef] then
+               NextToken;
+            end {if}
+         end; {while}
+      if token.kind = eqch then
+         NextToken;
+      end; {if}
    if variable^.storage = stackFrame then
       Expression(autoInitializerExpression, [commach,rparench,rbracech])
    else
