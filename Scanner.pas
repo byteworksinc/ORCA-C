@@ -182,6 +182,7 @@ const
                                         {----}
    defaultName  = '13:ORCACDefs:Defaults.h'; {default include file name}
    maxErr       = 10;                   {max errors on one line}
+   maxLint      = 147;                  {maximum lint error code}
 
 type
    errorType = record                   {record of a single error}
@@ -265,6 +266,7 @@ var
    versionStrL: longStringPtr;          {macro version string}
    workString: pstring;                 {for building strings and identifiers}
    ucnString: string[10];               {string of a UCN}
+   lintErrors: set of 1..maxLint;       {lint error codes}
 
 {-- External procedures; see expresssion evaluator for notes ---}
 
@@ -676,7 +678,8 @@ if list or (numErr <> 0) then begin
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
-       if terminalErrors and (numErrors <> 0) then begin
+       if terminalErrors and (numErrors <> 0)
+          and (lintIsError or not (num in lintErrors)) then begin
           if enterEditor then begin
              if line = lineNumber then
                 ExitToEditor(msg, ord4(firstPtr)+col-ord4(bofPtr)-1)
@@ -2984,7 +2987,7 @@ procedure Error {err: integer};
 { err - error number                                            }
 
 begin {Error}
-if lintIsError or not (err in [51,104,105,110,124,125,128,129,130,147])
+if lintIsError or not (err in lintErrors)
    then begin
    if (numErr <> maxErr) or (numErrors = 0) then
       numErrors := numErrors+1;
@@ -3629,6 +3632,10 @@ doingstring := false;                   {not doing a string}
 doingPPExpression := false;             {not doing a preprocessor expression}
 unix_1 := false;			{int is 16 bits}
 lintIsError := true;                    {lint messages are considered errors}
+
+                                        {error codes for lint messages}
+                                        {if changed, also change maxLint}
+lintErrors := [51,104,105,110,124,125,128,129,130,147];
 
 new(mp);                                {__LINE__}
 mp^.name := @'__LINE__';
