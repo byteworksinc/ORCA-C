@@ -35,7 +35,7 @@
 {  GenerateCode - generate code from a fully formed expression  }
 {       tree                                                    }
 {  GetTemp - find a temporary work variable                     }
-{  InitExpression - initlialize the expression handler          }
+{  InitExpression - initialize the expression handler           }
 {  UsualBinaryConversions - performs the usual binary           }
 {       conversions                                             }
 {  UsualUnaryConversions - performs the usual unary conversions }
@@ -119,7 +119,7 @@ procedure DoSelection (lType: typePtr; tree: tokenPtr; var size: longint);
 {         unsigned - is the bit field unsigned?                 }
 {         isBitField - is the field a bit field?                }
 {                                                               }
-{ varaibles:                                                    }
+{ variables:                                                    }
 {         expressionType - set to the type of the field         }
 
 
@@ -835,7 +835,7 @@ var
          Error(31);
          errorFound := true;
          end; {else}
-      end {if id = nill}
+      end {if id = nil}
    else if id^.itype^.kind = enumConst then begin
       stack^.token.class := intConstant;
       stack^.token.kind := intconst;
@@ -1402,7 +1402,7 @@ var
 
    procedure Skip;
 
-   { skip all tokens in the reminader of the expression             }
+   { skip all tokens in the remainder of the expression             }
 
    begin {Skip}
    while not (token.kind in stopSym+[eofsy]) do
@@ -1630,7 +1630,7 @@ if token.kind in startExpression then begin
                   dispose(op);
                   end {if}
                else begin
-        	  done2 := false;	{do operations with less precidence}
+        	  done2 := false;	{do operations with less precedence}
         	  repeat
                      if opStack = nil then
                 	done2 := true
@@ -1936,7 +1936,7 @@ procedure DoSelection {lType: typePtr; tree: tokenPtr; var size: longint};
 {         unsigned - is the bit field unsigned?              }
 {         isBitField - is the field a bit field?             }
 {                                                            }
-{ varaibles:                                                 }
+{ variables:                                                 }
 {         expressionType - set to the type of the field      }
 
 label 1;
@@ -2115,7 +2115,7 @@ var
 
    { returns the type of an expression                           }
    {                                                             }
-   { This subroutine is used to see if + and - operarions        }
+   { This subroutine is used to see if + and - operations        }
    { should do pointer addition.                                 }
    {                                                             }
    { parameters:                                                 }
@@ -2138,7 +2138,7 @@ var
       expressionType := expressionType^.dType;
    ExpressionKind := expressionType^.kind;
 
-   doDispose := ldoDispose;             {resore the volitile variables}
+   doDispose := ldoDispose;             {restore the volatile variables}
    codeGeneration := lCodeGeneration and (numErrors = 0);
    expressionType := lexpressionType;
    end; {ExpressionKind}

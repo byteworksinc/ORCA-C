@@ -40,7 +40,7 @@
 {  voidPtrPtr - typeless pointer, for some type casting         }
 {  stringTypePtr - pointer to the base type for string          }
 {       constants                                               }
-{  defaultStruc - default for structures with errors            }
+{  defaultStruct - default for structures with errors           }
 {                                                               }
 {---------------------------------------------------------------}
 
@@ -942,7 +942,7 @@ var
 
       procedure WriteScalarType (tp: typePtr; modifiers, subscripts: integer);
 
-      { Write a scalar type and subscipt field			}
+      { Write a scalar type and subscript field			}
       {								}
       { parameters:						}
       {    tp - type pointer					}
@@ -1539,7 +1539,7 @@ var
    lPtr,tPtr: typePtr;                  {for tracing forward declared types}
 
 begin {ResolveForwardReference}
-iPtr^.isForwardDeclared := false;	{we will succeeed or flag an error...}
+iPtr^.isForwardDeclared := false;	{we will succeed or flag an error...}
 tPtr := iPtr^.itype;			{skip to the struct/union type}
 lPtr := nil;
 while tPtr^.kind in [pointerType,arrayType,functionType,definedType] do begin

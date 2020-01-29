@@ -64,7 +64,7 @@ function CodesMatch (op1, op2: icptr; exact: boolean): boolean;
 
    function LongStrCmp (s1, s2: longStringPtr): boolean;
 
-   { Are the strings s1 amd s2 equal?				}
+   { Are the strings s1 and s2 equal?				}
    {								}
    { parameters:						}
    {    s1, s2 - strings to compare				}
@@ -3815,7 +3815,7 @@ var
             {								}
             { Returns: True if the store is valid, false if not.	}
             {								}
-            { Notes: Specifically, these two rules are inforced:	}
+            { Notes: Specifically, these two rules are enforced:	}
             {    1. No other stores to the same location appear in the	}
             {       loop.						}
             {    2. All uses of the value in the loop can be reached	}
@@ -4083,7 +4083,7 @@ var
                 	   end; {if}
                   end {else if}
                else if opcode in [pc_ldo,pc_lod] then begin
-        	  {invariant if there is an immediately preceeding invariant store}
+        	  {invariant if there is an immediately preceding invariant store}
         	  if PreviousStore(op, lp2^.block^.code) then begin
                      op^.parents := icount;
                      icount := icount+1;

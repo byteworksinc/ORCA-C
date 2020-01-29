@@ -174,7 +174,7 @@ type
 
 var
    codeStarted: boolean;		{has code generation started?}
-   includeLevel: 0..maxint;		{nexted include level}
+   includeLevel: 0..maxint;		{nested include level}
    includeMark: boolean;		{has the mark field been written?}
    savePragmas: set of pragmas;		{pragmas to record}
    saveSource: boolean;			{save source streams?}

@@ -38,8 +38,8 @@ type
       end;
 
 var
-                                        {msc}
-                                        {---}
+                                        {misc}
+                                        {----}
    blkcnt: longint;                     {number of bytes in current segment}
 
                                         {buffers}

@@ -5,7 +5,7 @@
 {                                                               }
 {  This unit serves as the glue code attaching a compiler       }
 {  to the code generator.  It provides subroutines in a         }
-{  format that is convinient for the compiler during            }
+{  format that is convenient for the compiler during            }
 {  semantic analysis, and produces intermediate code records    }
 {  as output.  These intermediate code records are then         }
 {  passed on to the code generator for optimization and         }
@@ -327,7 +327,7 @@ var
    stringsize: 0..maxstring;            {amount of string space left}
    stringspace: packed array[1..maxstring] of char; {string table}
    symLength: integer;                  {length of debug symbol table}
-   toolParms: boolean;                  {generate tool format paramaters?}
+   toolParms: boolean;                  {generate tool format parameters?}
    volatile: boolean;			{has a volatile qualifier been used?}
    hasVarargsCall: boolean;             {does current function call any varargs fns?}
    
@@ -769,7 +769,7 @@ profileFlag := false;                   {don't generate profiling code}
 debugFlag := false;                     {don't generate debug code}
 debugStrFlag := false;                  {don't generate gsbug debug strings}
 traceBack := false;                     {don't generate traceback code}
-volatile := false;			{no volatile quialifiers found}
+volatile := false;			{no volatile qualifiers found}
 
 registers := cLineOptimize;             {don't do register optimizations}
 peepHole := cLineOptimize;              {not doing peephole optimization (yet)}
@@ -799,7 +799,7 @@ if codeGeneration then begin
 {     WriteCode(code);                  {debug}
    DAG(code);				{generate the code}
 
-   {initialize volitile variables for next intermediate code}
+   {initialize volatile variables for next intermediate code}
    code := pointer(Calloc(sizeof(intermediate_code)));
    {code^.lab := nil;}
    code^.optype := cgWord;

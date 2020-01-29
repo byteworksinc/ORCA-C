@@ -359,7 +359,7 @@ var
       end;
    count: integer;                      {number of constants to repeat}
    i,j,k: integer;                      {loop variables}
-   lsegDisp: longint;                   {for backtracking while writting the   }
+   lsegDisp: longint;                   {for backtracking while writing the    }
                                         { debugger's symbol table              }
    lval: longint;                       {temp storage for long constant}
    nptr: stringPtr;                     {pointer to a name}
@@ -1437,7 +1437,7 @@ var
 
       function SignExtension (ns: integer): boolean;
 
-      { See if the pattern is a sugn extension			}
+      { See if the pattern is a sign extension			}
       {								}
       { Parameters:						}
       {    ns - start of suspected pattern			}
@@ -2074,7 +2074,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
 
    var
       i: integer;                       {loop index}
-      lab: stringPtr;			{for holdling names var pointers}
+      lab: stringPtr;			{for holding names var pointers}
       menuLen: integer;                 {length of the menu name string}
 
 

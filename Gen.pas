@@ -52,7 +52,7 @@ const
 
 type
                                         {possible locations for 4 byte values}
-   longType = record                    {desciption of current four byte value}
+   longType = record                    {description of current four byte value}
       preference: integer;              {where you want the value}
       where: integer;                   {where the value is at}
       fixedDisp: boolean;               {is the displacement a fixed value?}

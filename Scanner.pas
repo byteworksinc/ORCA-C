@@ -237,7 +237,7 @@ type
 var
    dateStr: longStringPtr;              {macro date string}
    doingPPExpression: boolean;          {are we processing a preprocessor expression?}
-   doingstring: boolean;                {used to supress comments in strings}
+   doingstring: boolean;                {used to suppress comments in strings}
    errors: array[1..maxErr] of errorType; {errors in this line}
    eofPtr: ptr;                         {points one byte past the last char in the file}
    fileList: filePtr;                   {include file list}
@@ -268,7 +268,7 @@ var
    ucnString: string[10];               {string of a UCN}
    lintErrors: set of 1..maxLint;       {lint error codes}
 
-{-- External procedures; see expresssion evaluator for notes ---}
+{-- External procedures; see expression evaluator for notes ----}
 
 procedure EndInclude (chPtr: ptr); extern;
 
@@ -406,7 +406,7 @@ end; {AddPath}
 function Convertsl(var str: pString): longint; extern;
 
 { Return the integer equivalent of the string.  Assumes a valid }
-{ 4-byte integer string; supporst unsigned values.              }
+{ 4-byte integer string; supports unsigned values.              }
 
 
 procedure SetDateTime; extern;
@@ -416,7 +416,7 @@ procedure SetDateTime; extern;
 
 function KeyPress: boolean; extern;
  
-{ Has a key been presed?                                        }
+{ Has a key been pressed?                                       }
 {                                                               }
 { If a key has not been pressed, this function returns          }
 { false.  If a key has been pressed, it clears the key          }
@@ -3432,7 +3432,7 @@ var
    lch: char;                           {next command line character}
    cp: ptr;                             {character pointer}
    i: 0..hashSize;                      {loop variable}
-   negative: boolean;                   {is a number nagative?}
+   negative: boolean;                   {is a number negative?}
 
    mp: macroRecordPtr;                  {for building the predefined macros}
    bp: ^macroRecordPtr;

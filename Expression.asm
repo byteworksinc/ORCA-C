@@ -342,7 +342,7 @@ ml1      lda   ans                      SYSS1*SYSS1+2+SYSS1+2 -> SYSS1,SYSS1+2
          lda   ans+6
          adc   num2+2
          sta   ans+6
-ml2      ror   ans+6                    shift the interem result
+ml2      ror   ans+6                    shift the interim result
          ror   ans+4
          ror   ans+2
          ror   ans

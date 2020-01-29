@@ -55,7 +55,7 @@ lb2      iny                            next character
 
 ****************************************************************
 *
-*  KeyPress - Has a key been presed?
+*  KeyPress - Has a key been pressed?
 *
 *  If a key has not been pressed, this function returns
 *  false.  If a key has been pressed, it clears the key

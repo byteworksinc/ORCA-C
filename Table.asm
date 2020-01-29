@@ -349,7 +349,7 @@ charSym  start                          single character symbols
          dc    i'0,0,0,0,0,0,0,0'                                       x-rub
          end
 
-icp      start                          in comming priority for expression
+icp      start                          in-coming priority for expression
 !                                       assumes notAnOperation = 200
          dc    i1'200'                  ident
          dc    i1'200'                  intconst

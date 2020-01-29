@@ -155,7 +155,7 @@ var
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
    isForwardDeclared: boolean;          {is the field list component           }
-                                        { referenceing a forward struct/union? }
+                                        { referencing a forward struct/union?  }
    isFunction: boolean;                 {is the declaration a function?}
    isPascal: boolean;                   {has the pascal modifier been used?}
                                         { (set by DoDeclaration)}
@@ -236,7 +236,7 @@ procedure GotoLabel (op: pcodes);
 { does not already exist.  Generate the label or a jump to it   }
 { based on op.                                                  }
 {                                                               }
-{ paremeters:                                                   }
+{ parameters:                                                   }
 {       op - operation code to create                           }
 
 label 1;
@@ -279,7 +279,7 @@ procedure CompoundStatement (makeSymbols: boolean);
 {								}
 { Parameters:							}
 {    makeSymbols - create a symbol table? (False for a		}
-{       function's outer wrapper, true for imbeded statements)	}
+{       function's outer wrapper, true for imbedded statements)	}
 
 var
    stPtr: statementPtr;                 {for creating a compound statement record}
@@ -398,7 +398,7 @@ var
 
    procedure AssignmentStatement;
  
-   { handle an asignment statement                               }
+   { handle an assignment statement                              }
  
    begin {AssignmentStatement}
    if token.kind in startExpression then begin
@@ -1032,7 +1032,7 @@ if tl <> nil then begin
    NextToken;                           {evaluate the expression}
    Expression(normalExpression, [semicolonch]);
    Gen0t(pc_pop, UsualUnaryConversions);
-   NextToken;                           {skip the seminolon}
+   NextToken;                           {skip the semicolon}
    printMacroExpansions := lPrintMacroExpansions;
    end; {if}
 
@@ -1185,7 +1185,7 @@ type
 
 var
    i: integer;                          {loop variable}
-   lastWasIdentifier: boolean;          {for deciding if the declarator is a fuction}
+   lastWasIdentifier: boolean;          {for deciding if the declarator is a function}
    lastWasPointer: boolean;             {was the last type a pointer?}
    newName: stringPtr;                  {new symbol name}
    parameterStorage: boolean;           {is the new symbol in a parm list?}
@@ -2301,7 +2301,7 @@ var
  
       procedure RecomputeSizes (tp: typePtr);
   
-      { a size has been infered from an initializer - set the     }
+      { a size has been inferred from an initializer - set the    }
       { appropriate type size values                              }
       {                                                           }
       { parameters:                                               }
@@ -2561,7 +2561,7 @@ procedure DeclarationSpecifiers (allowedTokens: tokenSet;
 {                                                               }
 { outputs:                                                      }
 {       isForwardDeclared - is the field list component         }
-{               referenceing a forward struct/union?            }
+{               referencing a forward struct/union?             }
 {       skipDeclarator - for enum,struct,union with no          }
 {               declarator                                      }
 {       typespec - type specifier                               }
@@ -3827,7 +3827,7 @@ var
       { nonempty-abstract-declarator:                           }
       {    ( nonempty-abstract-declarator )                     }
       {    abstract-declarator ( )                              }
-      {    abstract-declaraotr [ expression OPT ]               }
+      {    abstract-declarator [ expression OPT ]               }
       {    * abstract-declarator                                }
 
       var
@@ -3858,7 +3858,7 @@ var
             end {if}
          else begin
 
-            {handle a perenthesized type}
+            {handle a parenthesized type}
             if not (token.kind in [lparench,asteriskch,lbrackch]) then
                begin
                Error(82);
@@ -4125,7 +4125,7 @@ var
       { parameters:						}
       {    elements - elements in the array			}
       {    itype - type of each array element			}
-      {    count - remaining initializer repititions		}
+      {    count - remaining initializer repetitions		}
       {    iPtr - initializer record				}
 
       begin {ZeroFill}
@@ -4248,7 +4248,7 @@ var
          endDisp := disp + itype^.size;
          if iPtr^.isStructOrUnion then begin
             LoadAddress;                {load the destination address}
-            GenerateCode(iptr^.iTree);  {load the stuct address}
+            GenerateCode(iptr^.iTree);  {load the struct address}
                                         {do the assignment}
             AssignmentConversion(itype, expressionType, isConstant, val,
                true, false);

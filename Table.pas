@@ -35,7 +35,7 @@ var
 
                                         {from EXPRESSION.PAS}
                                         {-------------------}
-   icp: array[tokenEnum] of byte;       {in-commong priorities}
+   icp: array[tokenEnum] of byte;       {in-coming priorities}
    isp: array[tokenEnum] of byte;       {in-stack priorities}
 
                                         {from Charset.pas}

@@ -42,7 +42,7 @@
 {          value of constant expressions in this variable       }
 {  expressionType - the type of the expression                  }
 {  expressionTree - for non-constant initializers               }
-{  isConstant - is the initializer expression conastant?        }
+{  isConstant - is the initializer expression constant?         }
 {  typeSpec - type given by the last declaration specifiers,    }
 {          specifier-qualifier list, or type name evaluated     }
 {                                                               }
@@ -123,7 +123,7 @@ type
    pString = packed array [0..maxLine] of char; {length string}
    stringPtr = ^pString;
    ptr        = ^byte;                  {general purpose pointer}
-   handle     = ^ptr;                   {gereral purpose handle}
+   handle     = ^ptr;                   {general purpose handle}
  
    gsosInString = record
        size: integer;
@@ -139,9 +139,9 @@ type
    gsosOutStringPtr = ^gsosOutString;
    
    { The base types include two main categories.  The values starting    }
-   { with cg are defined in the code generater, and may be passed to the }
+   { with cg are defined in the code generator, and may be passed to the }
    { code generator for resolution.  The cc types are used internally in }
-   { the compiler.  Any values whose type is cc must be resulved to one  }
+   { the compiler.  Any values whose type is cc must be resolved to one  }
    { of the cg types before the code generator is called.                }
  
    baseTypeEnum = (cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,
@@ -475,7 +475,7 @@ var
    expressionValue: longint;            {value of the last constant expression}
    expressionType: typePtr;             {the type of the expression}
    initializerTree: tokenPtr;           {for non-constant initializers}
-   isConstant: boolean;                 {is the initializer expression conastant?}
+   isConstant: boolean;                 {is the initializer expression constant?}
 
                                         {type specifier results}
                                         {----------------------}
