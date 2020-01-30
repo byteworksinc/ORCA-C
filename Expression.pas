@@ -824,7 +824,7 @@ var
          np := pointer(GMalloc(length(fToken.name^)+1));
          CopyString(pointer(np), pointer(fToken.name));
          id := NewSymbol(np, fnPtr, ident, variableSpace, declared);
-         if (lint & lintUndefFn) <> 0 then
+         if ((lint & lintUndefFn) <> 0) or ((lint & lintC99Syntax) <> 0) then
             Error(51);
          end {if}
       else if kind = preprocessorExpression then begin

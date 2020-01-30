@@ -2634,7 +2634,6 @@ var
          DoStaticAssert;
          goto 1;
          end; {if}
-      typeSpec := wordPtr;              {default type specifier is an integer}
       DeclarationSpecifiers(specifierQualifierListElement, ident);
       alignmentSpecified := _Alignassy in declarationModifiers;
       if not skipDeclarator then
@@ -2816,7 +2815,7 @@ var
 
 
 begin {DeclarationSpecifiers}
-myTypeSpec := typeSpec;
+myTypeSpec := nil;
 myIsForwardDeclared := false;           {not doing a forward reference (yet)}
 mySkipDeclarator := false;              {declarations are required (so far)}
 myDeclarationModifiers := [];
@@ -3138,6 +3137,11 @@ isForwardDeclared := myIsForwardDeclared;
 skipDeclarator := mySkipDeclarator;
 typeSpec := myTypeSpec;
 declarationModifiers := myDeclarationModifiers;
+if typeSpec = nil then begin
+   typeSpec := wordPtr;                 {under C89, default type is int}
+   if (lint & lintC99Syntax) <> 0 then
+      Error(151);
+   end; {if}
 if isconstant then begin                {handle a constant type}
    new(tPtr);
    if typeSpec^.kind in [structType,unionType] then begin
@@ -3399,7 +3403,6 @@ if token.kind = _Static_assertsy then begin
    end; {if}
 lDoingParameters := doingParameters;    {record the status}
 noFDefinitions := false;                {are function definitions inhibited?}
-typeFound := false;                     {no explicit type found, yet}
 if doingPrototypes then                 {prototypes implies a parm list}
    doingParameters := true
 else
@@ -3412,10 +3415,8 @@ if not doingFunction then               {handle any segment statements}
 inhibitHeader := true;			{block imbedded includes in headers}
 lUseGlobalPool := useGlobalPool;
 storageClass := ident;
-typeSpec := wordPtr;                    {default type specifier is an integer}
                                         {handle a TypeSpecifier/declarator}
-if token.kind in declarationSpecifiersElement then
-   typeFound := true;
+typeFound := token.kind in declarationSpecifiersElement;
 DeclarationSpecifiers(declarationSpecifiersElement, ident);
 isPascal := pascalsy in declarationModifiers;
 isAsm := asmsy in declarationModifiers;
@@ -3443,7 +3444,8 @@ isPascal := lisPascal;
 if isFunction then begin
    if not typeFound then
       if (lint & lintNoFnType) <> 0 then
-         Error(104);
+         if (lint & lintC99Syntax) = 0 then
+            Error(104);
    end {if}
 else
    if not typeFound then
@@ -3581,7 +3583,7 @@ if isFunction then begin
          while tlp <> nil do begin
             if tlp^.itype = nil then begin
                tlp^.itype := wordPtr;
-               if (lint & lintNoFnType) <> 0 then
+               if (lint & lintC99Syntax) <> 0 then
                   if (lint & lintNotPrototyped) = 0 then
                      Error(147);        {C99+ require K&R params to be declared}
                end; {if}
@@ -3950,7 +3952,6 @@ var
 
 begin {TypeName}
 {read and process the type specifier}
-typeSpec := wordPtr;
 DeclarationSpecifiers(specifierQualifierListElement, rparench);
 
 {_Alignas is not allowed in most uses of type names.            }
