@@ -182,7 +182,7 @@ const
                                         {----}
    defaultName  = '13:ORCACDefs:Defaults.h'; {default include file name}
    maxErr       = 10;                   {max errors on one line}
-   maxLint      = 151;                  {maximum lint error code}
+   maxLint      = 152;                  {maximum lint error code}
 
 type
    errorType = record                   {record of a single error}
@@ -676,6 +676,7 @@ if list or (numErr <> 0) then begin
         149: msg := @'invalid universal character name for use in an identifier';
         150: msg := @'designated initializers are not supported by ORCA/C';
         151: msg := @'lint: type specifier missing';
+        152: msg := @'lint: return with no value in non-void function';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3636,7 +3637,7 @@ lintIsError := true;                    {lint messages are considered errors}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
-lintErrors := [51,104,105,110,124,125,128,129,130,147,151];
+lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152];
 
 new(mp);                                {__LINE__}
 mp^.name := @'__LINE__';

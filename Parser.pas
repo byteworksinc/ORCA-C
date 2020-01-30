@@ -763,7 +763,12 @@ var
                         end;
          otherwise:     ;
          end; {case}
-      end; {if}
+      end {if}
+   else begin
+      if (fType^.kind <> scalarType) or (fType^.baseType <> cgVoid) then
+         if (lint & lintC99Syntax) <> 0 then
+            Error(152);
+      end; {else}
    Gen1(pc_ujp, returnLabel);           {branch to the exit point}
    Match(semicolonch, 22);              {insist on a closing ';'}
    end; {ReturnStatement}
