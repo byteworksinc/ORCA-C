@@ -154,7 +154,6 @@ var
    doingMain: boolean;                  {are we processing the main function?}
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
-   fIsNoreturn: boolean;                {is the current function _Noreturn?}
    isForwardDeclared: boolean;          {is the field list component           }
                                         { referencing a forward struct/union?  }
    isFunction: boolean;                 {is the declaration a function?}
@@ -352,6 +351,7 @@ if not doingFunction then begin         {if so, finish it off}
    dumpLocal := true;                   {dump the local pool}
    nameFound := false;                  {no pc_nam for the next function (yet)}
    volatile := savedVolatile;           {local volatile vars are out of scope}
+   fIsNoreturn := false;                {not doing a noreturn function}
    end; {if}
 PopTable;				{remove this symbol table}
 dispose(stPtr);                         {dump the record}
@@ -4364,6 +4364,7 @@ nameFound := false;                     {no pc_nam generated yet}
 statementList := nil;                   {no open statements}
 codegenStarted := false;                {code generator is not started}
 doingForLoopClause1 := false;           {not doing a for loop}
+fIsNoreturn := false;                   {not doing a noreturn function}
 
                                         {init syntactic classes of tokens}
                                         {See C17 section 6.7 ff.}

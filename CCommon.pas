@@ -504,6 +504,7 @@ var
    useGlobalPool: boolean;              {use global (or local) string pool?}
    wait: boolean;                       {wait for keypress after errors?}
    lintIsError: boolean;                {treat lint messages as errors?}
+   fIsNoreturn: boolean;                {is the current function _Noreturn?}
 
                                         {syntactic classes of tokens}
                                         {---------------------------}

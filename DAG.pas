@@ -4821,6 +4821,34 @@ var
          DumpLoopLists;
    DAGhead := nil;			{reset the DAG pointers}
    end; {Generate}
+   
+   
+   procedure CheckNoreturn;
+   
+   { Check if a noreturn function looks like it might return.   }
+   {                                                            }
+   { This uses a heuristic of basically looking for code at the }
+   { end of the function that would lead to it returning if     }
+   { executed.  Control flow operations are optimistically      }
+   { assumed not to lead to a return.  This may produce both    }
+   { false positives and false negative, but any false          }
+   { positives should reflect extraneous code that is not       }
+   { actually reachable (which is dubious in its own right).    }
+   
+   var
+      code: icptr;
+
+   begin {CheckNoreturn}
+   code := DAGhead;
+   while code^.opcode in [pc_nop,pc_ret,pc_lnm,dc_lab,dc_loc,pc_add] do
+      code := code^.next;
+   while code^.opcode = pc_pop do
+      code := code^.left;
+   while code^.opcode = pc_bno do
+      code := code^.right;
+   if not (code^.opcode in [pc_fjp,pc_tjp,pc_ujp,pc_xjp,pc_cui,pc_cup,pc_tl1])
+      then Error(154);
+   end; {CheckNoreturn}
 
 
    procedure Push (code: icptr);
@@ -4940,6 +4968,9 @@ case code^.opcode of
       end;
 
    dc_enp: begin
+      if fIsNoreturn then
+         if (lint & lintNoreturn) <> 0 then
+            CheckNoreturn;
       Push(code);
       Reverse;
       Generate;
