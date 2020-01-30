@@ -267,6 +267,8 @@ var
    workString: pstring;                 {for building strings and identifiers}
    ucnString: string[10];               {string of a UCN}
    lintErrors: set of 1..maxLint;       {lint error codes}
+   spaceStr: string[2];                 {string ' ' (used in stringization)}
+   quoteStr: string[2];                 {string '"' (used in stringization)}
 
 {-- External procedures; see expression evaluator for notes ----}
 
@@ -1513,12 +1515,25 @@ else begin
                if tcPtr = nil then
                   BuildStringToken(nil, 0);
                while tcPtr <> nil do begin
-                  if tcPtr^.token.kind = stringconst then
+                  if tcPtr^.token.kind = stringconst then begin
+                     BuildStringToken(@quoteStr[1], 1);
                      BuildStringToken(@tcPtr^.token.sval^.str,
-                        tcPtr^.token.sval^.length)
-                  else
+                        tcPtr^.token.sval^.length);
+                     BuildStringToken(@quoteStr[1], 1);
+                     end {if}
+                  else begin
+                     if tcPtr <> pptr^.tokens then
+                        if charKinds[tcPtr^.tokenEnd^] = ch_white then
+                           BuildStringToken(@spaceStr[1], 1);
                      BuildStringToken(tcPtr^.tokenStart,
                         ord(ord4(tcPtr^.tokenEnd)-ord4(tcPtr^.tokenStart)));
+
+                     {hack because stringconst may not have proper tokenEnd}
+                     if tcPtr^.next <> nil then
+                        if tcPtr^.next^.token.kind = stringconst then
+                           if charKinds[ptr(ord4(tcPtr^.tokenStart)-1)^] = ch_white then
+                              BuildStringToken(@spaceStr[1], 1);
+                     end;
                   tcPtr := tcPtr^.next;
                   end; {while}
                tlPtr := tlPtr^.next;
@@ -3639,6 +3654,9 @@ lintIsError := true;                    {lint messages are considered errors}
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
 lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153];
+
+spaceStr := ' ';                        {strings used in stringization}
+quoteStr := '"';
 
 new(mp);                                {__LINE__}
 mp^.name := @'__LINE__';
