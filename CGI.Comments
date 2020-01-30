@@ -7,7 +7,7 @@
 {  Gen2t(dc_cns, ival, count, type);                            }
 {  GenS(dc_cns, sptr);                                          }
 {                                                               }
-{  Creates COUNT occurrances of the constant lval, rval or      }
+{  Creates COUNT occurrences of the constant lval, rval or      }
 {  ival, based on the type.  In Gen2t can accept byte or word   }
 {  types.  In the case of GenS, the operand is a string         }
 {  constant, and no repeat count is allowed.                    }
@@ -215,7 +215,7 @@
 {       cgULong discard discard discard discard                 float   }
 {       cgReal  trunc   trunc   trunc   trunc   trunc   trunc           }
 {                                                                       }
-{  The meaning of the operationd shown in the table is:         }
+{  The meaning of the operations shown in the table is:         }
 {                                                               }
 {       (blank) No action is taken, but the instruction is      }
 {               accepted by the code generator.                 }
@@ -573,7 +573,7 @@
 {  specified by tos.  The result is an integer, which replaces  }
 {  the operands on the stack.  This is a signed shift:  the     }
 {  leftmost bit position is filled in with a copy of the        }
-{  orignial leftmost bit.                                       }
+{  original leftmost bit.                                       }
 {                                                               }
 {  Pc_usr is the unsigned form.  The operation is the same,     }
 {  except that the leftmost bit is replaced with a zero.        }
@@ -760,7 +760,7 @@
 {  Defines a local label using the label parameter as a label   }
 {  number.  Size bytes are reserved on the stack frame.  Label  }
 {  numbers should be assigned by the compiler, starting with    }
-{  number 1.  Label 0 is reserved for refering to the return    }
+{  number 1.  Label 0 is reserved for referring to the return   }
 {  value of a function (if any).                                }
 {                                                               }
 {                                                               }
@@ -789,7 +789,7 @@
 {  Gen1Name(dc_sym, doGLobals, pointer(table)                   }
 {                                                               }
 {  Generates a symbol table for the debugger.  TABLE is the     }
-{  address of the sybol table, which will be passed back to a   }
+{  address of the symbol table, which will be passed back to a  }
 {  subroutine called GenSymbols, which must be supplied by the  }
 {  compiler.  DOGLOBALS is a flag the compiler can set for its  }
 {  own purposes.  C uses the flag to note that the symbol       }
