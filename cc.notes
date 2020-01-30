@@ -23,10 +23,11 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2020
               	See "New Headers."
 
             8.	Two new #pragma ignore bits are defined.  See "Compiler changes
-              	introduced in C 2.2.0".
+              	introduced in C 2.2.0."
 
-            9.	Two new #pragma lint bits are defined.  See "Format Checking"
-              	and "Checking for Undefined Behavior in Computations."
+            9.	Several new #pragma lint bits are defined.  Also, messages from
+              	#pragma lint can now optionally be treated as warnings rather
+              	than errors.  See "Enhancements to #pragma lint."
 
             10.	Stack repair code is now more efficient.
             
@@ -170,15 +171,7 @@ Bit 4 controls whether C99-style scope rules are followed and whether mixed stat
 
 p. 259
 
-The #pragma lint directive can now optionally treat messages from lint checks as warnings rather than errors.  To make it work this way, add ";0" after the integer value indicating the lint checks to perform.
-
-In addition, two new types of lint checks are now available:
-
-If bit 4 (a value of 16) is set, the compiler will check if the format strings passed to the fprintf() and fscanf() families of functions are valid, and if the number and types of arguments passed to them match what the format strings call for.  See "Format Checking," below.
-
-If bit 5 (a value of 32) is set, the compiler will check for several situations in computations that give rise to undefined behavior under the C standards.  See "Checking for Undefined Behavior in Computations," below.
-
-Also, note that the conditions detected by lint checks 1 and 2 are errors under C99 and later C standards.  Thus, to make ORCA/C conform as closely as possible to those standards, at least "#pragma lint 3" should be used.
+The #pragma lint directive can now optionally treat messages from lint checks as warnings rather than errors.  In addition, several new types of lint checks are now available.  For details, see "Enhancements to #pragma lint," below.
 
 p. 263
 
@@ -372,12 +365,6 @@ These behave the same as the existing tokens [, ], {, }, #, and ## (respectively
 
 16. (C99) Any or all of the arguments to a function-like macro can be empty.  (This happened to work previously in some cases but not others.)
 
-17. The #pragma lint directive can now optionally be configured to perform its checks but treat any messages produced as warnings rather than errors, so that they do not cause compilation to fail.  To make it work this way, add ";0" after the integer value indicating the checks to perform.  For example, you can use
-
-   #pragma lint -1;0
-
-to perform all lint checks but treat them as warnings rather than errors.
-
 
 Multi-Character Character Constants
 -----------------------------------
@@ -401,58 +388,79 @@ Note that inline function names are unrelated to the other types of debug code t
 (Kelvin Sherlock)
 
 
-Format Checking
----------------
+Enhancements to #pragma lint
+----------------------------
+The #pragma lint directive has several new features.
 
-ORCA/C now supports a new #pragma lint bit to enable checking of the format strings passed to the fprintf() and fscanf() families of functions.  If #pragma lint bit 4 (a value of 16) is set, the compiler will check if the format strings passed to those functions are valid, and if the number and types of arguments passed to them match what the format strings call for.
+First, the directive can now optionally be configured to perform its checks but treat any messages produced as warnings rather than errors, so that they do not cause compilation to fail.  To make it work this way, add ";0" after the integer value indicating the checks to perform.  For example, you can use
+
+   #pragma lint -1;0
+
+to perform all lint checks but treat them as warnings rather than errors.
+
+In addition, several new kinds of lint checks can now be performed.  They are controlled by new bits in the #pragma lint operand, as described below.
+
+* Format Checking:
+
+There is a new #pragma lint bit to enable checking of the format strings passed to the fprintf() and fscanf() families of functions.  If #pragma lint bit 4 (a value of 16) is set, the compiler will check if the format strings passed to those functions are valid, and if the number and types of arguments passed to them match what the format strings call for.
 
 If these lint checks detect any errors, they will produce the error message "lint: invalid format string or arguments," followed by more detailed information about the problem(s) found.
 
 (Kelvin Sherlock)
 
+* Checking for Undefined Behavior in Computations:
 
-Checking for Undefined Behavior in Computations
------------------------------------------------
-
-ORCA/C now supports a new #pragma lint bit to enable checking for several situations in arithmetic computations or bit manipulation that give rise to undefined behavior according to the C standards.  These are generally indicative of bugs, or (in code ported from other platforms) of assumptions that types have larger ranges than they do in ORCA/C.
+There is a new #pragma lint bit to enable checking for several situations in arithmetic computations or bit manipulation that give rise to undefined behavior according to the C standards.  These are generally indicative of bugs, or (in code ported from other platforms) of assumptions that types have larger ranges than they do in ORCA/C.
 
 These checks are enabled if #pragma lint bit 5 (a value of 32) is set.  They currently check for the following conditions:
 
-- Integer overflow from arithmetic in constant expressions of type int.
-- Integer division by the constant zero (or remainder from such division).
-- Invalid constant shift counts (negative, or >= the width of the type).
+- Integer overflow from arithmetic in constant expressions of type int
+- Integer division by the constant zero (or remainder from such division)
+- Invalid constant shift counts (negative, or >= the width of the type)
 
-(Stephen Heumann)
+* Checking for syntax disallowed by C99:
+
+ORCA/C can now detect several elements of C syntax that were allowed in C89 but are not allowed in C99 or later.  These checks are performed if #pragma lint bit 6 (a value of 64) is set.  This currently checks for the following situations:
+
+- Calls to undeclared functions (also detected by #pragma lint bit 0)
+- K&R-style function definitions without explicit declarations for parameters
+- return statements with no value in functions with non-void return types
+- Declarations or type names with no type specifiers (using 'implicit int')
+  (This includes but is broader than what is checked by #pragma lint bit 1.)
+
+* Checking for _Noreturn functions that may return:
+
+If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects cases where it appears that a function declared as _Noreturn may return.  Currently, this only detects return statements in _Noreturn functions.  They also should not return by executing to the end of the function, but this is not currently detected.
 
 
 New Headers
 -----------
 
-ORCA/C now includes three new headers specified by recent C standards.
+ORCA/C now includes several new headers specified by recent C standards.
 
-1.  The <iso646.h> header contains macros giving alternative spellings for certain operators.  It may be useful in contexts where the characters in those operators cannot easily be typed or displayed.  It complies with the C95, C99, and C11 standards.
+1.  (C95) The <iso646.h> header contains macros giving alternative spellings for certain operators.  It may be useful in contexts where the characters in those operators cannot easily be typed or displayed.
 
-2.  The <stdint.h> header defines various integer types with certain sizes and properties, as well as macros related to integer types.  It largely complies with the C99 and C11 standards, but is missing 64-bit integer types because ORCA/C does not currently support them.  For the same reason, intmax_t and uintmax_t are 32-bit types, even though C99 and C11 require them to be 64-bit or larger types.
+2.  (C99) The <stdint.h> header defines various integer types with certain sizes and properties, as well as macros related to integer types.  It largely complies with the C99 and later standards, but is missing 64-bit integer types because ORCA/C does not currently support them.  For the same reason, intmax_t and uintmax_t are 32-bit types, even though the standards require them to be 64-bit or larger types.
 
-3.  The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  The macros provided generally conform to the C99 and C11 standards, but the functions that the standards specify should be declared in this header are not available.
+3.  (C99) The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  The macros provided generally conform to the C99 and later standards, but the functions that the standards specify should be declared in this header are not available.
 
-4. The <stdalign.h> header defines the macros "alignas" for _Alignas and "alignof" for _Alignof.  It complies with the C11 standard.
+4.  (C11) The <stdalign.h> header defines the macros "alignas" for _Alignas and "alignof" for _Alignof.
 
-5. The <stdnoreturn.h> header defines the macro "noreturn" for _Noreturn.  It complies with the C11 standard.
+5.  (C11) The <stdnoreturn.h> header defines the macro "noreturn" for _Noreturn.
 
 
 Library Updates
 ---------------
 ORCA/C now includes some new library functions and features specified by the C99 and C11 standards:
 
-1.  The isblank() function and macro have been added:
+1.  (C99) The isblank() function and macro have been added:
 
 #include <ctype.h>
 int isblank(int c);
 
 isblank returns non-zero if the argument is a standard blank character, and zero if it is not.  The argument must lie in the range -1 to 255, or the result is not valid.  The standard blank characters are space and horizontal tab.
 
-2.  The snprintf() and vsnprintf() functions have been added:
+2.  (C99) The snprintf() and vsnprintf() functions have been added:
 
 #include <stdio.h>
 int snprintf(char * s, size_t n, const char * restrict, ...);
@@ -463,7 +471,7 @@ int vsnprintf(char * s, size_t n, const char * format, va_list arg);
 
 These are equivalent to sprintf and vsprintf, except that they take an additional argument giving the maximum number of characters to be written.  If n is 0, no characters are written.  Otherwise, at most n-1 characters are written based on the format string, followed by a terminating null character.  They return the number of characters (not including the terminating null character) that would have been written if there was no size limit.
 
-3.  The fprintf() and fscanf() families of functions have been updated to support some additional length modifiers and conversion specifiers:
+3.  (C99) The fprintf() and fscanf() families of functions have been updated to support some additional length modifiers and conversion specifiers:
 
 The length modifiers 'z', 't', and 'j', and 'hh' are now allowed in the format strings for the fprintf and fscanf families of functions.  They may be used with the 'd', 'i', 'o', 'u', 'x', 'X', or 'n' conversion specifiers.  These each correspond to integer types, as follows: 'z' to size_t or the corresponding signed integer type, 't' to ptrdiff_t or the corresponding unsigned integer type, 'j' to intmax_t or uintmax_t, and 'hh' to signed char or unsigned char.    The corresponding argument must be an integer of an appropriate type, or a pointer to such an integer, as appropriate for the conversion specifier and function.  (In the case of 'hh', arguments of character types will have been promoted to int according to the integer promotions, but their values should be within the range of signed char or unsigned char.)
 
@@ -471,7 +479,7 @@ The conversion specifiers 'F', 'a', and 'A' are now allowed in the format string
 
 The conversion specifier 'F' is now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.  The conversion specifiers 'a' and 'A' (both also used with floating-point numbers) are also recognized in the format strings for the fprintf family of functions, but they do not currently print the numbers in the hexadecimal format required by the C99 standard.
 
-4. The _Exit(), quick_exit(), and at_quick_exit() functions have been added:
+4. (C99 and C11) The _Exit(), quick_exit(), and at_quick_exit() functions have been added:
 
 #include <stdlib.h>
 _Noreturn void _Exit(int status);
@@ -484,7 +492,7 @@ quick_exit() calls any functions registered with at_quick_exit(), then exits the
 
 at_quick_exit() registers a function to be called by quick_exit().  It works similarly to atexit(), except that it maintains a separate list of functions that are called only if the program exits via quick_exit().  It returns zero if the function is registered successfully, and a non-zero value if there is not enough memory to satisfy the request.
 
-5. The aligned_alloc function has beed added:
+5. (C11) The aligned_alloc function has beed added:
 
 #include <stdlib.h>
 void *aligned_alloc(size_t alignment, size_t size);
@@ -508,7 +516,7 @@ The only differences are that the file doesn't have to exist (and if it doesn't 
 
 You can put absolutely anything you like in this file.  The intent is to use it for pragmas or other preprocessor directives that you would like to become defaults for all of your programs, but there is no restriction that prevents you from putting other things in the file.
 
-WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym files are created by the compiler to make recompiling programs faster.  They need to be recreated with the new information from the defaults.h file, but the compiler will not notice the presense of the defaults.h file if it is compiling a .sym file created with a previous version of the compiler.
+WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym files are created by the compiler to make recompiling programs faster.  They need to be recreated with the new information from the defaults.h file, but the compiler will not notice the presence of the defaults.h file if it is compiling a .sym file created with a previous version of the compiler.
 
 
 // Comments
@@ -918,6 +926,12 @@ int foo(int[42]);
 115. strtol() and strtoul() did not always set the end pointer to the right value in error cases.  Now they do: if there was a sequence of the expected numeric form, then they fully parse that sequence and give a pointer past the end of it, even if the number was out of range.  If there was not a sequence of the expected form, they give the starting pointer that was passed in to them.
 
 116. strtol() now accepts "-2147483648" or equivalent in other bases (i.e. LONG_MIN) as a valid input, and does not set errno in this case.
+
+117. Register optimization could generate incorrect code in some cases.
+
+(Kelvin Sherlock)
+
+118. Unnamed bit-fields with non-zero widths were treated as taking up no space.  They now take up the same space as a named bit-field of the same width would.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
