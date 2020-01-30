@@ -154,6 +154,7 @@ var
    doingMain: boolean;                  {are we processing the main function?}
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
+   fIsNoreturn: boolean;                {is the current function _Noreturn?}
    isForwardDeclared: boolean;          {is the field list component           }
                                         { referencing a forward struct/union?  }
    isFunction: boolean;                 {is the declaration a function?}
@@ -737,6 +738,9 @@ var
       tk: tokenType;                    {structure name token}
 
    begin {ReturnStatement}
+   if fIsNoreturn then
+      if (lint & lintNoreturn) <> 0 then
+         Error(153);
    NextToken;                           {skip the 'return' token}
    if token.kind <> semicolonch then    {if present, evaluate the return value}
       begin
@@ -3568,6 +3572,7 @@ if isFunction then begin
       ftype := fnType^.ftype;           {record the type of the function}
       while fType^.kind = definedType do
          fType := fType^.dType;
+      fIsNoreturn := isNoreturn;        {record if function is _Noreturn}
       variable^.state := defined;       {note that the function is defined}
       pfunc := variable;                {set the identifier for parm checks}
       fnType^.isPascal := isPascal;     {note if we have pascal parms}

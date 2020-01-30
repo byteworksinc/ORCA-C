@@ -92,6 +92,7 @@ const
    lintPrintf           = $0010;        {check printf/scanf format flags}
    lintOverflow         = $0020;        {check for overflows}
    lintC99Syntax        = $0040;        {check for syntax that C99 disallows}
+   lintNoreturn         = $0080;        {check for return in _Noreturn funcs}
 
                                         {bit masks for GetLInfo flags}
                                         {----------------------------}
