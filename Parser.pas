@@ -3010,6 +3010,7 @@ while token.kind in allowedTokens do begin
                end; {else}
             end; {if}
 1:       mySkipDeclarator := token.kind = semicolonch;
+         myTypeSpec := wordPtr;
          typeDone := true;
          end;
   
