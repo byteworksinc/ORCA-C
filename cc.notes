@@ -430,7 +430,7 @@ ORCA/C can now detect several elements of C syntax that were allowed in C89 but 
 
 * Checking for _Noreturn functions that may return:
 
-If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects cases where it appears that a function declared as _Noreturn may return.  Currently, this only detects return statements in _Noreturn functions.  They also should not return by executing to the end of the function, but this is not currently detected.
+If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects cases where it appears that a function declared as _Noreturn may return.  This detects return statements in _Noreturn functions.  It also detects some (but not all) cases where a _Noreturn function could return by executing to the end of the function.  (This may also report some cases where the code at the end of a _Noreturn function is not actually reachable.  The error message is "lint: function declared _Noreturn can return or has unreachable code.")
 
 
 New Headers
@@ -932,6 +932,12 @@ int foo(int[42]);
 (Kelvin Sherlock)
 
 118. Unnamed bit-fields with non-zero widths were treated as taking up no space.  They now take up the same space as a named bit-field of the same width would.
+
+119. The compiler allowed non-pointer types to be dereferenced when used as an l-value.
+
+(Kelvin Sherlock)
+
+120. The # operator in macros, which makes a string literal from the tokens passed as an argument to the macro, now puts quotes around string literal tokens and inserts spaces corresponding to whitespace between tokens.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
