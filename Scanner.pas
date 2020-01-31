@@ -57,6 +57,7 @@ type
       saved: boolean;
       name: stringPtr;
       parameters: integer;
+      isVarargs: boolean;
       tokens: tokenListRecordPtr;
       readOnly: boolean;
       algorithm: integer;
@@ -1357,6 +1358,7 @@ var
    pptr: parameterPtr;                  {work pointer for tracing parms list}
    sp: longStringPtr;                   {work pointer}
    stringization: boolean;              {are we stringizing a parameter?}
+   endParmTokens: tokenSet;             {tokens that end a parameter}
 
 begin {Expand}
 lPrintMacroExpansions := printMacroExpansions; {inhibit token printing}
@@ -1371,10 +1373,14 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
       NextToken;                        {skip the '('}
       paramCount := 0;                  {process the parameters}
       parmEnd := nil;
+      endParmTokens := [rparench,commach];
       repeat
          done := true;
          parenCount := 0;
          paramCount := paramCount+1;
+         if macro^.isVarargs then
+            if paramCount = macro^.parameters then
+               endParmTokens := endParmTokens - [commach];
          new(newParm);
          newParm^.next := nil;
          if parmEnd = nil then
@@ -1385,7 +1391,7 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
          newParm^.tokens := nil;
          while (token.kind <> eofsy)
             and ((parenCount <> 0)
-            or (not (token.kind in [rparench,commach]))) do begin
+            or (not (token.kind in endParmTokens))) do begin
             new(tPtr);
             tPtr^.next := newParm^.tokens;
             newParm^.tokens := tPtr;
@@ -2154,6 +2160,7 @@ var
       mPtr^.name := token.name;         {record the name}
       mPtr^.saved := false;		{not saved in symbol file}
       mPtr^.tokens := nil;              {no tokens yet}
+      mPtr^.isVarargs := false;         {not varargs (yet)}
       charKinds[ord('#')] := ch_pound;  {allow # as a token}
       if ch = '(' then begin            {scan the parameter list...}
          NextToken;                     {done with the name token...}
@@ -2186,7 +2193,29 @@ var
                   NextToken;
                   done := false;
                   end; {if}
-               end; {if}
+               end {if}
+            else if token.kind = dotch then begin
+               NextToken;
+               if token.kind = dotch then begin
+                  NextToken;                  
+                  if token.kind = dotch then
+                     NextToken
+                  else
+                     Error(89);
+                  end
+               else
+                  Error(89);
+               new(np);
+               np^.next := nil;
+               np^.str := '__VA_ARGS__';
+               if ple = nil then
+                  parameterList := np
+               else
+                  ple^.next := np;
+               ple := np;
+               parameters := parameters + 1;
+               mPtr^.isVarargs := true;
+               end; {else}
          until done;
          if token.kind = rparench then  {insist on a matching ')'}
             NextToken

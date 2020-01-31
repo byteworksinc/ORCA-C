@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 6;                  {version number of .sym file format}
+   symFileVersion = 7;                  {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -733,6 +733,7 @@ procedure EndInclude {chPtr: ptr};
                mp^.saved := true;	{mark this one as saved}
                WriteString(mp^.name);	{write the macroRecord}
                WriteByte(mp^.parameters);
+               WriteByte(ord(mp^.isVarargs));
                WriteByte(ord(mp^.readOnly));
                WriteByte(mp^.algorithm);
                tp := mp^.tokens;	{loop over token list}
@@ -1350,6 +1351,7 @@ var
       mp^.parameters := ReadByte;
       if mp^.parameters & $0080 <> 0 then
          mp^.parameters := mp^.parameters | $FF00;
+      mp^.isVarargs := boolean(ReadByte);
       mp^.readOnly := boolean(ReadByte);
       mp^.algorithm := ReadByte;
       mp^.tokens := nil;
