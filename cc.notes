@@ -363,7 +363,9 @@ These behave the same as the existing tokens [, ], {, }, #, and ## (respectively
 
 15. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In a string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  For ORCA/C the source and execution character sets are both considered to be Mac OS Roman, the character set used in the IIGS desktop environment.
 
-16. (C99) Any or all of the arguments to a function-like macro can be empty.  (This happened to work previously in some cases but not others.)
+16. (C99) Function-like macros may take a variable number of arguments.  To specify such a macro, include "..." as the last (or only) member of its parameter list.  When the macro is used, one or more corresponding arguments may be provided.  To access these arguments within the macro, use the special identifier __VA_ARGS__.  This functions similarly to a normal macro parameter, but its expansion includes the tokens from all the corresponding arguments that were provided, including any commas separating arguments.
+
+17. (C99) Any or all of the arguments to a function-like macro can now be empty.  (This happened to work previously in some cases but not others.)
 
 
 Multi-Character Character Constants
@@ -400,7 +402,7 @@ to perform all lint checks but treat them as warnings rather than errors.
 
 In addition, several new kinds of lint checks can now be performed.  They are controlled by new bits in the #pragma lint operand, as described below.
 
-* Format Checking:
+* Format checking:
 
 There is a new #pragma lint bit to enable checking of the format strings passed to the fprintf() and fscanf() families of functions.  If #pragma lint bit 4 (a value of 16) is set, the compiler will check if the format strings passed to those functions are valid, and if the number and types of arguments passed to them match what the format strings call for.
 
@@ -408,7 +410,7 @@ If these lint checks detect any errors, they will produce the error message "lin
 
 (Kelvin Sherlock)
 
-* Checking for Undefined Behavior in Computations:
+* Checking for undefined behavior in computations:
 
 There is a new #pragma lint bit to enable checking for several situations in arithmetic computations or bit manipulation that give rise to undefined behavior according to the C standards.  These are generally indicative of bugs, or (in code ported from other platforms) of assumptions that types have larger ranges than they do in ORCA/C.
 
@@ -424,13 +426,14 @@ ORCA/C can now detect several elements of C syntax that were allowed in C89 but 
 
 - Calls to undeclared functions (also detected by #pragma lint bit 0)
 - K&R-style function definitions without explicit declarations for parameters
-- return statements with no value in functions with non-void return types
+- return statements with no value in functions that have non-void return types
+  (also detected by #pragma lint bit 7, described below)
 - Declarations or type names with no type specifiers (using 'implicit int')
   (This includes but is broader than what is checked by #pragma lint bit 1.)
 
-* Checking for _Noreturn functions that may return:
+* Checking for functions not returning a value or returning inappropriately:
 
-If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects cases where it appears that a function declared as _Noreturn may return.  This detects return statements in _Noreturn functions.  It also detects some (but not all) cases where a _Noreturn function could return by executing to the end of the function.  (This may also report some cases where the code at the end of a _Noreturn function is not actually reachable.  The error message is "lint: function declared _Noreturn can return or has unreachable code.")
+If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects some situations where a function with a non-void return type may return an unpredictable value, either by executing a return statement with no value or by executing to the end of the function with no return statement.  (The former case is also detected by #pragma lint bit 6.)  It also detects some situations where a _Noreturn function could return.  Note that these checks only detect some cases of these problems, not all of them.  Also, they may report a potential problem in some situations where the code at the end of a function is not actually reachable.
 
 
 New Headers
@@ -479,7 +482,7 @@ The conversion specifiers 'F', 'a', and 'A' are now allowed in the format string
 
 The conversion specifier 'F' is now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.  The conversion specifiers 'a' and 'A' (both also used with floating-point numbers) are also recognized in the format strings for the fprintf family of functions, but they do not currently print the numbers in the hexadecimal format required by the C99 standard.
 
-4. (C99 and C11) The _Exit(), quick_exit(), and at_quick_exit() functions have been added:
+4.  (C99 and C11) The _Exit(), quick_exit(), and at_quick_exit() functions have been added:
 
 #include <stdlib.h>
 _Noreturn void _Exit(int status);
@@ -492,12 +495,14 @@ quick_exit() calls any functions registered with at_quick_exit(), then exits the
 
 at_quick_exit() registers a function to be called by quick_exit().  It works similarly to atexit(), except that it maintains a separate list of functions that are called only if the program exits via quick_exit().  It returns zero if the function is registered successfully, and a non-zero value if there is not enough memory to satisfy the request.
 
-5. (C11) The aligned_alloc function has beed added:
+5.  (C11) The aligned_alloc function has beed added:
 
 #include <stdlib.h>
 void *aligned_alloc(size_t alignment, size_t size);
 
 This is equivalent to malloc, except that it specifies an alignment for the block of memory to be allocated.  In ORCA/C, the only supported alignment value is 1 (which is the alignment of all object types).
+
+6.  (C11) If the second argument to fopen() or freopen() starts with "w", it can optionally have an "x" at the end (e.g. "wbx").  This is equivalent to the corresponding form without an "x", except that the operation will only succeed if the file does not already exist (so that it can be newly created).  If the file already exists, the operation will fail: it will leave the file alone, set errno to EEXIST, and return NULL.
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
@@ -938,6 +943,16 @@ int foo(int[42]);
 (Kelvin Sherlock)
 
 120. The # operator in macros, which makes a string literal from the tokens passed as an argument to the macro, now puts quotes around string literal tokens and inserts spaces corresponding to whitespace between tokens.
+
+121. freopen() did not properly handle modes with 'b' before '+' (e.g. "rb+").
+
+122. If tmpnam() is called with a non-null pointer argument, it should return that same pointer, not a pointer to its internal static buffer.
+
+123. When running under a multitasking environment, there was a theoretical possibility that a race condition could cause tmpfile() to open a file that had already been created by another program running concurrently.  It will now return NULL in the very unlikely situation where this would occur.
+
+124. localtime() would set tm_isdst based on the system's current DST setting even when given a time_t argument other than the current time, so the tm_isdst value might be incorrect.  Now it works as follows: if localtime() is passed the time_t value that was produced by the most recent call to time(), it gives the DST setting (as configured in the Time CDev) in effect at the time of that call.  Otherwise, it sets tm_isdst to -1, indicating that the correct value is unknown.
+
+(Steve Reeves)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
