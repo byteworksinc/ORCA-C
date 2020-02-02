@@ -151,7 +151,6 @@ type
       end;
 
 var
-   doingMain: boolean;                  {are we processing the main function?}
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
    isForwardDeclared: boolean;          {is the field list component           }
@@ -739,7 +738,7 @@ var
 
    begin {ReturnStatement}
    if fIsNoreturn then
-      if (lint & lintNoreturn) <> 0 then
+      if (lint & lintReturn) <> 0 then
          Error(153);
    NextToken;                           {skip the 'return' token}
    if token.kind <> semicolonch then    {if present, evaluate the return value}
@@ -770,7 +769,7 @@ var
       end {if}
    else begin
       if (fType^.kind <> scalarType) or (fType^.baseType <> cgVoid) then
-         if (lint & lintC99Syntax) <> 0 then
+         if ((lint & lintC99Syntax) <> 0) or ((lint & lintReturn) <> 0) then
             Error(152);
       end; {else}
    Gen1(pc_ujp, returnLabel);           {branch to the exit point}

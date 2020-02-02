@@ -183,7 +183,7 @@ const
                                         {----}
    defaultName  = '13:ORCACDefs:Defaults.h'; {default include file name}
    maxErr       = 10;                   {max errors on one line}
-   maxLint      = 154;                  {maximum lint error code}
+   maxLint      = 155;                  {maximum lint error code}
 
 type
    errorType = record                   {record of a single error}
@@ -682,6 +682,7 @@ if list or (numErr <> 0) then begin
         152: msg := @'lint: return with no value in non-void function';
         153: msg := @'lint: return statement in function declared _Noreturn';
         154: msg := @'lint: function declared _Noreturn can return or has unreachable code';
+        155: msg := @'lint: non-void function may not return a value or has unreachable code';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3683,7 +3684,7 @@ lintIsError := true;                    {lint messages are considered errors}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
-lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153,154];
+lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155];
 
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';

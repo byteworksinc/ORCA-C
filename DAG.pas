@@ -4823,9 +4823,10 @@ var
    end; {Generate}
    
    
-   procedure CheckNoreturn;
+   procedure CheckReturn;
    
-   { Check if a noreturn function looks like it might return.   }
+   { Check if a noreturn function looks like it might return,   }
+   { or if a non-void function might return with no value.      }
    {                                                            }
    { This uses a heuristic of basically looking for code at the }
    { end of the function that would lead to it returning if     }
@@ -4838,17 +4839,22 @@ var
    var
       code: icptr;
 
-   begin {CheckNoreturn}
+   begin {CheckReturn}
    code := DAGhead;
-   while code^.opcode in [pc_nop,pc_ret,pc_lnm,dc_lab,dc_loc,pc_add] do
+   while code^.opcode in [pc_lnm,dc_lab,dc_loc,pc_add] do
       code := code^.next;
    while code^.opcode = pc_pop do
       code := code^.left;
    while code^.opcode = pc_bno do
       code := code^.right;
    if not (code^.opcode in [pc_fjp,pc_tjp,pc_ujp,pc_xjp,pc_cui,pc_cup,pc_tl1])
-      then Error(154);
-   end; {CheckNoreturn}
+      then begin
+      if fIsNoreturn then
+         Error(154)
+      else
+         Error(155);
+      end;
+   end; {CheckReturn}
 
 
    procedure Push (code: icptr);
@@ -4938,8 +4944,16 @@ case code^.opcode of
    pc_gil, pc_gli, pc_gdl, pc_gld, pc_lil, pc_lli, pc_ldl, pc_lld,
    pc_lad, pc_lao, pc_lca, pc_lda, pc_ldc, pc_ldo, pc_lod, pc_nop,
    dc_cns, dc_glb, dc_dst, pc_lnm, pc_nam, pc_nat, dc_lab, pc_add,
-   pc_ujp, dc_pin, pc_ent, pc_ret, dc_sym:
+   pc_ujp, dc_pin, pc_ent, dc_sym:
       Push(code);
+
+   pc_ret:
+      begin
+      if (lint & lintReturn) <> 0 then
+         if fIsNoreturn or ((code^.optype <> cgVoid) and not doingMain) then
+            CheckReturn;
+      Push(code);
+      end;
 
    pc_cnn:
       begin
@@ -4968,9 +4982,6 @@ case code^.opcode of
       end;
 
    dc_enp: begin
-      if fIsNoreturn then
-         if (lint & lintNoreturn) <> 0 then
-            CheckNoreturn;
       Push(code);
       Reverse;
       Generate;

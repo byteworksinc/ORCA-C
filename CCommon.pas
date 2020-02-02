@@ -92,7 +92,7 @@ const
    lintPrintf           = $0010;        {check printf/scanf format flags}
    lintOverflow         = $0020;        {check for overflows}
    lintC99Syntax        = $0040;        {check for syntax that C99 disallows}
-   lintNoreturn         = $0080;        {check for return in _Noreturn funcs}
+   lintReturn           = $0080;        {flag issues with how functions return}
 
                                         {bit masks for GetLInfo flags}
                                         {----------------------------}
@@ -505,6 +505,7 @@ var
    wait: boolean;                       {wait for keypress after errors?}
    lintIsError: boolean;                {treat lint messages as errors?}
    fIsNoreturn: boolean;                {is the current function _Noreturn?}
+   doingMain: boolean;                  {are we processing the main function?}
 
                                         {syntactic classes of tokens}
                                         {---------------------------}
