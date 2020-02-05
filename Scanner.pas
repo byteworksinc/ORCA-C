@@ -238,7 +238,7 @@ type
 var
    dateStr: longStringPtr;              {macro date string}
    doingPPExpression: boolean;          {are we processing a preprocessor expression?}
-   doingstring: boolean;                {used to suppress comments in strings}
+   doingStringOrCharacter: boolean;     {used to suppress comments in strings}
    errors: array[1..maxErr] of errorType; {errors in this line}
    eofPtr: ptr;                         {points one byte past the last char in the file}
    fileList: filePtr;                   {include file list}
@@ -3677,7 +3677,7 @@ needWriteLine := false;                 {no lines are pending}
 wroteLine := false;                     {current line has not been written}
 switchLanguages := false;               {not switching languages}
 lastWasReturn := false;                 {last char was not return}
-doingstring := false;                   {not doing a string}
+doingStringOrCharacter := false;        {not doing a string}
 doingPPExpression := false;             {not doing a preprocessor expression}
 unix_1 := false;			{int is 16 bits}
 lintIsError := true;                    {lint messages are considered errors}
@@ -4044,7 +4044,9 @@ var
    {set up locals}
    cnt := 0;
    result := 0;
-      
+
+   doingStringOrCharacter := true;
+
    {skip the leading quote}
    NextCh;
    
@@ -4054,6 +4056,7 @@ var
          cnt := cnt + 1;
       result := (result << 8) | EscapeCh;
       end; {while}
+   doingStringOrCharacter := false;
    
    {skip the closing quote}
    if (charKinds[ord(ch)] = ch_char) then begin
@@ -4429,7 +4432,7 @@ case charKinds[ord(ch)] of
    ch_char  : CharConstant;		{character constants}
 
    ch_string: begin                     {string constants}
-      doingstring := true;              {change character scanning}
+      doingStringOrCharacter := true;   {change character scanning}
       token.kind := stringconst;        {set up the token}
       token.class := stringConstant;
       i := 0;                           {set up for the string scan}
@@ -4462,7 +4465,7 @@ case charKinds[ord(ch)] of
          if (i = 1) and ispstring then
             setLength := true;
          end; {while}
-      doingstring := false;             {process the end of the string}
+      doingStringOrCharacter := false;  {process the end of the string}
       if ch = '"' then
          NextCh
       else
@@ -4474,7 +4477,6 @@ case charKinds[ord(ch)] of
       token.sval := pointer(Malloc(i+3)); {put the string in the string pool}
       CopyLongString(token.sval, pointer(sPtr));
       dispose(sPtr);
-      doingstring := false;
       token.sval^.str[i+1] := chr(0);   {add null in case the string is extended}
       end;
 

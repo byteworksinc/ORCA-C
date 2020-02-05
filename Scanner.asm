@@ -332,10 +332,10 @@ lb9      anop
 !
 !    {if it's a comment, skip the comment }
 !    {characters and return a space.      }
-!    if (not doingstring) and (ch = '/') and (chPtr <> eofPtr)
+!    if (not doingStringOrCharacter) and (ch = '/') and (chPtr <> eofPtr)
 !       and ((chr(chPtr^) = '*')
 !       or ((chr(chPtr^) = '/') and allowSlashSlashComments))then begin
-         lda   doingstring
+         lda   doingStringOrCharacter
          jne   lc6
          lda   ch
          cmp   #'/'
