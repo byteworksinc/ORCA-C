@@ -805,8 +805,14 @@ var
    fToken := token;
    NextToken;
 
+   {in the preprocessor, all identifiers (post macro replacement) become 0}
+   if kind = preprocessorExpression then begin
+      stack^.token.kind := longconst;
+      stack^.token.lval := 0;
+      end {if}
+
    {if the id is not declared, create a function returning integer}
-   if id = nil then begin
+   else if id = nil then begin
       if token.kind = lparench then begin
          fnPtr := pointer(GCalloc(sizeof(typeRecord)));
          {fnPtr^.size := 0;}
@@ -827,10 +833,6 @@ var
          if ((lint & lintUndefFn) <> 0) or ((lint & lintC99Syntax) <> 0) then
             Error(51);
          end {if}
-      else if kind = preprocessorExpression then begin
-         stack^.token.kind := intconst;
-         stack^.token.ival := 0;
-         end {else if}
       else begin
          Error(31);
          errorFound := true;

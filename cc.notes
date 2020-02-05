@@ -965,6 +965,8 @@ int foo(int[42]);
 
 125. Within character constants, /* or // should not start a comment.
 
+126. In a proprocessor expression, any identifiers remaining after macro expansion should be replaced with the constant 0.  This did not work correctly for declared variable or function names, nor for enumeration constants.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
