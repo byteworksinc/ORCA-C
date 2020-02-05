@@ -7,7 +7,7 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2020
 2.2.0 B4    1.	Bugs squashed.  See bug notes, below.
 
             2.	New language features added (mainly features from C99 and C11).
-              	See "Compiler changes introduced in C 2.2.0."
+              	See "New Language Features," below.
 
             3.	Some optimization passes have small improvements.
 
@@ -22,8 +22,8 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2020
             7.	Some new headers specified by recent C standards are added.
               	See "New Headers."
 
-            8.	Two new #pragma ignore bits are defined.  See "Compiler changes
-              	introduced in C 2.2.0."
+            8.	Three new #pragma ignore bits are defined.  See "Additions to
+              	#pragma ignore."
 
             9.	Several new #pragma lint bits are defined.  Also, messages from
               	#pragma lint can now optionally be treated as warnings rather
@@ -60,9 +60,7 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2020
 
 -- Known Issues -------------------------------------------------------------
 
-1.  Not all orderings of storage class specifiers, type qualifiers, and type specifiers are supported in declarations and type names.
-
-2.  ORCA/C fails to detect various error conditions for which the C standards require a diagnostic message to be issued.
+1.  ORCA/C fails to detect various error conditions for which the C standards require a diagnostic message to be issued.
 
 -- Manual Errata ------------------------------------------------------------
 
@@ -105,11 +103,11 @@ The table shows the language number for C as 7.  It should be 8.
 
 p. 233
 
-Identifiers may now contain universal character names, a type of escape sequence that can denote a Unicode character.  See "Compiler changes introduced in C 2.2.0," below.
+Identifiers may now contain universal character names, a type of escape sequence that can denote a Unicode character.  See "New Language Features," below.
 
-Several new reserved words (keywords) added in the C99 or C11 standards are now supported.  For information on what these are and how they are used, see "Compiler changes introduced in C 2.2.0," below.
+Several new reserved words (keywords) added in the C99 or C11 standards are now supported.  For information on what these are and how they are used, see "New Language Features," below.
 
-Certain alternate reserved symbols known as digraphs are now supported.  See "Compiler changes introduced in C 2.2.0," below.
+Certain alternate reserved symbols known as digraphs are now supported.  See "New Language Features," below.
 
 p. 237
 
@@ -121,7 +119,7 @@ The limit on the total length of string constants in a single function has been 
 
 p. 239
 
-String and character constants may now contain universal character names, a type of escape sequence that can denote a Unicode character.  See "Compiler changes introduced in C 2.2.0," below.
+String and character constants may now contain universal character names, a type of escape sequence that can denote a Unicode character.  See "New Language Features," below.
 
 p. 240
 
@@ -157,7 +155,7 @@ The #pragma ignore directive supports four new bits.
 
 Bit 1 affects the interpretation of multi-character character constants.  See "Multi-Character Character Constants," below.
 
-Bit 2 controls whether spurious tokens are allowed after an #endif directive.  See "Compiler changes introduced in C 2.2.0," below.
+Bit 2 controls whether spurious tokens are allowed after an #endif directive.  See "Additions to #pragma ignore," below.
 
 Bit 3 controls whether // comments are allowed.  If bit 3 is set, as in
 
@@ -167,7 +165,7 @@ ORCA/C supports // comments.  If bit 3 is clear, ORCA/C does not support // comm
 
 See "// Comments," below, for a complete description of // comments.
 
-Bit 4 controls whether C99-style scope rules are followed and whether mixed statements and declarations are allowed in blocks.  See "Compiler changes introduced in C 2.2.0," below.
+Bit 4 controls whether C99-style scope rules are followed and whether mixed statements and declarations are allowed in blocks.  See "New Language Features," below.
 
 p. 259
 
@@ -181,7 +179,7 @@ p. 263
 
 p. 275
 
-Several new declaration specifiers from C99 and C11 are now supported.  For details, see "Compiler changes introduced in C 2.2.0," below.
+Several new declaration specifiers from C99 and C11 are now supported.  For details, see "New Language Features," below.
 
 p. 277
 
@@ -289,7 +287,7 @@ The control codes to turn the cursor on and off are no longer used in the .CONSO
 New Language Features
 ---------------------
 
-ORCA/C 2.2.0 adds support for several new C language features.  Most are features that were added in the C99 language standard.
+ORCA/C 2.2.0 adds support for several new C language features.  Most are features that were added in the C99 or C11 language standards.
 
 1.  (C99 and C11) ORCA/C now recognizes the new keywords added in C99 and C11.  These are:
 
@@ -339,33 +337,29 @@ The flexible array member does not contribute to the size of the struct as repor
 
 8.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
 
-9.  Two more new bits are introduced in the #pragma ignore directive.  Bit 1 (a value of 2) affects the handling of multi-character character constants; it is described in the section below.  Bit 2 (a value of 4) controls whether spurious tokens are allowed to appear after the #endif directive.  If this bit is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
+9.  (C11) The _Alignof operator and _Alignas declaration specifier are now supported.  An expression "_Alignof(type-name)" gives the alignment of the specified type.  In a declaration, an alignment specifier "_Alignas(type-name)" or "_Alignas(constant-expression)" specifies the required alignment for the object being declared.  In ORCA/C, the alignment of all object types is 1, and that is the only alignment value supported.  (As such, these features are not particularly useful in ORCA/C-specific code, but they may be used to control alignment in portable programs.)
 
-(Kelvin Sherlock, Mike Westerfield)
+10. (C11) The _Noreturn function specifier may be used in function declarations.  It indicates that the function does not return to its caller.  This serves as documentation to the user.  It could potentially also enable optimizations, although ORCA/C does not currently perform any optimizations based on it.
 
-10. (C11) The _Alignof operator and _Alignas declaration specifier are now supported.  An expression "_Alignof(type-name)" gives the alignment of the specified type.  In a declaration, an alignment specifier "_Alignas(type-name)" or "_Alignas(constant-expression)" specifies the required alignment for the object being declared.  In ORCA/C, the alignment of all object types is 1, and that is the only alignment value supported.  (As such, these features are not particularly useful in ORCA/C-specific code, but they may be used to control alignment in portable programs.)
-
-11. (C11) The _Noreturn function specifier may be used in function declarations.  It indicates that the function does not return to its caller.  This serves as documentation to the user.  It could potentially also enable optimizations, although ORCA/C does not currently perform any optimizations based on it.
-
-12. (C11) Static assertions are now supported.  These have the form
+11. (C11) Static assertions are now supported.  These have the form
 
    _Static_assert ( constant-expression , string-literal ) ;
 
 and may appear wherever a declaration can (including inside and outside functions).  They serve as assertions evaluated at compilation time, which will fail and abort compilation if the constant expression evaluates to 0.  The string literal can contain an error message describing the problem.
 
-13. (C99) The "restrict" type qualifier is now supported.  This qualifier on object pointer types requires that all accesses to the pointed-to object must directly or indirectly use the value of that particular pointer.  For example, if a function takes two pointer parameters that are both restrict-qualified, this asserts that during any execution of the function, if an object is accessed through one of those pointer parameters, it is not also accessed through the other; the values passed at call sites must be such that this will be the case.  Using "restrict" could potentially enable greater optimization possibilities, but ORCA/C does not currently perform any optimizations based on it.
+12. (C99) The "restrict" type qualifier is now supported.  This qualifier on object pointer types requires that all accesses to the pointed-to object must directly or indirectly use the value of that particular pointer.  For example, if a function takes two pointer parameters that are both restrict-qualified, this asserts that during any execution of the function, if an object is accessed through one of those pointer parameters, it is not also accessed through the other; the values passed at call sites must be such that this will be the case.  Using "restrict" could potentially enable greater optimization possibilities, but ORCA/C does not currently perform any optimizations based on it.
 
-14. (C95) Digraphs are now supported. These are alternative tokens that are equivalent to certain tokens that may be difficult to type or display in some situations (e.g. on the IIgs text screen with certain language settings).  Specifically, the following six tokens are now supported:
+13. (C95) Digraphs are now supported. These are alternative tokens that are equivalent to certain tokens that may be difficult to type or display in some situations (e.g. on the IIgs text screen with certain language settings).  Specifically, the following six tokens are now supported:
 
    <: :> <% %> %: %:%:
 
 These behave the same as the existing tokens [, ], {, }, #, and ## (respectively), apart from their spelling.
 
-15. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In a string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  For ORCA/C the source and execution character sets are both considered to be Mac OS Roman, the character set used in the IIGS desktop environment.
+14. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In a string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  For ORCA/C the source and execution character sets are both considered to be Mac OS Roman, the character set used in the IIGS desktop environment.
 
-16. (C99) Function-like macros may take a variable number of arguments.  To specify such a macro, include "..." as the last (or only) member of its parameter list.  When the macro is used, one or more corresponding arguments may be provided.  To access these arguments within the macro, use the special identifier __VA_ARGS__.  This functions similarly to a normal macro parameter, but its expansion includes the tokens from all the corresponding arguments that were provided, including any commas separating arguments.
+15. (C99) Function-like macros may take a variable number of arguments.  To specify such a macro, include "..." as the last (or only) member of its parameter list.  When the macro is used, one or more corresponding arguments may be provided.  To access these arguments within the macro, use the special identifier __VA_ARGS__.  This functions similarly to a normal macro parameter, but its expansion includes the tokens from all the corresponding arguments that were provided, including any commas separating arguments.
 
-17. (C99) Any or all of the arguments to a function-like macro can now be empty.  (This happened to work previously in some cases but not others.)
+16. (C99) Any or all of the arguments to a function-like macro can now be empty.  (This happened to work previously in some cases but not others.)
 
 
 Multi-Character Character Constants
@@ -380,18 +374,32 @@ Note that MPW IIGS ORCA/C also supports multi-character constants and #pragma ig
 (Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
 
 
+Additions to #pragma ignore
+---------------------------
+Three additional #pragma ignore bits are now supported.
+
+Bit 1 (a value of 2) affects the interpretation of multi-character character constants.  It is described under "Multi-Character Character Constants," above.
+
+Bit 2 (a value of 4) controls whether spurious tokens are allowed after an #endif directive.  If it is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
+
+Bit 4 (a value of 16) controls whether ORCA/C follows C99-style rules for declaration placement and block scopes.  See "New Language Features," above.
+
+(Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
+
+
 Inline Function Names
 ---------------------
 
 ORCA/C now supports recording the names of functions using the inline name format documented in Apple IIGS Technical Note #103.  This allows assembly-level debugging tools such as GSBug and Nifty List to display the names of functions in an ORCA/C program while debugging it.  To enable generation of inline function names, set #pragma debug bit 15 (a value of 0x8000).
 
-Note that inline function names are unrelated to the other types of debug code that ORCA/C can generate.  In particular, inline function names are not needed for source-level debugging using the desktop development environment or other compatible source-level debuggers, although it is not harmful to enable both types of debugging information at the same time.
+Note that inline function names are unrelated to the other types of debug code that ORCA/C can generate.  In particular, inline function names are not needed for source-level debugging using the desktop development environment or other compatible source-level debuggers, although it is possible to enable both types of debugging information at the same time.
 
 (Kelvin Sherlock)
 
 
 Enhancements to #pragma lint
 ----------------------------
+
 The #pragma lint directive has several new features.
 
 First, the directive can now optionally be configured to perform its checks but treat any messages produced as warnings rather than errors, so that they do not cause compilation to fail.  To make it work this way, add ";0" after the integer value indicating the checks to perform.  For example, you can use
@@ -454,6 +462,7 @@ ORCA/C now includes several new headers specified by recent C standards.
 
 Library Updates
 ---------------
+
 ORCA/C now includes some new library functions and features specified by the C99 and C11 standards:
 
 1.  (C99) The isblank() function and macro have been added:
@@ -953,6 +962,8 @@ int foo(int[42]);
 124. localtime() would set tm_isdst based on the system's current DST setting even when given a time_t argument other than the current time, so the tm_isdst value might be incorrect.  Now it works as follows: if localtime() is passed the time_t value that was produced by the most recent call to time(), it gives the DST setting (as configured in the Time CDev) in effect at the time of that call.  Otherwise, it sets tm_isdst to -1, indicating that the correct value is unknown.
 
 (Steve Reeves)
+
+125. Within character constants, /* or // should not start a comment.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
