@@ -636,7 +636,7 @@
 {                                                               }
 {  dc_lab - define a label                                      }
 {                                                               }
-{  Gen1(pc_lab, lab)                                            }
+{  Gen1(dc_lab, lab)                                            }
 {                                                               }
 {  Defines label number lab at the current location.            }
 {                                                               }
