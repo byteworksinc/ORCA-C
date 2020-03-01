@@ -150,6 +150,14 @@ type
                    cgReal,cgDouble,cgComp,cgExtended,cgString,
                    cgVoid,ccPointer);
 
+   { Basic types (plus the void type) as defined by the C language.      }
+   { This differs from baseTypeEnum in that different types with the     }
+   { same representation are distinguished from each other.              }
+
+   cTypeEnum = (ctChar, ctSChar, ctUChar, ctShort, ctUShort, ctInt, ctUInt,
+                ctLong, ctULong, ctFloat, ctDouble, ctLongDouble, ctComp,
+                ctVoid);
+
                                         {tokens}
                                         {------}
                                         {Note: tokenEnum is duplicated in }
@@ -266,7 +274,8 @@ type
      isConstant: boolean;               {is the type a constant?}
      saveDisp: longint;			{disp in symbol file}
      case kind: typeKind of             {NOTE: aType,pType and fType must overlap}
-        scalarType  : (baseType: baseTypeEnum;);
+        scalarType  : (baseType: baseTypeEnum;  {our internal type representation}
+                       cType: cTypeEnum);       {type in the C type system}
         arrayType   : (aType: typePtr;
                        elements: longint;
                       );

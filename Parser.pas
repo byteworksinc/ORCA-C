@@ -1862,7 +1862,7 @@ var
          else begin
             Error(47);
             errorFound := true;
-            Subscript := wordPtr;
+            Subscript := intPtr;
             end; {else}
          end {if}
       else if tree^.token.kind = dotch then begin
@@ -1879,7 +1879,7 @@ var
          else begin
             Error(47);
             errorFound := true;
-            Subscript := wordPtr;
+            Subscript := intPtr;
             end; {else}
          end {else if}
       else if tree^.token.kind = ident then begin
@@ -1887,7 +1887,7 @@ var
          if ip = nil then begin
             Error(31);
             errorFound := true;
-            Subscript := wordPtr;
+            Subscript := intPtr;
             iPtr^.pName := @'?';
             end {if}
          else begin
@@ -1898,7 +1898,7 @@ var
       else begin
          Error(47);
          errorFound := true;
-         Subscript := wordPtr;
+         Subscript := intPtr;
          end; {else}
       end; {Subscript}
 
@@ -2239,7 +2239,7 @@ var
 
          {fill a structure}
          if variable^.storage in [external,global,private] then
-            Fill(count * tp^.size, bytePtr)
+            Fill(count * tp^.size, sCharPtr)
          else begin
             i := count;
             while i <> 0 do begin
@@ -2256,7 +2256,7 @@ var
 
          {fill a union}
          if variable^.storage in [external,global,private] then
-            Fill(count * tp^.size, bytePtr)
+            Fill(count * tp^.size, sCharPtr)
          else
             Fill(count, tp^.fieldList^.iType);
          end {else if}
@@ -2364,7 +2364,7 @@ var
                iPtr^.sval := token.sval;
                count := tp^.elements - token.sval^.length;
                if count <> 0 then
-                  Fill(count, bytePtr);
+                  Fill(count, sCharPtr);
                end {if}
             else begin
                iPtr^.isConstant := false;
@@ -2477,7 +2477,7 @@ var
             end; {if}
          if count > 0 then
             if variable^.storage in [external,global,private] then
-               Fill(count, bytePtr);
+               Fill(count, sCharPtr);
          printMacroExpansions := lPrintMacroExpansions;
          end {if}
       else                              {struct/union assignment initializer}
@@ -2767,33 +2767,33 @@ var
    if typeSpecifiers = [voidsy] then
       myTypeSpec := voidPtr
    else if typeSpecifiers = [charsy] then
-      myTypeSpec := uBytePtr
+      myTypeSpec := charPtr
    else if typeSpecifiers = [signedsy,charsy] then
-      myTypeSpec := bytePtr
+      myTypeSpec := sCharPtr
    else if typeSpecifiers = [unsignedsy,charsy] then
-      myTypeSpec := uBytePtr
+      myTypeSpec := uCharPtr
    else if (typeSpecifiers = [shortsy])
       or (typeSpecifiers = [signedsy,shortsy])
       or (typeSpecifiers = [shortsy,intsy])
       or (typeSpecifiers = [signedsy,shortsy,intsy]) then
-      myTypeSpec := wordPtr
+      myTypeSpec := shortPtr
    else if (typeSpecifiers = [unsignedsy,shortsy])
       or (typeSpecifiers = [unsignedsy,shortsy,intsy]) then
-      myTypeSpec := uWordPtr
+      myTypeSpec := uShortPtr
    else if (typeSpecifiers = [intsy])
       or (typeSpecifiers = [signedsy])
       or (typeSpecifiers = [signedsy,intsy]) then begin
       if unix_1 then
          myTypeSpec := longPtr
       else
-         myTypeSpec := wordPtr;
+         myTypeSpec := intPtr;
       end {else if}
    else if (typeSpecifiers = [unsignedsy])
       or (typeSpecifiers = [unsignedsy,intsy]) then begin
       if unix_1 then
          myTypeSpec := uLongPtr
       else
-         myTypeSpec := uWordPtr;
+         myTypeSpec := uIntPtr;
       end {else if}
    else if (typeSpecifiers = [longsy])
       or (typeSpecifiers = [signedsy,longsy])
@@ -2804,18 +2804,17 @@ var
       or (typeSpecifiers = [unsignedsy,longsy,intsy]) then
       myTypeSpec := uLongPtr
    else if typeSpecifiers = [floatsy] then
-      myTypeSpec := realPtr
+      myTypeSpec := floatPtr
    else if typeSpecifiers = [doublesy] then
       myTypeSpec := doublePtr
-   else if typeSpecifiers = [longsy,doublesy] then
+   else if (typeSpecifiers = [longsy,doublesy])
+      or (typeSpecifiers = [extendedsy]) then
       myTypeSpec := extendedPtr
    else if typeSpecifiers = [compsy] then
       myTypeSpec := compPtr
-   else if typeSpecifiers = [extendedsy] then
-      myTypeSpec := extendedPtr
    else if typeSpecifiers = [_Boolsy] then begin
       Error(135);
-      myTypeSpec := wordPtr;
+      myTypeSpec := intPtr;
       end {else if}
    else
       UnexpectedTokenError(expectedNext);
@@ -3009,7 +3008,7 @@ while token.kind in allowedTokens do begin
                end; {else}
             end; {if}
 1:       mySkipDeclarator := token.kind = semicolonch;
-         myTypeSpec := wordPtr;
+         myTypeSpec := intPtr;
          typeDone := true;
          end;
   
@@ -3147,7 +3146,7 @@ skipDeclarator := mySkipDeclarator;
 typeSpec := myTypeSpec;
 declarationModifiers := myDeclarationModifiers;
 if typeSpec = nil then begin
-   typeSpec := wordPtr;                 {under C89, default type is int}
+   typeSpec := intPtr;                  {under C89, default type is int}
    if (lint & lintC99Syntax) <> 0 then
       Error(151);
    end; {if}
@@ -3592,7 +3591,7 @@ if isFunction then begin
          tlp := lp;
          while tlp <> nil do begin
             if tlp^.itype = nil then begin
-               tlp^.itype := wordPtr;
+               tlp^.itype := intPtr;
                if (lint & lintC99Syntax) <> 0 then
                   if (lint & lintNotPrototyped) = 0 then
                      Error(147);        {C99+ require K&R params to be declared}

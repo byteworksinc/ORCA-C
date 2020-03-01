@@ -25,17 +25,19 @@
 {  noDeclarations - have we declared anything at this level?    }
 {  table - current symbol table                                 }
 {                                                               }
-{  bytePtr - pointer to the base type for bytes                 }
-{  uBytePtr - pointer to the base type for unsigned bytes       }
-{  wordPtr - pointer to the base type for words                 }
-{  uWordPtr - pointer to the base type for unsigned words       }
-{  longPtr - pointer to the base type for long words            }
-{  uLongPtr - pointer to the base type for unsigned long words  }
-{  realPtr - pointer to the base type for reals                 }
-{  doublePtr - pointer to the base type for double precision    }
-{       reals                                                   }
-{  compPtr - pointer to the base type for comp reals            }
-{  extendedPtr - pointer to the base type for extended reals    }
+{  charPtr - pointer to the base type for char                  }
+{  sCharPtr - pointer to the base type for signed char          }
+{  uCharPtr - pointer to the base type for unsigned char        }
+{  shortPtr - pointer to the base type for short                }
+{  uShortPtr - pointer to the base type for unsigned short      }
+{  intPtr - pointer to the base type for int                    }
+{  uIntPtr - pointer to the base type for unsigned int          }
+{  longPtr - pointer to the base type for long                  }
+{  uLongPtr - pointer to the base type for unsigned long        }
+{  floatPtr - pointer to the base type for float                }
+{  doublePtr - pointer to the base type for double              }
+{  compPtr - pointer to the base type for comp                  }
+{  extendedPtr - pointer to the base type for extended          }
 {  voidPtr - pointer to the base type for void                  }
 {  voidPtrPtr - typeless pointer, for some type casting         }
 {  stringTypePtr - pointer to the base type for string          }
@@ -69,9 +71,10 @@ var
    noDeclarations: boolean;             {have we declared anything at this level?}
    table: symbolTablePtr;               {current symbol table}
    globalTable: symbolTablePtr;         {global symbol table}
- 
-   bytePtr,uBytePtr,wordPtr,uWordPtr,   {base types}
-      longPtr,uLongPtr,realPtr,doublePtr,compPtr,extendedPtr,
+
+                                        {base types}
+   charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,
+      longPtr,uLongPtr,floatPtr,doublePtr,compPtr,extendedPtr,
       stringTypePtr,voidPtr,voidPtrPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
@@ -381,9 +384,10 @@ else
 
       scalarType:
          if kind2 = scalarType then
-            CompTypes := t1^.baseType = t2^.baseType
+            CompTypes :=
+               (t1^.baseType = t2^.baseType) and (t1^.cType = t2^.cType)
          else if kind2 = enumType then
-            CompTypes := t1^.baseType = cgWord;
+            CompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);
 
       arrayType:
          if kind2 = arrayType then begin
@@ -417,7 +421,7 @@ else
 
       enumType:
          if kind2 = scalarType then
-            CompTypes := t2^.baseType = cgWord
+            CompTypes := (t2^.baseType = cgWord) and (t2^.cType = ctInt)
          else if kind2 = enumType then
             CompTypes := true;
 
@@ -986,7 +990,7 @@ var
       case tp^.kind of
          scalarType:	WriteScalarType(tp, $80, subscripts);
          enumType,
-         functionType:  WriteScalarType(wordPtr, $80, subscripts);
+         functionType:  WriteScalarType(intPtr, $80, subscripts);
          otherwise:	begin
         		CnOut(11);
         		CnOut2(subscripts);
@@ -1050,7 +1054,7 @@ var
          else
             WriteScalarType(tp2, 0, count)
       else if tp2^.kind = enumType then
-         WriteScalarType(wordPtr, 0, count)
+         WriteScalarType(intPtr, 0, count)
       else if tp2^.kind = pointerType then
          WritePointerType(tp2, count)
       else begin
@@ -1133,7 +1137,7 @@ var
       WriteAddress(ip);			{write the address field}
       case tPtr^.kind of
          scalarType:	WriteScalarType(tPtr, 0, 0);
-         enumType:	WriteScalarType(wordPtr, 0, 0);
+         enumType:	WriteScalarType(intPtr, 0, 0);
          pointerType:	begin
          		WritePointerType(tPtr, 0);
                         ExpandPointerType(tPtr);
@@ -1192,37 +1196,68 @@ PushTable;
 globalTable := table;
 noDeclarations := false;
                                         {declare base types}
-new(bytePtr);                           {byte}
-with bytePtr^ do begin
+new(sCharPtr);                          {signed char}
+with sCharPtr^ do begin
    size := cgByteSize;
    saveDisp := 0;
    isConstant := false;
    kind := scalarType;
    baseType := cgByte;
+   cType := ctSChar;
    end; {with}
-new(uBytePtr);                          {unsigned byte}
-with uBytePtr^ do begin
+new(charPtr);                           {char}
+with charPtr^ do begin
    size := cgByteSize;
    saveDisp := 0;
    isConstant := false;
    kind := scalarType;
    baseType := cgUByte;
+   cType := ctChar;
    end; {with}
-new(wordPtr);                           {word}
-with wordPtr^ do begin
+new(uCharPtr);                          {unsigned char}
+with uCharPtr^ do begin
+   size := cgByteSize;
+   saveDisp := 0;
+   isConstant := false;
+   kind := scalarType;
+   baseType := cgUByte;
+   cType := ctUChar;
+   end; {with}
+new(shortPtr);                          {short}
+with shortPtr^ do begin
    size := cgWordSize;
    saveDisp := 0;
    isConstant := false;
    kind := scalarType;
    baseType := cgWord;
+   cType := ctShort;
    end; {with}
-new(uWordPtr);                          {unsigned word}
-with uWordPtr^ do begin
+new(uShortPtr);                         {unsigned short}
+with uShortPtr^ do begin
    size := cgWordSize;
    saveDisp := 0;
    isConstant := false;
    kind := scalarType;
    baseType := cgUWord;
+   cType := ctUShort;
+   end; {with}
+new(intPtr);                            {int}
+with intPtr^ do begin
+   size := cgWordSize;
+   saveDisp := 0;
+   isConstant := false;
+   kind := scalarType;
+   baseType := cgWord;
+   cType := ctInt;
+   end; {with}
+new(uIntPtr);                           {unsigned int}
+with uIntPtr^ do begin
+   size := cgWordSize;
+   saveDisp := 0;
+   isConstant := false;
+   kind := scalarType;
+   baseType := cgUWord;
+   cType := ctUInt;
    end; {with}
 new(longPtr);                           {long}
 with longPtr^ do begin
@@ -1231,6 +1266,7 @@ with longPtr^ do begin
    isConstant := false;
    kind := scalarType;
    baseType := cgLong;
+   cType := ctLong;
    end; {with}
 new(uLongPtr);                          {unsigned long}
 with uLongPtr^ do begin
@@ -1239,14 +1275,16 @@ with uLongPtr^ do begin
    isConstant := false;
    kind := scalarType;
    baseType := cgULong;
+   cType := ctULong;
    end; {with}
-new(realPtr);                           {real}
-with realPtr^ do begin
+new(floatPtr);                          {real}
+with floatPtr^ do begin
    size := cgRealSize;
    saveDisp := 0;
    isConstant := false;
    kind := scalarType;
    baseType := cgReal;
+   cType := ctFloat;
    end; {with}
 new(doublePtr);                         {double}
 with doublePtr^ do begin
@@ -1255,6 +1293,7 @@ with doublePtr^ do begin
    isConstant := false;
    kind := scalarType;
    baseType := cgDouble;
+   cType := ctDouble;
    end; {with}
 new(compPtr);                           {comp}
 with compPtr^ do begin
@@ -1263,14 +1302,16 @@ with compPtr^ do begin
    isConstant := false;
    kind := scalarType;
    baseType := cgComp;
+   cType := ctComp;
    end; {with}
-new(extendedPtr);                       {extended}
+new(extendedPtr);                       {extended, aka long double}
 with extendedPtr^ do begin
    size := cgExtendedSize;
    saveDisp := 0;
    isConstant := false;
    kind := scalarType;
    baseType := cgExtended;
+   cType := ctLongDouble;
    end; {with}
 new(stringTypePtr);                     {string constant type}
 with stringTypePtr^ do begin
@@ -1278,7 +1319,7 @@ with stringTypePtr^ do begin
    saveDisp := 0;
    isConstant := false;
    kind := arrayType;
-   aType := uBytePtr;
+   aType := charPtr;
    elements := 1;
    end; {with}
 new(voidPtr);                           {void}
@@ -1288,6 +1329,7 @@ with voidPtr^ do begin
    isConstant := false;
    kind := scalarType;
    baseType := cgVoid;
+   cType := ctVoid;
    end; {with}
 new(voidPtrPtr);                        {typeless pointer}
 with voidPtrPtr^ do begin
@@ -1308,7 +1350,7 @@ with defaultStruct^ do begin            {(for structures with errors)}
    with fieldlist^ do begin
       next := nil;
       name := @'field';
-      itype := wordPtr;
+      itype := intPtr;
       class := ident;
       state := declared;
       disp := 0;

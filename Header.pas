@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 7;                  {version number of .sym file format}
+   symFileVersion = 8;                  {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -969,19 +969,19 @@ procedure EndInclude {chPtr: ptr};
 
 
             begin {WriteType}
-            if tp = bytePtr then
+            if tp = sCharPtr then
                WriteByte(2)
-            else if tp = uBytePtr then
+            else if tp = charPtr then
                WriteByte(3)
-            else if tp = wordPtr then
+            else if tp = intPtr then
                WriteByte(4)
-            else if tp = uWordPtr then
+            else if tp = uIntPtr then
                WriteByte(5)
             else if tp = longPtr then
                WriteByte(6)
             else if tp = uLongPtr then
                WriteByte(7)
-            else if tp = realPtr then
+            else if tp = floatPtr then
                WriteByte(8)
             else if tp = doublePtr then
                WriteByte(9)
@@ -995,6 +995,12 @@ procedure EndInclude {chPtr: ptr};
                WriteByte(13)
             else if tp = defaultStruct then
                WriteByte(14)
+            else if tp = uCharPtr then
+               WriteByte(15)
+            else if tp = shortPtr then
+               WriteByte(16)
+            else if tp = uShortPtr then
+               WriteByte(17)
             else if tp^.saveDisp <> 0 then begin
                WriteByte(1);
                WriteLong(tp^.saveDisp);
@@ -1006,8 +1012,10 @@ procedure EndInclude {chPtr: ptr};
                WriteByte(ord(tp^.isConstant));
                WriteByte(ord(tp^.kind));
                case tp^.kind of
-        	  scalarType:
+        	  scalarType: begin
         	     WriteByte(ord(tp^.baseType));
+        	     WriteByte(ord(tp^.cType));
+        	     end;
 
         	  arrayType: begin
         	     WriteLong(tp^.elements);
@@ -1612,8 +1620,10 @@ var
 	       tp^.isConstant := boolean(ReadByte);
 	       tp^.kind := typeKind(ReadByte);
 	       case tp^.kind of
-        	  scalarType:
+        	  scalarType: begin
         	     tp^.baseType := baseTypeEnum(ReadByte);
+        	     tp^.cType := cTypeEnum(ReadByte);
+        	     end;
 
         	  arrayType: begin
         	     tp^.elements := ReadLong;
@@ -1676,19 +1686,22 @@ var
                   end; {if}
                end; {case 1}
 
-            2: tp := bytePtr;
-            3: tp := uBytePtr;
-            4: tp := wordPtr;
-            5: tp := uWordPtr;
+            2: tp := sCharPtr;
+            3: tp := charPtr;
+            4: tp := intPtr;
+            5: tp := uIntPtr;
             6: tp := longPtr;
             7: tp := uLongPtr;
-            8: tp := realPtr;
+            8: tp := floatPtr;
             9: tp := doublePtr;
             10: tp := extendedPtr;
             11: tp := stringTypePtr;
             12: tp := voidPtr;
             13: tp := voidPtrPtr;
             14: tp := defaultStruct;
+            15: tp := uCharPtr;
+            16: tp := shortPtr;
+            17: tp := uShortPtr;
             end; {case}
 	 end; {ReadType}
 

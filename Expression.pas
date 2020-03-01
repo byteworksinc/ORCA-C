@@ -374,13 +374,13 @@ if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
          end {else if}
       else {one operand is unsigned in and the other is int} begin
          UsualBinaryConversions := cgUWord;
-         expressionType := uWordPtr;
+         expressionType := uIntPtr;
          end; {else}
       end {if}
    else begin {types are the same}
       UsualBinaryConversions := lt;
       if lt = cgWord then               {update types that may have changed}
-         expressionType := wordPtr
+         expressionType := intPtr
       else if lt = cgExtended then
          expressionType := extendedPtr;
       end; {else}
@@ -413,7 +413,7 @@ if expressionType^.kind = scalarType then begin
    et := Unary(expressionType^.baseType);
    UsualUnaryConversions := et;
    if et = cgWord then                  {update types that may have changed}
-      expressionType := wordPtr
+      expressionType := intPtr
    else if et = cgExtended then
       expressionType := extendedPtr;
    end {if}
@@ -819,7 +819,7 @@ var
          {fnPtr^.saveDisp := 0;}
          {fnPtr^.isConstant := false;}
          fnPtr^.kind := functionType;
-         fnPtr^.fType := wordPtr;
+         fnPtr^.fType := intPtr;
          {fnPtr^.varargs := false;}
          {fnPtr^.prototyped := false;}
          {fnPtr^.overrideKR := false;}
@@ -1722,7 +1722,7 @@ if expressionType^.kind = scalarType then begin
       otherwise:
          Error(47);
       end; {case}
-   expressionType := wordPtr;
+   expressionType := intPtr;
    Gen0t(op, bt);
    end {if}
 else
@@ -1947,7 +1947,7 @@ var
    ip: identPtr;                        {for scanning for the field}
 
 begin {DoSelection}
-expressionType := wordPtr;              {set defaults in case there is an error}
+expressionType := intPtr;               {set defaults in case there is an error}
 size := 0;
 if tree^.token.class = identifier then begin
    while lType^.kind = definedType do
@@ -2260,7 +2260,7 @@ var
    else if ExpressionKind(tree) in [arrayType,pointerType] then
       GenerateCode(tree)
    else begin
-      expressionType := wordPtr;        {set default type in case of error}
+      expressionType := intPtr;         {set default type in case of error}
       if doDispose then                 {prevent spurious errors}
          Error(78);
       end; {else}
@@ -2805,7 +2805,7 @@ case tree^.token.kind of
 
          enumConst: begin
             Gen1t(pc_ldc, tree^.id^.itype^.eval, cgWord);  
-            expressionType := wordPtr;
+            expressionType := intPtr;
             end;
 
          end; {case}
@@ -2816,9 +2816,9 @@ case tree^.token.kind of
       lastwasconst := true;
       lastconst := tree^.token.ival;
       if tree^.token.kind = intConst then
-         expressionType := wordPtr
+         expressionType := intPtr
       else
-         expressionType := uwordPtr;
+         expressionType := uIntPtr;
       end; {case intConst}
 
    longConst,ulongConst: begin
@@ -3134,7 +3134,7 @@ case tree^.token.kind of
       else if UsualUnaryConversions = cgExtended then begin
          GenLdcReal(0.0);
          Gen0t(pc_neq, cgExtended);
-         expressionType := wordPtr;
+         expressionType := intPtr;
          end; {if}
       lType := expressionType;
       GenerateCode(tree^.right);
@@ -3143,7 +3143,7 @@ case tree^.token.kind of
       else if UsualUnaryConversions = cgExtended then begin
          GenLdcReal(0.0);
          Gen0t(pc_neq, cgExtended);
-         expressionType := wordPtr;
+         expressionType := intPtr;
          end; {if}
       case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
@@ -3153,7 +3153,7 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
-      expressionType := wordPtr;
+      expressionType := intPtr;
       end; {case barbarop}
 
    andandop: begin                      {&&}
@@ -3163,7 +3163,7 @@ case tree^.token.kind of
       else if UsualUnaryConversions = cgExtended then begin
          GenLdcReal(0.0);
          Gen0t(pc_neq, cgExtended);
-         expressionType := wordPtr;
+         expressionType := intPtr;
          end; {if}
       lType := expressionType;
       GenerateCode(tree^.right);
@@ -3172,7 +3172,7 @@ case tree^.token.kind of
       else if UsualUnaryConversions = cgExtended then begin
          GenLdcReal(0.0);
          Gen0t(pc_neq, cgExtended);
-         expressionType := wordPtr;
+         expressionType := intPtr;
          end; {if}
       case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
@@ -3182,7 +3182,7 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
-      expressionType := wordPtr;
+      expressionType := intPtr;
       end; {case andandop}
 
    carotch: begin                       {^}
@@ -3472,7 +3472,7 @@ case tree^.token.kind of
          Gen0t(pc_equ, UsualBinaryConversions(lType))
       else
          Gen0t(pc_neq, UsualBinaryConversions(lType));
-      expressionType := wordPtr;
+      expressionType := intPtr;
       end; {case exceqop,eqeqop}
 
    lteqop,                              {<=}
@@ -3491,7 +3491,7 @@ case tree^.token.kind of
          Gen0t(pc_les, UsualBinaryConversions(lType))
       else {if tree^.token.kind = gtch then}
          Gen0t(pc_grt, UsualBinaryConversions(lType));
-      expressionType := wordPtr;
+      expressionType := intPtr;
       end; {case lteqop,gteqop,ltch,gtch}
 
    uminus: begin                        {unary -}
@@ -3546,7 +3546,7 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
-      expressionType := wordPtr;
+      expressionType := intPtr;
       end; {case excch}
 
    plusplusop:                          {prefix ++}
@@ -3754,7 +3754,7 @@ if kind = normalExpression then begin   {generate code from the expression tree}
       GenerateCode(tree);
       end {if}
    else
-      expressionType := wordPtr;        {set default type in case of error}
+      expressionType := intPtr;         {set default type in case of error}
    end {if}
 else begin                              {record the expression for an initializer}
    initializerTree := tree;
@@ -3762,7 +3762,7 @@ else begin                              {record the expression for an initialize
    if errorFound then begin
       DisposeTree(initializerTree);
       initializerTree := nil;
-      expressionType := wordPtr;        {set default type in case of error}
+      expressionType := intPtr;         {set default type in case of error}
       end {if}
    else begin
       ldoDispose := doDispose;          {find the expression type}
@@ -3795,13 +3795,13 @@ else begin                              {record the expression for an initialize
          end; {if}
       if tree^.token.kind = intconst then begin
          expressionValue := tree^.token.ival;
-         expressionType := wordPtr;
+         expressionType := intPtr;
          isConstant := true;
          end {else if}
       else if tree^.token.kind = uintconst then begin
          expressionValue := tree^.token.ival;
          expressionValue := expressionValue & $0000FFFF;
-         expressionType := uwordPtr;
+         expressionType := uIntPtr;
          isConstant := true;
          end {else if}
       else if tree^.token.kind = longconst then begin
@@ -3819,7 +3819,7 @@ else begin                              {record the expression for an initialize
          expressionType := extendedPtr;
          isConstant := true;
          if kind in [arrayExpression,preprocessorExpression] then begin
-            expressionType := wordPtr;
+            expressionType := intPtr;
             expressionValue := 1;
             Error(47);
             end; {if}
@@ -3829,7 +3829,7 @@ else begin                              {record the expression for an initialize
          expressionType := stringTypePtr;
          isConstant := true;
          if kind in [arrayExpression,preprocessorExpression] then begin
-            expressionType := wordPtr;
+            expressionType := intPtr;
             expressionValue := 1;
             Error(47);
             end; {if}
