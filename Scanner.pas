@@ -1477,7 +1477,7 @@ if macro^.readOnly then begin           {handle special macros}
 
       5: begin                          {__STDC__}
          token.kind := intConst;        {__ORCAC__}
-         token.numString := @oneStr;
+         token.numString := @oneStr;    {__STDC_NO_...__}
          token.class := intConstant;
          token.ival := 1;
          oneStr := '1';
@@ -3749,6 +3749,42 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.algorithm := 6;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__STDC_NO_ATOMICS__}
+mp^.name := @'__STDC_NO_ATOMICS__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 5;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__STDC_NO_COMPLEX__}
+mp^.name := @'__STDC_NO_COMPLEX__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 5;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__STDC_NO_THREADS__}
+mp^.name := @'__STDC_NO_THREADS__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 5;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__STDC_NO_VLA__}
+mp^.name := @'__STDC_NO_VLA__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 5;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
