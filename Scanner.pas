@@ -253,7 +253,8 @@ var
    needWriteLine: boolean;              {is there a line that needs to be written?}
    wroteLine: boolean;                  {has the current line already been written?}
    numErr: 0..maxErr;                   {number of errors in this line}
-   oneStr: string[2];			{string form of __STDC__}
+   oneStr: string[2];                   {string form of __STDC__, etc.}
+   zeroStr: string[2];                  {string form of __STDC_HOSTED__ when not hosted}
    ispstring: boolean;                  {is the current string a p-string?}
    saveNumber: boolean;                 {save the characters in a number?}
    skipping: boolean;                   {skipping tokens?}
@@ -1492,7 +1493,29 @@ if macro^.readOnly then begin           {handle special macros}
          token.sval := versionStrL;
          tokenStart := @versionStrL^.str;
          tokenEnd := pointer(ord4(tokenStart)+versionStrL^.length);
-         end;                     
+         end;
+
+      7: begin                          {__STDC_HOSTED__}
+         if isNewDeskAcc or isClassicDeskAcc or isCDev or isNBA or isXCMD then
+         begin
+            token.kind := intConst;
+            token.numString := @zeroStr;
+            token.class := intConstant;
+            token.ival := 0;
+            zeroStr := '0';
+            tokenStart := @zeroStr[1];
+            tokenEnd := pointer(ord4(tokenStart)+1);
+            end {if}
+         else begin
+            token.kind := intConst;
+            token.numString := @oneStr;
+            token.class := intConstant;
+            token.ival := 1;
+            oneStr := '1';
+            tokenStart := @oneStr[1];
+            tokenEnd := pointer(ord4(tokenStart)+1);
+            end {else}
+         end;
 
       otherwise: Error(57);
 
@@ -3785,6 +3808,15 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.algorithm := 5;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__STDC_HOSTED__}
+mp^.name := @'__STDC_HOSTED__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 7;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
