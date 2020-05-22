@@ -89,6 +89,7 @@ var
                                         {Note: The following two are set together}
    allowMixedDeclarations: boolean;     {allow mixed declarations & stmts (C99)?}
    c99Scope: boolean;                   {follow C99 rules for block scopes?}
+   looseCharTypeChecks: boolean;        {treat char and unsigned char as compatible?}
 
 {---------------------------------------------------------------}
 
@@ -2981,6 +2982,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      allowTokensAfterEndif := odd(val >> 2);
                      allowSlashSlashComments := odd(val >> 3);
                      allowMixedDeclarations := odd(val >> 4);
+                     looseCharTypeChecks := odd(val >> 5);
                      if allowMixedDeclarations <> c99Scope then begin
                         if doingFunction then
                            Error(126)
@@ -3672,6 +3674,7 @@ allowTokensAfterEndif := false;         {allow tokens after #endif}
 allowSlashSlashComments := true;		{allow // comments}
 allowMixedDeclarations := true;         {allow mixed declarations & stmts (C99)}
 c99Scope := true;                       {follow C99 rules for block scopes}
+looseCharTypeChecks := true;            {make char and unsigned char compatible}
 foundFunction := false;                 {no functions found so far}
 fileList := nil;                        {no included files}
 gettingFileName := false;               {not in GetFileName}

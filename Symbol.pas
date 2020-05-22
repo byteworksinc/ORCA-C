@@ -383,9 +383,14 @@ else
    case kind1 of
 
       scalarType:
-         if kind2 = scalarType then
-            CompTypes :=
-               (t1^.baseType = t2^.baseType) and (t1^.cType = t2^.cType)
+         if kind2 = scalarType then begin
+            CompTypes := t1^.baseType = t2^.baseType;
+            if t1^.cType <> t2^.cType then
+                if not (looseCharTypeChecks
+                   and (t1^.cType in [ctChar, ctUChar]) 
+                   and (t2^.cType in [ctChar, ctUChar])) then
+                   CompTypes := false;
+            end {if}
          else if kind2 = enumType then
             CompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);
 
