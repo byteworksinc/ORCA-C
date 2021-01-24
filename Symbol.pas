@@ -32,6 +32,8 @@
 {  uShortPtr - pointer to the base type for unsigned short      }
 {  intPtr - pointer to the base type for int                    }
 {  uIntPtr - pointer to the base type for unsigned int          }
+{  int32Ptr - pointer to the base type for 32-bit int           }
+{  uInt32Ptr - pointer to the base type for 32-bit unsigned int }
 {  longPtr - pointer to the base type for long                  }
 {  uLongPtr - pointer to the base type for unsigned long        }
 {  floatPtr - pointer to the base type for float                }
@@ -73,8 +75,8 @@ var
    globalTable: symbolTablePtr;         {global symbol table}
 
                                         {base types}
-   charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,
-      longPtr,uLongPtr,floatPtr,doublePtr,compPtr,extendedPtr,
+   charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
+      uInt32Ptr,longPtr,uLongPtr,floatPtr,doublePtr,compPtr,extendedPtr,
       stringTypePtr,voidPtr,voidPtrPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
@@ -1263,6 +1265,24 @@ with uIntPtr^ do begin
    kind := scalarType;
    baseType := cgUWord;
    cType := ctUInt;
+   end; {with}
+new(int32Ptr);                          {int (32-bit)}
+with int32Ptr^ do begin
+   size := cgLongSize;
+   saveDisp := 0;
+   isConstant := false;
+   kind := scalarType;
+   baseType := cgLong;
+   cType := ctInt32;
+   end; {with}
+new(uInt32Ptr);                         {unsigned int (32-bit)}
+with uInt32Ptr^ do begin
+   size := cgLongSize;
+   saveDisp := 0;
+   isConstant := false;
+   kind := scalarType;
+   baseType := cgULong;
+   cType := ctUInt32;
    end; {with}
 new(longPtr);                           {long}
 with longPtr^ do begin

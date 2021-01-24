@@ -153,10 +153,11 @@ type
    { Basic types (plus the void type) as defined by the C language.      }
    { This differs from baseTypeEnum in that different types with the     }
    { same representation are distinguished from each other.              }
+   { (ctInt32/ctUInt32 are 32-bit int types when using #pragma unix 1.)  }
 
    cTypeEnum = (ctChar, ctSChar, ctUChar, ctShort, ctUShort, ctInt, ctUInt,
                 ctLong, ctULong, ctFloat, ctDouble, ctLongDouble, ctComp,
-                ctVoid);
+                ctVoid, ctInt32, ctUInt32);
 
                                         {tokens}
                                         {------}

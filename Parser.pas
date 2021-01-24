@@ -2784,14 +2784,14 @@ var
       or (typeSpecifiers = [signedsy])
       or (typeSpecifiers = [signedsy,intsy]) then begin
       if unix_1 then
-         myTypeSpec := longPtr
+         myTypeSpec := int32Ptr
       else
          myTypeSpec := intPtr;
       end {else if}
    else if (typeSpecifiers = [unsignedsy])
       or (typeSpecifiers = [unsignedsy,intsy]) then begin
       if unix_1 then
-         myTypeSpec := uLongPtr
+         myTypeSpec := uInt32Ptr
       else
          myTypeSpec := uIntPtr;
       end {else if}
