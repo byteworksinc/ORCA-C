@@ -22,7 +22,7 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2020
             7.	Some new headers specified by recent C standards are added.
               	See "New Headers."
 
-            8.	Three new #pragma ignore bits are defined.  See "Additions to
+            8.	Several new #pragma ignore bits are defined.  See "Additions to
               	#pragma ignore."
 
             9.	Several new #pragma lint bits are defined.  Also, messages from
@@ -131,6 +131,12 @@ p. 241
 
 ORCA/C now supports // comments.  See "// Comments," below.
 
+p. 247
+
+The predefined macros __STDC__ and __ORCAC__ expand to the integer constant 1, not -1.
+
+ORCA/C now supports several new predefined macros.  See "New Language Features," below. 
+
 p. 250
 
 Several things are listed that will cause a .sym file to stop or not be built at all.  Add to this list a #append, which does not work like a #include.
@@ -151,7 +157,7 @@ The #pragma expand directive has been changed to use three-digit octal escape se
 
 p. 258
 
-The #pragma ignore directive supports four new bits.
+The #pragma ignore directive supports several new bits.
 
 Bit 1 affects the interpretation of multi-character character constants.  See "Multi-Character Character Constants," below.
 
@@ -166,6 +172,8 @@ ORCA/C supports // comments.  If bit 3 is clear, ORCA/C does not support // comm
 See "// Comments," below, for a complete description of // comments.
 
 Bit 4 controls whether C99-style scope rules are followed and whether mixed statements and declarations are allowed in blocks.  See "New Language Features," below.
+
+Bit 5 controls whether the types "char" and "unsigned char" are treated as compatible with each other.  See "Additions to #pragma ignore," below.
 
 p. 259
 
@@ -361,6 +369,12 @@ These behave the same as the existing tokens [, ], {, }, #, and ## (respectively
 
 16. (C99) Any or all of the arguments to a function-like macro can now be empty.  (This happened to work previously in some cases but not others.)
 
+17. (C99 and C11) Several new predefined macros have been added:
+
+__STDC_HOSTED__ normally expands to the integer constant 1, indicating that ORCA/C is a hosted implementation of the C language (where the full standard library is available and the program starts by executing the main function).  However, it will expand to 0 if one of the pragmas for special types of programs with different entry points has been used.
+
+__STDC_NO_ATOMICS__, __STDC_NO_COMPLEX__, __STDC_NO_THREADS__, and __STDC_NO_VLA__ all expand to the integer constant 1.  These indicate that ORCA/C does not implement certain C language features that are optional under the C11 and later standards (atomics, complex numbers, threads, and variable length arrays).
+
 
 Multi-Character Character Constants
 -----------------------------------
@@ -376,13 +390,20 @@ Note that MPW IIGS ORCA/C also supports multi-character constants and #pragma ig
 
 Additions to #pragma ignore
 ---------------------------
-Three additional #pragma ignore bits are now supported.
+Several additional #pragma ignore bits are now supported.
 
 Bit 1 (a value of 2) affects the interpretation of multi-character character constants.  It is described under "Multi-Character Character Constants," above.
 
 Bit 2 (a value of 4) controls whether spurious tokens are allowed after an #endif directive.  If it is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
 
 Bit 4 (a value of 16) controls whether ORCA/C follows C99-style rules for declaration placement and block scopes.  See "New Language Features," above.
+
+Bit 5 (a value of 32) controls whether the types "char" and "unsigned char" are treated as compatible with each other.  These types have the same representation in ORCA/C, but the C standards specify that they are nonetheless two distinct types and are not mutually compatible.  Therefore, any standard-conforming C compiler should produce a diagnostic message if these two types or types derived from them are used in a situation where the types are required to be compatible, as in the following example:
+
+   unsigned char uc;
+   char *p = &uc; /* &uc has type unsigned char *, incompatible with char *. */
+
+If bit 5 is set, it causes the "char" and "unsigned char" types to be treated as compatible, matching ORCA/C's historical behavior and permitting code like the above example.  If this bit is clear, the types will be treated as incompatible, as required by the C standards.  This will make ORCA/C give a "type conflict" error for code like the example above.  Currently, this bit is set by default, giving the more permissive behavior, but new code should avoid relying on this.
 
 (Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
 
@@ -966,6 +987,10 @@ int foo(int[42]);
 125. Within character constants, /* or // should not start a comment.
 
 126. In a proprocessor expression, any identifiers remaining after macro expansion should be replaced with the constant 0.  This did not work correctly for declared variable or function names, nor for enumeration constants.
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B5.)
+
+127. ORCA/C internally treated types with the same representation (e.g. short and int) as essentially being the same type, and therefore did not report type conflicts between these types, including in some circumstances where the C standards require a diagnostic message to be produced.  These type conflicts are now reported.  However, char and unsigned char are still treated as compatible by default (controlled by a new bit in #pragma ignore, described above).
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
