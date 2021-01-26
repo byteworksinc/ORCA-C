@@ -157,7 +157,7 @@ type
 
    cTypeEnum = (ctChar, ctSChar, ctUChar, ctShort, ctUShort, ctInt, ctUInt,
                 ctLong, ctULong, ctFloat, ctDouble, ctLongDouble, ctComp,
-                ctVoid, ctInt32, ctUInt32);
+                ctVoid, ctInt32, ctUInt32, ctBool);
 
                                         {tokens}
                                         {------}

@@ -489,8 +489,21 @@ else if kind2 in
             baseType2 := t2^.baseType;
             if baseType2 in [cgString,cgVoid] then
                Error(47)
-            else if genCode then
-               Gen2(pc_cnv, ord(baseType2), ord(baseType1));
+            else if genCode then begin
+               if t1^.cType = ctBool then begin
+                  expressionType := t2;
+                  CompareToZero(pc_neq);
+                  end {if}
+               else
+                  Gen2(pc_cnv, ord(baseType2), ord(baseType1));
+               end {else if}
+            end {else if}
+         else if (t1^.cType = ctBool)
+            and (kind2 in [pointerType,arrayType]) then begin
+            if genCode then begin
+               expressionType := t2;
+               CompareToZero(pc_neq);
+               end {if}
             end {else if}
          else
             Error(47);
@@ -1296,7 +1309,10 @@ var
                      if baseType in [cgByte,cgWord] then begin
                         op^.token.kind := intConst;
                         op^.token.class := intConstant;
-                        op^.token.ival := long(op1).lsw;
+                        if tp^.cType = ctBool then
+                           op^.token.ival := ord(rop1 <> 0.0)
+                        else
+                           op^.token.ival := long(op1).lsw;
                         if baseType = cgByte then
                            with op^.token do begin
                               ival := ival & $00FF;
@@ -1847,7 +1863,10 @@ var
    et,rt: baseTypeEnum;                 {work variables}
 
 begin {Cast}
-if (tp^.kind = scalarType) and (expressionType^.kind = scalarType) then begin
+if (tp^.kind = scalarType) and (tp^.cType = ctBool) then begin
+   CompareToZero(pc_neq);
+   end {if}
+else if (tp^.kind = scalarType) and (expressionType^.kind = scalarType) then begin
    rt := tp^.baseType;
    et := expressionType^.baseType;
    if rt <> et then
@@ -1963,7 +1982,8 @@ if tree^.token.class = identifier then begin
             bitDisp := ip^.bitDisp;
             bitSize := ip^.bitSize;
             isBitField := (bitSize+bitDisp) <> 0;
-            unsigned := ip^.itype^.baseType in [cgUByte,cgUWord,cgULong];
+            unsigned := (ip^.itype^.baseType in [cgUByte,cgUWord,cgULong])
+                        or (ip^.itype^.cType = ctBool);
             goto 1;
             end; {if}
          ip := ip^.next;
@@ -2306,6 +2326,10 @@ var
                      Gen0(pc_adi)
                   else
                      Gen0(pc_sbi);
+                  if expressionType^.cType = ctBool then begin
+                     CompareToZero(pc_neq);
+                     expressionType := boolPtr;
+                     end {if}
                   end;
 
                cgLong,cgULong: begin
@@ -2357,10 +2381,16 @@ var
          if iType^.kind = scalarType then begin
             iSize := 1;
             baseType := iType^.baseType;
-            if baseType in [cgReal,cgDouble,cgComp,cgExtended] then begin
+            if (baseType in [cgReal,cgDouble,cgComp,cgExtended])
+               or (iType^.cType = ctBool) then begin
 
-               {do real inc or dec}
+               {do real or bool inc or dec}
                LoadScalar(tree^.id);    {load the value}
+               if pc_l in [pc_lli,pc_lld] then
+                  if iType^.cType = ctBool then begin
+                     t1 := GetTemp(cgWordSize);
+                     Gen2t(pc_cop, t1, 0, cgWord);
+                     end; {if}
                tp := baseType;
                expressionType := iType;
                IncOrDec(pc_l in [pc_lli,pc_lil]); {do the ++ or --}
@@ -2372,11 +2402,21 @@ var
                   otherwise: ;
                   end; {case}
                                         {correct the value for postfix ops}
-               if pc_l in [pc_lli,pc_lld] then
-                  IncOrDec(pc_l = pc_lld);
-               expressionType := doublePtr;
+               if pc_l in [pc_lli,pc_lld] then               
+                  if iType^.cType = ctBool then begin
+                     Gen0t(pc_pop, cgWord);
+                     Gen2t(pc_lod, t1, 0, cgWord);
+                     Gen0t(pc_bno, cgWord);
+                     FreeTemp(t1, cgWordSize);
+                     end {if}
+                  else
+                     IncOrDec(pc_l = pc_lld);
+               if iType^.cType = ctBool then
+                  expressionType := boolPtr
+               else
+                  expressionType := doublePtr;
                goto 1;
-               end; {if}
+               end; {else if}
             end {if}
          else {if iType^.kind in [pointerType,arrayType] then} begin
             lSize := iType^.pType^.size;
@@ -2435,7 +2475,8 @@ var
                tp := UsualUnaryConversions
          else
             tp := UsualUnaryConversions;
-         if tp in [cgByte,cgUByte,cgWord,cgUword] then
+         if (tp in [cgByte,cgUByte,cgWord,cgUword])
+            and (expressionType^.cType <> ctBool) then
             Gen0t(pc_i, tp)             {do indirect inc/dec}
          else begin
             t1 := GetTemp(cgLongSize);
@@ -2444,6 +2485,11 @@ var
             Gen2t(pc_lod, t1, 0, cgULong);
             FreeTemp(t1, cgLongSize);
             Gen1t(pc_ind, 0, tp);       {load the value}
+            if pc_l in [pc_lli,pc_lld] then
+               if expressionType^.cType = ctBool then begin
+                  t1 := GetTemp(cgWordSize);
+                  Gen2t(pc_cop, t1, 0, cgWord);
+                  end; {if}
             IncOrDec(pc_l in [pc_lli,pc_lil]); {do the ++ or --}
             if isBitField then          {copy the value}
                if bitDisp+bitSize > 16 then begin
@@ -2459,7 +2505,14 @@ var
                Gen0t(pc_bno, tp);
                end; {else}
             if pc_l in [pc_lli,pc_lld] then {correct the value for postfix ops}
-               IncOrDec(pc_l = pc_lld);
+               if expressionType^.cType = ctBool then begin
+                  Gen0t(pc_pop, cgWord);
+                  Gen2t(pc_lod, t1, 0, cgWord);
+                  Gen0t(pc_bno, cgWord);
+                  FreeTemp(t1, cgWordSize);
+                  end {if}
+               else
+                  IncOrDec(pc_l = pc_lld);
             end; {else}
          end; {else}
 1:

@@ -2694,7 +2694,8 @@ var
                if (tPtr^.kind <> scalarType)
                   or not (tPtr^.baseType in
                      [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
-                  or (expressionValue > tPtr^.size*8) then
+                  or (expressionValue > tPtr^.size*8)
+                  or ((expressionValue > 1) and (tPtr^.cType = ctBool)) then
                   Error(115);
                if alignmentSpecified then
                   Error(142);
@@ -2813,8 +2814,7 @@ var
    else if typeSpecifiers = [compsy] then
       myTypeSpec := compPtr
    else if typeSpecifiers = [_Boolsy] then begin
-      Error(135);
-      myTypeSpec := intPtr;
+      myTypeSpec := boolPtr;
       end {else if}
    else
       UnexpectedTokenError(expectedNext);

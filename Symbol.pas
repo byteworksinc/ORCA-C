@@ -40,6 +40,7 @@
 {  doublePtr - pointer to the base type for double              }
 {  compPtr - pointer to the base type for comp                  }
 {  extendedPtr - pointer to the base type for extended          }
+{  boolPtr - pointer to the base type for _Bool                 }
 {  voidPtr - pointer to the base type for void                  }
 {  voidPtrPtr - typeless pointer, for some type casting         }
 {  stringTypePtr - pointer to the base type for string          }
@@ -77,7 +78,7 @@ var
                                         {base types}
    charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
       uInt32Ptr,longPtr,uLongPtr,floatPtr,doublePtr,compPtr,extendedPtr,
-      stringTypePtr,voidPtr,voidPtrPtr,defaultStruct: typePtr;
+      boolPtr,stringTypePtr,voidPtr,voidPtrPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
 
@@ -967,7 +968,10 @@ var
       case tp^.baseType of
 	 cgByte:	val := $40;
          cgUByte:	val := $00;
-         cgWord:	val := $01;
+         cgWord:	if tp^.cType = ctBool then
+                	   val := $09
+                	else
+                	   val := $01;
          cgUWord:	val := $41;
          cgLong:	val := $02;
          cgULong:	val := $42;
@@ -1337,6 +1341,15 @@ with extendedPtr^ do begin
    kind := scalarType;
    baseType := cgExtended;
    cType := ctLongDouble;
+   end; {with}
+new(boolPtr);                            {_Bool}
+with boolPtr^ do begin
+   size := cgWordSize;
+   saveDisp := 0;
+   isConstant := false;
+   kind := scalarType;
+   baseType := cgWord;
+   cType := ctBool;
    end; {with}
 new(stringTypePtr);                     {string constant type}
 with stringTypePtr^ do begin
