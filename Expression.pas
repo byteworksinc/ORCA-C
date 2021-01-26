@@ -2368,10 +2368,11 @@ var
 
    begin {DoIncDec}
    L_Value(tree);
-   with tree^.id^ do
-      if (tree^.token.kind = ident)
-         and ((iType^.kind in [scalarType,pointerType])
-         or ((iType^.kind = arrayType) and (storage = parameter))) then begin
+   if (tree^.token.kind = ident)
+      and ((tree^.id^.iType^.kind in [scalarType,pointerType])
+      or ((tree^.id^.iType^.kind = arrayType) and (tree^.id^.storage = parameter)))
+      then
+      with tree^.id^ do begin
 
          {check for ++ or -- of a constant}
          if iType^.isConstant then
@@ -2459,62 +2460,64 @@ var
             otherwise: ;
             end; {case}
          expressionType := itype;
-         end {if}
-      else begin
+         end {with}
+   else begin
 
-         {do an indirect ++ or --}
-         LoadAddress(tree);             {get the address to save to}
-         if expressionType^.kind = arrayType then
-            expressionType := expressionType^.aType
-         else if expressionType^.kind = pointerType then
-            expressionType := expressionType^.pType;
-         if expressionType^.kind = scalarType then
-            if expressionType^.baseType in [cgByte,cgUByte,cgWord,cgUWord] then
-               tp := expressionType^.baseType
-            else
-               tp := UsualUnaryConversions
+      {do an indirect ++ or --}
+      LoadAddress(tree);                {get the address to save to}
+      if expressionType^.kind = arrayType then
+         expressionType := expressionType^.aType
+      else if expressionType^.kind = pointerType then
+         expressionType := expressionType^.pType;
+      if expressionType^.kind = scalarType then
+         if expressionType^.baseType in 
+            [cgByte,cgUByte,cgWord,cgUWord,cgReal,cgDouble,cgComp,cgExtended] then
+            tp := expressionType^.baseType
          else
-            tp := UsualUnaryConversions;
-         if (tp in [cgByte,cgUByte,cgWord,cgUword])
-            and (expressionType^.cType <> ctBool) then
-            Gen0t(pc_i, tp)             {do indirect inc/dec}
-         else begin
-            t1 := GetTemp(cgLongSize);
-            Gen2t(pc_str, t1, 0, cgULong);
-            Gen2t(pc_lod, t1, 0, cgULong);
-            Gen2t(pc_lod, t1, 0, cgULong);
-            FreeTemp(t1, cgLongSize);
-            Gen1t(pc_ind, 0, tp);       {load the value}
-            if pc_l in [pc_lli,pc_lld] then
-               if expressionType^.cType = ctBool then begin
-                  t1 := GetTemp(cgWordSize);
-                  Gen2t(pc_cop, t1, 0, cgWord);
-                  end; {if}
-            IncOrDec(pc_l in [pc_lli,pc_lil]); {do the ++ or --}
-            if isBitField then          {copy the value}
-               if bitDisp+bitSize > 16 then begin
-                  Gen2t(pc_cbf, bitDisp, bitSize, cgLong);
-                  Gen0t(pc_bno, cgLong);
-                  end {if}
-               else begin
-                  Gen2t(pc_cbf, bitDisp, bitSize, cgWord);
-                  Gen0t(pc_bno, cgWord);
-                  end {else}
-            else begin
-               Gen0t(pc_cpi, tp);
-               Gen0t(pc_bno, tp);
-               end; {else}
-            if pc_l in [pc_lli,pc_lld] then {correct the value for postfix ops}
-               if expressionType^.cType = ctBool then begin
-                  Gen0t(pc_pop, cgWord);
-                  Gen2t(pc_lod, t1, 0, cgWord);
-                  Gen0t(pc_bno, cgWord);
-                  FreeTemp(t1, cgWordSize);
-                  end {if}
-               else
-                  IncOrDec(pc_l = pc_lld);
-            end; {else}
+            tp := UsualUnaryConversions
+      else
+         tp := UsualUnaryConversions;
+      if (tp in [cgByte,cgUByte,cgWord,cgUword])
+         and (expressionType^.cType <> ctBool)
+         and not isBitField then
+         Gen0t(pc_i, tp)                {do indirect inc/dec}
+      else begin
+         t1 := GetTemp(cgLongSize);
+         Gen2t(pc_str, t1, 0, cgULong);
+         Gen2t(pc_lod, t1, 0, cgULong);
+         Gen2t(pc_lod, t1, 0, cgULong);
+         FreeTemp(t1, cgLongSize);
+                                        {load the value}
+         if isBitField then begin
+            if unsigned then
+               Gen2t(pc_lbu, bitDisp, bitSize, tp)
+            else
+               Gen2t(pc_lbf, bitDisp, bitSize, tp);
+            end {if}
+         else
+            Gen1t(pc_ind, 0, tp);
+         if pc_l in [pc_lli,pc_lld] then
+            if expressionType^.cType = ctBool then begin
+               t1 := GetTemp(cgWordSize);
+               Gen2t(pc_cop, t1, 0, cgWord);
+               end; {if}
+         IncOrDec(pc_l in [pc_lli,pc_lil]); {do the ++ or --}
+         if isBitField then             {copy the value}
+            Gen2t(pc_cbf, bitDisp, bitSize, tp)
+         else
+            Gen0t(pc_cpi, tp);
+         Gen0t(pc_bno, tp);
+         if pc_l in [pc_lli,pc_lld] then {correct the value for postfix ops}
+            if expressionType^.cType = ctBool then begin
+               Gen0t(pc_pop, cgWord);
+               Gen2t(pc_lod, t1, 0, cgWord);
+               Gen0t(pc_bno, cgWord);
+               FreeTemp(t1, cgWordSize);
+               end {if}
+            else
+               IncOrDec(pc_l = pc_lld);
          end; {else}
+      end; {else}
 1:
    end; {DoIncDec}
 
