@@ -375,6 +375,8 @@ __STDC_HOSTED__ normally expands to the integer constant 1, indicating that ORCA
 
 __STDC_NO_ATOMICS__, __STDC_NO_COMPLEX__, __STDC_NO_THREADS__, and __STDC_NO_VLA__ all expand to the integer constant 1.  These indicate that ORCA/C does not implement certain C language features that are optional under the C11 and later standards (atomics, complex numbers, threads, and variable length arrays).
 
+18. (C99) The _Bool type is now supported.  This is a boolean type that can hold the values 0 or 1.  When a value of another type is converted to _Bool, the result is 0 if the value compares equal to 0, or 1 otherwise.
+
 
 Multi-Character Character Constants
 -----------------------------------
@@ -479,6 +481,8 @@ ORCA/C now includes several new headers specified by recent C standards.
 4.  (C11) The <stdalign.h> header defines the macros "alignas" for _Alignas and "alignof" for _Alignof.
 
 5.  (C11) The <stdnoreturn.h> header defines the macro "noreturn" for _Noreturn.
+
+6.  (C99) The <stdbool.h> header defines the macro "bool" for _Bool, and the macros "true" and "false" for the boolean values 1 and 0.
 
 
 Library Updates
@@ -991,6 +995,8 @@ int foo(int[42]);
 (Bug fixes below here were added in ORCA/C 2.2.0 B5.)
 
 127. ORCA/C internally treated types with the same representation (e.g. short and int) as essentially being the same type, and therefore did not report type conflicts between these types, including in some circumstances where the C standards require a diagnostic message to be produced.  These type conflicts are now reported.  However, char and unsigned char are still treated as compatible by default (controlled by a new bit in #pragma ignore, described above).
+
+128. The ++ and -- operators often would not work correctly on bit-fields, or on floating-point values that were in a structure or were accessed via a pointer.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
