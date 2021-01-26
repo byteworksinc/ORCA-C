@@ -27,10 +27,18 @@
 
 #define dispatcher 0xE10000L            /* tool locator dispatch address */
 
+#ifndef TRUE
 #define TRUE 1
-#define true TRUE
+#endif
+#ifndef true
+#define true 1
+#endif
+#ifndef FALSE
 #define FALSE 0
-#define false FALSE
+#endif
+#ifndef false
+#define false 0
+#endif
 
 /* RefDescriptors */
 #define refIsPointer 0x0000
