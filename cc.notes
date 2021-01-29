@@ -998,6 +998,8 @@ int foo(int[42]);
 
 128. The ++ and -- operators often would not work correctly on bit-fields, or on floating-point values that were in a structure or were accessed via a pointer.
 
+129. Certain invalid compound assignment expressions were erroneously permitted.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

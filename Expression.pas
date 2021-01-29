@@ -3011,11 +3011,13 @@ case tree^.token.kind of
          kind := lType^.kind;
       GenerateCode(tree^.right);
       if expressionType^.kind <> scalarType then
-         if tree^.token.kind in [pluseqop,minuseqop] then
-            Error(66);
+         Error(66);
       if tree^.token.kind in [gtgteqop,ltlteqop] then
          if kind = scalarType then
             if expressionType^.kind = scalarType then begin
+               if expressionType^.baseType in 
+                  [cgReal,cgDouble,cgComp,cgExtended,cgVoid] then
+                  Error(66);
                et := UsualUnaryConversions;
                if et <> Unary(ltype^.baseType) then begin
                   Gen2(pc_cnv, et, ord(Unary(ltype^.baseType)));
