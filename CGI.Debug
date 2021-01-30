@@ -239,6 +239,8 @@ var
       cgUWord:  write('u');
       cgLong:   write('l');
       cgULong:  write('ul');
+      cgQuad:   write('q');
+      cgUQuad:  write('uq');
       cgReal:   write('r');
       cgDouble: write('d');
       cgComp:   write('c');

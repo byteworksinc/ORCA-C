@@ -204,6 +204,7 @@ const
    cgByteSize           =       1;
    cgWordSize           =       2;
    cgLongSize           =       4;
+   cgQuadSize           =       8;
    cgPointerSize        =       4;
    cgRealSize           =       4;
    cgDoubleSize         =       8;
@@ -246,6 +247,8 @@ type
          cgUWord        : (opnd: longint; llab,slab: integer);
          cgLong,
          cgULong        : (lval: longint);
+         cgQuad,
+         cgUQuad        : (qval: longlong);
          cgReal,
          cgDouble,
          cgComp,
@@ -1291,6 +1294,7 @@ case tp of
    cgByte,cgUByte:   TypeSize := cgByteSize;
    cgWord,cgUWord:   TypeSize := cgWordSize;
    cgLong,cgULong:   TypeSize := cgLongSize;
+   cgQuad,cgUQuad:   TypeSize := cgQuadSize;
    cgReal:           TypeSize := cgRealSize;
    cgDouble:         TypeSize := cgDoubleSize;
    cgComp:           TypeSize := cgCompSize;

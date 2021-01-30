@@ -114,6 +114,7 @@ type
                                         {Misc.}
                                         {-----}
    long = record lsw,msw: integer; end; {for extracting words from longints}
+   longlong = record low32,high32: longint; end; {64-bit integer representation}
  
    cString = packed array [1..256] of char; {null terminated string}
    cStringPtr = ^cString;
@@ -146,7 +147,7 @@ type
    { the compiler.  Any values whose type is cc must be resolved to one  }
    { of the cg types before the code generator is called.                }
  
-   baseTypeEnum = (cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,
+   baseTypeEnum = (cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad,
                    cgReal,cgDouble,cgComp,cgExtended,cgString,
                    cgVoid,ccPointer);
 
@@ -157,7 +158,7 @@ type
 
    cTypeEnum = (ctChar, ctSChar, ctUChar, ctShort, ctUShort, ctInt, ctUInt,
                 ctLong, ctULong, ctFloat, ctDouble, ctLongDouble, ctComp,
-                ctVoid, ctInt32, ctUInt32, ctBool);
+                ctVoid, ctInt32, ctUInt32, ctBool, ctLongLong, ctULongLong);
 
                                         {tokens}
                                         {------}
@@ -316,6 +317,8 @@ type
                cgUWord,
                cgLong,
                cgULong   : (iVal: longint);
+               cgQuad,
+               cgUQuad   : (qVal: longlong);
                cgString  : (sVal: longstringPtr);
                cgReal,
                cgDouble,

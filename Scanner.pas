@@ -663,8 +663,8 @@ if list or (numErr <> 0) then begin
         131: msg := @'numeric constant is too long';
         132: msg := @'static assertion failed';
         133: msg := @'incomplete or function types may not be used here';
-        134: msg := @'''long long'' types are not supported by ORCA/C';
-        135: msg := @'the type _Bool is not supported by ORCA/C';
+       {134: msg := @'''long long'' types are not supported by ORCA/C';}
+       {135: msg := @'the type _Bool is not supported by ORCA/C';}
         136: msg := @'complex or imaginary types are not supported by ORCA/C';
         137: msg := @'atomic types are not supported by ORCA/C';
         138: msg := @'unsupported alignment';

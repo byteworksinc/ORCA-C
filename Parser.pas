@@ -2602,6 +2602,8 @@ var
    mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
    myTypeSpec: typePtr;                 {value of typeSpec to generate}
    myDeclarationModifiers: tokenSet;    {all modifiers in this declaration}
+   
+   isLongLong: boolean;                 {is this a "long long" type?}
  
    procedure FieldList (tp: typePtr; kind: typeKind);
  
@@ -2799,11 +2801,19 @@ var
    else if (typeSpecifiers = [longsy])
       or (typeSpecifiers = [signedsy,longsy])
       or (typeSpecifiers = [longsy,intsy])
-      or (typeSpecifiers = [signedsy,longsy,intsy]) then
-      myTypeSpec := longPtr
+      or (typeSpecifiers = [signedsy,longsy,intsy]) then begin
+      if isLongLong then
+         myTypeSpec := longLongPtr
+      else
+         myTypeSpec := longPtr;
+      end {else if}
    else if (typeSpecifiers = [unsignedsy,longsy])
-      or (typeSpecifiers = [unsignedsy,longsy,intsy]) then
-      myTypeSpec := uLongPtr
+      or (typeSpecifiers = [unsignedsy,longsy,intsy]) then begin
+      if isLongLong then
+         myTypeSpec := uLongLongPtr
+      else
+         myTypeSpec := uLongPtr;
+      end {else if}
    else if typeSpecifiers = [floatsy] then
       myTypeSpec := floatPtr
    else if typeSpecifiers = [doublesy] then
@@ -2829,6 +2839,7 @@ myDeclarationModifiers := [];
 typeSpecifiers := [];
 typeDone := false;
 isConstant := false;
+isLongLong := false;
 while token.kind in allowedTokens do begin
    case token.kind of
       {storage class specifiers}
@@ -2918,9 +2929,11 @@ while token.kind in allowedTokens do begin
          if typeDone then
             UnexpectedTokenError(expectedNext)
          else if token.kind in typeSpecifiers then begin
-            if (token.kind = longsy)
-               and (typeSpecifiers <= [signedsy,unsignedsy,longsy,intsy]) then
-               Error(134)
+            if (token.kind = longsy) and 
+               ((myTypeSpec = longPtr) or (myTypeSpec = uLongPtr)) then begin
+               isLongLong := true;
+               ResolveType;
+               end
             else
                UnexpectedTokenError(expectedNext);
             end {if}
