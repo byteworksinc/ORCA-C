@@ -119,6 +119,8 @@ opt[pc_nop] := 'nop';
 opt[pc_bqr] := 'bqr';
 opt[pc_bqx] := 'bqx';
 opt[pc_baq] := 'baq';
+opt[pc_bnq] := 'bnq';
+opt[pc_ngq] := 'ngq';
 end; {InitWriteCode}
 
 

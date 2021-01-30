@@ -3597,6 +3597,8 @@ case tree^.token.kind of
             Gen0(pc_ngi);
          cgLong,cgULong:
             Gen0(pc_ngl);
+         cgQuad,cgUQuad:
+            Gen0(pc_ngq);
          cgExtended:
             Gen0(pc_ngr);
          otherwise:
@@ -3613,6 +3615,8 @@ case tree^.token.kind of
             Gen0(pc_bnt);
          cgLong,cgULong:
             Gen0(pc_bnl);
+         cgQuad,cgUQuad:
+            Gen0(pc_bnq);
          otherwise:
             error(66);
          end; {case}

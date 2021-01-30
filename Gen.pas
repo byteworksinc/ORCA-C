@@ -3932,6 +3932,49 @@ gLong.where := onStack;                 {the result is on the stack}
 end; {GenUnaryLong}
 
 
+procedure GenUnaryQuad (op: icptr);
+
+{ generate a pc_bnq or pc_ngq					}
+
+begin {GenUnaryQuad}
+GenTree(op^.left);
+case op^.opcode of			{do the operation}
+
+   pc_bnq: begin
+      GenNative(m_lda_s, direct, 1, nil, 0);
+      GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+      GenNative(m_sta_s, direct, 1, nil, 0);
+      GenNative(m_lda_s, direct, 3, nil, 0);
+      GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+      GenNative(m_sta_s, direct, 3, nil, 0);
+      GenNative(m_lda_s, direct, 5, nil, 0);
+      GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+      GenNative(m_sta_s, direct, 5, nil, 0);
+      GenNative(m_lda_s, direct, 7, nil, 0);
+      GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+      GenNative(m_sta_s, direct, 7, nil, 0);
+      end; {case pc_bnq}
+
+   pc_ngq: begin
+      GenImplied(m_sec);
+      GenNative(m_ldy_imm, immediate, 0, nil, 0);
+      GenImplied(m_tya);
+      GenNative(m_sbc_s, direct, 1, nil, 0);
+      GenNative(m_sta_s, direct, 1, nil, 0);
+      GenImplied(m_tya);
+      GenNative(m_sbc_s, direct, 3, nil, 0);
+      GenNative(m_sta_s, direct, 3, nil, 0);
+      GenImplied(m_tya);
+      GenNative(m_sbc_s, direct, 5, nil, 0);
+      GenNative(m_sta_s, direct, 5, nil, 0);
+      GenImplied(m_tya);
+      GenNative(m_sbc_s, direct, 7, nil, 0);
+      GenNative(m_sta_s, direct, 7, nil, 0);
+      end; {case pc_ngq}
+   end; {case}
+end; {GenUnaryQuad}
+
+
 procedure GenTree {op: icptr};
 
 { generate code for op and its children				}
@@ -5718,6 +5761,7 @@ case op^.opcode of
       pc_uml,pc_vsr: GenBinLong(op);
    pc_bqr,pc_bqx,pc_baq: GenBinQuad(op);
    pc_bnl,pc_ngl: GenUnaryLong(op);
+   pc_bnq,pc_ngq: GenUnaryQuad(op);
    pc_bno: GenBno(op);
    pc_bnt,pc_ngi,pc_not: GenBntNgiNot(op);
    pc_cnv: GenCnv(op);

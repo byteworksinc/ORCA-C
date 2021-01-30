@@ -142,9 +142,11 @@
 {                                                               }
 {  pc_bnt - bitwise negation                                    }
 {  pc_bnl - long bitwise negation                               }
+{  pc_bnq - long long bitwise negation                          }
 {                                                               }
 {  Gen0(pc_bnt)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_bnl)         cgLong,cgULong                          }
+{  Gen0(pc_bnq)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The value on the top of the evaluation stack is removed,     }
 {  exclusive ored with $FFFF, and replaced.  (One's compliment.)}
@@ -490,10 +492,12 @@
 {                                                               }
 {  pc_ngi - integer negation                                    }
 {  pc_ngl - long negation                                       }
+{  pc_ngq - long long negation                                  }
 {  pc_ngr - real negation                                       }
 {                                                               }
 {  Gen0(pc_ngi)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_ngl)         cgLong,cgULong                          }
+{  Gen0(pc_ngq)         cgQuad,cgUQuad                          }
 {  Gen0(pc_ngr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The value on the top of the evaluation stack is removed,     }
