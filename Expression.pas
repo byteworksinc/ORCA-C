@@ -337,16 +337,40 @@ if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
    rt := Unary(rType^.baseType);
    if lt <> rt then begin
       if lt = cgExtended then begin
-         if rt in [cgWord,cgUWord,cgLong,cgULong] then
+         if rt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
             Gen2(pc_cnv, ord(rt), ord(cgExtended));
          UsualBinaryConversions := cgExtended;
          expressionType := extendedPtr;
          end {if}
       else if rt = cgExtended then begin
-         if lt in [cgWord,cgUWord,cgLong,cgULong] then
+         if lt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
             Gen2(pc_cnn, ord(lt), ord(cgExtended));
          UsualBinaryConversions := cgExtended;
          expressionType := extendedPtr;
+         end {else if}
+      else if lt = cgUQuad then begin
+         if rt in [cgWord,cgUWord,cgLong,cgULong] then
+            Gen2(pc_cnv, ord(rt), ord(cgUQuad));
+         UsualBinaryConversions := cgUQuad;
+         expressionType := uLongLongPtr;
+         end {else if}
+      else if rt = cgUQuad then begin
+         if lt in [cgWord,cgUWord,cgLong,cgULong] then
+            Gen2(pc_cnn, ord(lt), ord(cgUQuad));
+         UsualBinaryConversions := cgUQuad;
+         expressionType := uLongLongPtr;
+         end {else if}
+      else if lt = cgQuad then begin
+         if rt in [cgWord,cgUWord,cgLong,cgULong] then
+            Gen2(pc_cnv, ord(rt), ord(cgQuad));
+         UsualBinaryConversions := cgQuad;
+         expressionType := longLongPtr;
+         end {else if}
+      else if rt = cgQuad then begin
+         if lt in [cgWord,cgUWord,cgLong,cgULong] then
+            Gen2(pc_cnn, ord(lt), ord(cgQuad));
+         UsualBinaryConversions := cgQuad;
+         expressionType := longLongPtr;
          end {else if}
       else if lt = cgULong then begin
          if rt in [cgWord,cgUWord] then
