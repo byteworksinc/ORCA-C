@@ -3209,6 +3209,42 @@ case optype of
             end; {case}
          end; {else}
       end; {case CGLong, cgULong}
+
+   cgQuad, cgUQuad: begin
+      GenTree(op^.left);
+      if opcode = pc_sro then
+         GenImplied(m_pla)
+      else {if opcode = pc_cpo then}
+         GenNative(m_lda_s, direct, 1, nil, 0);
+      if smallMemoryModel then
+         GenNative(m_sta_abs, absolute, q, lab, 0)
+      else
+         GenNative(m_sta_long, longabsolute, q, lab, 0);
+      if opcode = pc_sro then
+         GenImplied(m_pla)
+      else {if opcode = pc_cpo then}
+         GenNative(m_lda_s, direct, 3, nil, 0);
+      if smallMemoryModel then
+         GenNative(m_sta_abs, absolute, q+2, lab, 0)
+      else
+         GenNative(m_sta_long, longabsolute, q+2, lab, 0);
+      if opcode = pc_sro then
+         GenImplied(m_pla)
+      else {if opcode = pc_cpo then}
+         GenNative(m_lda_s, direct, 5, nil, 0);
+      if smallMemoryModel then
+         GenNative(m_sta_abs, absolute, q+4, lab, 0)
+      else
+         GenNative(m_sta_long, longabsolute, q+4, lab, 0);
+      if opcode = pc_sro then
+         GenImplied(m_pla)
+      else {if opcode = pc_cpo then}
+         GenNative(m_lda_s, direct, 7, nil, 0);
+      if smallMemoryModel then
+         GenNative(m_sta_abs, absolute, q+6, lab, 0)
+      else
+         GenNative(m_sta_long, longabsolute, q+6, lab, 0);
+      end; {case cgQuad, cgUQuad}
    end; {case}
 end; {GenSroCpo}
       
@@ -3806,6 +3842,55 @@ case optype of
             otherwise:
                Error(cge1);
             end; {case}
+         end; {else}
+      end;
+
+   cgQuad, cgUQuad: begin
+      GenTree(op^.left);
+      if disp < 250 then begin
+         if op^.opcode = pc_str then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cop then}
+            GenNative(m_lda_s, direct, 1, nil, 0);
+         GenNative(m_sta_dir, direct, disp, nil, 0);
+         if op^.opcode = pc_str then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cop then}
+            GenNative(m_lda_s, direct, 3, nil, 0);
+         GenNative(m_sta_dir, direct, disp+2, nil, 0);
+         if op^.opcode = pc_str then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cop then}
+            GenNative(m_lda_s, direct, 5, nil, 0);
+         GenNative(m_sta_dir, direct, disp+4, nil, 0);
+         if op^.opcode = pc_str then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cop then}
+            GenNative(m_lda_s, direct, 7, nil, 0);
+         GenNative(m_sta_dir, direct, disp+6, nil, 0);
+         end {else if}
+      else begin
+         GenNative(m_ldx_imm, immediate, disp, nil, 0);
+         if op^.opcode = pc_str then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cop then}
+            GenNative(m_lda_s, direct, 1, nil, 0);
+         GenNative(m_sta_dirX, direct, 0, nil, 0);
+         if op^.opcode = pc_str then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cop then}
+            GenNative(m_lda_s, direct, 3, nil, 0);
+         GenNative(m_sta_dirX, direct, 2, nil, 0);
+         if op^.opcode = pc_str then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cop then}
+            GenNative(m_lda_s, direct, 5, nil, 0);
+         GenNative(m_sta_dirX, direct, 4, nil, 0);
+         if op^.opcode = pc_str then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cop then}
+            GenNative(m_lda_s, direct, 7, nil, 0);
+         GenNative(m_sta_dirX, direct, 6, nil, 0);
          end; {else}
       end;
 
@@ -4579,6 +4664,29 @@ procedure GenTree {op: icptr};
             end; {else}
          end; {case cgLong,cgULong}
 
+      cgQuad, cgUQuad: begin
+         if smallMemoryModel then begin
+            GenNative(m_lda_abs, absolute, op^.q+6, op^.lab, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_abs, absolute, op^.q+4, op^.lab, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_abs, absolute, op^.q+2, op^.lab, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_abs, absolute, op^.q, op^.lab, 0);
+            GenImplied(m_pha);
+            end {if}
+         else begin
+            GenNative(m_lda_long, longabsolute, op^.q+6, op^.lab, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_long, longabsolute, op^.q+4, op^.lab, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_long, longabsolute, op^.q+2, op^.lab, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_long, longabsolute, op^.q, op^.lab, 0);
+            GenImplied(m_pha);
+            end; {else}
+         end; {case cgQuad,cgUQuad}
+
       otherwise:
          Error(cge1);
       end; {case}
@@ -4630,6 +4738,26 @@ procedure GenTree {op: icptr};
             GenCall(70)
          else {if optype = cgExtended then}
             GenCall(71);
+         end;
+
+      cgQuad, cgUQuad: begin
+         if disp >= 250 then begin
+            GenNative(m_ldx_imm, immediate, disp, nil, 0);
+            GenNative(m_lda_dirx, direct, 6, nil, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_dirx, direct, 4, nil, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_dirx, direct, 2, nil, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_dirx, direct, 0, nil, 0);
+            GenImplied(m_pha);
+            end {if}
+         else begin
+            GenNative(m_pei_dir, direct, disp+6, nil, 0);
+            GenNative(m_pei_dir, direct, disp+4, nil, 0);
+            GenNative(m_pei_dir, direct, disp+2, nil, 0);
+            GenNative(m_pei_dir, direct, disp, nil, 0);
+            end; {else}
          end;
 
       cgLong, cgULong: begin
@@ -5007,6 +5135,13 @@ procedure GenTree {op: icptr};
         	  GenImplied(m_pla);
         	  end; {if}
                {else do nothing}
+
+	 cgQuad, cgUQuad: begin
+            GenImplied(m_tsc);
+            GenImplied(m_clc);
+            GenNative(m_adc_imm, immediate, 8, nil, 0);
+            GenImplied(m_tcs);
+            end;
          
 	 cgReal, cgDouble, cgComp, cgExtended: begin
             GenImplied(m_tsc);
