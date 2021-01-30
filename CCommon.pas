@@ -147,9 +147,9 @@ type
    { the compiler.  Any values whose type is cc must be resolved to one  }
    { of the cg types before the code generator is called.                }
  
-   baseTypeEnum = (cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad,
+   baseTypeEnum = (cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,
                    cgReal,cgDouble,cgComp,cgExtended,cgString,
-                   cgVoid,ccPointer);
+                   cgVoid,cgQuad,cgUQuad,ccPointer);
 
    { Basic types (plus the void type) as defined by the C language.      }
    { This differs from baseTypeEnum in that different types with the     }
