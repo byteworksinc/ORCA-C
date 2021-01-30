@@ -4095,6 +4095,44 @@ procedure GenTree {op: icptr};
    end; {GenBinLong}
 
 
+   procedure GenBinQuad (op: icptr);
+
+   { generate one of: pc_bqr, pc_bqx, pc_baq                    }
+
+      procedure GenOp (ops: integer);
+
+      { generate a 64-bit binary bitwise operation              }
+      {                                                         }
+      { parameters:                                             }
+      {    ops - stack version of operation                     }
+
+      begin {GenOp}
+      GenImplied(m_pla);
+      GenNative(ops, direct, 7, nil, 0);
+      GenNative(m_sta_s, direct, 7, nil, 0);
+      GenImplied(m_pla);
+      GenNative(ops, direct, 7, nil, 0);
+      GenNative(m_sta_s, direct, 7, nil, 0);
+      GenImplied(m_pla);
+      GenNative(ops, direct, 7, nil, 0);
+      GenNative(m_sta_s, direct, 7, nil, 0);
+      GenImplied(m_pla);
+      GenNative(ops, direct, 7, nil, 0);
+      GenNative(m_sta_s, direct, 7, nil, 0);
+      end; {GenOp}
+
+   begin {GenBinQuad}
+   GenTree(op^.left);
+   GenTree(op^.right);
+   case op^.opcode of
+      pc_bqr: GenOp(m_ora_s);
+      pc_bqx: GenOp(m_eor_s);
+      pc_baq: GenOp(m_and_s);
+      otherwise: Error(cge1);
+      end; {case}
+   end; {GenBinQuad}
+
+
    procedure GenBno (op: icptr);
 
    { Generate code for a pc_bno					}
@@ -5678,6 +5716,7 @@ case op^.opcode of
    pc_and,pc_bnd,pc_bor,pc_bxr,pc_ior: GenLogic(op);
    pc_blr,pc_blx,pc_bal,pc_dvl,pc_mdl,pc_mpl,pc_sll,pc_slr,pc_udl,pc_ulm,
       pc_uml,pc_vsr: GenBinLong(op);
+   pc_bqr,pc_bqx,pc_baq: GenBinQuad(op);
    pc_bnl,pc_ngl: GenUnaryLong(op);
    pc_bno: GenBno(op);
    pc_bnt,pc_ngi,pc_not: GenBntNgiNot(op);

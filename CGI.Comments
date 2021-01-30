@@ -117,9 +117,11 @@
 {                                                               }
 {  pc_bnd - bitwise and                                         }
 {  pc_bal - long bitwise and                                    }
+{  pc_baq - long long bitwise and                               }
 {                                                               }
 {  Gen0(pc_bnd)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_bal)         cgLong,cgULong                          }
+{  Gen0(pc_baq)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
 {  removed and anded.  The result is placed back on the stack.  }
@@ -150,9 +152,11 @@
 {                                                               }
 {  pc_bor - bitwise or                                          }
 {  pc_blr - long bitwise or                                     }
+{  pc_bqr - long long bitwise or                                }
 {                                                               }
 {  Gen0(pc_bor)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_blr)         cgLong,cgULong                          }
+{  Gen0(pc_bqr)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
 {  removed and ored.  The result is placed back on the stack.   }
@@ -160,9 +164,11 @@
 {                                                               }
 {  pc_bxr - exclusive or                                        }
 {  pc_blx - long exclusive or                                   }
+{  pc_bqx - long long exclusive or                              }
 {                                                               }
 {  Gen0(pc_bxr)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_blx)         cgLong,cgULong                          }
+{  Gen0(pc_bqx)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
 {  removed and exclusive ored.  The result is placed back on    }

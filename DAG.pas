@@ -4938,7 +4938,7 @@ case code^.opcode of
    pc_les, pc_neq, pc_ior, pc_lor, pc_ixa, pc_mod, pc_uim, pc_mdl,
    pc_ulm, pc_mpi, pc_umi, pc_mpl, pc_uml, pc_mpr, pc_psh, pc_sbi,
    pc_sbl, pc_sbr, pc_shl, pc_sll, pc_shr, pc_usr, pc_slr, pc_vsr,
-   pc_tri, pc_sbf, pc_sto, pc_cui:
+   pc_tri, pc_sbf, pc_sto, pc_cui, pc_bqr, pc_bqx, pc_baq:
       begin
       code^.right := Pop;
       code^.left := Pop;

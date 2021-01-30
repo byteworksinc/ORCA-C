@@ -3147,6 +3147,8 @@ case tree^.token.kind of
                Gen0(pc_bnd)
             else if et in [cgLong,cgULong] then
                Gen0(pc_bal)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_baq)
             else
                Error(66);
 
@@ -3155,6 +3157,8 @@ case tree^.token.kind of
                Gen0(pc_bxr)
             else if et in [cgLong,cgULong] then
                Gen0(pc_blx)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_bqx)
             else
                Error(66);
 
@@ -3163,6 +3167,8 @@ case tree^.token.kind of
                Gen0(pc_bor)
             else if et in [cgLong,cgULong] then
                Gen0(pc_blr)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_bqr)
             else
                Error(66);
 
@@ -3278,6 +3284,8 @@ case tree^.token.kind of
             Gen0(pc_bxr);
          cgLong,cgULong:
             Gen0(pc_blx);
+         cgQuad,cgUQuad:
+            Gen0(pc_bqx);
          otherwise:
             error(66);
          end; {case}
@@ -3294,6 +3302,8 @@ case tree^.token.kind of
             Gen0(pc_bor);
          cgLong,cgULong:
             Gen0(pc_blr);
+         cgQuad,cgUQuad:
+            Gen0(pc_bqr);
          otherwise:
             error(66);
          end; {case}
@@ -3310,6 +3320,8 @@ case tree^.token.kind of
             Gen0(pc_bnd);
          cgLong,cgULong:
             Gen0(pc_bal);
+         cgQuad,cgUQuad:
+            Gen0(pc_baq);
          otherwise:
             error(66);
          end; {case}

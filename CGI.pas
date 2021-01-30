@@ -228,7 +228,8 @@ type
        pc_mdl,pc_sll,pc_slr,pc_bal,pc_ngl,pc_adl,pc_sbl,pc_blr,pc_blx,
        dc_sym,pc_lnd,pc_lor,pc_vsr,pc_uml,pc_udl,pc_ulm,pc_pop,pc_gil,
        pc_gli,pc_gdl,pc_gld,pc_cpi,pc_tri,pc_lbu,pc_lbf,pc_sbf,pc_cbf,dc_cns,
-       dc_prm,pc_nat,pc_bno,pc_nop,pc_psh,pc_ili,pc_iil,pc_ild,pc_idl);
+       dc_prm,pc_nat,pc_bno,pc_nop,pc_psh,pc_ili,pc_iil,pc_ild,pc_idl,
+       pc_bqr,pc_bqx,pc_baq);
 
                                         {intermediate code}
                                         {-----------------}

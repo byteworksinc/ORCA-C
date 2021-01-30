@@ -116,6 +116,9 @@ opt[dc_prm] := 'PRM';
 opt[pc_nat] := 'nat';
 opt[pc_bno] := 'bno';
 opt[pc_nop] := 'nop';
+opt[pc_bqr] := 'bqr';
+opt[pc_bqx] := 'bqx';
+opt[pc_baq] := 'baq';
 end; {InitWriteCode}
 
 
@@ -261,7 +264,7 @@ with code^ do
       pc_uml,pc_adr,pc_dvr,pc_mpr,pc_adi,pc_sbi,pc_mpi,pc_dvi,
       pc_umi,pc_shl,pc_nop,pc_and,pc_lnd,pc_bnd,pc_lor,pc_ior,pc_bxr,
       pc_bnt,pc_blx,pc_bnl,pc_ngi,pc_ngl,pc_ngr,pc_ixa,pc_mdl,
-      pc_udi,pc_udl: ;
+      pc_udi,pc_udl,pc_bqr,pc_bqx,pc_baq: ;
 
       dc_prm:
          write('  ', q:1, ':', r:1, ':', s:1);
