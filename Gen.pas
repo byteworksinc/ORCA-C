@@ -1317,10 +1317,20 @@ else if op^.q in [longToReal,uLongToReal] then begin
    else
       GenCall(13);
    end {else}
-else if op^.q in [realToByte,realToUbyte,realToWord] then begin
+else if op^.q =realToWord then
+   GenCall(14)
+else if op^.q = realToUbyte then begin
    GenCall(14);
-   if (op^.q & $00FF) in [0,1] then
-      GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   end {else if}      
+else if op^.q = realToByte then begin
+   lab1 := GenLabel;
+   GenCall(14);
+   GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   GenNative(m_bit_imm, immediate, $0080, nil, 0);
+   GenNative(m_beq, relative, lab1, nil, 0);
+   GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+   GenLab(lab1);
    end {else if}
 else if op^.q = realToUword then 
    GenCall(15)
