@@ -405,7 +405,7 @@ NeedsCondition := opcode in
    [pc_and,pc_ior,pc_cui,pc_cup,pc_lor,pc_lnd,pc_ldl,pc_lil,pc_lld,
     pc_lli,pc_gil,pc_gli,pc_gdl,pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,
     pc_cop,pc_cpo,pc_cpi,pc_dvi,pc_mpi,pc_adi,pc_sbi,pc_mod,pc_bno,
-    pc_udi,pc_uim,pc_umi];
+    pc_udi,pc_uim,pc_umi,pc_cnv];
 end; {NeedsCondition}
 
 
@@ -1330,15 +1330,23 @@ else if op^.q in [ubyteToLong,ubyteToUlong,uwordToLong,uwordToUlong] then
       GenImplied(m_pha);
       end; {else}
    end {else if}
-else if op^.q in [wordToByte,wordToUbyte,uwordToByte,uwordToUbyte] then
+else if op^.q in [wordToUbyte,uwordToUbyte] then
    GenNative(m_and_imm, immediate, $00FF, nil, 0)
+else if op^.q in [wordToByte,uwordToByte] then begin
+   lab1 := GenLabel;
+   GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   GenNative(m_bit_imm, immediate, $0080, nil, 0);
+   GenNative(m_beq, relative, lab1, nil, 0);
+   GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+   GenLab(lab1);
+   end {else if}
 else if op^.q in [byteToReal,uByteToReal,wordToReal] then
    GenCall(11)
 else if op^.q = uwordToReal then begin
    GenNative(m_ldx_imm, immediate, 0, nil, 0);
    GenCall(12);
    end {else if}
-else if op^.q in [longToByte,longToUbyte,ulongToByte,ulongToUbyte] then begin
+else if op^.q in [longToUbyte,ulongToUbyte] then begin
    if gLong.where = A_X then
       GenNative(m_and_imm, immediate, $00FF, nil, 0)
    else if gLong.where = constant then
@@ -1348,6 +1356,22 @@ else if op^.q in [longToByte,longToUbyte,ulongToByte,ulongToUbyte] then begin
       GenImplied(m_plx);
       GenNative(m_and_imm, immediate, $00FF, nil, 0);
       end; {else if}
+   end {else if}
+else if op^.q in [longToByte,ulongToByte] then begin
+   if gLong.where = A_X then
+      GenNative(m_and_imm, immediate, $00FF, nil, 0)
+   else if gLong.where = constant then
+      GenNative(m_lda_imm, immediate, long(gLong.lval).lsw & $00FF, nil, 0)
+   else {if gLong.where = onStack then} begin
+      GenImplied(m_pla);
+      GenImplied(m_plx);
+      GenNative(m_and_imm, immediate, $00FF, nil, 0);
+      end; {else if}
+   lab1 := GenLabel;
+   GenNative(m_bit_imm, immediate, $0080, nil, 0);
+   GenNative(m_beq, relative, lab1, nil, 0);
+   GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+   GenLab(lab1);
    end {else if}
 else if op^.q in [longToWord,longToUword,ulongToWord,ulongToUword] then begin
    {Note: if the result is in A_X, no further action is needed}
@@ -1372,10 +1396,20 @@ else if op^.q in [longToReal,uLongToReal] then begin
    else
       GenCall(13);
    end {else}
-else if op^.q in [realToByte,realToUbyte,realToWord] then begin
+else if op^.q =realToWord then
+   GenCall(14)
+else if op^.q = realToUbyte then begin
    GenCall(14);
-   if (op^.q & $00FF) in [0,1] then
-      GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   end {else if}      
+else if op^.q = realToByte then begin
+   lab1 := GenLabel;
+   GenCall(14);
+   GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   GenNative(m_bit_imm, immediate, $0080, nil, 0);
+   GenNative(m_beq, relative, lab1, nil, 0);
+   GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+   GenLab(lab1);
    end {else if}
 else if op^.q = realToUword then 
    GenCall(15)
@@ -2136,8 +2170,16 @@ case op^.optype of
             GenNative(m_rep, immediate, 32, nil, 0);
          end; {else}
       if not skipLoad then
-         if short then
+         if short then begin
             GenNative(m_and_imm, immediate, $00FF, nil, 0);
+            if op^.optype = cgByte then begin
+               GenNative(m_bit_imm, immediate, $0080, nil, 0);
+               lab1 := GenLabel;
+               GenNative(m_beq, relative, lab1, nil, 0);
+               GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+               GenLab(lab1);
+               end; {if}
+            end; {if}
       end; {case cgByte,cgUByte,cgWord,cgUWord}
 
    otherwise:
@@ -3414,6 +3456,7 @@ var
    simple: boolean;			{is the load a simple load?}
    lLong: longType;			{address record for left node}
    zero: boolean;			{is the operand a constant zero?}
+   lab1: integer;			{label}
 
 
    procedure LoadLSW;
@@ -3727,8 +3770,16 @@ case optype of
          end; {else}
       if short then begin
          GenNative(m_rep, immediate, 32, nil, 0);
-         if opcode = pc_cpi then
+         if opcode = pc_cpi then begin
             GenNative(m_and_imm, immediate, $00FF, nil, 0);
+            if optype = cgByte then begin
+               GenNative(m_bit_imm, immediate, $0080, nil, 0);
+               lab1 := GenLabel;
+               GenNative(m_beq, relative, lab1, nil, 0);
+               GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+               GenLab(lab1);
+               end; {if}
+            end; {if}
          end; {if}
       end; {case cgByte,cgUByte,cgWord,cgUWord}
 
@@ -5493,6 +5544,7 @@ procedure GenTree {op: icptr};
 
    var
       size: integer;			{localSize + parameterSize}
+      lab1: integer;			{label}
 
    begin {GenRet}
    {pop the name record}
@@ -5541,7 +5593,14 @@ procedure GenTree {op: icptr};
 
       cgByte,cgUByte: begin
          GenNative(m_lda_dir, direct, funLoc, nil, 0);
-         GenNative(m_and_imm, immediate, $00FF, nil, 0);
+         GenNative(m_and_imm, immediate, $00FF, nil, 0);         
+         if op^.optype = cgByte then begin
+            GenNative(m_bit_imm, immediate, $0080, nil, 0);
+            lab1 := GenLabel;
+            GenNative(m_beq, relative, lab1, nil, 0);
+            GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+            GenLab(lab1);
+            end; {if}
          if size <> 2 then
             GenImplied(m_tay);
          end;
