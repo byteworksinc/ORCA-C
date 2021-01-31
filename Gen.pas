@@ -1175,33 +1175,45 @@ const                                {note: these constants list all legal }
    cComp             = $08;
    cExtended         = $09;
    cVoid             = $0B;
+   cQuad             = $0C;
+   cUQuad            = $0D;
 
    byteToWord        = $02;
    byteToUword       = $03;
    byteToLong        = $04;
    byteToUlong       = $05;
+   byteToQuad        = $0C;
+   byteToUQuad       = $0D;
    byteToReal        = $06;
    byteToDouble      = $07;
    ubyteToLong       = $14;
    ubyteToUlong      = $15;
+   ubyteToQuad       = $1C;
+   ubyteToUQuad      = $1D;
    ubyteToReal       = $16;
    ubyteToDouble     = $17;
    wordToByte        = $20;
    wordToUByte       = $21;
    wordToLong        = $24;
    wordToUlong       = $25;
+   wordToQuad        = $2C;
+   wordToUQuad       = $2D;
    wordToReal        = $26;
    wordToDouble      = $27;
    uwordToByte       = $30;
    uwordToUByte      = $31;
    uwordToLong       = $34;
    uwordToUlong      = $35;
+   uwordToQuad       = $3C;
+   uwordToUQuad      = $3D;
    uwordToReal       = $36;
    uwordToDouble     = $37;
    longTobyte        = $40;
    longToUbyte       = $41;
    longToWord        = $42;
    longToUword       = $43;
+   longToQuad        = $4C;
+   longToUQuad       = $4D;
    longToReal        = $46;
    longToDouble      = $47;
    longToVoid        = $4B;
@@ -1209,6 +1221,8 @@ const                                {note: these constants list all legal }
    ulongToUbyte      = $51;
    ulongToWord       = $52;
    ulongToUword      = $53;
+   ulongToQuad       = $5C;
+   ulongToUQuad      = $5D;
    ulongToReal       = $56;
    ulongToDouble     = $57;
    ulongToVoid       = $5B;
@@ -1218,6 +1232,8 @@ const                                {note: these constants list all legal }
    realToUword       = $63;
    realToLong        = $64;
    realToUlong       = $65;
+   realToQuad        = $6C;
+   realToUQuad       = $6D;
    realToVoid        = $6B;
    doubleTobyte      = $70;
    doubleToUbyte     = $71;
@@ -1225,6 +1241,26 @@ const                                {note: these constants list all legal }
    doubleToUword     = $73;
    doubleToLong      = $74;
    doubleToUlong     = $75;
+   doubleToQuad      = $7C;
+   doubleToUQuad     = $7D;
+   quadToByte        = $C0;
+   quadToUByte       = $C1;
+   quadToWord        = $C2;
+   quadToUword       = $C3;
+   quadToLong        = $C4;
+   quadToULong       = $C5;
+   quadToReal        = $C6;
+   quadToDouble      = $C7;
+   quadToVoid        = $CB;
+   uquadToByte       = $D0;
+   uquadToUByte      = $D1;
+   uquadToWord       = $D2;
+   uquadToUword      = $D3;
+   uquadToLong       = $D4;
+   uquadToULong      = $D5;
+   uquadToReal       = $D6;
+   uquadToDouble     = $D7;
+   uquadToVoid       = $DB;
 
 var
    fromReal: boolean;			{are we converting from a real?}
@@ -1368,6 +1404,80 @@ else if op^.q in [longToVoid,ulongToVoid] then begin
       GenImplied(m_plx);
       gLong.where := A_X;
       end; {if}
+   end {else if}
+else if op^.q in [ubyteToQuad,ubyteToUQuad,uwordToQuad,uwordToUQuad] then begin
+   GenNative(m_ldy_imm, immediate, 0, nil, 0);
+   GenImplied(m_phy);
+   GenImplied(m_phy);
+   GenImplied(m_phy);
+   GenImplied(m_pha);
+   end {else if}
+else if op^.q in [ulongToQuad,ulongToUQuad] then begin
+   if gLong.where = A_X then begin
+      GenNative(m_pea, immediate, 0, nil, 0);
+      GenNative(m_pea, immediate, 0, nil, 0);
+      GenImplied(m_phx);
+      GenImplied(m_pha);
+      end {if}
+   else if gLong.where = constant then begin
+      GenNative(m_pea, immediate, 0, nil, 0);
+      GenNative(m_pea, immediate, 0, nil, 0);
+      GenNative(m_pea, immediate, long(gLong.lval).msw, nil, 0);
+      GenNative(m_pea, immediate, long(gLong.lval).lsw, nil, 0);
+      end {else if}
+   else {if gLong.where = onStack then} begin
+      GenImplied(m_pla);
+      GenImplied(m_plx);
+      GenNative(m_pea, immediate, 0, nil, 0);
+      GenNative(m_pea, immediate, 0, nil, 0);
+      GenImplied(m_phx);
+      GenImplied(m_pha);
+      end; {else}
+   end {else if}
+else if op^.q in [quadToWord,uquadToWord,quadToUWord,uquadToUWord] then begin
+   GenImplied(m_pla);
+   GenImplied(m_plx);
+   GenImplied(m_ply);
+   GenImplied(m_ply);
+   GenImplied(m_tay);
+   end {else if}
+else if op^.q in [quadToUByte,uquadToUByte] then begin
+   GenImplied(m_pla);
+   GenImplied(m_plx);
+   GenImplied(m_ply);
+   GenImplied(m_ply);
+   GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   end {else if}
+else if op^.q in [quadToByte,uquadToByte] then begin
+   GenImplied(m_pla);
+   GenImplied(m_plx);
+   GenImplied(m_ply);
+   GenImplied(m_ply);
+   GenNative(m_and_imm, immediate, $00FF, nil, 0);
+   lab1 := GenLabel;
+   GenNative(m_bit_imm, immediate, $0080, nil, 0);
+   GenNative(m_beq, relative, lab1, nil, 0);
+   GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+   GenLab(lab1);
+   end {else if}
+else if op^.q in [quadToLong,uquadToLong,quadToULong,uquadToULong] then begin
+   GenImplied(m_pla);
+   GenImplied(m_plx);
+   GenImplied(m_ply);
+   GenImplied(m_ply);
+   if (lLong.preference & A_X) <> 0 then
+      gLong.where := A_X
+   else begin
+      gLong.where := onStack;
+      GenImplied(m_phx);
+      GenImplied(m_pha);
+      end; {else}
+   end {else if}
+else if op^.q in [quadToVoid,uquadToVoid] then begin
+   GenImplied(m_tsc);
+   GenImplied(m_clc);
+   GenNative(m_adc_imm, immediate, 8, nil, 0);
+   GenImplied(m_tcs);
    end {else if}
 else if (op^.q & $000F) = cVoid then
    {do nothing}
