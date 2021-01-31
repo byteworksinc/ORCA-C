@@ -110,7 +110,7 @@ function CodesMatch (op1, op2: icptr; exact: boolean): boolean;
 
       pc_adi, pc_adl, pc_adr, pc_and, pc_lnd, pc_bnd, pc_bal, pc_bor,
       pc_blr, pc_bxr, pc_blx, pc_equ, pc_neq, pc_ior, pc_lor, pc_mpi,
-      pc_umi, pc_mpl, pc_uml, pc_mpr, pc_bqr, pc_bqx, pc_baq: begin
+      pc_umi, pc_mpl, pc_uml, pc_mpr, pc_bqr, pc_bqx, pc_baq, pc_adq: begin
          if op1^.left = op2^.left then
             if op1^.right = op2^.right then
                result := true;
@@ -2266,7 +2266,7 @@ case op^.opcode of
    pc_udl, pc_ulm, pc_uml, pc_vsr:
       TypeOf := cgULong;
 
-   pc_bnq, pc_ngq, pc_bqr, pc_bqx, pc_baq:
+   pc_bnq, pc_ngq, pc_bqr, pc_bqx, pc_baq, pc_adq, pc_sbq:
       TypeOf := cgQuad;
 
    pc_ngr, pc_adr, pc_dvr, pc_mpr, pc_sbr:
@@ -4062,7 +4062,7 @@ var
                    pc_mdl,pc_ulm,pc_mpi,pc_umi,pc_mpl,pc_uml,pc_mpr,pc_ngi,
                    pc_ngl,pc_ngr,pc_not,pc_pop,pc_sbi,pc_sbl,pc_sbr,
                    pc_shl,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr,pc_tri,
-                   pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq]
+                   pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq]
                   then begin
         	  op^.parents := icount;
                   icount := icount+1;
@@ -4942,7 +4942,8 @@ case code^.opcode of
    pc_les, pc_neq, pc_ior, pc_lor, pc_ixa, pc_mod, pc_uim, pc_mdl,
    pc_ulm, pc_mpi, pc_umi, pc_mpl, pc_uml, pc_mpr, pc_psh, pc_sbi,
    pc_sbl, pc_sbr, pc_shl, pc_sll, pc_shr, pc_usr, pc_slr, pc_vsr,
-   pc_tri, pc_sbf, pc_sto, pc_cui, pc_bqr, pc_bqx, pc_baq:
+   pc_tri, pc_sbf, pc_sto, pc_cui, pc_bqr, pc_bqx, pc_baq, pc_adq,
+   pc_sbq:
       begin
       code^.right := Pop;
       code^.left := Pop;

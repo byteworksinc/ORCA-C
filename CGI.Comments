@@ -90,10 +90,12 @@
 {                                                               }
 {  pc_adi - integer addition                                    }
 {  pc_adl - long addition                                       }
+{  pc_adq - long long addition                                  }
 {  pc_adr - real addition                                       }
 {                                                               }
 {  Gen0(pc_adi)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_adl)         cgLong,cgULong                          }
+{  Gen0(pc_adq)         cgQuad,cgUQuad                          }
 {  Gen0(pc_adr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
@@ -547,10 +549,12 @@
 {                                                               }
 {  pc_sbi - integer subtraction                                 }
 {  pc_sbl - long subtraction                                    }
+{  pc_sbq - long long subtraction                               }
 {  pc_sbr - real subtraction                                    }
 {                                                               }
 {  Gen0(pc_sbi)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_sbl)         cgLong,cgULong                          }
+{  Gen0(pc_sbq)         cgQuad,cgUQuad                          }
 {  Gen0(pc_sbr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }

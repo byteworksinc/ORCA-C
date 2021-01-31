@@ -3063,6 +3063,8 @@ case tree^.token.kind of
                Gen0(pc_adi)
             else if et in [cgLong,cgULong] then
                Gen0(pc_adl)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_adq)
             else if et = cgExtended then
                Gen0(pc_adr)
             else
@@ -3077,6 +3079,8 @@ case tree^.token.kind of
                Gen0(pc_sbi)
             else if et in [cgLong,cgULong] then
                Gen0(pc_sbl)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_sbq)
             else if et = cgExtended then
                Gen0(pc_sbr)
             else
@@ -3422,6 +3426,8 @@ case tree^.token.kind of
                Gen0(pc_adi);
             cgLong,cgULong:
                Gen0(pc_adl);
+            cgQuad,cgUQuad:
+               Gen0(pc_adq);
             cgExtended:
                Gen0(pc_adr);
             otherwise:
@@ -3478,6 +3484,8 @@ case tree^.token.kind of
                Gen0(pc_sbi);
             cgLong,cgULong:
                Gen0(pc_sbl);
+            cgQuad,cgUQuad:
+               Gen0(pc_sbq);
             cgExtended:
                Gen0(pc_sbr);
             otherwise:

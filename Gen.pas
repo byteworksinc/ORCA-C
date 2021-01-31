@@ -679,6 +679,49 @@ else begin
 end; {GenAdlSbl}
 
 
+procedure GenAdqSbq (op: icptr);
+
+{ generate code for pc_adq, pc_sbq				}
+{								}
+{ parameters:							}
+{    op - pc_adq or pc_sbq operation				}
+
+begin {GenAdqSbq}
+GenTree(op^.right);
+GenTree(op^.left);
+if op^.opcode = pc_adq then begin
+   GenImplied(m_clc);
+   GenImplied(m_pla);
+   GenNative(m_adc_s, direct, 7, nil, 0);
+   GenNative(m_sta_s, direct, 7, nil, 0);
+   GenImplied(m_pla);
+   GenNative(m_adc_s, direct, 7, nil, 0);
+   GenNative(m_sta_s, direct, 7, nil, 0);
+   GenImplied(m_pla);
+   GenNative(m_adc_s, direct, 7, nil, 0);
+   GenNative(m_sta_s, direct, 7, nil, 0);
+   GenImplied(m_pla);
+   GenNative(m_adc_s, direct, 7, nil, 0);
+   GenNative(m_sta_s, direct, 7, nil, 0);
+   end {else}
+else {if op^.opcode = pc_sbq then} begin
+   GenImplied(m_sec);
+   GenImplied(m_pla);
+   GenNative(m_sbc_s, direct, 7, nil, 0);
+   GenNative(m_sta_s, direct, 7, nil, 0);
+   GenImplied(m_pla);
+   GenNative(m_sbc_s, direct, 7, nil, 0);
+   GenNative(m_sta_s, direct, 7, nil, 0);
+   GenImplied(m_pla);
+   GenNative(m_sbc_s, direct, 7, nil, 0);
+   GenNative(m_sta_s, direct, 7, nil, 0);
+   GenImplied(m_pla);
+   GenNative(m_sbc_s, direct, 7, nil, 0);
+   GenNative(m_sta_s, direct, 7, nil, 0);
+   end; {else}
+end; {GenAdqSbq}
+
+
 procedure GenCmp (op: icptr; rOpcode: pcodes; lb: integer);
 
 { generate code for pc_les, pc_leq, pc_grt or pc_geq		}
@@ -5755,6 +5798,7 @@ case op^.opcode of
    pc_add: GenNative(d_add, genaddress, op^.q, nil, 0);
    pc_adi: GenAdi(op);
    pc_adl,pc_sbl: GenAdlSbl(op, nil);
+   pc_adq,pc_sbq: GenAdqSbq(op);
    pc_adr,pc_dvr,pc_mpr,pc_sbr: GenRealBinOp(op);
    pc_and,pc_bnd,pc_bor,pc_bxr,pc_ior: GenLogic(op);
    pc_blr,pc_blx,pc_bal,pc_dvl,pc_mdl,pc_mpl,pc_sll,pc_slr,pc_udl,pc_ulm,
