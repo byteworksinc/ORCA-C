@@ -105,14 +105,14 @@ The following table shows the format used to store the variable’s current valu
     7       Pascal-style string
     8       character
     9       boolean
-    10      SANE COMP number
+    10      SANE COMP number or 8-byte integer
     11      pointer
     12      structure, union or record
     13      derived type
     14      object
 
 
-One-byte integers default to unsigned, while two-byte and four-byte integers default to signed format.  `OR`ing the format code with `$40` reverses this default, giving signed one-byte integers or unsigned four-byte integers.  (The signed flag is not supported by PRIZM 1.1.3.)
+One-byte integers default to unsigned, while two-byte, four-byte, and eight-byte integers default to signed format.  `OR`ing the format code with `$40` reverses this default, giving signed one-byte integers or unsigned four-byte integers.  (The signed flag is not supported by PRIZM 1.1.3.)
 
 A pointer to a scalar type (1-10) is indicated by `OR`ing the value’s format code with `$80`. For example, `$82` would be a pointer to a 4-byte integer.
 

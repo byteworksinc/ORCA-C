@@ -982,6 +982,8 @@ var
          cgDouble:	val := $04;
          cgComp:	val := $0A;
          cgExtended:	val := $05;
+         cgQuad:	val := $0A; {same as comp}
+         cgUQuad:	val := $4A;
          otherwise:	val := $01;
          end; {case}
       CnOut(val | modifiers);		{write the format byte}
