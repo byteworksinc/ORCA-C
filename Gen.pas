@@ -1310,14 +1310,14 @@ else if op^.q in [byteToLong,byteToUlong] then begin
       GenImplied(m_phx);
       GenImplied(m_pha);
       end; {else}
-   end {if}
+   end {else if}
 else if op^.q in [byteToWord,byteToUword] then begin
    lab1 := GenLabel;
    GenNative(m_bit_imm, immediate, $0080, nil, 0);
    GenNative(m_beq, relative, lab1, nil, 0);
    GenNative(m_ora_imm, immediate, $FF00, nil, 0);
    GenLab(lab1);
-   end {if}
+   end {else if}
 else if op^.q in [ubyteToLong,ubyteToUlong,uwordToLong,uwordToUlong] then
    begin
    if (lLong.preference & A_X) <> 0 then begin
@@ -1395,8 +1395,8 @@ else if op^.q in [longToReal,uLongToReal] then begin
       GenCall(12)
    else
       GenCall(13);
-   end {else}
-else if op^.q =realToWord then
+   end {else if}
+else if op^.q = realToWord then
    GenCall(14)
 else if op^.q = realToUbyte then begin
    GenCall(14);
@@ -1446,6 +1446,31 @@ else if op^.q in [ubyteToQuad,ubyteToUQuad,uwordToQuad,uwordToUQuad] then begin
    GenImplied(m_phy);
    GenImplied(m_pha);
    end {else if}
+else if op^.q in [byteToQuad,byteToUQuad] then begin
+   lab1 := GenLabel;
+   GenNative(m_ldx_imm, immediate, 0, nil, 0);
+   GenNative(m_bit_imm, immediate, $0080, nil, 0);
+   GenNative(m_beq, relative, lab1, nil, 0);
+   GenImplied(m_dex);
+   GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+   GenLab(lab1);
+   GenImplied(m_phx);
+   GenImplied(m_phx);
+   GenImplied(m_phx);
+   GenImplied(m_pha);
+   end {else if}
+else if op^.q in [wordToQuad,wordToUQuad] then begin
+   lab1 := GenLabel;
+   GenNative(m_ldx_imm, immediate, 0, nil, 0);
+   GenImplied(m_tay);
+   GenNative(m_bpl, relative, lab1, nil, 0);
+   GenImplied(m_dex);
+   GenLab(lab1);
+   GenImplied(m_phx);
+   GenImplied(m_phx);
+   GenImplied(m_phx);
+   GenImplied(m_pha);
+   end {else if}
 else if op^.q in [ulongToQuad,ulongToUQuad] then begin
    if gLong.where = A_X then begin
       GenNative(m_pea, immediate, 0, nil, 0);
@@ -1468,6 +1493,41 @@ else if op^.q in [ulongToQuad,ulongToUQuad] then begin
       GenImplied(m_pha);
       end; {else}
    end {else if}
+else if op^.q in [longToQuad,longToUQuad] then begin
+   if gLong.where = constant then begin
+      if glong.lval < 0 then begin
+         GenNative(m_pea, immediate, -1, nil, 0);
+         GenNative(m_pea, immediate, -1, nil, 0);
+         GenNative(m_pea, immediate, long(gLong.lval).msw, nil, 0);
+         GenNative(m_pea, immediate, long(gLong.lval).lsw, nil, 0);
+         end {if}
+      else begin
+         GenNative(m_pea, immediate, 0, nil, 0);
+         GenNative(m_pea, immediate, 0, nil, 0);
+         GenNative(m_pea, immediate, long(gLong.lval).msw, nil, 0);
+         GenNative(m_pea, immediate, long(gLong.lval).lsw, nil, 0);
+         end; {else}
+      end {if}
+   else begin
+      GenNative(m_ldy_imm, immediate, 0, nil, 0);
+      if gLong.where = onStack then begin
+         GenImplied(m_pla);
+         GenImplied(m_plx);
+         end {if}
+      else {if gLong.where = A_X then}
+         GenNative(m_cpx_imm, immediate, 0, nil, 0);
+      lab1 := GenLabel;
+      GenNative(m_bpl, relative, lab1, nil, 0);
+      GenImplied(m_dey);
+      GenLab(lab1);
+      GenImplied(m_phy);
+      GenImplied(m_phy);
+      GenImplied(m_phx);
+      GenImplied(m_pha);
+      end; {else}
+   end {else if}
+else if op^.q in [realToQuad, realToUQuad] then
+   Error(cge1) {TODO: implement}
 else if op^.q in [quadToWord,uquadToWord,quadToUWord,uquadToUWord] then begin
    GenImplied(m_pla);
    GenImplied(m_plx);
@@ -1513,6 +1573,8 @@ else if op^.q in [quadToVoid,uquadToVoid] then begin
    GenNative(m_adc_imm, immediate, 8, nil, 0);
    GenImplied(m_tcs);
    end {else if}
+else if op^.q in [quadToReal, uquadToReal] then
+   Error(cge1) {TODO: implement}
 else if (op^.q & $000F) = cVoid then
    {do nothing}
 else if lLong.preference & gLong.where = 0 then begin
