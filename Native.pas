@@ -777,7 +777,7 @@ case p_opcode of
 
    m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvs,m_clc,m_cmp_abs,
    m_cmp_dir,m_cmp_imm,m_cmp_s,m_cpx_imm,m_jml,m_pha,m_phb,m_phd,
-   m_phx,m_phy,m_plb,m_pld,m_rtl,m_rts,m_sec,m_tcs,m_tcd,d_add,d_pin,
+   m_phx,m_phy,m_plb,m_rtl,m_rts,m_sec,m_tcs,d_add,d_pin,
    m_pei_dir,m_cpx_abs,m_cpx_dir,m_cmp_dirx,m_php,m_plp,m_cop,d_wrd:   ;
 
    m_pea: begin
@@ -810,7 +810,7 @@ case p_opcode of
          end; {if}
       end;
 
-   m_sta_s: begin
+   m_sta_s,m_pld,m_tcd: begin
       if aRegister.condition = regLocal then
          aRegister.condition := regUnknown;
       if xRegister.condition = regLocal then
