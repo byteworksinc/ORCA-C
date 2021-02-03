@@ -3337,7 +3337,7 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
       token.lval := Convertsl(numString);
       end; {else}
    end {else if}
-else begin                            {hex & octal}
+else begin                            {hex, octal, & binary}
    token.lval := 0;
    if isHex then begin
       i := 3;
@@ -3392,7 +3392,7 @@ else begin                            {hex & octal}
    if long(token.lval).msw <> 0 then
       isLong := true;
    if isLong then begin
-      if unsigned then
+      if unsigned or (token.lval & $80000000 <> 0) then
          token.kind := ulongConst
       else
          token.kind := longConst;
