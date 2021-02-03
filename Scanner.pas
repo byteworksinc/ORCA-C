@@ -685,6 +685,7 @@ if list or (numErr <> 0) then begin
         153: msg := @'lint: return statement in function declared _Noreturn';
         154: msg := @'lint: function declared _Noreturn can return or has unreachable code';
         155: msg := @'lint: non-void function may not return a value or has unreachable code';
+        156: msg := @'invalid suffix on numeric constant';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3277,14 +3278,17 @@ if c2 in ['e','E'] then begin           {handle an exponent}
 while c2 in ['l','u','L','U'] do        {check for long or unsigned}
    if c2 in ['l','L'] then begin
       NextChar;
-      if not isReal then
-         isLong := true;
+      if isLong then
+         FlagError(156);
+      isLong := true;
       end {if}
    else {if c2 in ['u','U'] then} begin
       NextChar;
-      unsigned := true;
-      if isReal then
+      if unsigned then
+         FlagError(156)
+      else if isReal then
          FlagError(91);
+      unsigned := true;
       end; {else}
 if c2 in ['f','F'] then begin           {allow F designator on reals}
    if unsigned then
