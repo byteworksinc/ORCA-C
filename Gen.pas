@@ -1606,7 +1606,7 @@ procedure GenEquNeq (op: icptr; opcode: pcodes; lb: integer);
 var
    nd: icptr;				{work node}
    num: integer;			{constant to compare to}
-   lab1,lab2: integer;			{label numbers}
+   lab1,lab2,lab3: integer;		{label numbers}
    bne: integer;			{instruction for a pc_equ bne branch}
    beq: integer;			{instruction for a pc_equ beq branch}
    lLong: longType;			{local long value information}
@@ -1899,7 +1899,57 @@ else
             end {if}
          else if op^.opcode = pc_neq then
             GenNative(m_eor_imm, immediate, 1, nil, 0);
-         end; {case optype of cgReal..cgExtended,cgSet,cgString}
+         end; {case optype of cgReal..cgExtended}
+
+      cgQuad,cgUQuad: begin
+         GenTree(op^.left);
+         GenTree(op^.right);
+
+         lab1 := GenLabel;
+         lab2 := GenLabel;
+         GenImplied(m_pla);
+         GenImplied(m_plx);
+         GenImplied(m_ply);
+         GenNative(m_eor_s, direct, 3, nil, 0);
+         GenNative(m_bne, relative, lab1, nil, 0);
+         GenImplied(m_txa);
+         GenNative(m_eor_s, direct, 5, nil, 0);
+         GenNative(m_bne, relative, lab1, nil, 0);
+         GenImplied(m_tya);
+         GenNative(m_eor_s, direct, 7, nil, 0);
+         GenNative(m_bne, relative, lab1, nil, 0);
+         GenImplied(m_pla);
+         GenNative(m_eor_s, direct, 7, nil, 0);
+         GenNative(m_bra, relative, lab2, nil, 0);
+         GenLab(lab1);
+         GenImplied(m_plx);
+         GenLab(lab2);
+         GenImplied(m_tax);
+
+         GenImplied(m_tsc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, 8, nil, 0);
+         GenImplied(m_tcs);
+         
+         GenImplied(m_txa);
+         if opcode in [pc_fjp,pc_tjp] then begin
+            lab3 := GenLabel;
+            if opcode = pc_fjp then
+               GenNative(beq, relative, lab3, nil, 0)
+            else
+               GenNative(bne, relative, lab3, nil, 0);
+            GenNative(m_brl, longrelative, lb, nil, 0);
+            GenLab(lab3);
+            end {if}
+         else begin
+            lab3 := GenLabel;
+            GenNative(m_beq, relative, lab3, nil, 0);
+            GenNative(m_lda_imm, immediate, 1, nil, 0);
+            GenLab(lab3);
+            if op^.opcode = pc_equ then
+               GenNative(m_eor_imm, immediate, 1, nil, 0);
+            end; {else}
+         end; {case optype of cgQuad,cgUQuad}
 
       otherwise:
          Error(cge1);
