@@ -3685,6 +3685,11 @@ case tree^.token.kind of
             Gen0t(pc_equ, cgLong);
             end;
 
+         cgQuad,cgUQuad: begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_equ, cgQuad);
+            end;
+
          cgExtended: begin
             GenLdcReal(0.0);
             Gen0t(pc_equ, cgExtended);
