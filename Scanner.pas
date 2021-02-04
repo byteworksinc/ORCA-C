@@ -3853,6 +3853,10 @@ repeat
          bp := pointer(ord4(macros) + hash(mp^.name));
          mp^.next := bp^;
          bp^ := mp;
+         token.kind := intconst;        {create the default value}
+         token.numString := nil;
+         token.class := intConstant;
+         token.ival := 1;
          if lch = '=' then begin
             NextCh;                     {record the value}
             token.numString := nil;
@@ -3876,12 +3880,8 @@ repeat
                         otherwise: ;
                         end; {case}
                   end {if}
-               else begin
-                  token.kind := intconst;
-                  token.numString := nil;
-                  token.class := intConstant;
-                  token.ival := 0;
-                  end; {else}
+               else
+                  Error(108);
                end {else if}
             else if lch in ['.','0'..'9'] then begin
                token.name := GetWord;
@@ -3891,17 +3891,11 @@ repeat
                GetString
             else
                Error(108);
-            end {if}
-         else begin
-            token.kind := intconst;     {create the default value}
-            token.numString := nil;
-            token.class := intConstant;
-            token.ival := 1;
-            end; {else}
+            end; {if}
          new(mp^.tokens);               {add the value to the definition}
          with mp^.tokens^ do begin
             next := nil;
-            tokenString := nil;
+            tokenString := @'';
             expandEnabled := true;
             tokenStart := nil;
             tokenEnd := nil;
