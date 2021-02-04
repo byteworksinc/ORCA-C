@@ -3351,22 +3351,35 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
       or (not unsigned and (stringIndex = 5) and (numString > '32767'))
       or (unsigned and (stringIndex = 5) and (numString > '65535')) then
       isLong := true;
-   if (stringIndex > 10) or
+   if (stringIndex > 10)
+      or (not unsigned and (stringIndex = 10) and (numString > '2147483647'))
+      or (unsigned and (stringIndex = 10) and (numString > '4294967295')) then
+      isLongLong := true;
+   if (stringIndex > 10) or                             {TODO increase limits}
       ((stringIndex = 10) and (numString > '4294967295')) then begin
       numString := '0';
       if flagOverflows then
          FlagError(6);
       end; {if}
-   if isLong then begin
+   if isLongLong then begin
+      token.class := longlongConstant;
+      token.qval.hi := 0;
+      token.qval.lo := Convertsl(numString);  {TODO support full 64-bit range}
+      if unsigned then
+         token.kind := ulonglongConst
+      else begin
+         token.kind := longlongConst;
+         if token.qval.hi < 0 then
+            FlagError(6);
+         end; {else}
+      end {if}
+   else if isLong then begin
       token.class := longConstant;
       token.lval := Convertsl(numString);
       if unsigned then
          token.kind := ulongConst
-      else begin
+      else
          token.kind := longConst;
-         if token.lval < 0 then
-            token.kind := ulongConst;
-         end; {else}
       end {if}
    else begin
       if unsigned then
