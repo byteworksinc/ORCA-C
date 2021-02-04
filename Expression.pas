@@ -1757,6 +1757,8 @@ if expressionType^.kind = scalarType then begin
          Gen1t(pc_ldc, 0, cgWord);
       cgLong,cgULong:
          GenLdcLong(0);
+      cgQuad,cgUQuad:
+         GenLdcQuad(longlong0);
       cgReal,cgDouble,cgComp,cgExtended:
          GenLdcReal(0.0);
       otherwise:
