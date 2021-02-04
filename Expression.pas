@@ -2364,6 +2364,14 @@ var
                      Gen0(pc_sbl);
                   end;
 
+               cgQuad,cgUQuad: begin
+                  GenLdcQuad(longlong1);
+                  if inc then
+                     Gen0(pc_adq)
+                  else
+                     Gen0(pc_sbq);
+                  end;
+
                cgReal,cgDouble,cgComp,cgExtended: begin
                   GenLdcReal(1.0);
                   if inc then
@@ -2406,7 +2414,7 @@ var
          if iType^.kind = scalarType then begin
             iSize := 1;
             baseType := iType^.baseType;
-            if (baseType in [cgReal,cgDouble,cgComp,cgExtended])
+            if (baseType in [cgReal,cgDouble,cgComp,cgExtended,cgQuad,cgUQuad])
                or (iType^.cType = ctBool) then begin
 
                {do real or bool inc or dec}
@@ -2438,6 +2446,10 @@ var
                      IncOrDec(pc_l = pc_lld);
                if iType^.cType = ctBool then
                   expressionType := boolPtr
+               else if baseType = cgQuad then
+                  expressionType := longLongPtr
+               else if baseType = cgUQuad then
+                  expressionType := ulongLongPtr
                else
                   expressionType := doublePtr;
                goto 1;

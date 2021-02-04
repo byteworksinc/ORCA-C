@@ -484,6 +484,8 @@ var
    partialFileGS: gsosOutString;        {partial compile list}
    sourceFileGS: gsosOutString;		{debug source file name}
    tempList: tempPtr;                   {list of temp work variables}
+   longlong0: longlong;                 {the value 0 as a longlong}
+   longlong1: longlong;                 {the value 1 as a longlong}
 
                                         {expression results}
                                         {------------------}
@@ -851,6 +853,10 @@ spinner[0] := '|';			{set up the spinner characters}
 spinner[1] := '/';
 spinner[2] := '-';
 spinner[3] := '\';
+longlong0.hi := 0;
+longlong0.lo := 0;
+longlong1.hi := 0;
+longlong1.lo := 1;
 end; {InitCCommon}
 
 
