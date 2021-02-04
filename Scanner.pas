@@ -685,6 +685,7 @@ if list or (numErr <> 0) then begin
         153: msg := @'lint: return statement in function declared _Noreturn';
         154: msg := @'lint: function declared _Noreturn can return or has unreachable code';
         155: msg := @'lint: non-void function may not return a value or has unreachable code';
+        156: msg := @'invalid suffix on numeric constant';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3277,14 +3278,17 @@ if c2 in ['e','E'] then begin           {handle an exponent}
 while c2 in ['l','u','L','U'] do        {check for long or unsigned}
    if c2 in ['l','L'] then begin
       NextChar;
-      if not isReal then
-         isLong := true;
+      if isLong then
+         FlagError(156);
+      isLong := true;
       end {if}
    else {if c2 in ['u','U'] then} begin
       NextChar;
-      unsigned := true;
-      if isReal then
+      if unsigned then
+         FlagError(156)
+      else if isReal then
          FlagError(91);
+      unsigned := true;
       end; {else}
 if c2 in ['f','F'] then begin           {allow F designator on reals}
    if unsigned then
@@ -3337,7 +3341,7 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
       token.lval := Convertsl(numString);
       end; {else}
    end {else if}
-else begin                            {hex & octal}
+else begin                            {hex, octal, & binary}
    token.lval := 0;
    if isHex then begin
       i := 3;
@@ -3392,7 +3396,7 @@ else begin                            {hex & octal}
    if long(token.lval).msw <> 0 then
       isLong := true;
    if isLong then begin
-      if unsigned then
+      if unsigned or (token.lval & $80000000 <> 0) then
          token.kind := ulongConst
       else
          token.kind := longConst;
@@ -3849,6 +3853,10 @@ repeat
          bp := pointer(ord4(macros) + hash(mp^.name));
          mp^.next := bp^;
          bp^ := mp;
+         token.kind := intconst;        {create the default value}
+         token.numString := nil;
+         token.class := intConstant;
+         token.ival := 1;
          if lch = '=' then begin
             NextCh;                     {record the value}
             token.numString := nil;
@@ -3872,12 +3880,8 @@ repeat
                         otherwise: ;
                         end; {case}
                   end {if}
-               else begin
-                  token.kind := intconst;
-                  token.numString := nil;
-                  token.class := intConstant;
-                  token.ival := 0;
-                  end; {else}
+               else
+                  Error(108);
                end {else if}
             else if lch in ['.','0'..'9'] then begin
                token.name := GetWord;
@@ -3887,17 +3891,11 @@ repeat
                GetString
             else
                Error(108);
-            end {if}
-         else begin
-            token.kind := intconst;     {create the default value}
-            token.numString := nil;
-            token.class := intConstant;
-            token.ival := 1;
-            end; {else}
+            end; {if}
          new(mp^.tokens);               {add the value to the definition}
          with mp^.tokens^ do begin
             next := nil;
-            tokenString := nil;
+            tokenString := @'';
             expandEnabled := true;
             tokenStart := nil;
             tokenEnd := nil;
