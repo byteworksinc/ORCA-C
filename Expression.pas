@@ -2828,7 +2828,8 @@ var
 
    begin {CheckDivByZero}
    if opType^.kind = scalarType then
-      if opType^.baseType in [cgByte,cgWord,cgUByte,cgUWord,cgLong,cgULong] then
+      if opType^.baseType in 
+         [cgByte,cgWord,cgUByte,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
          if ((divisor.class = intConstant) and (divisor.ival = 0))
             or ((divisor.class = longConstant) and (divisor.lval = 0))
             or ((divisor.class = longlongConstant) 
@@ -2869,6 +2870,9 @@ var
             Error(130);
       if opType^.baseType in [cgLong,cgULong] then
          if (shiftCount < 0) or (shiftCount > 31) then
+            Error(130);
+      if opType^.baseType in [cgQuad,cgUQuad] then
+         if (shiftCount < 0) or (shiftCount > 63) then
             Error(130);
       end; {if}
    end; {CheckShiftOverflow}
