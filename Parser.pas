@@ -1946,7 +1946,13 @@ var
       variable^.storage := global;
    if isConstant and (variable^.storage in [external,global,private]) then begin
       if bitsize = 0 then begin
-         iPtr^.iVal := expressionValue;
+         if etype^.baseType in [cgQuad,cgUQuad] then begin
+            iPtr^.qVal := longlongExpressionValue;
+            end {if}
+         else begin
+            iPtr^.qval.hi := 0;
+            iPtr^.iVal := expressionValue;
+            end; {else}
          iPtr^.itype := tp^.baseType;
          InitializeBitField;
          end; {if}
@@ -1954,13 +1960,20 @@ var
 
          scalarType: begin
             bKind := tp^.baseType;
-            if (bKind in [cgByte..cgULong])
-               and (etype^.baseType in [cgByte..cgULong]) then begin
-               if bKind in [cgLong,cgULong] then
+            if (etype^.baseType in [cgByte..cgULong,cgQuad,cgUQuad])
+               and (bKind in [cgByte..cgULong,cgQuad,cgUQuad]) then begin
+               if bKind in [cgLong,cgULong,cgQuad,cgUQuad] then
                   if eType^.baseType = cgUByte then
                      iPtr^.iVal := iPtr^.iVal & $000000FF
                   else if eType^.baseType = cgUWord then
                      iPtr^.iVal := iPtr^.iVal & $0000FFFF;
+               if bKind in [cgQuad,cgUQuad] then
+                  if etype^.baseType in [cgByte..cgULong] then
+                     if (etype^.baseType in [cgByte,cgWord,cgLong])
+                        and (iPtr^.iVal < 0) then
+                        iPtr^.qVal.hi := -1
+                     else
+                        iPtr^.qVal.hi := 0;
                goto 3;
                end; {if}
             if bKind in [cgReal,cgDouble,cgComp,cgExtended] then begin
@@ -2012,6 +2025,14 @@ var
             else if etype^.kind = scalarType then
                if etype^.baseType in [cgByte..cgULong] then
                   if expressionValue = 0 then
+                     iPtr^.iType := cgULong
+                  else begin
+                     Error(47);
+                     errorFound := true;
+                     end {else}
+               else if etype^.baseType in [cgQuad,cgUQuad] then
+                  if (longlongExpressionValue.hi = 0) and
+                     (longlongExpressionValue.lo = 0) then
                      iPtr^.iType := cgULong
                   else begin
                      Error(47);

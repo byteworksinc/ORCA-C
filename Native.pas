@@ -346,7 +346,7 @@ procedure WriteNative (opcode: integer; mode: addressingMode; operand: integer;
 label 1;
 
 type
-   rkind = (k1,k2,k3);                  {cnv record types}
+   rkind = (k1,k2,k3,k4);               {cnv record types}
 
 var
    ch: char;                            {temp storage for string constants}
@@ -355,7 +355,8 @@ var
       case rkind of
          k1: (rval: real;);
          k2: (dval: double;);
-         k3: (ival1,ival2,ival3,ival4: integer;);
+         k3: (qval: longlong);
+         k4: (ival1,ival2,ival3,ival4: integer;);
       end;
    count: integer;                      {number of constants to repeat}
    i,j,k: integer;                      {loop variables}
@@ -605,6 +606,13 @@ case mode of
                                   lval := icptr(name)^.lval;
                                   CnOut2(long(lval).lsw);
                                   CnOut2(long(lval).msw);
+                                  end;
+            cgQuad,cgUQuad      : begin
+                                  cnv.qval := icptr(name)^.qval;
+                                  CnOut2(cnv.ival1);
+                                  CnOut2(cnv.ival2);
+                                  CnOut2(cnv.ival3);
+                                  CnOut2(cnv.ival4);
                                   end;
             cgReal              : begin
                                   cnv.rval := icptr(name)^.rval;

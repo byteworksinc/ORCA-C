@@ -494,6 +494,8 @@ procedure DoGlobals;
                            end;
                         cgLong,cgULong:
                            GenL1(dc_cns, ip^.ival, ip^.count);
+                        cgQuad,cgUQuad:
+                           GenQ1(dc_cns, ip^.qval, ip^.count);
                         cgReal,cgDouble,cgComp,cgExtended:
                            GenR1t(dc_cns, ip^.rval, ip^.count, ip^.itype);
                         cgString:
@@ -583,6 +585,8 @@ procedure DoGlobals;
                         end;
                      cgLong,cgULong:
                         GenL1(dc_cns, ip^.ival, 1);
+                     cgQuad,cgUQuad:
+                        GenQ1(dc_cns, ip^.qval, 1);
                      cgReal,cgDouble,cgComp,cgExtended:
                         GenR1t(dc_cns, ip^.rval, 1, ip^.itype);
                      cgString:

@@ -311,7 +311,7 @@ type
       isStructOrUnion: boolean;         {is this a struct or union initializer?}
       case isConstant: boolean of       {is this a constant initializer?}
          false: (iTree: tokenPtr);
-         true : (
+         true : (                       {Note: qVal.lo must overlap iVal}
             case itype: baseTypeEnum of
                cgByte,
                cgUByte,

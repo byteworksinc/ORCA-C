@@ -557,6 +557,15 @@ procedure GenL1 (fop: pcodes; lval: longint; fp1: integer);
 {       fp1 - integer parameter                                 }
 
 
+procedure GenQ1 (fop: pcodes; qval: longlong; fp1: integer);
+
+{ generate an instruction that uses a longlong and an int       }
+{                                                               }
+{ parameters:                                                   }
+{       qval - longlong parameter                               }
+{       fp1 - integer parameter                                 }
+
+
 procedure GenR1t (fop: pcodes; rval: double; fp1: integer; tp: baseTypeEnum);
 
 { generate an instruction that uses a real and an int           }
@@ -1203,6 +1212,28 @@ if codeGeneration then begin
 end; {GenL1}
 
 
+procedure GenQ1 {fop: pcodes; qval: longlong; fp1: integer};
+
+{ generate an instruction that uses a longlong and an int       }
+{                                                               }
+{ parameters:                                                   }
+{       qval - longlong parameter                               }
+{       fp1 - integer parameter                                 }
+
+var
+   lcode: icptr;                        {local copy of code}
+
+begin {GenQ1}
+if codeGeneration then begin
+   lcode := code;
+   lcode^.optype := cgQuad;
+   lcode^.qval := qval;
+   lcode^.q := fp1;
+   Gen0(fop);
+   end; {if}
+end; {GenQ1}
+
+
 procedure GenR1t {fop: pcodes; rval: double; fp1: integer; tp: baseTypeEnum};
 
 { generate an instruction that uses a real and an int           }
@@ -1260,8 +1291,7 @@ begin {GenLdcQuad}
 if codeGeneration then begin
    lcode := code;
    lcode^.optype := cgQuad;
-   lcode^.qval.lo := qval.lo;
-   lcode^.qval.hi := qval.hi;
+   lcode^.qval := qval;
    Gen0(pc_ldc);
    end; {if}
 end; {GenLdcQuad}

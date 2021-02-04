@@ -338,6 +338,8 @@ with code^ do
                write(r:1);
             cgLong,cgULong:
                write(lval:1);
+            cgQuad,cgUQuad:
+               write('***');
             cgReal,cgDouble,cgComp,cgExtended:
                write('***');
             cgString: begin

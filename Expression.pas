@@ -3941,14 +3941,12 @@ else begin                              {record the expression for an initialize
          isConstant := true;
          end {else if}
       else if tree^.token.kind = longlongconst then begin
-         longlongExpressionValue.lo := tree^.token.qval.lo;
-         longlongExpressionValue.hi := tree^.token.qval.hi;
+         longlongExpressionValue := tree^.token.qval;
          expressionType := longLongPtr;
          isConstant := true;
          end {else if}
       else if tree^.token.kind = ulonglongconst then begin
-         longlongExpressionValue.lo := tree^.token.qval.lo;
-         longlongExpressionValue.hi := tree^.token.qval.hi;
+         longlongExpressionValue := tree^.token.qval;
          expressionType := ulongLongPtr;
          isConstant := true;
          end {else if}

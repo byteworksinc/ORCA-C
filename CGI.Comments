@@ -3,13 +3,14 @@
 {  dc_cns - generate a constant value                           }
 {                                                               }
 {  GenL1(dc_cns, lval, count);                                  }
+{  GenQ1(dc_cns, qval, count);                                  }
 {  GenR1t(dc_cns, rval, count, type);                           }
 {  Gen2t(dc_cns, ival, count, type);                            }
 {  GenS(dc_cns, sptr);                                          }
 {                                                               }
-{  Creates COUNT occurrences of the constant lval, rval or      }
-{  ival, based on the type.  In Gen2t can accept byte or word   }
-{  types.  In the case of GenS, the operand is a string         }
+{  Creates COUNT occurrences of the constant lval, qval, rval   }
+{  or ival, based on the type.  In Gen2t can accept byte or     }
+{  word types.  In the case of GenS, the operand is a string    }
 {  constant, and no repeat count is allowed.                    }
 {                                                               }
 {                                                               }
