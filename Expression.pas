@@ -1058,6 +1058,10 @@ var
          op^.left := Pop;
          kindRight := op^.right^.token.kind;
          kindLeft := op^.left^.token.kind;
+         if not (kind in [normalExpression,autoInitializerExpression]) then
+            if (kindLeft in [longlongconst,ulonglongconst])
+               or (kindRight in [longlongconst,ulonglongconst]) then
+               Error(157);
          if kindRight in [intconst,uintconst,longconst,ulongconst] then begin
             if kindLeft in [intconst,uintconst,longconst,ulongconst] then begin
                if kind = preprocessorExpression then begin
@@ -1378,6 +1382,9 @@ var
          else if not (op^.token.kind in
             [typedef,plusplusop,minusminusop,opplusplus,opminusminus,uand]) then
             begin
+            if not (kind in [normalExpression,autoInitializerExpression]) then
+               if op^.left^.token.kind in [longlongconst,ulonglongconst] then
+                  Error(157);
             if (op^.left^.token.kind
                in [intconst,uintconst,longconst,ulongconst]) then begin
 

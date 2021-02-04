@@ -687,6 +687,7 @@ if list or (numErr <> 0) then begin
         154: msg := @'lint: function declared _Noreturn can return or has unreachable code';
         155: msg := @'lint: non-void function may not return a value or has unreachable code';
         156: msg := @'invalid suffix on numeric constant';
+        157: msg := @'ORCA/C cannot evaluate this constant expression with long long operand(s)';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
