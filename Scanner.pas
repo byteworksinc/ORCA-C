@@ -3222,6 +3222,23 @@ var
    end; {GetDigits}
 
 
+   procedure ShiftAndOrValue (shiftCount, nextDigit: integer);
+
+   {  Shift the 64-bit value of token.qval left by shiftCount,  }
+   {  then binary-or it with nextDigit.                         }
+   
+   begin {ShiftAndOrValue}
+   while shiftCount > 0 do begin
+      token.qval.hi := token.qval.hi << 1;
+      if (token.qval.lo & $80000000) <> 0 then
+         token.qval.hi := token.qval.hi | 1;
+      token.qval.lo := token.qval.lo << 1;
+      shiftCount := shiftCount - 1;
+      end; {while}
+   token.qval.lo := token.qval.lo | nextDigit;
+   end; {ShiftAndOrValue}
+   
+
 begin {DoNumber}
 isBin := false;                         {assume it's not binary}
 isHex := false;                         {assume it's not hex}
@@ -3361,11 +3378,12 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
       end; {else}
    end {else if}
 else begin                            {hex, octal, & binary}
-   token.lval := 0;
+   token.qval.lo := 0;
+   token.qval.hi := 0;
    if isHex then begin
       i := 3;
       while i <= length(numString) do begin
-         if token.lval & $F0000000 <> 0 then begin
+         if token.qval.hi & $F0000000 <> 0 then begin
             i := maxint;
             if flagOverflows then
                FlagError(6);
@@ -3375,7 +3393,7 @@ else begin                            {hex, octal, & binary}
                val := (ord(numString[i])-7) & $000F
             else
                val := ord(numString[i]) & $000F;
-            token.lval := (token.lval << 4) | val;
+            ShiftAndOrValue(4, val);
             i := i+1;
             end; {else}
          end; {while}
@@ -3383,7 +3401,7 @@ else begin                            {hex, octal, & binary}
    else if isBin then begin
       i := 3;
       while i <= length(numString) do begin
-         if token.lval & $80000000 <> 0 then begin
+         if token.qval.hi & $80000000 <> 0 then begin
             i := maxint;
             if flagOverflows then
                FlagError(6);
@@ -3391,7 +3409,7 @@ else begin                            {hex, octal, & binary}
          else begin
             if not (numString[i] in ['0','1']) then
                FlagError(121);
-            token.lval := (token.lval << 1) | (ord(numString[i]) & $0001);
+            ShiftAndOrValue(1, ord(numString[i]) & $0001);
             i := i+1;
             end; {else}
          end; {while}
@@ -3399,7 +3417,7 @@ else begin                            {hex, octal, & binary}
    else begin
       i := 1;
       while i <= length(numString) do begin
-         if token.lval & $E0000000 <> 0 then begin
+         if token.qval.hi & $E0000000 <> 0 then begin
             i := maxint;
             if flagOverflows then
                FlagError(6);
@@ -3407,32 +3425,32 @@ else begin                            {hex, octal, & binary}
          else begin
             if numString[i] in ['8','9'] then
                FlagError(7);
-            token.lval := (token.lval << 3) | (ord(numString[i]) & $0007);
+            ShiftAndOrValue(3, ord(numString[i]) & $0007);
             i := i+1;
             end; {else}
          end; {while}
       end; {else}
-   if long(token.lval).msw <> 0 then
-      isLong := true;
+   if token.qval.hi <> 0 then
+      isLongLong := true;
+   if not isLongLong then
+      if long(token.qval.lo).msw <> 0 then
+         isLong := true;
    if isLongLong then begin
-      {TODO support actual long long range}
-      token.qval.lo := token.lval;
-      token.qval.hi := 0;
-      if unsigned then
+      if unsigned or (token.qval.hi & $80000000 <> 0) then
          token.kind := ulonglongConst
       else
          token.kind := longlongConst;
       token.class := longlongConstant;
       end {if}
    else if isLong then begin
-      if unsigned or (token.lval & $80000000 <> 0) then
+      if unsigned or (token.qval.lo & $80000000 <> 0) then
          token.kind := ulongConst
       else
          token.kind := longConst;
       token.class := longConstant;
       end {if}
    else begin
-      if (long(token.lval).lsw & $8000) <> 0 then
+      if (long(token.qval.lo).lsw & $8000) <> 0 then
          unsigned := true;
       if unsigned then
          token.kind := uintConst
