@@ -1846,6 +1846,8 @@ var
                size := rtree^.token.ival
             else if rtree^.token.kind in [longconst,ulongconst] then
                size := rtree^.token.lval
+            else if rtree^.token.kind in [longlongconst,ulonglongconst] then
+               size := rtree^.token.qval.lo
             else begin
                Error(18);
                errorFound := true;
@@ -2056,11 +2058,13 @@ var
             operator := tree^.token.kind;
             while operator in [plusch,minusch] do begin
                with tree^.right^.token do
-                  if kind in [intConst,longConst] then begin
+                  if kind in [intConst,longConst,longlongConst] then begin
                      if kind = intConst then
                         offSet2 := ival
-                     else
-                        offset2 := lval;
+                     else if kind = longConst then
+                        offset2 := lval
+                     else {if kind = longlongConst then}
+                        offset2 := qval.lo;
                      if operator = plusch then
                         offset := offset + offset2
                      else
@@ -4179,12 +4183,19 @@ var
                                         {do assignment conversions}
          while tree^.token.kind = castoper do
             tree := tree^.left;
-         isConstant := tree^.token.class in [intConstant,longConstant];
+         isConstant :=
+            tree^.token.class in [intConstant,longConstant,longlongConstant];
          if isConstant then
             if tree^.token.class = intConstant then
                val := tree^.token.ival
-            else
-               val := tree^.token.lval;
+            else if tree^.token.class = longConstant then
+               val := tree^.token.lval
+            else {if tree^.token.class = longlongConstant then} begin
+               if (tree^.token.qval.hi = 0) and (tree^.token.qval.lo >= 0) then
+                  val := tree^.token.qval.lo
+               else
+                  isConstant := false;
+               end; {else}
 
 {        if isConstant then
             if tree^.token.class = intConstant then

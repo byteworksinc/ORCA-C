@@ -167,8 +167,8 @@ else if (op1 <> nil) and (op2 <> nil) then
                               if op1^.lval = op2^.lval then
                                  CodesMatch := true;
                            cgQuad, cgUQuad:
-                              if op1^.qval.low32 = op2^.qval.low32 then
-                                 if op1^.qval.high32 = op2^.qval.high32 then
+                              if op1^.qval.lo = op2^.qval.lo then
+                                 if op1^.qval.hi = op2^.qval.hi then
                                     CodesMatch := true;
                            cgReal, cgDouble, cgComp, cgExtended:
                               if op1^.rval = op2^.rval then

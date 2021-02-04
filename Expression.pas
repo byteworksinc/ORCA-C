@@ -2810,6 +2810,8 @@ var
       if opType^.baseType in [cgByte,cgWord,cgUByte,cgUWord,cgLong,cgULong] then
          if ((divisor.class = intConstant) and (divisor.ival = 0))
             or ((divisor.class = longConstant) and (divisor.lval = 0))
+            or ((divisor.class = longlongConstant) 
+               and (divisor.qval.lo = 0) and (divisor.qval.hi = 0))
             or ((divisor.class = doubleConstant) and (divisor.rval = 0.0)) then
             Error(129);
    end; {CheckDivByZero}
@@ -2831,6 +2833,12 @@ var
       shiftCount := shiftCountTok.ival
    else if shiftCountTok.class = longConstant then
       shiftCount := shiftCountTok.lval
+   else if shiftCountTok.class = longlongConstant then begin
+      if shiftCountTok.qval.hi = 0 then
+         shiftCount := shiftCountTok.qval.lo
+      else
+         shiftCount := -1;
+      end {else if}
    else
       shiftCount := 0;
 
@@ -2910,6 +2918,18 @@ case tree^.token.kind of
       lastwasconst := true;
       lastconst := tree^.token.lval;
       end; {case longConst}
+
+   longlongConst,ulonglongConst: begin
+      GenLdcQuad(tree^.token.qval);
+      if tree^.token.kind = longlongConst then
+         expressionType := longlongPtr
+      else
+         expressionType := ulonglongPtr;
+      if (tree^.token.qval.hi = 0) and (tree^.token.qval.lo >= 0) then begin
+         lastwasconst := true;
+         lastconst := tree^.token.qval.lo;
+         end; {if}
+      end; {case longlongConst}
 
    doubleConst: begin
       GenLdcReal(tree^.token.rval);
@@ -3920,6 +3940,18 @@ else begin                              {record the expression for an initialize
          expressionType := ulongPtr;
          isConstant := true;
          end {else if}
+      else if tree^.token.kind = longlongconst then begin
+         longlongExpressionValue.lo := tree^.token.qval.lo;
+         longlongExpressionValue.hi := tree^.token.qval.hi;
+         expressionType := longLongPtr;
+         isConstant := true;
+         end {else if}
+      else if tree^.token.kind = ulonglongconst then begin
+         longlongExpressionValue.lo := tree^.token.qval.lo;
+         longlongExpressionValue.hi := tree^.token.qval.hi;
+         expressionType := ulongLongPtr;
+         isConstant := true;
+         end {else if}
       else if tree^.token.kind = doubleconst then begin
          realExpressionValue := tree^.token.rval;
          expressionType := extendedPtr;
@@ -3955,8 +3987,8 @@ procedure InitExpression;
 { initialize the expression handler                             }
 
 begin {InitExpression}
-startTerm := [ident,intconst,uintconst,longconst,ulongconst,doubleconst,
-              stringconst,_Genericsy];
+startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
+              ulonglongconst,doubleconst,stringconst,_Genericsy];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
               plusplusop,minusminusop,typedef,_Alignofsy];

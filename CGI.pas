@@ -575,6 +575,14 @@ procedure GenLdcLong (lval: longint);
 {       lval - value to load                                    }
 
 
+procedure GenLdcQuad (qval: longlong);
+
+{ load a long long constant                                     }
+{                                                               }
+{ parameters:                                                   }
+{       qval - value to load                                    }
+
+
 procedure GenLdcReal (rval: double);
 
 { load a real constant                                          }
@@ -1236,6 +1244,27 @@ if codeGeneration then begin
    Gen0(pc_ldc);
    end; {if}
 end; {GenLdcLong}
+
+
+procedure GenLdcQuad {qval: longlong};
+
+{ load a long long constant                                     }
+{                                                               }
+{ parameters:                                                   }
+{       qval - value to load                                    }
+
+var
+   lcode: icptr;                        {local copy of code}
+
+begin {GenLdcQuad}
+if codeGeneration then begin
+   lcode := code;
+   lcode^.optype := cgQuad;
+   lcode^.qval.lo := qval.lo;
+   lcode^.qval.hi := qval.hi;
+   Gen0(pc_ldc);
+   end; {if}
+end; {GenLdcQuad}
 
 
 procedure GenTool {fop: pcodes; fp1, fp2: integer; dispatcher: longint};

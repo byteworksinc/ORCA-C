@@ -4986,6 +4986,13 @@ procedure GenTree {op: icptr};
             GenNative(m_pea, immediate, long(op^.lval).lsw, nil, 0);
             end;
 
+      cgQuad,cgUQuad: begin
+         GenNative(m_pea, immediate, long(op^.qval.hi).msw, nil, 0);
+         GenNative(m_pea, immediate, long(op^.qval.hi).lsw, nil, 0);
+         GenNative(m_pea, immediate, long(op^.qval.lo).msw, nil, 0);
+         GenNative(m_pea, immediate, long(op^.qval.lo).lsw, nil, 0);
+         end;
+
       otherwise:
          Error(cge1);
       end; {case}

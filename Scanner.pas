@@ -272,6 +272,7 @@ var
    lintErrors: set of 1..maxLint;       {lint error codes}
    spaceStr: string[2];                 {string ' ' (used in stringization)}
    quoteStr: string[2];                 {string '"' (used in stringization)}
+   numericConstants: set of tokenClass; {token classes for numeric constants}
 
 {-- External procedures; see expression evaluator for notes ----}
 
@@ -742,6 +743,9 @@ case token.kind of
 
    longConst,
    ulongConst:       write(token.lval:1);
+   
+   longlongConst,
+   ulonglongConst:   write('0x...'); {TODO implement}
 
    doubleConst:      write(token.rval:1);
 
@@ -1043,7 +1047,7 @@ if class1 in [identifier,reservedWord] then begin
       str2 := tk2.name
    else if class2 = reservedWord then
       str2 := @reservedWords[kind2]
-   else if class2 in [intConstant,longConstant,doubleConstant] then
+   else if class2 in numericConstants then
       str2 := tk2.numString                   
    else begin
       Error(63);
@@ -1067,8 +1071,8 @@ if class1 in [identifier,reservedWord] then begin
    goto 1;
    end {class1 in [identifier,reservedWord]}
 
-else if class1 in [intConstant,longConstant,doubleConstant] then begin
-   if class2 in [intConstant,longConstant,doubleConstant] then
+else if class1 in numericConstants then begin
+   if class2 in numericConstants then
       str2 := tk2.numString
    else if class2 = identifier then
       str2 := tk2.name
@@ -1086,7 +1090,7 @@ else if class1 in [intConstant,longConstant,doubleConstant] then begin
    tk1 := token;
    token := lt;
    goto 1;
-   end {else if class1 in [intConstant,longConstant,doubleConstant]}
+   end {else if class1 in numericConstants}
 
 else if class1 = stringConstant then begin
    if class2 = stringConstant then begin
@@ -1106,7 +1110,7 @@ else if class1 = stringConstant then begin
    end {else if}
 
 else if kind1 = dotch then begin
-   if class2 in [intConstant,longConstant,doubleConstant] then begin
+   if class2 in numericConstants then begin
       workString := concat(tk1.numString^, tk2.numString^);
       lt := token;
       DoNumber(true);
@@ -1114,7 +1118,7 @@ else if kind1 = dotch then begin
       token := lt;
       goto 1;
       end; {if}
-   end {else if class1 in [intConstant,longConstant,doubleConstant]}
+   end {else if class1 in numericConstants}
 
 else if kind1 = poundch then begin
    if kind2 = poundch then begin
@@ -1846,7 +1850,7 @@ else begin
       new(tempString);
       tempString^[0] := chr(0);
       while
-         (token.class in [reservedWord,intconstant,longconstant,doubleconstant])
+         (token.class in ([reservedWord] + numericConstants))
          or (token.kind in [dotch,ident]) do begin
          if token.kind = ident then
             tempString^ := concat(tempString^, token.name^)
@@ -1854,7 +1858,7 @@ else begin
             tempString^ := concat(tempString^, '.')
          else if token.class = reservedWord then
             tempString^ := concat(tempString^, reservedWords[token.kind])
-         else {if token.class in [intconst,longconst,doubleconst] then}
+         else {if token.class in numericConstants then}
             tempString^ := concat(tempString^, token.numstring^);
          NextToken;
          end; {while}
@@ -2316,6 +2320,10 @@ var
                            goto 3;
                      longConstant:
                         if tk1^.token.lval <> tk2^.token.lval then
+                           goto 3;
+                     longlongConstant:
+                        if (tk1^.token.qval.lo <> tk2^.token.qval.lo) or
+                           (tk1^.token.qval.hi <> tk2^.token.qval.hi) then
                            goto 3;
                      doubleConstant:
                         if tk1^.token.rval <> tk2^.token.rval then
@@ -3145,12 +3153,14 @@ var
    isBin: boolean;                      {is the value a binary number?}
    isHex: boolean;                      {is the value a hex number?}
    isLong: boolean;                     {is the value a long number?}
+   isLongLong: boolean;                 {is the value a long long number?}
    isReal: boolean;                     {is the value a real number?}
    numIndex: 0..maxLine;                {index into workString}
    sp: stringPtr;                       {for saving identifier names}
    stringIndex: 0..maxLine;             {length of the number string}
    unsigned: boolean;                   {is the number unsigned?}
    val: integer;                        {value of a digit}
+   c1: char;                            {saved copy of last character}
 
    numString: pString;                  {characters in the number}
 
@@ -3217,6 +3227,7 @@ isBin := false;                         {assume it's not binary}
 isHex := false;                         {assume it's not hex}
 isReal := false;                        {assume it's an integer}
 isLong := false;                        {assume a short integer}
+isLongLong := false;
 unsigned := false;                      {assume signed numbers}
 stringIndex := 0;                       {no digits so far...}
 if scanWork then begin                  {set up the scanner}
@@ -3276,11 +3287,17 @@ if c2 in ['e','E'] then begin           {handle an exponent}
    end; {if}
 1:
 while c2 in ['l','u','L','U'] do        {check for long or unsigned}
-   if c2 in ['l','L'] then begin
-      NextChar;
-      if isLong then
+   if c2 in ['l','L'] then begin   
+      if isLong or isLongLong then
          FlagError(156);
-      isLong := true;
+      c1 := c2;
+      NextChar;
+      if c2 = c1 then begin
+         NextChar;
+         isLongLong := true;
+         end {if}
+      else
+         isLong := true;
       end {if}
    else {if c2 in ['u','U'] then} begin
       NextChar;
@@ -3293,6 +3310,8 @@ while c2 in ['l','u','L','U'] do        {check for long or unsigned}
 if c2 in ['f','F'] then begin           {allow F designator on reals}
    if unsigned then
       FlagError(91);
+   if isLongLong then
+      FlagError(156);
    if not isReal then begin
       FlagError(100);
       isReal := true;
@@ -3395,7 +3414,17 @@ else begin                            {hex, octal, & binary}
       end; {else}
    if long(token.lval).msw <> 0 then
       isLong := true;
-   if isLong then begin
+   if isLongLong then begin
+      {TODO support actual long long range}
+      token.qval.lo := token.lval;
+      token.qval.hi := 0;
+      if unsigned then
+         token.kind := ulonglongConst
+      else
+         token.kind := longlongConst;
+      token.class := longlongConstant;
+      end {if}
+   else if isLong then begin
       if unsigned or (token.lval & $80000000 <> 0) then
          token.kind := ulongConst
       else
@@ -3718,6 +3747,8 @@ lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155];
 
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';
+                                        {set of classes for numeric constants}
+numericConstants := [intConstant,longConstant,longlongConstant,doubleConstant];
 
 new(mp);                                {__LINE__}
 mp^.name := @'__LINE__';
@@ -3877,7 +3908,7 @@ repeat
                         intConstant   : token.ival := -token.ival;
                         longConstant  : token.lval := -token.lval;
                         doubleConstant: token.rval := -token.rval;
-                        otherwise: ;
+                        longlongConstant,otherwise: Error(108);
                         end; {case}
                   end {if}
                else
