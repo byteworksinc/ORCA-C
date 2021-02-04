@@ -1947,7 +1947,7 @@ var
    if isConstant and (variable^.storage in [external,global,private]) then begin
       if bitsize = 0 then begin
          if etype^.baseType in [cgQuad,cgUQuad] then begin
-            iPtr^.qVal := longlongExpressionValue;
+            iPtr^.qVal := llExpressionValue;
             end {if}
          else begin
             iPtr^.qval.hi := 0;
@@ -2031,8 +2031,8 @@ var
                      errorFound := true;
                      end {else}
                else if etype^.baseType in [cgQuad,cgUQuad] then
-                  if (longlongExpressionValue.hi = 0) and
-                     (longlongExpressionValue.lo = 0) then
+                  if (llExpressionValue.hi = 0) and
+                     (llExpressionValue.lo = 0) then
                      iPtr^.iType := cgULong
                   else begin
                      Error(47);

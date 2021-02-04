@@ -3899,6 +3899,8 @@ if kind = normalExpression then begin   {generate code from the expression tree}
 else begin                              {record the expression for an initializer}
    initializerTree := tree;
    isConstant := false;
+   llExpressionValue.lo := 0;
+   llExpressionValue.hi := 0;
    if errorFound then begin
       DisposeTree(initializerTree);
       initializerTree := nil;
@@ -3955,12 +3957,23 @@ else begin                              {record the expression for an initialize
          isConstant := true;
          end {else if}
       else if tree^.token.kind = longlongconst then begin
-         longlongExpressionValue := tree^.token.qval;
+         llExpressionValue := tree^.token.qval;
+         if ((llExpressionValue.hi = 0) and (llExpressionValue.lo >= 0))
+            or ((llExpressionValue.hi = -1) and (llExpressionValue.lo < 0)) then
+            expressionValue := llExpressionValue.lo
+         else if llExpressionValue.hi < 0 then
+            expressionValue := $80000000
+         else
+            expressionValue := $7fffffff;
          expressionType := longLongPtr;
          isConstant := true;
          end {else if}
       else if tree^.token.kind = ulonglongconst then begin
-         longlongExpressionValue := tree^.token.qval;
+         llExpressionValue := tree^.token.qval;
+         if llExpressionValue.hi = 0 then
+            expressionValue := llExpressionValue.lo
+         else
+            expressionValue := $FFFFFFFF;
          expressionType := ulongLongPtr;
          isConstant := true;
          end {else if}

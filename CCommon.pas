@@ -491,7 +491,7 @@ var
                                         {------------------}
    doDispose: boolean;                  {dispose of the expression tree as we go?}
    realExpressionValue: double;         {value of the last real constant expression}
-   longlongExpressionValue: longlong;   {value of the last long long constant expression}
+   llExpressionValue: longlong;         {value of the last long long constant expression}
    expressionValue: longint;            {value of the last constant expression}
    expressionType: typePtr;             {the type of the expression}
    initializerTree: tokenPtr;           {for non-constant initializers}
