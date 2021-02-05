@@ -121,6 +121,8 @@ opt[pc_bqx] := 'bqx';
 opt[pc_baq] := 'baq';
 opt[pc_bnq] := 'bnq';
 opt[pc_ngq] := 'ngq';
+opt[pc_mpq] := 'mpq';
+opt[pc_umq] := 'umq';
 end; {InitWriteCode}
 
 

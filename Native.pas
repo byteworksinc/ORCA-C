@@ -2033,6 +2033,8 @@ case callNum of
    76: sp := @'~STACKERR';              {CC}
    77: sp := @'~LOADSTRUCT';            {CC}
    78: sp := @'~DIV4';                  {CC}
+   79: sp := @'~MUL8';
+   80: sp := @'~UMUL8';
    otherwise:
       Error(cge1);
    end; {case}

@@ -480,12 +480,16 @@
 {  pc_umi - unsigned integer multiply                           }
 {  pc_mpl - long integer multiply                               }
 {  pc_uml - unsigned long multiply                              }
+{  pc_mpq - long long integer multiply                          }
+{  pc_umq - unsigned long long multiply                         }
 {  pc_mpr - real multiply                                       }
 {                                                               }
 {  Gen0(pc_mpi)         cgByte,cgWord                           }
 {  Gen0(pc_umi)         cgUByte,cgUWord                         }
 {  Gen0(pc_mpl)         cgLong                                  }
 {  Gen0(pc_uml)         cgULong                                 }
+{  Gen0(pc_mpq)         cgQuad                                  }
+{  Gen0(pc_umq)         cgUQuad                                 }
 {  Gen0(pc_mpr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }

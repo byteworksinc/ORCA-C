@@ -3142,6 +3142,10 @@ case tree^.token.kind of
                Gen0(pc_mpl)
             else if et = cgULong then
                Gen0(pc_uml)
+            else if et = cgQuad then
+               Gen0(pc_mpq)
+            else if et = cgUQuad then
+               Gen0(pc_umq)
             else if et = cgExtended then
                Gen0(pc_mpr)
             else
@@ -3556,6 +3560,10 @@ case tree^.token.kind of
             Gen0(pc_mpl);
          cgULong:
             Gen0(pc_uml);
+         cgQuad:
+            Gen0(pc_mpq);
+         cgUQuad:
+            Gen0(pc_umq);
          cgExtended:
             Gen0(pc_mpr);
          otherwise:
