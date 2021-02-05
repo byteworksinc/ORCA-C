@@ -123,6 +123,10 @@ opt[pc_bnq] := 'bnq';
 opt[pc_ngq] := 'ngq';
 opt[pc_mpq] := 'mpq';
 opt[pc_umq] := 'umq';
+opt[pc_dvq] := 'dvq';
+opt[pc_udq] := 'udq';
+opt[pc_mdq] := 'mdq';
+opt[pc_uqm] := 'uqm';
 end; {InitWriteCode}
 
 

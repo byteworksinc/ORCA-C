@@ -4493,7 +4493,8 @@ procedure GenTree {op: icptr};
 
    procedure GenBinQuad (op: icptr);
 
-   { generate one of: pc_bqr, pc_bqx, pc_baq                    }
+   { generate one of: pc_bqr, pc_bqx, pc_baq, pc_mpq, pc_umq,   }
+   {    pc_dvq, pc_udq, pc_mdq, pc_uqm                          }
 
       procedure GenOp (ops: integer);
 
@@ -4529,6 +4530,46 @@ procedure GenTree {op: icptr};
       
       pc_umq: GenCall(80);
       
+      pc_dvq: begin
+              GenCall(81);              {do division}
+              GenImplied(m_pla);        {get quotient, discarding remainder}
+              GenNative(m_sta_s, direct, 7, nil, 0);
+              GenImplied(m_pla);
+              GenNative(m_sta_s, direct, 7, nil, 0);
+              GenImplied(m_pla);
+              GenNative(m_sta_s, direct, 7, nil, 0);
+              GenImplied(m_pla);
+              GenNative(m_sta_s, direct, 7, nil, 0);
+              end;
+      
+      pc_udq: begin
+              GenCall(82);              {do division}
+              GenImplied(m_pla);        {get quotient, discarding remainder}
+              GenNative(m_sta_s, direct, 7, nil, 0);
+              GenImplied(m_pla);
+              GenNative(m_sta_s, direct, 7, nil, 0);
+              GenImplied(m_pla);
+              GenNative(m_sta_s, direct, 7, nil, 0);
+              GenImplied(m_pla);
+              GenNative(m_sta_s, direct, 7, nil, 0);
+              end;
+
+      pc_mdq: begin
+              GenCall(81);              {do division}          
+              GenImplied(m_tsc);        {discard quotient, leaving remainder}
+              GenImplied(m_clc);
+              GenNative(m_adc_imm, immediate, 8, nil, 0);
+              GenImplied(m_tcs);
+              end;
+
+      pc_uqm: begin
+              GenCall(82);              {do division}          
+              GenImplied(m_tsc);        {discard quotient, leaving remainder}
+              GenImplied(m_clc);
+              GenNative(m_adc_imm, immediate, 8, nil, 0);
+              GenImplied(m_tcs);
+              end;
+
       otherwise: Error(cge1);
       end; {case}
    end; {GenBinQuad}
@@ -6133,7 +6174,8 @@ case op^.opcode of
    pc_and,pc_bnd,pc_bor,pc_bxr,pc_ior: GenLogic(op);
    pc_blr,pc_blx,pc_bal,pc_dvl,pc_mdl,pc_mpl,pc_sll,pc_slr,pc_udl,pc_ulm,
       pc_uml,pc_vsr: GenBinLong(op);
-   pc_bqr,pc_bqx,pc_baq,pc_mpq,pc_umq: GenBinQuad(op);
+   pc_bqr,pc_bqx,pc_baq,pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm:
+      GenBinQuad(op);
    pc_bnl,pc_ngl: GenUnaryLong(op);
    pc_bnq,pc_ngq: GenUnaryQuad(op);
    pc_bno: GenBno(op);

@@ -2267,7 +2267,8 @@ case op^.opcode of
    pc_udl, pc_ulm, pc_uml, pc_vsr:
       TypeOf := cgULong;
 
-   pc_bnq, pc_ngq, pc_bqr, pc_bqx, pc_baq, pc_adq, pc_sbq, pc_mpq, pc_umq:
+   pc_bnq, pc_ngq, pc_bqr, pc_bqx, pc_baq, pc_adq, pc_sbq, pc_mpq,
+   pc_umq, pc_dvq, pc_udq, pc_mdq, pc_uqm:
       TypeOf := cgQuad;
 
    pc_ngr, pc_adr, pc_dvr, pc_mpr, pc_sbr:
@@ -4064,7 +4065,7 @@ var
                    pc_ngl,pc_ngr,pc_not,pc_pop,pc_sbi,pc_sbl,pc_sbr,
                    pc_shl,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr,pc_tri,
                    pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,
-                   pc_mpq,pc_umq]
+                   pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm]
                   then begin
         	  op^.parents := icount;
                   icount := icount+1;
@@ -4945,7 +4946,7 @@ case code^.opcode of
    pc_ulm, pc_mpi, pc_umi, pc_mpl, pc_uml, pc_mpr, pc_psh, pc_sbi,
    pc_sbl, pc_sbr, pc_shl, pc_sll, pc_shr, pc_usr, pc_slr, pc_vsr,
    pc_tri, pc_sbf, pc_sto, pc_cui, pc_bqr, pc_bqx, pc_baq, pc_adq,
-   pc_sbq, pc_mpq, pc_umq:
+   pc_sbq, pc_mpq, pc_umq, pc_dvq, pc_udq, pc_mdq, pc_uqm:
       begin
       code^.right := Pop;
       code^.left := Pop;

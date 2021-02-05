@@ -275,12 +275,16 @@
 {  pc_udi - unsigned integer divide                             }
 {  pc_dvl - long integer divide                                 }
 {  pc_udl - unsigned long divide                                }
+{  pc_dvq - long long integer divide                            }
+{  pc_udq - unsigned long long divide                           }
 {  pc_dvr - real divide                                         }
 {                                                               }
 {  Gen0(pc_dvi)         cgByte,cgWord                           }
 {  Gen0(pc_udi)         cgUByte,cgUWord                         }
 {  Gen0(pc_dvl)         cgLong                                  }
 {  Gen0(pc_udl)         cgULong                                 }
+{  Gen0(pc_dvq)         cgQuad                                  }
+{  Gen0(pc_udq)         cgUQuad                                 }
 {  Gen0(pc_dvr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
@@ -464,11 +468,15 @@
 {  pc_uim - unsigned integer modulus/remainder                  }
 {  pc_mdl - long remainder                                      }
 {  pc_ulm - unsigned long modulus/remainder                     }
+{  pc_mdq - long long remainder                                 }
+{  pc_uqm - unsigned long long modulus/remainder                }
 {                                                               }
 {  Gen0(pc_mod)         cgByte,cgWord                           }
 {  Gen0(pc_uim)         cgUByte,cgUWord                         }
 {  Gen0(pc_mdl)         cgLong                                  }
 {  Gen0(pc_ulm)         cgULong                                 }
+{  Gen0(pc_mdq)         cgQuad                                  }
+{  Gen0(pc_uqm)         cgUQuad                                 }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
 {  removed and the remainder after division is calculated.      }

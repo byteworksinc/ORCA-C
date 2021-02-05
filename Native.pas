@@ -2035,6 +2035,8 @@ case callNum of
    78: sp := @'~DIV4';                  {CC}
    79: sp := @'~MUL8';
    80: sp := @'~UMUL8';
+   81: sp := @'~CDIV8';
+   82: sp := @'~UDIV8';
    otherwise:
       Error(cge1);
    end; {case}

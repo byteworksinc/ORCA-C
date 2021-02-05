@@ -3160,6 +3160,10 @@ case tree^.token.kind of
                Gen0(pc_dvl)
             else if et = cgULong then
                Gen0(pc_udl)
+            else if et = cgQuad then
+               Gen0(pc_dvq)
+            else if et = cgUQuad then
+               Gen0(pc_udq)
             else if et = cgExtended then
                Gen0(pc_dvr)
             else
@@ -3174,6 +3178,10 @@ case tree^.token.kind of
                Gen0(pc_mdl)
             else if et = cgULong then
                Gen0(pc_ulm)
+            else if et = cgQuad then
+               Gen0(pc_mdq)
+            else if et = cgUQuad then
+               Gen0(pc_uqm)
             else
                Error(66);
 
@@ -3586,6 +3594,10 @@ case tree^.token.kind of
             Gen0(pc_dvl);
          cgULong:
             Gen0(pc_udl);
+         cgQuad:
+            Gen0(pc_dvq);
+         cgUQuad:
+            Gen0(pc_udq);
          cgExtended:
             Gen0(pc_dvr);
          otherwise:
@@ -3610,6 +3622,10 @@ case tree^.token.kind of
             Gen0(pc_mdl);
          cgULong:
             Gen0(pc_ulm);
+         cgQuad:
+            Gen0(pc_mdq);
+         cgUQuad:
+            Gen0(pc_uqm);
          otherwise:
             error(66);
          end; {case}
