@@ -3664,6 +3664,43 @@ case optype of
          end; {else}
       end; {case cgReal,cgDouble,cgComp,cgExtended}
 
+   cgQuad,cgUQuad: begin
+      GenTree(op^.right);
+      gLong.preference := A_X;
+      GenTree(op^.left);
+      if gLong.where = onStack then begin
+         GenImplied(m_pla);
+         GenImplied(m_plx);
+         end; {if}
+      GenNative(m_sta_dir, direct, dworkLoc, nil, 0);
+      GenNative(m_stx_dir, direct, dworkLoc+2, nil, 0);
+      if opcode = pc_sto then
+         GenImplied(m_pla)
+      else {if op^.opcode = pc_cpi then}
+         GenNative(m_lda_s, direct, 1, nil, 0);
+      GenNative(m_sta_indl, direct, dworkLoc, nil, 0);
+      GenNative(m_ldy_imm, immediate, 2, nil, 0);
+      if opcode = pc_sto then
+         GenImplied(m_pla)
+      else {if op^.opcode = pc_cpi then}
+         GenNative(m_lda_s, direct, 3, nil, 0);
+      GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
+      GenImplied(m_iny);
+      GenImplied(m_iny);
+      if opcode = pc_sto then
+         GenImplied(m_pla)
+      else {if op^.opcode = pc_cpi then}
+         GenNative(m_lda_s, direct, 5, nil, 0);
+      GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
+      GenImplied(m_iny);
+      GenImplied(m_iny);
+      if opcode = pc_sto then
+         GenImplied(m_pla)
+      else {if op^.opcode = pc_cpi then}
+         GenNative(m_lda_s, direct, 7, nil, 0);
+      GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
+      end; {case cgQuad,cgUQuad}
+
    cgLong,cgULong: begin
       if opcode = pc_sto then
          gLong.preference := onStack+constant
