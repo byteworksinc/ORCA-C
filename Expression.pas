@@ -2122,10 +2122,12 @@ case tp of
          Gen0(op);
          end;
       end;
-   cgLong,cgULong: begin
+   cgLong,cgULong,cgQuad,cgUQuad: begin
+      if tp in [cgQuad,cgUQuad] then 
+         Gen2(pc_cnv, ord(tp), ord(cgLong));
       if size <> 1 then begin
          GenLdcLong(size);
-         if tp = cgLong then
+         if tp in [cgLong,cgQuad] then
             Gen0(pc_mpl)
          else
             Gen0(pc_uml);
