@@ -67,6 +67,7 @@ var
    namePushed: boolean;			{has a name been pushed in this proc?}
    skipLoad: boolean;			{skip load for a pc_lli, etc?}
    stackSaveDepth: integer;		{nesting depth of saved stack positions}
+   argsSize: integer;			{total size of argument to a function}
 
                                         {stack frame locations}
                                         {---------------------}
@@ -4627,6 +4628,7 @@ procedure GenTree {op: icptr};
    var
       lab1: integer;			{return point}
       lLong: longType;			{used to reserve gLong}
+      lArgsSize: integer;		{saved copy of argsSize}
 
    begin {GenCui}
    {save the stack register}
@@ -4639,6 +4641,9 @@ procedure GenTree {op: icptr};
       GenNative(m_stx_dir, direct, stackLoc, nil, 0);
       stackSaveDepth := stackSaveDepth + 1;
       end; {if}
+
+   lArgsSize := argsSize;
+   argsSize := 0;
 
    {generate parameters}
    {place the operands on the stack}
@@ -4697,6 +4702,7 @@ procedure GenTree {op: icptr};
    {save the returned value}
    gLong.where := A_X;
    SaveRetValue(op^.optype);
+   argsSize := lArgsSize;
    end; {GenCui}
 
 
@@ -4705,7 +4711,8 @@ procedure GenTree {op: icptr};
    { Generate code for a pc_cup					}
 
    var
-      lLong: longType;                     {used to reserve gLong}
+      lLong: longType;                  {used to reserve gLong}
+      lArgsSize: integer;               {saved copy of argsSize}
 
    begin {GenCup}
    {save the stack register}
@@ -4718,6 +4725,9 @@ procedure GenTree {op: icptr};
       GenNative(m_stx_dir, direct, stackLoc, nil, 0);
       stackSaveDepth := stackSaveDepth + 1;
       end; {if}
+
+   lArgsSize := argsSize;
+   argsSize := 0;
 
    {generate parameters}
    lLong := gLong;
@@ -4755,6 +4765,7 @@ procedure GenTree {op: icptr};
    {save the returned value}
    gLong.where := A_X;
    SaveRetValue(op^.optype);
+   argsSize := lArgsSize;
    end; {GenCup}
 
 
@@ -5948,7 +5959,26 @@ procedure GenTree {op: icptr};
    var
       lab1: integer;			{branch point}
 
-   begin {GenStk}    
+   begin {GenStk}
+   if op^.left^.opcode = pc_psh then begin
+      if (op^.left^.right^.opcode = pc_ldc) and
+         (op^.left^.right^.optype in [cgWord,cgUWord]) then
+         argsSize := argsSize + op^.left^.right^.q
+      else
+         Error(cge1);
+      end {if}
+   else
+      case op^.optype of
+         cgByte,cgUByte,cgWord,cgUWord:
+            argsSize := argsSize + cgWordSize;
+         cgReal,cgDouble,cgComp,cgExtended:
+            argsSize := argsSize + cgExtendedSize;
+         cgLong,cgULong:
+            argsSize := argsSize + cgLongSize;
+         cgQuad,cgUQuad:
+            argsSize := argsSize + cgQuadSize;
+         otherwise: Error(cge1);
+         end; {case}
    glong.preference := onStack;		{generate the operand}
    GenTree(op^.left);
    if op^.optype in			{do the stk}
