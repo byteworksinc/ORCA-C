@@ -751,12 +751,18 @@ var
          id := FindSymbol(tk, variableSpace, false, true);
          Gen1Name(pc_lao, 0, id^.name);
          size := fType^.size;
-         end; {if}
+         end {if}
+      else if fType^.kind = scalarType then
+         if fType^.baseType in [cgQuad,cgUQuad] then
+            Gen2t(pc_lod, 0, 0, cgULong);
       Expression(normalExpression, [semicolonch]);
       AssignmentConversion(fType, expressionType, lastWasConst, lastConst,
          true, false);
       case fType^.kind of
-         scalarType:    Gen2t(pc_str, 0, 0, fType^.baseType);
+         scalarType:    if fType^.baseType in [cgQuad,cgUQuad] then
+                           Gen0t(pc_sto, fType^.baseType)
+                        else
+                           Gen2t(pc_str, 0, 0, fType^.baseType);
          enumType:      Gen2t(pc_str, 0, 0, cgWord);
          pointerType:   Gen2t(pc_str, 0, 0, cgULong);
          structType,

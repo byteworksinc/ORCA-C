@@ -68,6 +68,7 @@ var
    skipLoad: boolean;			{skip load for a pc_lli, etc?}
    stackSaveDepth: integer;		{nesting depth of saved stack positions}
    argsSize: integer;			{total size of argument to a function}
+   isQuadFunction: boolean;		{is the return type cg(U)Quad?}
 
                                         {stack frame locations}
                                         {---------------------}
@@ -4629,21 +4630,32 @@ procedure GenTree {op: icptr};
       lab1: integer;			{return point}
       lLong: longType;			{used to reserve gLong}
       lArgsSize: integer;		{saved copy of argsSize}
+      extraStackSize: integer;		{size of extra stuff pushed on stack}
 
    begin {GenCui}
+   lArgsSize := argsSize;
+   argsSize := 0;
+   extraStackSize := 0;
+   
+   {For functions returning cg(U)Quad, make space for result}
+   if op^.optype in [cgQuad,cgUQuad] then begin
+      GenImplied(m_tsc);
+      GenImplied(m_sec);
+      GenNative(m_sbc_imm, immediate, 8, nil, 0);
+      GenImplied(m_tcs);
+      end; {if}
+
    {save the stack register}
    if saveStack or checkStack or (op^.q <> 0) then begin
       if stackSaveDepth <> 0 then begin
          GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
          GenImplied(m_phx);
+         extraStackSize := 2;
          end; {if}
       GenImplied(m_tsx);
       GenNative(m_stx_dir, direct, stackLoc, nil, 0);
       stackSaveDepth := stackSaveDepth + 1;
       end; {if}
-
-   lArgsSize := argsSize;
-   argsSize := 0;
 
    {generate parameters}
    {place the operands on the stack}
@@ -4654,6 +4666,14 @@ procedure GenTree {op: icptr};
    gLong.preference := onStack;
    GenTree(op^.right);
    gLong := lLong;
+   
+   {For functions returning cg(U)Quad, x = address to store result in}
+   if op^.optype in [cgQuad,cgUQuad] then begin
+      GenImplied(m_tsc);
+      GenImplied(m_clc);
+      GenNative(m_adc_imm, immediate, argsSize+extraStackSize+4+1, nil, 0);
+      GenImplied(m_tax);
+      end; {if}
 
    {create a return label}
    lab1 := GenLabel;
@@ -4713,26 +4733,55 @@ procedure GenTree {op: icptr};
    var
       lLong: longType;                  {used to reserve gLong}
       lArgsSize: integer;               {saved copy of argsSize}
+      extraStackSize: integer;          {size of extra stuff pushed on stack}
 
    begin {GenCup}
+   lArgsSize := argsSize;
+   argsSize := 0;
+   extraStackSize := 0;
+   
+   {For functions returning cg(U)Quad, make space for result}
+   if op^.optype in [cgQuad,cgUQuad] then begin
+      GenImplied(m_tsc);
+      GenImplied(m_sec);
+      GenNative(m_sbc_imm, immediate, 8, nil, 0);
+      GenImplied(m_tcs);
+      end; {if}
+
    {save the stack register}
    if saveStack or checkStack or (op^.q <> 0) then begin
       if stackSaveDepth <> 0 then begin
          GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
          GenImplied(m_phx);
+         extraStackSize := 2;
          end; {if}
       GenImplied(m_tsx);
       GenNative(m_stx_dir, direct, stackLoc, nil, 0);
       stackSaveDepth := stackSaveDepth + 1;
       end; {if}
 
-   lArgsSize := argsSize;
-   argsSize := 0;
-
    {generate parameters}
    lLong := gLong;
    GenTree(op^.left);
    gLong := lLong;
+
+   {For functions returning cg(U)Quad, x = address to store result in}
+   if op^.optype in [cgQuad,cgUQuad] then
+      if argsSize + extraStackSize in [0,1,2] then begin
+         GenImplied(m_tsx);
+         GenImplied(m_inx);
+         if argsSize + extraStackSize in [1,2] then begin
+            GenImplied(m_inx);
+            if argsSize + extraStackSize = 2 then
+               GenImplied(m_inx);
+            end; {if}
+         end {if}
+      else begin
+         GenImplied(m_tsc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, argsSize+extraStackSize+1, nil, 0);
+         GenImplied(m_tax);
+         end; {else}
 
    {generate the jsl}
    GenNative(m_jsl, longAbs, 0, op^.lab, 0);
@@ -4863,6 +4912,11 @@ procedure GenTree {op: icptr};
       GenImplied(m_tcs);
       GenImplied(m_phd);
       GenImplied(m_tcd);
+      end; {if}
+
+   if isQuadFunction then begin		{save return location for cg(U)Quad}
+      GenNative(m_stx_dir, direct, funloc, nil, 0);
+      GenNative(m_stz_dir, direct, funloc+2, nil, 0);
       end; {if}
 
    if dataBank then begin		{preserve and set data bank}
@@ -5841,6 +5895,8 @@ procedure GenTree {op: icptr};
          GenNative(m_ldy_dir, direct, funLoc, nil, 0);
          end;
 
+      cgQuad,cgUQuad: ;                 {return value was already written}
+
       otherwise:
          Error(cge1);
       end; {case}
@@ -5883,7 +5939,7 @@ procedure GenTree {op: icptr};
             end; {if}
          end;
 
-      cgVoid: ;
+      cgVoid,cgQuad,cgUQuad: ;
 
       otherwise:
          Error(cge1);
@@ -6351,6 +6407,10 @@ var
          cgComp:			size := cgCompSize;
          cgExtended:			size := cgExtendedSize;
          cgLong,cgULong:		size := cgLongSize;
+         cgQuad,cgUQuad:		begin
+                        		size := cgLongSize; {pointer}
+                        		isQuadFunction := true;
+                        		end;
          end; {case}
       funLoc := 1;
       if dworkLoc <> 0 then
@@ -6379,6 +6439,7 @@ funLoc := 0;
 dworkLoc := 0;
 minSize := 1;
 stackSaveDepth := 0;
+isQuadFunction := false;
 while bk <> nil do begin 
    op := bk^.code;
    while op <> nil do begin
