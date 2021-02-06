@@ -1177,8 +1177,8 @@ const                                {note: these constants list all legal }
    cComp             = $08;
    cExtended         = $09;
    cVoid             = $0B;
-   cQuad             = $0C;
-   cUQuad            = $0D;
+   cLong             = $04;
+   cULong            = $05;
 
    byteToWord        = $02;
    byteToUword       = $03;
@@ -1579,17 +1579,18 @@ else if op^.q in [quadToReal, uquadToReal] then
    Error(cge1) {TODO: implement}
 else if (op^.q & $000F) = cVoid then
    {do nothing}
-else if lLong.preference & gLong.where = 0 then begin
-   if gLong.where = constant then begin
-      GenNative(m_pea, immediate, long(gLong.lval).msw, nil, 0);
-      GenNative(m_pea, immediate, long(gLong.lval).lsw, nil, 0);
-      end {if}
-   else if gLong.where = A_X then begin
-      GenImplied(m_phx);
-      GenImplied(m_pha);
-      end; {else if}
-   gLong.where := onStack;
-   end; {else if}
+else if (op^.q & $000F) in [cLong,cULong] then
+   if (lLong.preference & gLong.where) = 0 then begin
+      if gLong.where = constant then begin
+         GenNative(m_pea, immediate, long(gLong.lval).msw, nil, 0);
+         GenNative(m_pea, immediate, long(gLong.lval).lsw, nil, 0);
+         end {if}
+      else if gLong.where = A_X then begin
+         GenImplied(m_phx);
+         GenImplied(m_pha);
+         end; {else if}
+      gLong.where := onStack;
+      end; {if}
 end; {GenCnv}
 
 
