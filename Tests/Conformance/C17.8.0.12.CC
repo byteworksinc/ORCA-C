@@ -4,7 +4,7 @@
 
 main ()
   {
-   char  string [] = "  327678  0x  D    0xFFFFFFFFm   0x7fEd0X10 ";
+   char  string [] = "  327678  0x0  D   0xFFFFFFFFm   0x7fEd0X10 ";
    int   i;
    unsigned short us1;
    unsigned int   ui1;
@@ -20,12 +20,12 @@ main ()
 
    i = sscanf (&string [8], "%X", &ui1);       /* test "plain vanilla" fmt */
    if (i != 1)                                 /*   string; data contains  */
-       goto Fail;                              /*   the characters 0x      */
+       goto Fail;                              /*   the characters 0x0     */
    if (ui1 != 0)
        goto Fail;
 
    ul1 = 0;                                    /* test fmt string of max   */
-   i   = sscanf (&string [12], " D %12lxm", &ul1);   /*  field width of 12,*/
+   i   = sscanf (&string [13], " D %12lxm", &ul1);   /*  field width of 12,*/
    if (i != 1)                                 /*   long variable expected,*/
        goto Fail;                              /*   character m must appear*/
    if (ul1 != 4294967295u)                     /*   after digits read      */

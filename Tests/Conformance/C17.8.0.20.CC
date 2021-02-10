@@ -16,7 +16,7 @@ main ()
    f1 = fopen ("3/tmp", "wb+");                /* open input file for test */
    if (f1 == NULL)
        goto Fail1;
-   fprintf(f1, "     327678  0x  D    0xFFFFFFFFm   0x7fEd0X10");
+   fprintf(f1, "     327678  0x0  D    0xFFFFFFFFm   0x7fEd0X10");
    fclose(f1);
 
    stdin = freopen ("3/tmp", "r", stdin);
@@ -32,7 +32,7 @@ main ()
 
    i = scanf ("%X", &ui1);                     /* test "plain vanilla" fmt */
    if (i != 1)                                 /*   string; data contains  */
-       goto Fail;                              /*   the characters 0x      */
+       goto Fail;                              /*   the characters 0x0     */
    if (ui1 != 0)
        goto Fail;
 

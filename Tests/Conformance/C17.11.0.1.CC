@@ -30,17 +30,17 @@ main ()
 
    /* Write formatted output as string to the output files and sstring. */
 
-   i = fprintf (f1, " %-0+10.8hd  %0 10.*i  %5.d  %10.8li  %#-*li  M\n",
+   i = fprintf (f1, " %-0+10.8hd  %0 10.*i  %5.d  %10.8li  %-*li  M\n",
                 i1, i3, i1, i2, L1, i3, L1);
    if (i != 56)
        goto Fail;
 
-   i = printf (" %-0+10.8hd  %0 10.*i  %5.d  %10.8li  %#-*li  M\n",
+   i = printf (" %-0+10.8hd  %0 10.*i  %5.d  %10.8li  %-*li  M\n",
                i1, i3, i1, i2, L1, i3, L1);
    if (i != 56)
        goto Fail;
              
-   i = sprintf (sstring, " %-0+10.8hd  %0 10.*i  %5.d  %10.8li  %#-*li  M\n",
+   i = sprintf (sstring, " %-0+10.8hd  %0 10.*i  %5.d  %10.8li  %-*li  M\n",
                 i1, i3, i1, i2, L1, i3, L1);
    if (i != 56)
        goto Fail;
@@ -53,7 +53,7 @@ main ()
    if (i != 1)
        goto Fail3;
    string [55] = '\0';              
-   if (strcmp (string, " +000032767   000032767          -00032767\
+   if (strcmp (string, " +00032767     00032767          -00032767\
   -32767    M"))
        goto Fail;
                       
@@ -62,11 +62,11 @@ main ()
    if (i != 1)
        goto Fail3;
    string [55] = '\0';
-   if (strcmp (string, " +000032767   000032767          -00032767\
+   if (strcmp (string, " +00032767     00032767          -00032767\
   -32767    M"))
        goto Fail;
 
-   if (strcmp (sstring, " +000032767   000032767          -00032767\
+   if (strcmp (sstring, " +00032767     00032767          -00032767\
   -32767    M\n"))
        goto Fail;
 

@@ -4,9 +4,9 @@
 
 main ()
   {
-   short i1;
+   short i1, i3;
    int   i;
-   int   i2, i3;
+   int   i2;
    long  L1;
    char  ch;
    FILE  *f1;
@@ -17,7 +17,7 @@ main ()
    f1 = fopen ("3/tmp", "wb+");                /* open input file for test */
    if (f1 == NULL)
        goto Fail1;
-   fprintf(f1, "    +327678   -   -002147483647A   327677-22  123*\r");
+   fprintf(f1, "    +327678   -0   -002147483647A   327677-22  123*\r");
    fclose(f1);
 
    stdin = freopen ("3/tmp", "r", stdin);
@@ -25,21 +25,21 @@ main ()
        goto Fail1;
 
    i1 = 0;                                     /* test format string of no */
-   i  = scanf ("%*05hd8");                     /*   assignment, max. field */
-   if (i != 0)                                 /*   width of 5, h ignored, */
+   i  = scanf ("%*06hd8");                     /*   assignment, max. field */
+   if (i != 0)                                 /*   width of 6, h ignored, */
        goto Fail;                              /*   character 8 must appear*/
    if (i1 != 0)                                /*   after 5 digits read    */
        goto Fail;
 
    i2 = 15;                                    /* test "plain vanilla" fmt */
    i  = scanf ("%d", &i2);                     /*   string; data contains  */
-   if (i != 1)                                 /*   a single minus sign    */
+   if (i != 1)                                 /*   "-0"                   */
        goto Fail;
    if (i2 != 0)
        goto Fail;
 
    L1 = 0;                                     /* test format string of    */
-   i  = scanf ("%12ldA", &L1);                 /*   max. field width of 12,*/
+   i  = scanf ("%13ldA", &L1);                 /*   max. field width of 13,*/
    if (i != 1)                                 /*   long variable expected,*/
        goto Fail;                              /*   character A must appear*/
    if (L1 != -2147483647)                      /*   after digits read      */
