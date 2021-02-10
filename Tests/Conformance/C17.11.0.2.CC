@@ -29,17 +29,17 @@ main ()
 
    /* Write formatted output as string to the output files and sstring. */
 
-   i = fprintf (f1, " %-11.10hu  %# +07.4lu  %.0u  %-*.*lu  A\n",
+   i = fprintf (f1, " %-11.10hu  % +07.4lu  %.0u  %-*.*lu  A\n",
                 ui1, (long) ui1, ui2, i1, i2, ul1);
    if (i != 45)
        goto Fail;
 
-   i = printf (" %-11.10hu  %# +07.4lu  %.0u  %-*.*lu  A\n",
+   i = printf (" %-11.10hu  % +07.4lu  %.0u  %-*.*lu  A\n",
                ui1, (long) ui1, ui2, i1, i2, ul1);
    if (i != 45)
        goto Fail;
 
-   i = sprintf (sstring, " %-11.10hu  %# +07.4lu  %.0u  %-*.*lu  A\n",
+   i = sprintf (sstring, " %-11.10hu  % +07.4lu  %.0u  %-*.*lu  A\n",
                 ui1, (long) ui1, ui2, i1, i2, ul1);
    if (i != 45)
        goto Fail;
@@ -52,9 +52,9 @@ main ()
    if (i != 1)
        goto Fail3;
    string [44] = '\0';
-   i = fprintf (f1, " %-11.10hu  %# +07.4lu  %.0u  %-*.*lu  A\n",
+   i = fprintf (f1, " %-11.10hu  % +07.4lu  %.0u  %-*.*lu  A\n",
                 ui1, (long) ui1, ui2, i1, i2, ul1);
-   if (strcmp (string, " 0000065535   +065535    0000004294967295  A"))
+   if (strcmp (string, " 0000065535    +65535    0000004294967295  A"))
        goto Fail;
 
    rewind (stdout);
@@ -62,10 +62,10 @@ main ()
    if (i != 1)
        goto Fail3;
    string [44] = '\0';
-   if (strcmp (string, " 0000065535   +065535    0000004294967295  A"))
+   if (strcmp (string, " 0000065535    +65535    0000004294967295  A"))
        goto Fail;
 
-   if (strcmp (sstring, " 0000065535   +065535    0000004294967295  A\n"))
+   if (strcmp (sstring, " 0000065535    +65535    0000004294967295  A\n"))
        goto Fail;
 
 

@@ -4,30 +4,30 @@
 
 main ()
   {
-   char  string [] = "  +327678   -   -002147483647A   327677-22  123*";
-   short i1;
+   char  string [] = "  +327678   -0  -002147483647A   327677-22  123*";
+   short i1, i3;
    int   i;
-   int   i2, i3;
+   int   i2;
    long  L1;
    char  ch;
 
 
    i1 = 0;                                     /* test format string of no */
-   i  = sscanf (string, "%*05hd8");            /*   assignment, max. field */
-   if (i != 0)                                 /*   width of 5, h ignored, */
+   i  = sscanf (string, "%*06hd8");            /*   assignment, max. field */
+   if (i != 0)                                 /*   width of 6, h ignored, */
        goto Fail;                              /*   character 8 must appear*/
    if (i1 != 0)                                /*   after 5 digits read    */
        goto Fail;
 
    i2 = 15;                                    /* test "plain vanilla" fmt */
    i  = sscanf (&string [9], "%d", &i2);       /*   string; data contains  */
-   if (i != 1)                                 /*   a single minus sign    */
+   if (i != 1)                                 /*   "-0"                   */
        goto Fail;
    if (i2 != 0)
        goto Fail;
 
    L1 = 0;                                     /* test format string of    */
-   i  = sscanf (&string [15], "%12ldA", &L1);  /*   max. field width of 12,*/
+   i  = sscanf (&string [15], "%13ldA", &L1);  /*   max. field width of 13,*/
    if (i != 1)                                 /*   long variable expected,*/
        goto Fail;                              /*   character A must appear*/
    if (L1 != -2147483647)                      /*   after digits read      */
