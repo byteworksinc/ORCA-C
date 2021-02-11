@@ -901,8 +901,10 @@ case op^.opcode of			{check for optimizations of this node}
          opv := op^.left;
          end {if}
       else if op^.right^.opcode = pc_ldc then begin
-         if op^.right^.lval = 0 then
-            opv := op^.right
+         if op^.right^.lval = 0 then begin
+            if not SideEffects(op^.left) then
+               opv := op^.right;
+            end {if}
          else if op^.right^.lval = -1 then
             opv := op^.left;
          end; {else if}
@@ -916,8 +918,10 @@ case op^.opcode of			{check for optimizations of this node}
          opv := op^.left;
          end {if}
       else if op^.right^.opcode = pc_ldc then begin
-         if op^.right^.lval = -1 then
-            opv := op^.right
+         if op^.right^.lval = -1 then begin
+            if not SideEffects(op^.left) then
+               opv := op^.right;
+            end {if}
          else if op^.right^.lval = 0 then
             opv := op^.left;
          end; {else if}
@@ -948,8 +952,10 @@ case op^.opcode of			{check for optimizations of this node}
          opv := op^.left;
          end {if}
       else if op^.right^.opcode = pc_ldc then begin
-         if op^.right^.q = 0 then
-            opv := op^.right
+         if op^.right^.q = 0 then begin
+            if not SideEffects(op^.left) then
+               opv := op^.right;
+            end {if}
          else if op^.right^.q = -1 then
             opv := op^.left;
          end; {else if}
@@ -986,8 +992,10 @@ case op^.opcode of			{check for optimizations of this node}
          opv := op^.left;
          end {if}
       else if op^.right^.opcode = pc_ldc then begin
-         if op^.right^.q = -1 then
-            opv := op^.right
+         if op^.right^.q = -1 then begin
+            if not SideEffects(op^.left) then
+               opv := op^.right;
+            end {if}
          else if op^.right^.q = 0 then
             opv := op^.left;
          end; {else if}
@@ -1635,7 +1643,13 @@ case op^.opcode of			{check for optimizations of this node}
 
    pc_mdl: begin			{pc_mdl}
       if op^.right^.opcode = pc_ldc then 
-         if op^.left^.opcode = pc_ldc then 
+         if op^.right^.lval = 1 then begin
+            if not SideEffects(op^.left) then begin
+               op^.right^.lval := 0;
+               opv := op^.right;
+               end; {if}
+            end {if}
+         else if op^.left^.opcode = pc_ldc then 
             if (op^.left^.lval >= 0) and (op^.right^.lval > 0) then begin
                op^.left^.lval := op^.left^.lval mod op^.right^.lval;
                opv := op^.left;
@@ -1644,7 +1658,13 @@ case op^.opcode of			{check for optimizations of this node}
 
    pc_mod: begin			{pc_mod}
       if op^.right^.opcode = pc_ldc then 
-         if op^.left^.opcode = pc_ldc then 
+         if op^.right^.q = 1 then begin
+            if not SideEffects(op^.left) then begin
+               op^.right^.q := 0;
+               opv := op^.right;
+               end; {if}
+            end {if}
+         else if op^.left^.opcode = pc_ldc then 
             if (op^.left^.q >= 0) and (op^.right^.q > 0) then begin
                op^.left^.q := op^.left^.q mod op^.right^.q;
                opv := op^.left;
@@ -2142,7 +2162,13 @@ case op^.opcode of			{check for optimizations of this node}
 
    pc_uim: begin			{pc_uim}
       if op^.right^.opcode = pc_ldc then 
-         if op^.left^.opcode = pc_ldc then 
+         if op^.right^.q = 1 then begin
+            if not SideEffects(op^.left) then begin
+               op^.right^.q := 0;
+               opv := op^.right;
+               end; {if}
+            end {if}
+         else if op^.left^.opcode = pc_ldc then 
             if op^.right^.q <> 0 then begin
                op^.left^.q :=
                   ord(umod(op^.left^.q & $0000FFFF, op^.right^.q & $0000FFFF));
@@ -2167,7 +2193,13 @@ case op^.opcode of			{check for optimizations of this node}
 
    pc_ulm: begin			{pc_ulm}
       if op^.right^.opcode = pc_ldc then 
-         if op^.left^.opcode = pc_ldc then 
+         if op^.right^.lval = 1 then begin
+            if not SideEffects(op^.left) then begin
+               op^.right^.lval := 0;
+               opv := op^.right;
+               end; {if}
+            end {if}
+         else if op^.left^.opcode = pc_ldc then 
             if op^.right^.lval <> 0 then begin
                op^.left^.lval := umod(op^.left^.lval, op^.right^.lval);
                opv := op^.left;
