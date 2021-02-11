@@ -1575,8 +1575,10 @@ else if op^.q in [quadToVoid,uquadToVoid] then begin
    GenNative(m_adc_imm, immediate, 8, nil, 0);
    GenImplied(m_tcs);
    end {else if}
-else if op^.q in [quadToReal, uquadToReal] then
-   Error(cge1) {TODO: implement}
+else if op^.q = quadToReal then
+   GenCall(83)
+else if op^.q = uquadToReal then
+   GenCall(84)
 else if (op^.q & $000F) = cVoid then
    {do nothing}
 else if (op^.q & $000F) in [cLong,cULong] then
