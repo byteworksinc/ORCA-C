@@ -876,6 +876,15 @@ case op^.opcode of			{check for optimizations of this node}
          end; {else}   
       end; {case pc_adr}
 
+   pc_adq: begin			{pc_adq}
+      if op^.left^.opcode = pc_ldc then
+         ReverseChildren(op);
+      if op^.right^.opcode = pc_ldc then begin
+         if (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0) then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_adq}
+
    pc_and: begin			{pc_and}
       if op^.right^.opcode = pc_ldc then begin
          if op^.left^.opcode = pc_ldc then begin
@@ -910,6 +919,24 @@ case op^.opcode of			{check for optimizations of this node}
          end; {else if}
       end; {case pc_bal}
 
+   pc_baq: begin			{pc_baq}
+      if op^.left^.opcode = pc_ldc then
+         ReverseChildren(op);
+      if op^.left^.opcode = pc_ldc then begin
+         op^.left^.qval.hi := op^.left^.qval.hi & op^.right^.qval.hi;
+         op^.left^.qval.lo := op^.left^.qval.lo & op^.right^.qval.lo;
+         opv := op^.left;
+         end {if}
+      else if op^.right^.opcode = pc_ldc then begin
+         if (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0) then begin
+            if not SideEffects(op^.left) then
+               opv := op^.right;
+            end {if}
+         else if (op^.right^.qval.lo = -1) and (op^.right^.qval.hi = -1) then
+            opv := op^.left;
+         end; {else if}
+      end; {case pc_baq}
+
    pc_blr: begin			{pc_blr}
       if op^.left^.opcode = pc_ldc then
          ReverseChildren(op);
@@ -927,6 +954,24 @@ case op^.opcode of			{check for optimizations of this node}
          end; {else if}
       end; {case pc_blr}
 
+   pc_bqr: begin			{pc_bqr}
+      if op^.left^.opcode = pc_ldc then
+         ReverseChildren(op);
+      if op^.left^.opcode = pc_ldc then begin
+         op^.left^.qval.hi := op^.left^.qval.hi | op^.right^.qval.hi;
+         op^.left^.qval.lo := op^.left^.qval.lo | op^.right^.qval.lo;
+         opv := op^.left;
+         end {if}
+      else if op^.right^.opcode = pc_ldc then begin
+         if (op^.right^.qval.hi = -1) and (op^.right^.qval.lo = -1) then begin
+            if not SideEffects(op^.left) then
+               opv := op^.right;
+            end {if}
+         else if (op^.right^.qval.hi = 0) and (op^.right^.qval.lo = 0) then
+            opv := op^.left;
+         end; {else if}
+      end; {case pc_bqr}
+
    pc_blx: begin			{pc_blx}
       if op^.left^.opcode = pc_ldc then
          ReverseChildren(op);
@@ -943,6 +988,24 @@ case op^.opcode of			{check for optimizations of this node}
             end; {else if}
          end; {else if}
       end; {case pc_blx}
+
+   pc_bqx: begin			{pc_bqx}
+      if op^.left^.opcode = pc_ldc then
+         ReverseChildren(op);
+      if op^.left^.opcode = pc_ldc then begin
+         op^.left^.qval.hi := op^.left^.qval.hi ! op^.right^.qval.hi;
+         op^.left^.qval.lo := op^.left^.qval.lo ! op^.right^.qval.lo;
+         opv := op^.left;
+         end {if}
+      else if op^.right^.opcode = pc_ldc then begin
+         if (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0) then
+            opv := op^.left
+         else if (op^.right^.qval.lo = -1) and (op^.right^.qval.hi = -1) then begin
+            op^.opcode := pc_bnq;
+            op^.right := nil;
+            end; {else if}
+         end; {else if}
+      end; {case pc_bqx}
 
    pc_bnd: begin			{pc_bnd}
       if op^.left^.opcode = pc_ldc then
@@ -967,6 +1030,14 @@ case op^.opcode of			{check for optimizations of this node}
          opv := op^.left;
          end; {if}
       end; {case pc_bnl}
+
+   pc_bnq: begin			{pc_bnq}
+      if op^.left^.opcode = pc_ldc then begin
+         op^.left^.qval.hi := op^.left^.qval.hi ! $FFFFFFFF;
+         op^.left^.qval.lo := op^.left^.qval.lo ! $FFFFFFFF;
+         opv := op^.left;
+         end; {if}
+      end; {case pc_bnq}
 
    pc_bno: begin			{pc_bno}
       {Invalid optimization disabled}
@@ -2012,6 +2083,20 @@ case op^.opcode of			{check for optimizations of this node}
             opv := op^.left;
          end; {if}
       end; {case pc_sbr}
+
+   pc_sbq: begin			{pc_sbq}
+      if op^.left^.opcode = pc_ldc then begin
+         if (op^.left^.qval.lo = 0) and (op^.left^.qval.hi = 0) then begin
+            op^.opcode := pc_ngq;
+            op^.left := op^.right;
+            op^.right := nil;
+            end; {else if}
+         end {if}
+      else if op^.right^.opcode = pc_ldc then begin
+         if (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0) then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_sbq}
 
    pc_shl: begin			{pc_shl}
       if op^.right^.opcode = pc_ldc then begin
