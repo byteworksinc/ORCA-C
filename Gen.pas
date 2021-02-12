@@ -4575,6 +4575,12 @@ procedure GenTree {op: icptr};
               GenImplied(m_tcs);
               end;
 
+      pc_slq: GenCall(85);
+      
+      pc_sqr: GenCall(86);
+      
+      pc_wsr: GenCall(87);
+
       otherwise: Error(cge1);
       end; {case}
    end; {GenBinQuad}
@@ -6263,8 +6269,8 @@ case op^.opcode of
    pc_and,pc_bnd,pc_bor,pc_bxr,pc_ior: GenLogic(op);
    pc_blr,pc_blx,pc_bal,pc_dvl,pc_mdl,pc_mpl,pc_sll,pc_slr,pc_udl,pc_ulm,
       pc_uml,pc_vsr: GenBinLong(op);
-   pc_bqr,pc_bqx,pc_baq,pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm:
-      GenBinQuad(op);
+   pc_bqr,pc_bqx,pc_baq,pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm,pc_slq,
+      pc_sqr,pc_wsr: GenBinQuad(op);
    pc_bnl,pc_ngl: GenUnaryLong(op);
    pc_bnq,pc_ngq: GenUnaryQuad(op);
    pc_bno: GenBno(op);

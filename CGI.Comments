@@ -576,25 +576,32 @@
 {                                                               }
 {  pc_shl - shift left                                          }
 {  pc_sll - shift left long                                     }
+{  pc_slq - shift left long long                                }
 {                                                               }
 {  Gen0(pc_shl)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_sll)         cgLong,cgULong                          }
+{  Gen0(pc_slq)         cgQuad,cgUQuad (tos-1) / cgWord (tos)   }
 {                                                               }
 {  The value at tos-1 is shifted left by the number of bits     }
 {  specified by tos.  The result is an integer, which replaces  }
 {  the operands on the stack.  The right bit positions are      }
-{  filled with zeros.                                           }
+{  filled with zeros.  For pc_slq, only the value at tos-1 is   }
+{  cgQuad/cgUQuad; the shift count at tos is cgWord or cgUWord. }
 {                                                               }
 {                                                               }
 {  pc_shr - shift right                                         }
 {  pc_usr - unsigned shift right                                }
 {  pc_slr - long shift right                                    }
 {  pc_vsr - unsigned long shift right                           }
+{  pc_sqr - long long shift right                               }
+{  pc_wsr - unsigned long long shift right                      }
 {                                                               }
 {  Gen0(pc_shr)         cgByte,cgWord                           }
 {  Gen0(pc_usr)         cgUByte,cgUWord                         }
 {  Gen0(pc_slr)         cgLong                                  }
 {  Gen0(pc_vsr)         cgULong                                 }
+{  Gen0(pc_sqr)         cgQuad (tos-1) / cgWord (tos)           }
+{  Gen0(pc_wsr)         cgUQuad (tos-1) / cgWord (tos)          }
 {                                                               }
 {  The value at tos-1 is shifted right by the number of bits    }
 {  specified by tos.  The result is an integer, which replaces  }
@@ -604,7 +611,9 @@
 {                                                               }
 {  Pc_usr is the unsigned form.  The operation is the same,     }
 {  except that the leftmost bit is replaced with a zero.        }
-{  Pc_vsr is used for unsigned long operations.                 }
+{  Pc_vsr is used for unsigned long operations, and pc_wsr is   }
+{  used for unsigned long long operations.                      }
+{                                                               }
 {                                                               }
 {  pc_stk - stack an operand                                    }
 {                                                               }

@@ -3090,10 +3090,17 @@ case tree^.token.kind of
                   [cgReal,cgDouble,cgComp,cgExtended,cgVoid] then
                   Error(66);
                et := UsualUnaryConversions;
-               if et <> Unary(ltype^.baseType) then begin
-                  Gen2(pc_cnv, et, ord(Unary(ltype^.baseType)));
+               if ltype^.baseType in [cgQuad,cgUQuad] then begin
+                  if not (et in [cgWord,cgUWord]) then begin
+                     Gen2(pc_cnv, et, ord(cgWord));
+                     end; {if}
                   expressionType := lType;
-                  end; {if}
+                  end {if}
+               else
+                  if et <> Unary(ltype^.baseType) then begin
+                     Gen2(pc_cnv, et, ord(Unary(ltype^.baseType)));
+                     expressionType := lType;
+                     end; {if}
                end; {if}
       if kind <> pointerType then
          et := UsualBinaryConversions(lType)
@@ -3190,6 +3197,8 @@ case tree^.token.kind of
                Gen0(pc_shl)
             else if et in [cgLong,cgULong] then
                Gen0(pc_sll)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_slq)
             else
                Error(66);
 
@@ -3202,6 +3211,10 @@ case tree^.token.kind of
                Gen0(pc_slr)
             else if et = cgULong then
                Gen0(pc_vsr)
+            else if et = cgQuad then
+               Gen0(pc_sqr)
+            else if et = cgUQuad then
+               Gen0(pc_wsr)
             else
                Error(66);
 
@@ -3399,15 +3412,22 @@ case tree^.token.kind of
       GenerateCode(tree^.right);
       if (expressionType^.kind <> scalarType)
          or not (expressionType^.baseType in
-         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong]) then
+         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad]) then
          error(66);
-      if expressionType^.baseType <> et then
-         Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
+      if et in [cgQuad,cgUQuad] then begin
+         if not (expressionType^.baseType in [cgWord,cgUWord]) then
+            Gen2(pc_cnv, ord(expressionType^.baseType), ord(cgWord));
+         end {if}
+      else
+         if expressionType^.baseType <> et then
+            Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
       case et of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_shl);
          cgLong,cgULong:
             Gen0(pc_sll);
+         cgQuad,cgUQuad:
+            Gen0(pc_slq);
          otherwise:
             error(66);
          end; {case}
@@ -3425,10 +3445,15 @@ case tree^.token.kind of
       GenerateCode(tree^.right);
       if (expressionType^.kind <> scalarType)
          or not (expressionType^.baseType in
-         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong]) then
+         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad]) then
          error(66);
-      if expressionType^.baseType <> et then
-         Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
+      if et in [cgQuad,cgUQuad] then begin
+         if not (expressionType^.baseType in [cgWord,cgUWord]) then
+            Gen2(pc_cnv, ord(expressionType^.baseType), ord(cgWord));
+         end {if}
+      else
+         if expressionType^.baseType <> et then
+            Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
       case et of
          cgByte,cgWord:
             Gen0(pc_shr);
@@ -3438,6 +3463,10 @@ case tree^.token.kind of
             Gen0(pc_slr);
          cgULong:
             Gen0(pc_vsr);
+         cgQuad:
+            Gen0(pc_sqr);
+         cgUQuad:
+            Gen0(pc_wsr);
          otherwise:
             error(66);
          end; {case}

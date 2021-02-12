@@ -2039,6 +2039,9 @@ case callNum of
    82: sp := @'~UDIV8';
    83: sp := @'~CNVLONGLONGREAL';
    84: sp := @'~CNVULONGLONGREAL';
+   85: sp := @'~SHL8';
+   86: sp := @'~ASHR8';
+   87: sp := @'~LSHR8';
    otherwise:
       Error(cge1);
    end; {case}
