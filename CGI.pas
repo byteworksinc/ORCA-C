@@ -11,7 +11,7 @@
 {  passed on to the code generator for optimization and         }
 {  native code generation.                                      }
 {                                                               }
-{$copy 'cgi.comments'}
+{ copy 'cgi.comments'}
 {---------------------------------------------------------------}
 
 unit CodeGeneratorInterface;
