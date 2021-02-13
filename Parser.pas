@@ -1852,8 +1852,13 @@ var
                size := rtree^.token.ival
             else if rtree^.token.kind in [longconst,ulongconst] then
                size := rtree^.token.lval
-            else if rtree^.token.kind in [longlongconst,ulonglongconst] then
-               size := rtree^.token.qval.lo
+            else if rtree^.token.kind in [longlongconst,ulonglongconst] then begin
+               size := rtree^.token.qval.lo;
+               with rtree^.token.qval do
+                  if not (((hi = 0) and (lo & $ff000000 = 0)) or
+                     ((hi = -1) and (lo & $ff000000 = $ff000000))) then
+                     Error(6);
+               end {else if}
             else begin
                Error(18);
                errorFound := true;
@@ -2085,13 +2090,25 @@ var
             operator := tree^.token.kind;
             while operator in [plusch,minusch] do begin
                with tree^.right^.token do
-                  if kind in [intConst,longConst,longlongConst] then begin
+                  if kind in [intConst,uintconst,longConst,ulongconst,
+                     longlongConst,ulonglongconst] then begin
                      if kind = intConst then
                         offSet2 := ival
-                     else if kind = longConst then
-                        offset2 := lval
-                     else {if kind = longlongConst then}
+                     else if kind = uintConst then
+                        offset2 := ival & $0000ffff
+                     else if kind in [longConst,ulongconst] then begin
+                        offset2 := lval;
+                        if (lval & $ff000000 <> 0)
+                           and (lval & $ff000000 <> $ff000000) then
+                           Error(6);
+                        end {else if}
+                     else {if kind = longlongConst then} begin
                         offset2 := qval.lo;
+                        with qval do
+                           if not (((hi = 0) and (lo & $ff000000 = 0)) or
+                              ((hi = -1) and (lo & $ff000000 = $ff000000))) then
+                              Error(6);
+                        end; {else}
                      if operator = plusch then
                         offset := offset + offset2
                      else
