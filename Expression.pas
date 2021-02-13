@@ -901,6 +901,7 @@ var
       op: tokenPtr;                     {work pointer}
       op1,op2: longint;                 {for evaluating constant expressions}
       rop1,rop2: double;                {for evaluating double expressions}
+      llop1, llop2: longlong;           {for evaluating long long expressions}
       tp: typePtr;                      {cast type}
       unsigned: boolean;                {is the term unsigned?}
 
@@ -967,6 +968,39 @@ var
          IntVal := token.lval;
          end; {else}
       end; {IntVal}
+
+
+      procedure GetLongLongVal (var result: longlong; token: tokenType);
+
+      { convert an operand to a long long value                 }
+
+      begin {LongLongVal}
+      if token.kind = intconst then begin
+         result.lo := token.ival;
+         if result.lo < 0 then
+            result.hi := -1
+         else
+            result.hi := 0;
+         end {if}
+      else if token.kind = uintconst then begin
+         result.lo := token.ival & $0000FFFF;
+         result.hi := 0;
+         end {else if}
+      else if token.kind = longconst then begin
+         result.lo := token.lval;
+         if result.lo < 0 then
+            result.hi := -1
+         else
+            result.hi := 0;
+         end {else if}
+      else if token.kind = ulongconst then begin
+         result.lo := token.lval;
+         result.hi := 0;
+         end {else if}
+      else {if token.kind in [longlongconst,ulonglongconst] then} begin
+         result := token.qval;
+         end; {else}
+      end; {LongLongVal}
 
 
       function PPKind (token: tokenType): tokenEnum;
@@ -1058,10 +1092,6 @@ var
          op^.left := Pop;
          kindRight := op^.right^.token.kind;
          kindLeft := op^.left^.token.kind;
-         if not (kind in [normalExpression,autoInitializerExpression]) then
-            if (kindLeft in [longlongconst,ulonglongconst])
-               or (kindRight in [longlongconst,ulonglongconst]) then
-               Error(157);
          if kindRight in [intconst,uintconst,longconst,ulongconst] then begin
             if kindLeft in [intconst,uintconst,longconst,ulongconst] then begin
                if kind = preprocessorExpression then begin
@@ -1200,6 +1230,90 @@ var
                goto 1;
                end; {if}
             end; {if}
+         if kindRight in [intconst,uintconst,longconst,ulongconst,
+            longlongconst,ulonglongconst] then begin
+            if kindLeft in [intconst,uintconst,longconst,ulongconst,
+               longlongconst,ulonglongconst] then begin
+
+               if kind = preprocessorExpression then begin
+                  kindLeft := PPKind(op^.left^.token);
+                  kindRight := PPKind(op^.right^.token);
+                  end; {if}
+
+               {do the usual binary conversions}
+               if (kindRight = ulonglongconst) or (kindLeft = ulonglongconst) then
+                  ekind := ulonglongconst
+               else 
+                  ekind := longlongconst;
+
+               GetLongLongVal(llop1, op^.left^.token);
+               GetLongLongVal(llop2, op^.right^.token);
+               dispose(op^.right);
+               op^.right := nil;
+               dispose(op^.left);
+               op^.left := nil;
+               
+               case op^.token.kind of
+                  barbarop    : begin                                   {||}
+                                op1 := ord((llop1.lo <> 0) or (llop1.hi <> 0) or
+                                           (llop2.lo <> 0) or (llop2.hi <> 0));
+                                ekind := intconst;
+                                end;
+                  andandop    : begin                                   {&&}
+                                op1 := ord(((llop1.lo <> 0) or (llop1.hi <> 0)) and
+                                           ((llop2.lo <> 0) or (llop2.hi <> 0)));
+                                ekind := intconst;
+                                end;
+                  carotch     : begin                                   {^}
+                                llop1.lo := llop1.lo ! llop2.lo;
+                                llop1.hi := llop1.hi ! llop2.hi;
+                                end;
+                  barch       : begin                                   {|}
+                                llop1.lo := llop1.lo | llop2.lo;
+                                llop1.hi := llop1.hi | llop2.hi;
+                                end;
+                  andch       : begin                                   {&}
+                                llop1.lo := llop1.lo & llop2.lo;
+                                llop1.hi := llop1.hi & llop2.hi;
+                                end;
+                  eqeqop      : begin                                   {==}
+                                op1 := ord((llop1.lo = llop2.lo) and
+                                           (llop1.hi = llop2.hi));
+                                ekind := intconst;
+                                end;
+                  exceqop     : begin                                   {!=}
+                                op1 := ord((llop1.lo <> llop2.lo) or
+                                           (llop1.hi <> llop2.hi));
+                                ekind := intconst;
+                                end;
+                  ltch,                                                 {<}
+                  gtch,                                                 {>}  
+                  lteqop,                                               {<=}
+                  gteqop,                                               {>=}
+                  ltltop,                                               {<<}
+                  gtgtop,                                               {>>}
+                  plusch,                                               {+}
+                  minusch,                                              {-}
+                  asteriskch,                                           {*}
+                  slashch,                                              {/}
+                  percentch:                                            {%}
+                     if not (kind in [normalExpression,autoInitializerExpression])
+                        then               
+                        Error(157);
+                  otherwise: Error(57);
+                  end; {case}
+               op^.token.kind := ekind;
+               if ekind in [longlongconst,ulonglongconst] then begin
+                  op^.token.qval := llop1;
+                  op^.token.class := longlongConstant;
+                  end {if}
+               else begin
+                  op^.token.ival := long(op1).lsw;
+                  op^.token.class := intConstant;
+                  end; {else}
+               goto 1;
+               end; {if}
+            end; {if}
          if op^.right^.token.kind in
             [intconst,uintconst,longconst,ulongconst,doubleconst] then
             if op^.left^.token.kind in
@@ -1262,7 +1376,15 @@ var
                   op^.token.class := doubleConstant;
                   op^.token.kind := doubleConst;
                   end; {else}
+               goto 1;
                end; {if}
+         if op^.right^.token.kind in [intconst,uintconst,longconst,
+            ulongconst,longlongconst,ulonglongconst,doubleconst] then
+            if op^.left^.token.kind in [intconst,uintconst,longconst,
+               ulongconst,longlongconst,ulonglongconst,doubleconst] then
+               if not (kind in [normalExpression,autoInitializerExpression])
+                  then
+                  Error(157);
 1:
          end;
 
@@ -1382,9 +1504,6 @@ var
          else if not (op^.token.kind in
             [typedef,plusplusop,minusminusop,opplusplus,opminusminus,uand]) then
             begin
-            if not (kind in [normalExpression,autoInitializerExpression]) then
-               if op^.left^.token.kind in [longlongconst,ulonglongconst] then
-                  Error(157);
             if (op^.left^.token.kind
                in [intconst,uintconst,longconst,ulongconst]) then begin
 
@@ -1415,6 +1534,43 @@ var
                   op^.token.ival := long(op1).lsw;
                   end; {else}
                end {if}
+            else if op^.left^.token.kind 
+               in [longlongconst,ulonglongconst] then begin
+               
+               {evaluate a constant operation}
+               ekind := op^.left^.token.kind;
+               llop1 := op^.left^.token.qval;
+               dispose(op^.left);
+               op^.left := nil;
+               case op^.token.kind of
+                  tildech     : begin                           {~}
+                     llop1.lo := ~llop1.lo;
+                     llop1.hi := ~llop1.hi;
+                     end;
+                  excch       : begin                           {!}
+                     op1 := ord((llop1.hi = 0) and (llop1.lo = 0));
+                     ekind := intconst;
+                     end;
+                  uminus      : begin                           {unary -}
+                     llop1.lo := ~llop1.lo;
+                     llop1.hi := ~llop1.hi;
+                     llop1.lo := llop1.lo + 1;
+                     if llop1.lo = 0 then
+                        llop1.hi := llop1.hi + 1;
+                     end;
+                  uasterisk   : Error(79);                      {unary *}
+                  otherwise: Error(57);
+                  end; {case}
+               op^.token.kind := ekind;
+               if ekind in [longlongconst,ulonglongconst] then begin
+                  op^.token.class := longlongConstant;
+                  op^.token.qval := llop1;
+                  end {if}
+               else begin
+                  op^.token.class := intConstant;
+                  op^.token.ival := long(op1).lsw;
+                  end; {else}
+               end {else if}
             else if op^.left^.token.kind = doubleconst then begin
                ekind := doubleconst; {evaluate a constant operation}
                rop1 := RealVal(op^.left^.token);
