@@ -1404,6 +1404,13 @@ case op^.opcode of			{check for optimizations of this node}
         	  op^.left := nil;
         	  op^.right := nil;
         	  end;
+               cgQuad,cgUQuad: begin
+        	  op^.opcode := pc_ldc;
+        	  op^.q := ord((op^.left^.qval.lo = op^.right^.qval.lo) and
+        	               (op^.left^.qval.hi = op^.right^.qval.hi));
+        	  op^.left := nil;
+        	  op^.right := nil;
+        	  end;
                cgReal,cgDouble,cgComp,cgExtended: begin
         	  op^.opcode := pc_ldc;
         	  op^.q := ord(op^.left^.rval = op^.right^.rval);
@@ -1842,6 +1849,13 @@ case op^.opcode of			{check for optimizations of this node}
                cgLong,cgULong: begin
         	  op^.opcode := pc_ldc;
         	  op^.q := ord(op^.left^.lval <> op^.right^.lval);
+        	  op^.left := nil;
+        	  op^.right := nil;
+        	  end;
+               cgQuad,cgUQuad: begin
+        	  op^.opcode := pc_ldc;
+        	  op^.q := ord((op^.left^.qval.lo <> op^.right^.qval.lo) or
+        	               (op^.left^.qval.hi <> op^.right^.qval.hi));
         	  op^.left := nil;
         	  op^.right := nil;
         	  end;
