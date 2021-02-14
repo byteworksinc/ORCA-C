@@ -421,9 +421,10 @@
 {                                                               }
 {  Gen1t(pc_ldc, val, type)                                     }
 {  GenLdcLong(val)                                              }
+{  GenLdcQuad(val)                                              }
 {  GenLdcReal(val)                                              }
 {                                                               }
-{  Loads a constant value.  Special calls for long and real     }
+{  Loads a constant value.  Special calls for long, quad & real }
 {  values are provided due to the unique parameter requirements.}
 {                                                               }
 {                                                               }

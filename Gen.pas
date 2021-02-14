@@ -2461,7 +2461,9 @@ else if op^.optype in [cgLong,cgULong] then begin
                end; {else}
             end; {else}                      
       end; {else}
-   end; {else if}
+   end {else if}
+else
+   Error(cge1);
 end; {GenIncDec}
 
 
@@ -2682,7 +2684,7 @@ case optype of
          end; {if}
       end; {case cgByte,cgUByte,cgWord,cgUWord}
 
-   otherwise: ;
+   otherwise: Error(cge1);
    end; {case}
 end; {GenInd}
 
@@ -4252,7 +4254,7 @@ case optype of
          end; {else}
       end;
 
-   otherwise: ;
+   otherwise: Error(cge1);
 
    end; {case}
 end; {GenStrCop}
@@ -5691,7 +5693,9 @@ procedure GenTree {op: icptr};
       if isIncLoad then
 	 skipLoad := false;
       case op^.optype of		{do the pop}
-	 otherwise: ;
+	 otherwise: Error(cge1);
+
+	 cgByte, cgUByte, cgWord, cgUWord, cgVoid: ;
 
 	 cgLong, cgULong:
             if not isIncLoad then
