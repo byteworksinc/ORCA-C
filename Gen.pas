@@ -2684,6 +2684,170 @@ case optype of
          end; {if}
       end; {case cgByte,cgUByte,cgWord,cgUWord}
 
+   cgQuad,cgUQuad: begin
+      GetPointer(op^.left);
+      if gLong.where = inPointer then begin
+         if q = 0 then begin
+            if gLong.fixedDisp then begin
+               GenNative(m_ldy_imm, immediate, 6, nil, 0);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_indl, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               end {if}
+            else begin
+               GenImplied(m_tya);
+               GenImplied(m_clc);
+               GenNative(m_adc_imm, immediate, 6, nil, 0);
+               GenImplied(m_tay);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               end; {else}
+            end {if q = 0}
+         else begin
+            if gLong.fixedDisp then begin
+               GenNative(m_ldy_imm, immediate, q+6, nil, 0);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               end {if}
+            else begin
+               GenImplied(m_tya);
+               GenImplied(m_clc);
+               GenNative(m_adc_imm, immediate, q+6, nil, 0);
+               GenImplied(m_tay);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               GenImplied(m_dey);
+               GenImplied(m_dey);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               GenImplied(m_pha);
+               end; {else}
+            end; {else}
+         end {if glong.where = inPointer}
+      else if gLong.where = localAddress then begin
+         gLong.disp := gLong.disp+q;
+         if gLong.fixedDisp then
+            if (gLong.disp < 250) and (gLong.disp >= 0) then begin
+               GenNative(m_pei_dir, direct, gLong.disp+6, nil, 0);
+               GenNative(m_pei_dir, direct, gLong.disp+4, nil, 0);
+               GenNative(m_pei_dir, direct, gLong.disp+2, nil, 0);
+               GenNative(m_pei_dir, direct, gLong.disp, nil, 0);
+               end {if}
+            else begin
+               GenNative(m_ldx_imm, immediate, gLong.disp, nil, 0);
+               GenNative(m_lda_dirX, direct, 6, nil, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_dirX, direct, 4, nil, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_dirX, direct, 2, nil, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_dirX, direct, 0, nil, 0);
+               GenImplied(m_pha);
+               end {else}
+         else begin
+            if (gLong.disp >= 250) or (gLong.disp < 0) then begin
+               GenImplied(m_txa);
+               GenImplied(m_clc);
+               GenNative(m_adc_imm, immediate, gLong.disp, nil, 0);
+               GenImplied(m_tax);
+               gLong.disp := 0;
+               end; {if}
+            GenNative(m_lda_dirX, direct, gLong.disp+6, nil, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_dirX, direct, gLong.disp+4, nil, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_dirX, direct, gLong.disp+2, nil, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_dirX, direct, gLong.disp, nil, 0);
+            GenImplied(m_pha);
+            end; {else}
+         end {else if gLong.where = localAddress}
+      else {if gLong.where = globalLabel then} begin
+         gLong.disp := gLong.disp+q;
+         if gLong.fixedDisp then
+            if smallMemoryModel then begin
+               GenNative(m_lda_abs, absolute, gLong.disp+6, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_abs, absolute, gLong.disp+4, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_abs, absolute, gLong.disp+2, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_abs, absolute, gLong.disp, gLong.lab, 0);
+               GenImplied(m_pha);
+               end {if}
+            else begin
+               GenNative(m_lda_long, longAbs, gLong.disp+6, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_long, longAbs, gLong.disp+4, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_long, longAbs, gLong.disp+2, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_long, longAbs, gLong.disp, gLong.lab, 0);
+               GenImplied(m_pha);
+               end {else}
+         else
+            if smallMemoryModel then begin
+               GenNative(m_lda_absX, absolute, gLong.disp+6, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_absX, absolute, gLong.disp+4, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_absX, absolute, gLong.disp+2, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_absX, absolute, gLong.disp, gLong.lab, 0);
+               GenImplied(m_pha);
+               end {if}
+            else begin
+               GenNative(m_lda_longX, longAbs, gLong.disp+6, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_longX, longAbs, gLong.disp+4, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_longX, longAbs, gLong.disp+2, gLong.lab, 0);
+               GenImplied(m_pha);
+               GenNative(m_lda_longX, longAbs, gLong.disp, gLong.lab, 0);
+               GenImplied(m_pha);
+               end; {else}
+         end; {else}
+      end; {case cgQuad,cgUQuad}
    otherwise: Error(cge1);
    end; {case}
 end; {GenInd}
