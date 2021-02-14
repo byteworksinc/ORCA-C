@@ -3460,20 +3460,36 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
-      else if UsualUnaryConversions = cgExtended then begin
-         GenLdcReal(0.0);
-         Gen0t(pc_neq, cgExtended);
-         expressionType := intPtr;
-         end; {if}
+      else begin
+         et := UsualUnaryConversions;
+         if et = cgExtended then begin
+            GenLdcReal(0.0);
+            Gen0t(pc_neq, cgExtended);
+            expressionType := intPtr;
+            end {if}
+         else if et in [cgQuad,cgUQuad] then begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_neq, et);
+            expressionType := intPtr;
+            end; {else if}
+         end; {else}
       lType := expressionType;
       GenerateCode(tree^.right);
       if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
-      else if UsualUnaryConversions = cgExtended then begin
-         GenLdcReal(0.0);
-         Gen0t(pc_neq, cgExtended);
-         expressionType := intPtr;
-         end; {if}
+      else begin
+         et := UsualUnaryConversions;
+         if et = cgExtended then begin
+            GenLdcReal(0.0);
+            Gen0t(pc_neq, cgExtended);
+            expressionType := intPtr;
+            end {if}
+         else if et in [cgQuad,cgUQuad] then begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_neq, et);
+            expressionType := intPtr;
+            end; {else if}
+         end; {else}
       case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_ior);
@@ -3489,20 +3505,36 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
-      else if UsualUnaryConversions = cgExtended then begin
-         GenLdcReal(0.0);
-         Gen0t(pc_neq, cgExtended);
-         expressionType := intPtr;
-         end; {if}
+      else begin
+         et := UsualUnaryConversions;
+         if et = cgExtended then begin
+            GenLdcReal(0.0);
+            Gen0t(pc_neq, cgExtended);
+            expressionType := intPtr;
+            end {if}
+         else if et in [cgQuad,cgUQuad] then begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_neq, et);
+            expressionType := intPtr;
+            end; {else if}
+         end; {else}
       lType := expressionType;
       GenerateCode(tree^.right);
       if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
-      else if UsualUnaryConversions = cgExtended then begin
-         GenLdcReal(0.0);
-         Gen0t(pc_neq, cgExtended);
-         expressionType := intPtr;
-         end; {if}
+      else begin
+         et := UsualUnaryConversions;
+         if et = cgExtended then begin
+            GenLdcReal(0.0);
+            Gen0t(pc_neq, cgExtended);
+            expressionType := intPtr;
+            end {if}
+         else if et in [cgQuad,cgUQuad] then begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_neq, et);
+            expressionType := intPtr;
+            end; {else if}
+         end; {else}
       case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_and);
