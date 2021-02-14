@@ -49,9 +49,10 @@ implementation
 
 const
    feature_hh = true;
-   feature_ll = false;
+   feature_ll = true;
    feature_s_long = false;
    feature_n_size = true;
+   feature_scanf_ld = false;
 
 type
    length_modifier = (default, h, hh, l, ll, j, z, t, ld);
@@ -250,6 +251,24 @@ var
       Warning(@'argument missing; expected long int');
       end; {else}
    end; {expect_long}
+
+
+   procedure expect_long_long;
+   { Verify the current argument is a long long int.}
+   var
+      ty: typePtr;
+
+   begin {expect_long_long}
+   ty := popType;
+   if ty <> nil then begin
+      if (ty^.kind <> scalarType) or (not (ty^.baseType in [cgQuad, cgUQuad])) then begin
+         Warning(@'expected long long int');
+         end; {if}
+      end {if}
+   else begin
+      Warning(@'argument missing; expected long long int');
+      end; {else}
+   end; {expect_long_long}
 
 
    procedure expect_int;
@@ -456,9 +475,9 @@ var
                has_suppress := true;
                end;
 
-            'b': begin
+            'b', 'P': begin
                if has_length <> default then
-                  Warning(@'length modifier may not be used with %b');
+                  Warning(@'length modifier may not be used with %b or %P');
                expected := [cgByte, cgUByte];
                name := @'char';
                end;
@@ -489,9 +508,13 @@ var
                      expected := [cgByte, cgUByte];
                      name := @'char';
                      end;
-                  l, ll, j, z, t: begin
+                  l, z, t: begin
                      expected := [cgLong, cgULong];
                      name := @'long';
+                     end;
+                  ll, j: begin
+                     expected := [cgQuad, cgUQuad];
+                     name := @'long long';
                      end;
                   h: begin
                      expected := [cgWord, cgUWord];
@@ -523,9 +546,13 @@ var
                      expected := [cgByte, cgUByte];
                      name := @'char';
                      end;
-                  l, ll, j, z, t: begin
+                  l, z, t: begin
                      expected := [cgLong, cgULong];
                      name := @'long';
+                     end;
+                  ll, j: begin
+                     expected := [cgQuad, cgUQuad];
+                     name := @'long long';
                      end;
                   h: begin
                      expected := [cgWord, cgUWord];
@@ -552,6 +579,9 @@ var
 
                   case has_length of
                      ld: begin
+                        if not feature_scanf_ld then
+                           if not has_suppress then
+                              Warning(@'L length modifier is not currently supported');
                         expected := [cgExtended];
                         name := @'long double';
                         end;
@@ -606,7 +636,7 @@ var
    length_set := ['h', 'l', 'j', 't', 'z', 'L']; 
    flag_set := ['#', '0', '-', '+', ' '];
    format_set := ['%', '[', 'b', 'c', 's', 'd', 'i', 'o', 'x', 'X', 'u', 
-      'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G', 'n', 'p'];
+      'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G', 'n', 'p', 'P'];
 
 
    for i := 1 to s^.length do begin
@@ -711,9 +741,9 @@ var
                end;
 
              { %b: orca-specific - pascal string }
-            'b': begin
+            'b', 'P': begin
                if has_length <> default then
-                  Warning(@'length modifier may not be used with %b');
+                  Warning(@'length modifier may not be used with %b or %P');
                expect_pointer_to([cgByte, cgUByte], @'char');
                end;
             
@@ -739,8 +769,11 @@ var
                   hh:
                      expect_pointer_to([cgByte, cgUByte], @'char');
 
-                  l, ll, j, z, t:
+                  l, z, t:
                         expect_pointer_to([cgLong, cgULong], @'long');
+
+                  ll, j:
+                        expect_pointer_to([cgQuad, cgUQuad], @'long long');
 
                   otherwise: begin
                      if feature_n_size and (has_length = ld) then
@@ -767,8 +800,11 @@ var
 
             { chars are passed as ints so %hhx can be ignored here. }
             'd', 'i', 'o', 'x', 'X', 'u':
-               if has_length in [l, ll, j, z, t] then begin
+               if has_length in [l, z, t] then begin
                   expect_long;
+                  end
+               else if has_length in [ll, j] then begin
+                  expect_long_long;
                   end
                else if has_length = ld then begin
                   Warning(@'invalid length modifier');
@@ -805,7 +841,7 @@ var
    length_set := ['h', 'l', 'j', 't', 'z', 'L']; 
    flag_set := ['#', '0', '-', '+', ' '];
    format_set := ['%', 'b', 'c', 's', 'd', 'i', 'o', 'x', 'X', 'u', 
-      'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G', 'n', 'p'];
+      'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G', 'n', 'p', 'P'];
 
    for i := 1 to s^.length do begin
       c := s^.str[i];
