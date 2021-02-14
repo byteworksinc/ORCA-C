@@ -1230,6 +1230,7 @@ var
                goto 1;
                end; {if}
             end; {if}
+
          if kindRight in [intconst,uintconst,longconst,ulongconst,
             longlongconst,ulonglongconst] then begin
             if kindLeft in [intconst,uintconst,longconst,ulongconst,
@@ -1248,10 +1249,6 @@ var
 
                GetLongLongVal(llop1, op^.left^.token);
                GetLongLongVal(llop2, op^.right^.token);
-               dispose(op^.right);
-               op^.right := nil;
-               dispose(op^.left);
-               op^.left := nil;
                
                case op^.token.kind of
                   barbarop    : begin                                   {||}
@@ -1296,12 +1293,22 @@ var
                   minusch,                                              {-}
                   asteriskch,                                           {*}
                   slashch,                                              {/}
-                  percentch:                                            {%}
-                     if not (kind in [normalExpression,autoInitializerExpression])
-                        then               
-                        Error(157);
+                  percentch: begin                                      {%}
+                     if kind in [normalExpression,autoInitializerExpression]
+                        then goto 1;
+                     Error(157);
+                     llop1 := longlong0;
+                     op1 := 0;
+                     if op^.token.kind in [ltch,gtch,lteqop,gteqop] then
+                        ekind := intconst;
+                     end;
                   otherwise: Error(57);
                   end; {case}
+                  
+               dispose(op^.right);
+               op^.right := nil;
+               dispose(op^.left);
+               op^.left := nil;
                op^.token.kind := ekind;
                if ekind in [longlongconst,ulonglongconst] then begin
                   op^.token.qval := llop1;
@@ -1314,6 +1321,7 @@ var
                goto 1;
                end; {if}
             end; {if}
+
          if op^.right^.token.kind in
             [intconst,uintconst,longconst,ulongconst,doubleconst] then
             if op^.left^.token.kind in
@@ -1378,6 +1386,7 @@ var
                   end; {else}
                goto 1;
                end; {if}
+
          if op^.right^.token.kind in [intconst,uintconst,longconst,
             ulongconst,longlongconst,ulonglongconst,doubleconst] then
             if op^.left^.token.kind in [intconst,uintconst,longconst,
