@@ -1160,6 +1160,57 @@ else
             end; {if}
          end; {case optype of cgLong}
 
+      cgUQuad: begin
+         GenTree(op^.left);
+         GenTree(op^.right);
+         if op^.opcode = pc_geq then
+            GenNative(m_ldx_imm, immediate, 1, nil, 0)
+         else {if op^.opcode = pc_grt then}
+            GenNative(m_ldx_imm, immediate, 0, nil, 0);
+         lab1 := GenLabel;
+         lab2 := GenLabel;
+         GenNative(m_lda_s, direct, 15, nil, 0);
+         GenNative(m_cmp_s, direct, 7, nil, 0);
+         GenNative(m_bne, relative, lab1, nil, 0);
+         GenNative(m_lda_s, direct, 13, nil, 0);
+         GenNative(m_cmp_s, direct, 5, nil, 0);
+         GenNative(m_bne, relative, lab1, nil, 0);
+         GenNative(m_lda_s, direct, 11, nil, 0);
+         GenNative(m_cmp_s, direct, 3, nil, 0);
+         GenNative(m_bne, relative, lab1, nil, 0);
+         GenNative(m_lda_s, direct, 9, nil, 0);
+         GenNative(m_cmp_s, direct, 1, nil, 0);
+         GenNative(m_bne, relative, lab1, nil, 0);
+         GenLab(lab1);
+         if op^.opcode = pc_geq then begin
+            GenNative(m_bcs, relative, lab2, nil, 0);
+            GenImplied(m_dex);
+            end {if}
+         else begin {if op^.opcode = pc_grt then}
+            GenNative(m_bcc, relative, lab2, nil, 0);
+            GenNative(m_beq, relative, lab2, nil, 0);
+            GenImplied(m_inx);
+            end; {else}
+         GenLab(lab2);
+         GenImplied(m_tsc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, 16, nil, 0);
+         GenImplied(m_tcs);
+         GenImplied(m_txa);
+         if rOpcode = pc_fjp then begin
+            lab3 := GenLabel;
+            GenNative(m_bne, relative, lab3, nil, 0);
+            GenNative(m_brl, longrelative, lb, nil, 0);
+            GenLab(lab3);
+            end {if}
+         else if rOpcode = pc_tjp then begin
+            lab3 := GenLabel;
+            GenNative(m_beq, relative, lab3, nil, 0);
+            GenNative(m_brl, longrelative, lb, nil, 0);
+            GenLab(lab3);
+            end; {else if}
+         end; {case optype of cgUQuad}
+
       otherwise:
          Error(cge1);
       end; {case}
