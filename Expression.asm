@@ -382,3 +382,259 @@ ml6      ror   a                        shift the answer
 ;
 ml7      return 4:ans                   fix the stack
          end
+
+****************************************************************
+*
+*  procedure umul64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+umul64   start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~UMUL8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure udiv64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+udiv64   start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~UDIV8
+         pl8   [x]
+         pla
+         pla
+         pla
+         pla
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure div64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+div64    start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~CDIV8
+         pl8   [x]
+         pla
+         pla
+         pla
+         pla
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure umod64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+umod64   start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~UDIV8
+         pla
+         pla
+         pla
+         pla
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure rem64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+rem64    start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~CDIV8
+         pla
+         pla
+         pla
+         pla
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure add64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+add64    start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~ADD8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure sub64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+sub64    start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~SUB8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure shl64 (var x: longlong; y: integer);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+shl64    start exp
+
+         subroutine (4:x,2:y),0
+
+         ph8   [x]
+         lda   y
+         jsl   ~SHL8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure ashr64 (var x: longlong; y: integer);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+ashr64   start exp
+
+         subroutine (4:x,2:y),0
+
+         ph8   [x]
+         lda   y
+         jsl   ~ASHR8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure lshr64 (var x: longlong; y: integer);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+lshr64   start exp
+
+         subroutine (4:x,2:y),0
+
+         ph8   [x]
+         lda   y
+         jsl   ~LSHR8
+         pl8   [x]
+         
+         return
+         end

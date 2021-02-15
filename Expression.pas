@@ -269,6 +269,29 @@ function umod (x,y: longint): longint; extern;
 
 function umul (x,y: longint): longint; extern;
 
+{-- External 64-bit math routines ------------------------------}
+{ Procedures for arithmetic and shifts compute "x := x OP y".   }
+
+procedure umul64 (var x: longlong; y: longlong); extern;
+
+procedure udiv64 (var x: longlong; y: longlong); extern;
+
+procedure div64 (var x: longlong; y: longlong); extern;
+
+procedure umod64 (var x: longlong; y: longlong); extern;
+
+procedure rem64 (var x: longlong; y: longlong); extern;
+
+procedure add64 (var x: longlong; y: longlong); extern;
+
+procedure sub64 (var x: longlong; y: longlong); extern;
+
+procedure shl64 (var x: longlong; y: integer); extern;
+
+procedure ashr64 (var x: longlong; y: integer); extern;
+
+procedure lshr64 (var x: longlong; y: integer); extern;
+
 {---------------------------------------------------------------}
 
 function Unary(tp: baseTypeEnum): baseTypeEnum;
@@ -1247,18 +1270,23 @@ var
                else 
                   ekind := longlongconst;
 
+               unsigned := ekind = ulonglongconst;
                GetLongLongVal(llop1, op^.left^.token);
                GetLongLongVal(llop2, op^.right^.token);
                
                case op^.token.kind of
                   barbarop    : begin                                   {||}
-                                op1 := ord((llop1.lo <> 0) or (llop1.hi <> 0) or
-                                           (llop2.lo <> 0) or (llop2.hi <> 0));
+                                llop1.hi := 0;
+                                llop1.lo :=
+                                   ord((llop1.lo <> 0) or (llop1.hi <> 0) or
+                                       (llop2.lo <> 0) or (llop2.hi <> 0));
                                 ekind := intconst;
                                 end;
                   andandop    : begin                                   {&&}
-                                op1 := ord(((llop1.lo <> 0) or (llop1.hi <> 0)) and
-                                           ((llop2.lo <> 0) or (llop2.hi <> 0)));
+                                llop1.hi := 0;
+                                llop1.lo :=
+                                   ord(((llop1.lo <> 0) or (llop1.hi <> 0)) and
+                                       ((llop2.lo <> 0) or (llop2.hi <> 0)));
                                 ekind := intconst;
                                 end;
                   carotch     : begin                                   {^}
@@ -1274,34 +1302,63 @@ var
                                 llop1.hi := llop1.hi & llop2.hi;
                                 end;
                   eqeqop      : begin                                   {==}
-                                op1 := ord((llop1.lo = llop2.lo) and
-                                           (llop1.hi = llop2.hi));
+                                llop1.hi := 0;
+                                llop1.lo := ord((llop1.lo = llop2.lo) and
+                                                (llop1.hi = llop2.hi));
                                 ekind := intconst;
                                 end;
                   exceqop     : begin                                   {!=}
-                                op1 := ord((llop1.lo <> llop2.lo) or
-                                           (llop1.hi <> llop2.hi));
+                                llop1.hi := 0;
+                                llop1.lo := ord((llop1.lo <> llop2.lo) or
+                                                (llop1.hi <> llop2.hi));
                                 ekind := intconst;
                                 end;
                   ltch,                                                 {<}
                   gtch,                                                 {>}  
                   lteqop,                                               {<=}
-                  gteqop,                                               {>=}
-                  ltltop,                                               {<<}
-                  gtgtop,                                               {>>}
-                  plusch,                                               {+}
-                  minusch,                                              {-}
-                  asteriskch,                                           {*}
-                  slashch,                                              {/}
-                  percentch: begin                                      {%}
-                     if kind in [normalExpression,autoInitializerExpression]
-                        then goto 1;
-                     Error(157);
-                     llop1 := longlong0;
-                     op1 := 0;
-                     if op^.token.kind in [ltch,gtch,lteqop,gteqop] then
-                        ekind := intconst;
-                     end;
+                  gteqop      : begin                                   {>=}
+                                if kind in [normalExpression,autoInitializerExpression]
+                                   then goto 1;
+                                Error(157);
+                                llop1 := longlong0;
+                                op1 := 0;
+                                if op^.token.kind in [ltch,gtch,lteqop,gteqop] then
+                                   ekind := intconst;
+                                end;
+                  ltltop      : begin                                   {<<}
+                                shl64(llop1, long(llop2.lo).lsw);
+                                ekind := kindLeft;
+                                end;
+                  gtgtop      : begin                                   {>>}
+                                if kindleft = ulonglongconst then
+                                   lshr64(llop1, long(llop2.lo).lsw)
+                                else
+                                   ashr64(llop1, long(llop2.lo).lsw);
+                                ekind := kindLeft;
+                                end;
+                  plusch      : add64(llop1, llop2);                    {+}
+                  minusch     : sub64(llop1, llop2);                    {-}
+                  asteriskch  : umul64(llop1, llop2);                   {*}
+                  slashch     : begin                                   {/}
+                                if (llop2.lo = 0) and (llop2.hi = 0) then begin
+                                   Error(109);
+                                   llop2 := longlong1;
+                                   end; {if}
+                                if unsigned then
+                                   udiv64(llop1, llop2)
+                                else
+                                   div64(llop1, llop2);
+                                end;
+                  percentch   : begin                                   {%}
+                                if (llop2.lo = 0) and (llop2.hi = 0) then begin
+                                   Error(109);
+                                   llop2 := longlong1;
+                                   end; {if}
+                                if unsigned then
+                                   umod64(llop1, llop2)
+                                else
+                                   rem64(llop1, llop2);
+                                end;
                   otherwise: Error(57);
                   end; {case}
                   
@@ -1314,8 +1371,12 @@ var
                   op^.token.qval := llop1;
                   op^.token.class := longlongConstant;
                   end {if}
+               else if ekind in [longconst,ulongconst] then begin
+                  op^.token.lval := llop1.lo;
+                  op^.token.class := longConstant;
+                  end {if}
                else begin
-                  op^.token.ival := long(op1).lsw;
+                  op^.token.ival := long(llop1.lo).lsw;
                   op^.token.class := intConstant;
                   end; {else}
                goto 1;
