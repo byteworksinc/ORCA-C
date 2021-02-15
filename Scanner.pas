@@ -414,6 +414,11 @@ function Convertsl(var str: pString): longint; extern;
 { Return the integer equivalent of the string.  Assumes a valid }
 { 4-byte integer string; supports unsigned values.              }
 
+procedure Convertsll(var qval: longlong; var str: pString); extern;
+
+{ Save the integer equivalent of the string to qval.  Assumes a }
+{ valid 8-byte integer string; supports unsigned values.        }
+
 
 procedure SetDateTime; extern;
 
@@ -3356,22 +3361,21 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
       or (not unsigned and (stringIndex = 10) and (numString > '2147483647'))
       or (unsigned and (stringIndex = 10) and (numString > '4294967295')) then
       isLongLong := true;
-   if (stringIndex > 10) or                             {TODO increase limits}
-      ((stringIndex = 10) and (numString > '4294967295')) then begin
+   if (not unsigned and ((stringIndex > 19) or
+      ((stringIndex = 19) and (numString > '9223372036854775807')))) or
+      (unsigned and ((stringIndex > 20) or
+      ((stringIndex = 20) and (numString > '18446744073709551615')))) then begin
       numString := '0';
       if flagOverflows then
          FlagError(6);
       end; {if}
    if isLongLong then begin
       token.class := longlongConstant;
-      token.qval.hi := 0;
-      token.qval.lo := Convertsl(numString);  {TODO support full 64-bit range}
+      Convertsll(token.qval, numString);
       if unsigned then
          token.kind := ulonglongConst
       else begin
          token.kind := longlongConst;
-         if token.qval.hi < 0 then
-            FlagError(6);
          end; {else}
       end {if}
    else if isLong then begin

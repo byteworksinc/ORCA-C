@@ -529,3 +529,110 @@
  dc i4'&p'
  ~restm
  mend
+ macro
+&l ph8 &n1
+ lclc &c
+&l anop
+&c amid &n1,1,1
+ aif s:longa=1,.a
+ rep #%00100000
+.a
+ aif "&c"="#",.d
+ aif "&c"="[",.b
+ aif "&c"<>"{",.c
+&c amid &n1,l:&n1,1
+ aif "&c"<>"}",.g
+&n1 amid &n1,2,l:&n1-2
+&n1 setc (&n1)
+.b
+ ldy #6
+~&SYSCNT lda &n1,y
+ pha
+ dey
+ dey
+ bpl ~&SYSCNT
+ ago .e
+.c
+ aif "&c"<>"<",.c1
+ pei &n1+6
+ pei &n1+4
+ pei &n1+2
+ pei &n1
+ ago .e
+.c1
+ ldx #6
+~&SYSCNT lda &n1,x
+ pha
+ dex
+ dex
+ bpl ~&SYSCNT
+ ago .e
+.d
+&n1 amid &n1,2,l:&n1-1
+ pea +(&n1)|-48
+ pea +(&n1)|-32
+ pea +(&n1)|-16
+ pea &n1
+.e
+ aif s:longa=1,.f
+ sep #%00100000
+.f
+ mexit
+.g
+ mnote "Missing closing '}'",16
+ mend
+ macro
+&l pl8 &n1
+ lclc &c
+&l anop
+ aif s:longa=1,.a
+ rep #%00100000
+.a
+&c amid &n1,1,1
+ aif "&c"<>"{",.b
+&c amid &n1,l:&n1,1
+ aif "&c"<>"}",.f
+&n1 amid &n1,2,l:&n1-2
+ pla
+ sta (&n1)
+ ldy #2
+ pla
+ sta (&n1),y
+ ldy #4
+ pla
+ sta (&n1),y
+ ldy #6
+ pla
+ sta (&n1),y
+ ago .d
+.b
+ aif "&c"<>"[",.c
+ pla
+ sta &n1
+ ldy #2
+ pla
+ sta &n1,y
+ ldy #4
+ pla
+ sta &n1,y
+ ldy #6
+ pla
+ sta &n1,y
+ ago .d
+.c
+ pla
+ sta &n1
+ pla
+ sta &n1+2
+ pla
+ sta &n1+4
+ pla
+ sta &n1+6
+.d
+ aif s:longa=1,.e
+ sep #%00100000
+.e
+ mexit
+.f
+ mnote "Missing closing '}'",16
+ mend

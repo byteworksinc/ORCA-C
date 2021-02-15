@@ -55,6 +55,54 @@ lb2      iny                            next character
 
 ****************************************************************
 *
+*  Convertsll - Convert a string to a long long integer
+*
+*  Inputs:
+*        qval - pointer to location to save value
+*        str - pointer to the string
+*
+*  Outputs:
+*        Saves the value to [qval].
+*
+*  Notes:
+*        Assumes the string is valid.
+*
+****************************************************************
+*
+Convertsll start scanner
+disp     equ   0                        displacement into the string
+count    equ   2                        number of characters remaining to read
+
+         subroutine (4:qval,4:str),4
+
+         lda   [str]                    set count to length of string
+         and   #$00FF
+         sta   count
+         lda   #1                       start reading from character 1
+         sta   disp
+         ph8   #0                       initialize the number to zero
+         bra   lb1a
+lb1      ph8   #10                      multiply by 10
+         jsl   ~UMUL8
+lb1a     pea   $0000
+         pea   $0000
+         pea   $0000
+         ldy   disp
+         lda   [str],Y                  add in the new digit
+         and   #$000F
+         pha
+         jsl   ~ADD8
+lb2      inc   disp                     next character
+         dec   count
+         bne   lb1
+
+         pl8   [qval]                   save the value
+
+         return
+         end
+
+****************************************************************
+*
 *  KeyPress - Has a key been pressed?
 *
 *  If a key has not been pressed, this function returns
