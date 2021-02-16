@@ -1160,6 +1160,37 @@ else
             end; {if}
          end; {case optype of cgLong}
 
+      cgQuad: begin
+         if op^.opcode = pc_geq then begin
+            GenTree(op^.left);
+            GenTree(op^.right);
+            end {if}
+         else {if op^.opcode = pc_grt then} begin
+            GenTree(op^.right);
+            GenTree(op^.left);
+            end; {else}
+         GenCall(88);
+         if (rOpcode = pc_fjp) or (rOpcode = pc_tjp) then begin
+            lab1 := GenLabel;
+            if (rOpcode = pc_fjp) <> (op^.opcode = pc_grt) then
+               GenNative(m_bcs, relative, lab1, nil, 0)
+            else
+               GenNative(m_bcc, relative, lab1, nil, 0);
+            GenNative(m_brl, longrelative, lb, nil, 0);
+            GenLab(lab1);
+            end {if}
+         else begin
+            lab1 := GenLabel;
+            GenNative(m_lda_imm, immediate, 1, nil, 0);
+            if op^.opcode = pc_geq then
+               GenNative(m_bcs, relative, lab1, nil, 0)
+            else
+               GenNative(m_bcc, relative, lab1, nil, 0);
+            GenImplied(m_dea);
+            GenLab(lab1);
+            end; {else}
+         end; {case optype of cgQuad}
+
       cgUQuad: begin
          GenTree(op^.left);
          GenTree(op^.right);

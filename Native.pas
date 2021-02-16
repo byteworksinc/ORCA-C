@@ -2042,6 +2042,7 @@ case callNum of
    85: sp := @'~SHL8';
    86: sp := @'~ASHR8';
    87: sp := @'~LSHR8';
+   88: sp := @'~SCMP8';
    otherwise:
       Error(cge1);
    end; {case}
