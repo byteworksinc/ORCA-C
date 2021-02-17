@@ -1491,7 +1491,7 @@ if macro^.readOnly then begin           {handle special macros}
       5: begin                          {__STDC__}
          token.kind := intConst;        {__ORCAC__}
          token.numString := @oneStr;    {__STDC_NO_...__}
-         token.class := intConstant;
+         token.class := intConstant;    {__ORCAC_HAS_LONG_LONG__}
          token.ival := 1;
          oneStr := '1';
          tokenStart := @oneStr[1];
@@ -3860,6 +3860,15 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.algorithm := 6;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__ORCAC_HAS_LONG_LONG__}
+mp^.name := @'__ORCAC_HAS_LONG_LONG__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 5;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
