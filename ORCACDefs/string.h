@@ -22,13 +22,17 @@ typedef unsigned long size_t;
 #define NULL  (void *) 0L
 #endif
 
-char           *c2pstr(char *);
+#ifndef __KeepNamespacePure__
+   char        *c2pstr(char *);
+#endif
 void           *memchr(const void *, int, size_t);
 int             memcmp(const void *, const void *, size_t);
 void           *memcpy(void *, const void *, size_t);
 void           *memmove(void *, const void *, size_t);
 void           *memset(void *, int, size_t);
-char           *p2cstr(char *);
+#ifndef __KeepNamespacePure__
+   char        *p2cstr(char *);
+#endif
 char           *strcat(char *, const char *);
 char           *strchr(const char *, int);
 int             strcmp(const char *, const char *);
@@ -40,10 +44,14 @@ char           *strncat(char *, const char *, size_t);
 int             strncmp(const char *, const char *, size_t);
 char           *strncpy(char *, const char *, size_t);
 char           *strpbrk(const char *, const char *);
-int             strpos(char *, char);
+#ifndef __KeepNamespacePure__
+   int          strpos(char *, char);
+#endif
 char           *strrchr(const char *, int);
-char           *strrpbrk(char *, char *);
-int             strrpos(char *, char);
+#ifndef __KeepNamespacePure__
+   char        *strrpbrk(char *, char *);
+   int          strrpos(char *, char);
+#endif
 size_t          strspn(const char *, const char *);
 char           *strstr(const char *, const char *);
 char           *strtok(char *, const char *);
