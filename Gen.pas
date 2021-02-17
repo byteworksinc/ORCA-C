@@ -1610,8 +1610,10 @@ else if op^.q in [longToQuad,longToUQuad] then begin
       GenImplied(m_pha);
       end; {else}
    end {else if}
-else if op^.q in [realToQuad, realToUQuad] then
-   Error(cge1) {TODO: implement}
+else if op^.q = realToQuad then
+   GenCall(89)
+else if op^.q = realToUQuad then
+   GenCall(90)
 else if op^.q in [quadToWord,uquadToWord,quadToUWord,uquadToUWord] then begin
    GenImplied(m_pla);
    GenImplied(m_plx);
