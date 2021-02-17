@@ -292,6 +292,22 @@ procedure ashr64 (var x: longlong; y: integer); extern;
 
 procedure lshr64 (var x: longlong; y: integer); extern;
 
+function ult64(a,b: longlong): integer; extern;
+
+function uge64(a,b: longlong): integer; extern;
+
+function ule64(a,b: longlong): integer; extern;
+
+function ugt64(a,b: longlong): integer; extern;
+
+function slt64(a,b: longlong): integer; extern;
+
+function sge64(a,b: longlong): integer; extern;
+
+function sle64(a,b: longlong): integer; extern;
+
+function sgt64(a,b: longlong): integer; extern;
+
 {---------------------------------------------------------------}
 
 function Unary(tp: baseTypeEnum): baseTypeEnum;
@@ -1313,17 +1329,37 @@ var
                                                 (llop1.hi <> llop2.hi));
                                 ekind := intconst;
                                 end;
-                  ltch,                                                 {<}
-                  gtch,                                                 {>}  
-                  lteqop,                                               {<=}
+                  ltch        : begin                                   {<}
+                                if unsigned then
+                                   llop1.lo := ult64(llop1, llop2)
+                                else
+                                   llop1.lo := slt64(llop1, llop2);
+                                llop1.hi := 0;
+                                ekind := intconst;
+                                end;
+                  gtch        : begin                                   {>}
+                                if unsigned then
+                                   llop1.lo := ugt64(llop1, llop2)
+                                else
+                                   llop1.lo := sgt64(llop1, llop2);
+                                llop1.hi := 0;
+                                ekind := intconst;
+                                end;
+                  lteqop      : begin                                   {<=}
+                                if unsigned then
+                                   llop1.lo := ule64(llop1, llop2)
+                                else
+                                   llop1.lo := sle64(llop1, llop2);
+                                llop1.hi := 0;
+                                ekind := intconst;
+                                end;
                   gteqop      : begin                                   {>=}
-                                if kind in [normalExpression,autoInitializerExpression]
-                                   then goto 1;
-                                Error(157);
-                                llop1 := longlong0;
-                                op1 := 0;
-                                if op^.token.kind in [ltch,gtch,lteqop,gteqop] then
-                                   ekind := intconst;
+                                if unsigned then
+                                   llop1.lo := uge64(llop1, llop2)
+                                else
+                                   llop1.lo := sge64(llop1, llop2);
+                                llop1.hi := 0;
+                                ekind := intconst;
                                 end;
                   ltltop      : begin                                   {<<}
                                 shl64(llop1, long(llop2.lo).lsw);

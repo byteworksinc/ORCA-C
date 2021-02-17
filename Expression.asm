@@ -638,3 +638,303 @@ lshr64   start exp
          
          return
          end
+
+****************************************************************
+*
+*  function ult64(a,b: longlong): integer;
+*
+****************************************************************
+*
+ult64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bge   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function uge64(a,b: longlong): integer;
+*
+****************************************************************
+*
+uge64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      blt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function ule64(a,b: longlong): integer;
+*
+****************************************************************
+*
+ule64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bgt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function ugt64(a,b: longlong): integer;
+*
+****************************************************************
+*
+ugt64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      ble   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function slt64(a,b: longlong): integer;
+*
+****************************************************************
+*
+slt64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bge   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function sge64(a,b: longlong): integer;
+*
+****************************************************************
+*
+sge64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      blt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function sle64(a,b: longlong): integer;
+*
+****************************************************************
+*
+sle64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bgt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function sgt64(a,b: longlong): integer;
+*
+****************************************************************
+*
+sgt64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      ble   lb2
+         inc   result
+
+lb2      return 2:result
+         end
