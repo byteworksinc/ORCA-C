@@ -2845,6 +2845,9 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {    16 - check for stack errors              }
 		     FlagPragmas(p_debug);
                      NumericDirective;
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgQuad,cgUQuad] then
+                           expressionValue := llExpressionValue.lo;
                      val := long(expressionValue).lsw;
                      rangeCheck  := odd(val);
                      debugFlag   := odd(val >> 1);
@@ -2859,7 +2862,10 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      end {else}
                   else if token.name^ = 'lint' then begin
 		     FlagPragmas(p_lint);
-                     NumericDirective;   
+                     NumericDirective;
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgQuad,cgUQuad] then
+                           expressionValue := llExpressionValue.lo;
                      lint := long(expressionValue).lsw;
                      lintIsError := true;
                      if token.kind = semicolonch then begin
@@ -2893,7 +2899,10 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {    16 - common subexpression elimination    }
                      {    32 - loop invariant removal		   }
 		     FlagPragmas(p_optimize);
-                     NumericDirective;    
+                     NumericDirective;
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgQuad,cgUQuad] then
+                           expressionValue := llExpressionValue.lo;
                      val := long(expressionValue).lsw;
                      peepHole  := odd(val);
                      npeepHole := odd(val >> 1);
@@ -2990,7 +2999,10 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     8 - allow // comments                           }
                      {    16 - allow mixed decls & use C99 scope rules     }
                      FlagPragmas(p_ignore);
-                     NumericDirective;    
+                     NumericDirective;
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgQuad,cgUQuad] then
+                           expressionValue := llExpressionValue.lo;
                      val := long(expressionValue).lsw;
                      skipIllegalTokens := odd(val);
                      allowLongIntChar := odd(val >> 1);
@@ -3342,6 +3354,8 @@ if c2 in ['f','F'] then begin           {allow F designator on reals}
    NextChar;
    end; {if}
 numString[0] := chr(stringIndex);       {set the length of the string}
+if doingPPExpression then
+   isLongLong := true;
 if isReal then begin                    {convert a real constant}
    token.kind := doubleConst;
    token.class := doubleConstant;

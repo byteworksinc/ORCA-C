@@ -929,7 +929,7 @@ var
 
    { do an operation                                                }
 
-   label 1;
+   label 1,2;
 
    var
       baseType: baseTypeEnum;           {base type of value to cast}
@@ -1047,10 +1047,10 @@ var
       { adjust kind of token for use in preprocessor expression }
 
       begin {PPKind}
-      if token.kind = intconst then
-         PPKind := longconst
-      else if token.kind = uintconst then
-         PPKind := ulongconst
+      if token.kind in [intconst,longconst] then
+         PPKind := longlongconst
+      else if token.kind in [uintconst,ulongconst] then
+         PPKind := ulonglongconst
       else
          PPKind := token.kind;
       end; {PPKind}
@@ -1133,10 +1133,8 @@ var
          kindLeft := op^.left^.token.kind;
          if kindRight in [intconst,uintconst,longconst,ulongconst] then begin
             if kindLeft in [intconst,uintconst,longconst,ulongconst] then begin
-               if kind = preprocessorExpression then begin
-                  kindLeft := PPKind(op^.left^.token);
-                  kindRight := PPKind(op^.right^.token);
-                  end; {if}
+               if kind = preprocessorExpression then
+                  goto 2;
 
                {do the usual binary conversions}
                if (kindRight = ulongconst) or (kindLeft = ulongconst) then
@@ -1269,7 +1267,7 @@ var
                goto 1;
                end; {if}
             end; {if}
-
+2:
          if kindRight in [intconst,uintconst,longconst,ulongconst,
             longlongconst,ulonglongconst] then begin
             if kindLeft in [intconst,uintconst,longconst,ulongconst,
@@ -1610,13 +1608,11 @@ var
          else if not (op^.token.kind in
             [typedef,plusplusop,minusminusop,opplusplus,opminusminus,uand]) then
             begin
-            if (op^.left^.token.kind
+            if (kind <> preprocessorExpression) and (op^.left^.token.kind
                in [intconst,uintconst,longconst,ulongconst]) then begin
 
                {evaluate a constant operation}
                ekind := op^.left^.token.kind;
-               if kind = preprocessorExpression then
-                  ekind := PPKind(op^.left^.token);
                op1 := IntVal(op^.left^.token);
                dispose(op^.left);
                op^.left := nil;
@@ -1640,12 +1636,14 @@ var
                   op^.token.ival := long(op1).lsw;
                   end; {else}
                end {if}
-            else if op^.left^.token.kind 
-               in [longlongconst,ulonglongconst] then begin
+            else if op^.left^.token.kind in [longlongconst,ulonglongconst,
+               intconst,uintconst,longconst,ulongconst] then begin
                
-               {evaluate a constant operation}
+               {evaluate a constant operation with long long operand}
                ekind := op^.left^.token.kind;
-               llop1 := op^.left^.token.qval;
+               if kind = preprocessorExpression then
+                  ekind := PPKind(op^.left^.token);
+               GetLongLongVal(llop1, op^.left^.token);
                dispose(op^.left);
                op^.left := nil;
                case op^.token.kind of
