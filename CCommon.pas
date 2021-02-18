@@ -496,6 +496,7 @@ var
    expressionType: typePtr;             {the type of the expression}
    initializerTree: tokenPtr;           {for non-constant initializers}
    isConstant: boolean;                 {is the initializer expression constant?}
+   expressionIsLongLong: boolean;       {is the last constant expression long long?}
 
                                         {type specifier results}
                                         {----------------------}

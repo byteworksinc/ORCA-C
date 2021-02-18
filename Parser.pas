@@ -98,7 +98,7 @@ type
    switchRecord = record
       next,last: switchPtr;             {doubly linked list (for inserts)}
       lab: integer;                     {label to branch to}
-      val: longint;                     {switch value}
+      val: longlong;                    {switch value}
       end;
 
                                         {token stack}
@@ -139,7 +139,6 @@ type
             );
          switchSt: (
             maxVal: longint;            {max switch value}
-            isLong: boolean;            {do long switch?}
             ln: integer;                {temp var number}
             size: integer;              {temp var size}
             labelCount: integer;        {# of switch labels}
@@ -187,6 +186,12 @@ var
    localDeclarationStart: tokenSet;
    declarationSpecifiersElement: tokenSet;
    structDeclarationStart: tokenSet;
+
+{-- External procedures ----------------------------------------}
+
+function slt64(a,b: longlong): boolean; extern;
+
+function sgt64(a,b: longlong): boolean; extern;
 
 {-- Parser Utility Procedures ----------------------------------}
 
@@ -454,38 +459,52 @@ var
    var
       stPtr: statementPtr;              {switch record for this case label}
       swPtr,swPtr2: switchPtr;          {work pointers for inserting new entry}
-      val: integer;                     {case label value}
+      val: longlong;                    {case label value}
 
    begin {CaseStatement}
    while token.kind = casesy do begin
       NextToken;                        {skip the 'case' token}
       stPtr := GetSwitchRecord;         {get the proper switch record}
       Expression(arrayExpression, [colonch]); {evaluate the branch condition}
-      val := long(expressionValue).lsw;
-      if val <> expressionValue then
-         if not stPtr^.isLong then
-            expressionValue := val;     {convert out-of-range value to (U)Word}
+      GetLLExpressionValue(val);
+      if stPtr^.size = cgLongSize then begin {convert out-of-range values}
+         if val.lo < 0 then
+            val.hi := -1
+         else
+            val.hi := 0;
+         end {if}
+      else if stPtr^.size = cgWordSize then begin
+         if long(val.lo).lsw < 0 then begin
+            val.hi := -1;
+            val.lo := val.lo | $FFFF0000;
+            end {if}
+         else begin
+            val.hi := 0;
+            val.lo := val.lo & $0000FFFF;
+            end; {else}
+         end; {else if}
       if stPtr = nil then
          Error(72)
       else begin
          new(swPtr2);                   {create the new label table entry}
          swPtr2^.lab := GenLabel;
          Gen1(dc_lab, swPtr2^.lab);
-         swPtr2^.val := expressionValue;
+         swPtr2^.val := val;
          swPtr := stPtr^.switchList;
+         if val.lo > stPtr^.maxVal then
+            stPtr^.maxVal := val.lo;
          if swPtr = nil then begin      {enter it in the table}
             swPtr2^.last := nil;
             swPtr2^.next := nil;
             stPtr^.switchList := swPtr2;
-            stPtr^.maxVal := expressionValue;
             stPtr^.labelCount := 1;
             end {if}
          else begin
-            while (swPtr^.next <> nil) and (swPtr^.val < expressionValue) do
+            while (swPtr^.next <> nil) and slt64(swPtr^.val, val) do
                swPtr := swPtr^.next;
-            if swPtr^.val = expressionValue then
+            if (swPtr^.val.lo = val.lo) and (swPtr^.val.hi = val.hi) then
                Error(73)
-            else if swPtr^.val > expressionValue then begin
+            else if sgt64(swPtr^.val, val) then begin
                swPtr2^.next := swPtr;
                if swPtr^.last = nil then
                   stPtr^.switchList := swPtr2
@@ -498,7 +517,6 @@ var
                swPtr2^.next := nil;
                swPtr2^.last := swPtr;
                swPtr^.next := swPtr2;
-               stPtr^.maxVal := expressionValue;
                end; {else}
             stPtr^.labelCount := stPtr^.labelCount + 1;
             end; {else}
@@ -798,7 +816,6 @@ var
    statementList := stPtr;
    stPtr^.kind := switchSt;
    stPtr^.maxVal := -maxint4;
-   stPtr^.isLong := false;
    stPtr^.labelCount := 0;
    stPtr^.switchLab := GenLabel;
    stPtr^.switchExit := GenLabel;
@@ -815,14 +832,17 @@ var
    case tp^.kind of
 
       scalarType:
-         if tp^.baseType in [cgLong,cgULong] then begin
-            stPtr^.isLong := true;
+         if tp^.baseType in [cgQuad,cgUQuad] then begin
+            stPtr^.size := cgQuadSize;
+            stPtr^.ln := GetTemp(cgQuadSize);
+            Gen2t(pc_str, stPtr^.ln, 0, cgQuad);
+            end {if}
+         else if tp^.baseType in [cgLong,cgULong] then begin
             stPtr^.size := cgLongSize;
             stPtr^.ln := GetTemp(cgLongSize);
             Gen2t(pc_str, stPtr^.ln, 0, cgLong);
             end {if}
          else if tp^.baseType in [cgByte,cgUByte,cgWord,cgUWord] then begin
-            stPtr^.isLong := false;
             stPtr^.size := cgWordSize;
             stPtr^.ln := GetTemp(cgWordSize);
             Gen2t(pc_str, stPtr^.ln, 0, cgWord);
@@ -831,7 +851,6 @@ var
             Error(71);
 
       enumType: begin
-         stPtr^.isLong := false;
          stPtr^.size := cgWordSize;
          stPtr^.ln := GetTemp(cgWordSize);
          Gen2t(pc_str, stPtr^.ln, 0, cgWord);
@@ -1075,13 +1094,15 @@ var
                                         {-------------------------------}
    exitLab: integer;                    {label at the end of the jump table}
    isLong: boolean;                     {is the case expression long?}
+   isLongLong: boolean;                 {is the case expression long long?}
    swPtr,swPtr2: switchPtr;             {switch label table list}
 
 begin {EndSwitchStatement}
 if c99Scope then PopTable;
 stPtr := statementList;                 {get the statement record}
 exitLab := stPtr^.switchExit;           {get the exit label}
-isLong := stPtr^.isLong;                {get the long flag}
+isLong := stPtr^.size = cgLongSize;     {get the long flag}
+isLongLong := stPtr^.size = cgQuadSize; {get the long long flag}
 swPtr := stPtr^.switchList;             {Skip further generation if there were}
 if swPtr <> nil then begin              { no labels.                          }
    default := stPtr^.switchDefault;     {get a default label}
@@ -1089,21 +1110,25 @@ if swPtr <> nil then begin              { no labels.                          }
       default := exitLab;
    Gen1(pc_ujp, exitLab);               {branch past the indexed jump}
    Gen1(dc_lab, stPtr^.switchLab);      {create the label for the xjp table}
-   if isLong then                       {decide on a base type}
+   if isLongLong then                   {decide on a base type}
+      ltp := cgQuad
+   else if isLong then
       ltp := cgLong
    else
       ltp := cgWord;
-   if stPtr^.isLong
-      or (((stPtr^.maxVal-swPtr^.val) div stPtr^.labelCount) > sparse) then
+   if isLong or isLongLong
+      or (((stPtr^.maxVal-swPtr^.val.lo) div stPtr^.labelCount) > sparse) then
       begin
 
       {Long expressions and sparse switch statements are handled as a   }
       {series of if-goto tests.                                         }
       while swPtr <> nil do begin       {generate the compares}
-         if isLong then
-            GenLdcLong(swPtr^.val)
+         if isLongLong then
+            GenLdcQuad(swPtr^.val)
+         else if isLong then
+            GenLdcLong(swPtr^.val.lo)
          else
-            Gen1t(pc_ldc, long(swPtr^.val).lsw, cgWord);
+            Gen1t(pc_ldc, long(swPtr^.val.lo).lsw, cgWord);
          Gen2t(pc_lod, stPtr^.ln, 0, ltp);
          Gen0t(pc_equ, ltp);
          Gen1(pc_tjp, swPtr^.lab);
@@ -1116,12 +1141,12 @@ if swPtr <> nil then begin              { no labels.                          }
    else begin
 
       {compact word switch statements are handled with xjp}
-      minVal := long(swPtr^.val).lsw;   {record the min label value}
+      minVal := long(swPtr^.val.lo).lsw; {record the min label value}
       Gen2t(pc_lod, stPtr^.ln, 0, ltp); {get the value}
       Gen1t(pc_dec, minVal, cgWord);    {adjust the range}
       Gen1(pc_xjp, ord(stPtr^.maxVal-minVal+1)); {do the indexed jump}
       while swPtr <> nil do begin       {generate the jump table}
-         while minVal < swPtr^.val do begin
+         while minVal < swPtr^.val.lo do begin
             Gen1(pc_add, default);
             minVal := minVal+1;
             end; {while}

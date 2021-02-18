@@ -216,6 +216,11 @@ function UsualUnaryConversions: baseTypeEnum;
 { outputs:                                                      }
 {       expressionType - set to result type                     }
 
+procedure GetLLExpressionValue (var val: longlong);
+
+{ get the value of the last integer constant expression as a    }
+{ long long (whether it had long long type or not).             }
+
 {---------------------------------------------------------------}
 
 implementation
@@ -4264,6 +4269,7 @@ else begin                              {record the expression for an initialize
    isConstant := false;
    llExpressionValue.lo := 0;
    llExpressionValue.hi := 0;
+   expressionIsLongLong := false;
    if errorFound then begin
       DisposeTree(initializerTree);
       initializerTree := nil;
@@ -4321,6 +4327,7 @@ else begin                              {record the expression for an initialize
          end {else if}
       else if tree^.token.kind = longlongconst then begin
          llExpressionValue := tree^.token.qval;
+         expressionIsLongLong := true;
          if ((llExpressionValue.hi = 0) and (llExpressionValue.lo >= 0))
             or ((llExpressionValue.hi = -1) and (llExpressionValue.lo < 0)) then
             expressionValue := llExpressionValue.lo
@@ -4333,6 +4340,7 @@ else begin                              {record the expression for an initialize
          end {else if}
       else if tree^.token.kind = ulonglongconst then begin
          llExpressionValue := tree^.token.qval;
+         expressionIsLongLong := true;
          if llExpressionValue.hi = 0 then
             expressionValue := llExpressionValue.lo
          else
@@ -4368,6 +4376,25 @@ else begin                              {record the expression for an initialize
    end; {else}
 1:
 end; {Expression}
+
+
+procedure GetLLExpressionValue {var val: longlong};
+
+{ get the value of the last integer constant expression as a    }
+{ long long (whether it had long long type or not).             }
+
+begin {GetLLExpressionValue}
+   if expressionIsLongLong then
+      val := llExpressionValue
+   else begin
+      val.lo := expressionValue;
+      val.hi := 0;
+      if expressionValue < 0 then
+         if expressionType^.kind = scalarType then
+            if expressionType^.baseType in [cgByte,cgWord,cgLong] then
+               val.hi := -1;
+      end;
+end; {GetLLExpressionValue}
 
 
 procedure InitExpression;
