@@ -1324,7 +1324,7 @@ with longLongPtr^ do begin
    baseType := cgQuad;
    cType := ctLongLong;
    end; {with}
-new(uLongLongPtr);                      {unsigned long}
+new(uLongLongPtr);                      {unsigned long long}
 with uLongLongPtr^ do begin
    size := cgQuadSize;
    saveDisp := 0;
