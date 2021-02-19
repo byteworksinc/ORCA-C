@@ -359,3 +359,79 @@
 .j
  rtl
  mend
+ macro
+&l lla &ad1,&ad2
+&l anop
+ lcla &lb
+ lclb &la
+ aif s:longa,.a
+ rep #%00100000
+ longa on
+&la setb 1
+.a
+ lda #&ad2
+&lb seta c:&ad1
+.b
+ sta &ad1(&lb)
+&lb seta &lb-1
+ aif &lb,^b
+ lda #^&ad2
+&lb seta c:&ad1
+.c
+ sta 2+&ad1(&lb)
+&lb seta &lb-1
+ aif &lb,^c
+ aif &la=0,.d
+ sep #%00100000
+ longa off
+.d
+ mend
+ macro
+&l ph8 &n1
+ lclc &c
+&l anop
+&c amid &n1,1,1
+ aif s:longa=1,.a
+ rep #%00100000
+.a
+ aif "&c"="#",.d
+ aif "&c"="[",.b
+ aif "&c"<>"{",.c
+&c amid &n1,l:&n1,1
+ aif "&c"<>"}",.g
+&n1 amid &n1,2,l:&n1-2
+&n1 setc (&n1)
+.b
+ ldy #6
+~&SYSCNT lda &n1,y
+ pha
+ dey
+ dey
+ bpl ~&SYSCNT
+ ago .e
+.c
+ ldx #6
+~&SYSCNT lda &n1,x
+ pha
+ dex
+ dex
+ bpl ~&SYSCNT
+ ago .e
+.d
+&n1 amid &n1,2,l:&n1-1
+ bra ~b&SYSCNT
+~a&SYSCNT dc i8"&n1"
+~b&SYSCNT ldx #6
+~c&SYSCNT lda ~a&SYSCNT,x
+ pha
+ dex
+ dex
+ bpl ~c&SYSCNT
+.e
+ aif s:longa=1,.f
+ sep #%00100000
+.f
+ mexit
+.g
+ mnote "Missing closing '}'",16
+ mend

@@ -85,6 +85,22 @@ procedure CnvXULL (var result: longlong; val: extended); extern;
 {       val - the real value                                    }
 
 
+function CnvLLX (val: longlong): extended; extern;
+
+{ convert a long long to a real number                          }
+{                                                               }
+{ parameters:                                                   }
+{       val - the long long value                               }
+
+
+function CnvULLX (val: longlong): extended; extern;
+
+{ convert an unsigned long long to a real number                }
+{                                                               }
+{ parameters:                                                   }
+{       val - the unsigned long long value                      }
+
+
 procedure InitLabels; extern;
 
 { initialize the labels array for a procedure                   }

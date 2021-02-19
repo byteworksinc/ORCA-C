@@ -139,6 +139,74 @@ CnvXULL  start cg
          return
          end
 
+****************************************************************
+*
+*  function CnvLLX (val: longlong): extended;
+*
+*  convert a long long to a real number
+*
+*  Inputs:
+*        val - the long long value
+*
+****************************************************************
+
+CnvLLX   start cg
+
+         subroutine (4:val),0
+
+         ph8   [val]
+         jsl   ~CnvLongLongReal
+         pla
+         sta   >rval
+         pla
+         sta   >rval+2
+         pla
+         sta   >rval+4
+         pla
+         sta   >rval+6
+         pla
+         sta   >rval+8
+         
+         lla   val,rval
+         return 4:val
+
+rval     ds    10
+         end
+
+****************************************************************
+*
+*  function CnvULLX (val: longlong): extended;
+*
+*  convert an unsigned long long to a real number
+*
+*  Inputs:
+*        val - the unsigned long long value
+*
+****************************************************************
+
+CnvULLX  start cg
+
+         subroutine (4:val),0
+
+         ph8   [val]
+         jsl   ~CnvULongLongReal
+         pla
+         sta   >rval
+         pla
+         sta   >rval+2
+         pla
+         sta   >rval+4
+         pla
+         sta   >rval+6
+         pla
+         sta   >rval+8
+         
+         lla   val,rval
+         return 4:val
+
+rval     ds    10
+         end
+
          datachk off
 ****************************************************************
 *

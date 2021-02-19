@@ -1128,6 +1128,7 @@ case op^.opcode of			{check for optimizations of this node}
          op^.q := (op^.q & $FF0F) | (fromtype.i << 4);
          end; {if}
       if op^.left^.opcode = pc_ldc then begin
+         doit := true;
 	 case fromtype.optype of
             cgByte,cgWord:
                case totype.optype of
@@ -1217,6 +1218,60 @@ case op^.opcode of			{check for optimizations of this node}
                      end;
                   otherwise: ;
         	  end; {case}
+            cgQuad:
+               case totype.optype of
+                  cgByte,cgUByte,cgWord,cgUWord: begin
+                     q := long(op^.left^.qval.lo).lsw;
+                     op^.left^.qval := longlong0;
+                     op^.left^.q := q;
+                     end;
+                  cgLong, cgULong: begin
+                     lval := op^.left^.qval.lo;
+                     op^.left^.qval := longlong0;
+                     op^.left^.lval := lval;
+                     end;
+                  cgQuad,cgUQuad: ;
+                  cgDouble,cgExtended: begin
+                     {only convert values exactly representable in double}
+                     rval := CnvLLX(op^.left^.qval);
+                     if rval = CnvLLX(op^.left^.qval) then begin
+                        op^.left^.qval := longlong0;
+                        op^.left^.rval := rval;
+                        end {if}
+                     else
+                        doit := false;
+                     end;
+                  cgReal,cgComp:
+                     doit := false;
+                  otherwise: ;
+                  end; {case}
+            cgUQuad:
+               case totype.optype of
+                  cgByte,cgUByte,cgWord,cgUWord: begin
+                     q := long(op^.left^.qval.lo).lsw;
+                     op^.left^.qval := longlong0;
+                     op^.left^.q := q;
+                     end;
+                  cgLong, cgULong: begin
+                     lval := op^.left^.qval.lo;
+                     op^.left^.qval := longlong0;
+                     op^.left^.lval := lval;
+                     end;
+                  cgQuad,cgUQuad: ;
+                  cgDouble,cgExtended: begin
+                     {only convert values exactly representable in double}
+                     rval := CnvULLX(op^.left^.qval);
+                     if rval = CnvULLX(op^.left^.qval) then begin
+                        op^.left^.qval := longlong0;
+                        op^.left^.rval := rval;
+                        end {if}
+                     else
+                        doit := false;
+                     end;
+                  cgReal,cgComp:
+                     doit := false;
+                  otherwise: ;
+                  end; {case}
             cgReal,cgDouble,cgComp,cgExtended: begin
                rval := op^.left^.rval;
                case totype.optype of
@@ -1294,21 +1349,22 @@ case op^.opcode of			{check for optimizations of this node}
                end; {case}        
             otherwise: ;
             end; {case}
-         if fromtype.optype in
-            [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgReal,cgDouble,
-            cgComp,cgExtended] then
-            if totype.optype in
+         if doit then
+            if fromtype.optype in
                [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad,
-               cgReal,cgDouble,cgComp,cgExtended] then begin
-               op^.left^.optype := totype.optype;
-               if totype.optype in [cgByte,cgUByte] then begin
-                  op^.left^.q := op^.left^.q & $00FF;
-                  if totype.optype = cgByte then
-                     if (op^.left^.q & $0080) <> 0 then
-                        op^.left^.q := op^.left^.q | $FF00;
+               cgReal,cgDouble,cgComp,cgExtended] then
+               if totype.optype in
+                  [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad,
+                  cgReal,cgDouble,cgComp,cgExtended] then begin
+                  op^.left^.optype := totype.optype;
+                  if totype.optype in [cgByte,cgUByte] then begin
+                     op^.left^.q := op^.left^.q & $00FF;
+                     if totype.optype = cgByte then
+                        if (op^.left^.q & $0080) <> 0 then
+                           op^.left^.q := op^.left^.q | $FF00;
+                     end; {if}
+                  opv := op^.left;
                   end; {if}
-               opv := op^.left;
-               end; {if}
          end {if}
       else if op^.left^.opcode = pc_cnv then begin
          doit := false;
