@@ -1301,6 +1301,12 @@ case op^.opcode of			{check for optimizations of this node}
                [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad,
                cgReal,cgDouble,cgComp,cgExtended] then begin
                op^.left^.optype := totype.optype;
+               if totype.optype in [cgByte,cgUByte] then begin
+                  op^.left^.q := op^.left^.q & $00FF;
+                  if totype.optype = cgByte then
+                     if (op^.left^.q & $0080) <> 0 then
+                        op^.left^.q := op^.left^.q | $FF00;
+                  end; {if}
                opv := op^.left;
                end; {if}
          end {if}
