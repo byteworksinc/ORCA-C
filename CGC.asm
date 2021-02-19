@@ -85,6 +85,60 @@ rec_cmp  equ   18                       disp to comp (SANE) value
          rtl
          end
 
+****************************************************************
+*
+*  procedure CnvXLL (var result: longlong; val: extended);
+*
+*  Convert floating point to long long
+*
+*  Inputs:
+*        result - longlong to hold the converted value
+*        val - the real value
+*
+****************************************************************
+
+CnvXLL   start cg
+
+         subroutine (4:result,10:val),0
+
+         pei   (val+8)
+         pei   (val+6)
+         pei   (val+4)
+         pei   (val+2)
+         pei   (val)   
+         jsl   ~CnvRealLongLong
+         pl8   [result]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure CnvXULL (var result: longlong; val: extended);
+*
+*  Convert floating point to unsigned long long
+*
+*  Inputs:
+*        result - longlong to hold the converted value
+*        val - the real value
+*
+****************************************************************
+
+CnvXULL  start cg
+
+         subroutine (4:result,10:val),0
+
+         pei   (val+8)
+         pei   (val+6)
+         pei   (val+4)
+         pei   (val+2)
+         pei   (val)   
+         jsl   ~CnvRealULongLong
+         pl8   [result]
+         
+         return
+         end
+
          datachk off
 ****************************************************************
 *

@@ -11,7 +11,7 @@ unit DAG;
 
 interface
 
-{$segment 'CG'}
+{$segment 'DAG'}
 
 {$LibPrefix '0/obj/'}
 
@@ -48,6 +48,31 @@ function udiv (x,y: longint): longint; extern;
 function umod (x,y: longint): longint; extern;
 
 function umul (x,y: longint): longint; extern;
+
+function lshr (x,y: longint): longint; extern;
+
+{-- External 64-bit math routines; imported from Expression.pas --}
+{ Procedures for arithmetic and shifts compute "x := x OP y".   }
+
+procedure umul64 (var x: longlong; y: longlong); extern;
+
+procedure udiv64 (var x: longlong; y: longlong); extern;
+
+procedure div64 (var x: longlong; y: longlong); extern;
+
+procedure umod64 (var x: longlong; y: longlong); extern;
+
+procedure rem64 (var x: longlong; y: longlong); extern;
+
+procedure add64 (var x: longlong; y: longlong); extern;
+
+procedure sub64 (var x: longlong; y: longlong); extern;
+
+procedure shl64 (var x: longlong; y: integer); extern;
+
+procedure ashr64 (var x: longlong; y: integer); extern;
+
+procedure lshr64 (var x: longlong; y: integer); extern;
 
 {---------------------------------------------------------------}
 
@@ -224,8 +249,8 @@ if opt1 = cgByte then begin
    opt1 := cgWord;
    end {if}
 else if opt1 = cgUByte then begin
-   op1^.optype := cgUWord;
-   opt1 := cgUWord;
+   op1^.optype := cgWord;
+   opt1 := cgWord;
    end {else if}
 else if opt1 in [cgReal, cgDouble, cgComp] then begin
    op1^.optype := cgExtended;
@@ -236,8 +261,8 @@ if opt2 = cgByte then begin
    opt2 := cgWord;
    end {if}
 else if opt2 = cgUByte then begin
-   op2^.optype := cgUWord;
-   opt2 := cgUWord;
+   op2^.optype := cgWord;
+   opt2 := cgWord;
    end {else if}
 else if opt2 in [cgReal, cgDouble, cgComp] then begin
    op2^.optype := cgExtended;
@@ -877,12 +902,18 @@ case op^.opcode of			{check for optimizations of this node}
       end; {case pc_adr}
 
    pc_adq: begin			{pc_adq}
-      if op^.left^.opcode = pc_ldc then
-         ReverseChildren(op);
-      if op^.right^.opcode = pc_ldc then begin
-         if (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0) then
-            opv := op^.left;
-         end; {if}
+      if (op^.right^.opcode = pc_ldc) and (op^.left^.opcode = pc_ldc) then begin
+         add64(op^.left^.qval, op^.right^.qval);
+         opv := op^.left;
+         end {if}
+      else begin
+         if op^.left^.opcode = pc_ldc then
+            ReverseChildren(op);
+         if op^.right^.opcode = pc_ldc then begin
+            if (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0) then
+               opv := op^.left;
+            end; {if}
+         end; {else}
       end; {case pc_adq}
 
    pc_and: begin			{pc_and}
@@ -1106,6 +1137,14 @@ case op^.opcode of			{check for optimizations of this node}
                      op^.left^.q := 0;
                      op^.left^.lval := lval;
                      end;
+        	  cgQuad,cgUQuad: begin
+                     op^.left^.qval.lo := op^.left^.q;
+                     if op^.left^.qval.lo < 0 then
+                        op^.left^.qval.hi := -1
+                     else
+                        op^.left^.qval.hi := 0;
+                     op^.left^.q := 0;
+                     end;
         	  cgReal,cgDouble,cgComp,cgExtended: begin
                      rval := op^.left^.q;
                      op^.left^.q := 0;
@@ -1120,6 +1159,11 @@ case op^.opcode of			{check for optimizations of this node}
                      lval := ord4(op^.left^.q) & $0000FFFF;
                      op^.left^.q := 0;
                      op^.left^.lval := lval;
+                     end;
+        	  cgQuad,cgUQuad: begin
+                     op^.left^.qval.lo := ord4(op^.left^.q) & $0000FFFF;
+                     op^.left^.qval.hi := 0;
+                     op^.left^.q := 0;
                      end;
         	  cgReal,cgDouble,cgComp,cgExtended: begin
                      rval := ord4(op^.left^.q) & $0000FFFF;
@@ -1136,6 +1180,13 @@ case op^.opcode of			{check for optimizations of this node}
                      op^.left^.q := q;
                      end;
         	  cgLong, cgULong: ;
+        	  cgQuad,cgUQuad: begin
+                     op^.left^.qval.lo := op^.left^.lval;
+                     if op^.left^.qval.lo < 0 then
+                        op^.left^.qval.hi := -1
+                     else
+                        op^.left^.qval.hi := 0;
+                     end;
         	  cgReal,cgDouble,cgComp,cgExtended: begin
                      rval := op^.left^.lval;
                      op^.left^.lval := 0;
@@ -1151,6 +1202,10 @@ case op^.opcode of			{check for optimizations of this node}
                      op^.left^.q := q;
                      end;
         	  cgLong, cgULong: ;
+        	  cgQuad,cgUQuad: begin
+                     op^.left^.qval.lo := op^.left^.lval;
+                     op^.left^.qval.hi := 0;
+                     end;
         	  cgReal,cgDouble,cgComp,cgExtended: begin
                      lval := op^.left^.lval;
                      op^.left^.lval := 0;
@@ -1229,6 +1284,10 @@ case op^.opcode of			{check for optimizations of this node}
                      op^.left^.rval := 0.0;
                      op^.left^.lval := lval;
                      end;
+                  cgQuad:
+                     CnvXLL(op^.left^.qval, rval);
+                  cgUQuad:
+                     CnvXULL(op^.left^.qval, rval);
         	  cgReal,cgDouble,cgComp,cgExtended: ;
                   otherwise: ;
                   end;
@@ -1239,8 +1298,8 @@ case op^.opcode of			{check for optimizations of this node}
             [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgReal,cgDouble,
             cgComp,cgExtended] then
             if totype.optype in
-               [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgReal,cgDouble,
-               cgComp,cgExtended] then begin
+               [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad,
+               cgReal,cgDouble,cgComp,cgExtended] then begin
                op^.left^.optype := totype.optype;
                opv := op^.left;
                end; {if}
@@ -1282,6 +1341,13 @@ case op^.opcode of			{check for optimizations of this node}
                end; {if}
          if fromtype.optype in [cgLong,cgULong] then
             if totype.optype in [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong]
+               then begin
+               op^.left^.optype := totype.optype;
+               opv := op^.left;
+               end; {if}
+         if fromtype.optype in [cgQuad,cgUQuad] then
+            if totype.optype in
+               [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad]
                then begin
                op^.left^.optype := totype.optype;
                opv := op^.left;
@@ -1371,6 +1437,19 @@ case op^.opcode of			{check for optimizations of this node}
             opv := op^.left;
          end; {if}
       end; {case pc_dvl}
+
+   pc_dvq: begin			{pc_dvq}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            if (op^.right^.qval.lo <> 0) or (op^.right^.qval.hi <> 0) then begin
+               div64(op^.left^.qval, op^.right^.qval);
+               opv := op^.left;
+               end; {if}
+            end {if}
+         else if (op^.right^.qval.lo = 1) and (op^.right^.qval.hi = 0) then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_dvq}
 
    pc_dvr: begin			{pc_dvr}
       if op^.right^.opcode = pc_ldc then begin
@@ -1734,6 +1813,21 @@ case op^.opcode of			{check for optimizations of this node}
                end; {if}
       end; {case pc_mdl}
 
+   pc_mdq: begin			{pc_mdq}
+      if op^.right^.opcode = pc_ldc then 
+         if (op^.right^.qval.lo = 1) and (op^.right^.qval.hi = 0) then begin
+            if not SideEffects(op^.left) then begin
+               op^.right^.qval := longlong0;
+               opv := op^.right;
+               end; {if}
+            end {if}
+         else if op^.left^.opcode = pc_ldc then
+            if (op^.right^.qval.lo <> 0) or (op^.right^.qval.hi <> 0) then begin
+               rem64(op^.left^.qval, op^.right^.qval);
+               opv := op^.left;
+               end; {if}
+      end; {case pc_mdq}
+
    pc_mod: begin			{pc_mod}
       if op^.right^.opcode = pc_ldc then 
          if op^.right^.q = 1 then begin
@@ -1813,6 +1907,31 @@ case op^.opcode of			{check for optimizations of this node}
             end; {if}
          end; {else}
       end; {case pc_mpl, pc_uml}
+
+   pc_mpq, pc_umq: begin		{pc_mpq, pc_umq}
+      if (op^.right^.opcode = pc_ldc) and (op^.left^.opcode = pc_ldc) then begin
+         umul64(op^.left^.qval, op^.right^.qval);
+         opv := op^.left;
+         end {if}
+      else begin
+         if op^.left^.opcode = pc_ldc then
+            ReverseChildren(op);
+         if op^.right^.opcode = pc_ldc then begin
+            if (op^.right^.qval.lo = 1) and (op^.right^.qval.hi = 0) then
+               opv := op^.left
+            else if (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0) then
+               begin
+               if not SideEffects(op^.left) then
+                  opv := op^.right;
+               end {else if}
+            else if (op^.right^.qval.lo = -1) and (op^.right^.qval.hi = -1) then
+               if op^.opcode = pc_mpq then begin
+                  op^.opcode := pc_ngq;
+                  op^.right := nil;
+                  end; {if}
+            end; {if}
+         end; {else}
+      end; {case pc_mpq, pc_umq}
 
    pc_mpr: begin			{pc_mpr}
       if (op^.right^.opcode = pc_ldc) and (op^.left^.opcode = pc_ldc) then begin
@@ -1909,6 +2028,19 @@ case op^.opcode of			{check for optimizations of this node}
          end; {if}
       end; {case pc_ngl}
 
+   pc_ngq: begin			{pc_ngq}
+      if op^.left^.opcode = pc_ldc then begin
+         with op^.left^.qval do begin
+            lo := ~lo;
+            hi := ~hi;
+            lo := lo + 1;
+            if lo = 0 then
+               hi := hi + 1;
+            end; {with}
+         opv := op^.left;
+         end; {if}
+      end; {case pc_ngq}
+
    pc_ngr: begin			{pc_ngr}
       if op^.left^.opcode = pc_ldc then begin
          op^.left^.rval := -op^.left^.rval;
@@ -1925,7 +2057,12 @@ case op^.opcode of			{check for optimizations of this node}
             end {if}
          else if op^.left^.optype in [cgLong,cgULong] then begin
             q := ord(op^.left^.lval = 0);
-            lval := 0;
+            op^.left^.q := q;
+            op^.left^.optype := cgWord;
+            opv := op^.left;
+            end {else if}
+         else if op^.left^.optype in [cgQuad,cgUQuad] then begin
+            q := ord((op^.left^.qval.lo = 0) and (op^.left^.qval.hi = 0));
             op^.left^.q := q;
             op^.left^.optype := cgWord;
             opv := op^.left;
@@ -2100,7 +2237,11 @@ case op^.opcode of			{check for optimizations of this node}
 
    pc_sbq: begin			{pc_sbq}
       if op^.left^.opcode = pc_ldc then begin
-         if (op^.left^.qval.lo = 0) and (op^.left^.qval.hi = 0) then begin
+         if op^.right^.opcode = pc_ldc then begin
+            sub64(op^.left^.qval, op^.right^.qval);
+            opv := op^.left;
+            end {if}
+         else if (op^.left^.qval.lo = 0) and (op^.left^.qval.hi = 0) then begin
             op^.opcode := pc_ngq;
             op^.left := op^.right;
             op^.right := nil;
@@ -2115,7 +2256,11 @@ case op^.opcode of			{check for optimizations of this node}
    pc_shl: begin			{pc_shl}
       if op^.right^.opcode = pc_ldc then begin
          opcode := op^.left^.opcode;
-         if opcode = pc_shl then begin
+         if opcode = pc_ldc then begin
+            op^.left^.q := op^.left^.q << op^.right^.q;
+            opv := op^.left;
+            end {if}
+         else if opcode = pc_shl then begin
             if op^.left^.right^.opcode = pc_ldc then begin
                op^.right^.q := op^.right^.q + op^.left^.right^.q;
                op^.left := op^.left^.left;
@@ -2128,9 +2273,55 @@ case op^.opcode of			{check for optimizations of this node}
             op2^.left := op;
             opv := op2;
             PeepHoleOptimization(op2^.left);
-            end; {else if}
+            end {else if}
+         else if op^.right^.q = 0 then
+            opv := op^.left;
          end; {if}
       end; {case pc_shl}
+
+   pc_shr: begin			{pc_shr}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            op^.left^.q := op^.left^.q >> op^.right^.q;
+            opv := op^.left;
+            end {if}
+         else if op^.right^.q = 0 then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_shr}
+
+   pc_sll: begin			{pc_sll}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            op^.left^.lval := op^.left^.lval << op^.right^.lval;
+            opv := op^.left;
+            end {if}
+         else if op^.right^.lval = 0 then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_sll}
+
+   pc_slr: begin			{pc_slr}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            op^.left^.lval := op^.left^.lval >> op^.right^.lval;
+            opv := op^.left;
+            end {if}
+         else if op^.right^.lval = 0 then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_slr}
+
+   pc_slq: begin			{pc_slq}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            shl64(op^.left^.qval, op^.right^.q);
+            opv := op^.left;
+            end {if}
+         else if op^.right^.q = 0 then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_slq}
 
    pc_sro, pc_str: begin		{pc_sro, pc_str}
       if op^.optype in [cgReal,cgDouble,cgExtended] then
@@ -2155,6 +2346,17 @@ case op^.opcode of			{check for optimizations of this node}
          op^.right := nil;
          end; {if}
       end; {case pc_sto}
+
+   pc_sqr: begin			{pc_sqr}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            ashr64(op^.left^.qval, op^.right^.q);
+            opv := op^.left;
+            end {if}
+         else if op^.right^.q = 0 then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_sqr}
 
    pc_tjp: begin			{pc_tjp}
       opcode := op^.left^.opcode;
@@ -2259,6 +2461,19 @@ case op^.opcode of			{check for optimizations of this node}
          end; {if}
       end; {case pc_udl}
 
+   pc_udq: begin			{pc_udq}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            if (op^.right^.qval.lo <> 0) or (op^.right^.qval.hi <> 0) then begin
+               udiv64(op^.left^.qval, op^.right^.qval);
+               opv := op^.left;
+               end; {if}
+            end {if}
+         else if (op^.right^.qval.lo = 1) and (op^.right^.qval.hi = 0) then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_udq}
+
    pc_uim: begin			{pc_uim}
       if op^.right^.opcode = pc_ldc then 
          if op^.right^.q = 1 then begin
@@ -2304,6 +2519,55 @@ case op^.opcode of			{check for optimizations of this node}
                opv := op^.left;
                end; {if}
       end; {case pc_ulm}
+
+   pc_uqm: begin			{pc_uqm}
+      if op^.right^.opcode = pc_ldc then 
+         if (op^.right^.qval.lo = 1) and (op^.right^.qval.hi = 0) then begin
+            if not SideEffects(op^.left) then begin
+               op^.right^.qval := longlong0;
+               opv := op^.right;
+               end; {if}
+            end {if}
+         else if op^.left^.opcode = pc_ldc then
+            if (op^.right^.qval.lo <> 0) or (op^.right^.qval.hi <> 0) then begin
+               umod64(op^.left^.qval, op^.right^.qval);
+               opv := op^.left;
+               end; {if}
+      end; {case pc_uqm}
+
+   pc_usr: begin			{pc_usr}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            lval := lshr(op^.left^.q & $0000FFFF, op^.right^.q);
+            op^.left^.q := long(lval).lsw;
+            opv := op^.left;
+            end {if}
+         else if op^.right^.q = 0 then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_usr}
+
+   pc_vsr: begin			{pc_vsr}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            op^.left^.lval := lshr(op^.left^.lval, op^.right^.lval);
+            opv := op^.left;
+            end {if}
+         else if op^.right^.lval = 0 then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_vsr}
+
+   pc_wsr: begin			{pc_wsr}
+      if op^.right^.opcode = pc_ldc then begin
+         if op^.left^.opcode = pc_ldc then begin
+            lshr64(op^.left^.qval, op^.right^.q);
+            opv := op^.left;
+            end {if}
+         else if op^.right^.q = 0 then
+            opv := op^.left;
+         end; {if}
+      end; {case pc_wsr}
 
    otherwise: ;
    end; {case}
