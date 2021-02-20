@@ -313,6 +313,16 @@ function sle64(a,b: longlong): integer; extern;
 
 function sgt64(a,b: longlong): integer; extern;
 
+{-- External conversion functions; imported from CGC.pas -------}
+
+procedure CnvXLL (var result: longlong; val: extended); extern;
+
+procedure CnvXULL (var result: longlong; val: extended); extern;
+
+function CnvLLX (val: longlong): extended; extern;
+
+function CnvULLX (val: longlong): extended; extern;
+
 {---------------------------------------------------------------}
 
 function Unary(tp: baseTypeEnum): baseTypeEnum;
@@ -934,7 +944,7 @@ var
 
    { do an operation                                                }
 
-   label 1,2;
+   label 1,2,3;
 
    var
       baseType: baseTypeEnum;           {base type of value to cast}
@@ -946,6 +956,7 @@ var
       op1,op2: longint;                 {for evaluating constant expressions}
       rop1,rop2: double;                {for evaluating double expressions}
       llop1, llop2: longlong;           {for evaluating long long expressions}
+      extop1: extended;                 {temporary for conversions}
       tp: typePtr;                      {cast type}
       unsigned: boolean;                {is the term unsigned?}
 
@@ -1541,27 +1552,32 @@ var
 
          else if op^.token.kind = castoper then begin
             class := op^.left^.token.class;
-            if class in [intConstant,longConstant,doubleConstant] then begin
+            if class in [intConstant,longConstant,longlongconstant,
+               doubleConstant] then begin
                tp := op^.castType;
                while tp^.kind = definedType do
                   tp := tp^.dType;
                if tp^.kind = scalarType then begin
                   baseType := tp^.baseType;
-                  if baseType < cgString then begin
+                  if (baseType < cgString) or (baseType in [cgQuad,cgUQuad])
+                     then begin
                      if class = doubleConstant then begin
                         rop1 := RealVal(op^.left^.token);
-                        op1 := trunc(rop1);
-                        end {if}
-                     else {if class in [intConstant,longConstant] then} begin
-                        op1 := IntVal(op^.left^.token);
-                        if op1 >= 0 then
-                           rop1 := op1
-                        else if op^.left^.token.kind = uintConst then
-                           rop1 := (op1 & $7FFF) + 32768.0
-                        else if op^.left^.token.kind = ulongConst then
-                           rop1 := (op1 & $7FFFFFFF) + 2147483648.0
+                        if baseType = cgUQuad then
+                           CnvXULL(llop1, rop1)
                         else
-                           rop1 := op1;
+                           CnvXLL(llop1, rop1);
+                        end {if}
+                     else begin                      {handle integer constants}
+                        GetLongLongVal(llop1, op^.left^.token);
+                        if op^.left^.token.kind = ulonglongconst then
+                           extop1 := CnvULLX(llop1)
+                        else
+                           extop1 := CnvLLX(llop1);
+                        rop1 := extop1;          
+                        if baseType in [cgExtended,cgComp] then
+                           if rop1 <> extop1 then
+                              goto 3;
                         end; {else if}
                      dispose(op^.left);
                      op^.left := nil;
@@ -1571,7 +1587,7 @@ var
                         if tp^.cType = ctBool then
                            op^.token.ival := ord(rop1 <> 0.0)
                         else
-                           op^.token.ival := long(op1).lsw;
+                           op^.token.ival := long(llop1.lo).lsw;
                         if baseType = cgByte then
                            with op^.token do begin
                               ival := ival & $00FF;
@@ -1582,23 +1598,33 @@ var
                      else if baseType = cgUWord then begin
                         op^.token.kind := uintConst;         
                         op^.token.class := intConstant;
-                        op^.token.ival := long(op1).lsw;
+                        op^.token.ival := long(llop1.lo).lsw;
                         end {else if}
                      else if baseType = cgUByte then begin
                         op^.token.kind := intConst;         
                         op^.token.class := intConstant;
-                        op^.token.ival := long(op1).lsw;
+                        op^.token.ival := long(llop1.lo).lsw;
                         op^.token.ival := op^.token.ival & $00FF;
                         end {else if}
                      else if baseType = cgLong then begin
                         op^.token.kind := longConst;
                         op^.token.class := longConstant;
-                        op^.token.lval := op1;
+                        op^.token.lval := llop1.lo;
                         end {else if}
                      else if baseType = cgULong then begin
                         op^.token.kind := ulongConst;
                         op^.token.class := longConstant;
-                        op^.token.lval := op1;
+                        op^.token.lval := llop1.lo;
+                        end {else if}
+                     else if baseType = cgQuad then begin
+                        op^.token.kind := longlongConst;
+                        op^.token.class := longlongConstant;
+                        op^.token.qval := llop1;
+                        end {else if}
+                     else if baseType = cgUQuad then begin
+                        op^.token.kind := ulonglongConst;
+                        op^.token.class := longlongConstant;
+                        op^.token.qval := llop1;
                         end {else if}
                      else begin
                         op^.token.kind := doubleConst;
@@ -1606,7 +1632,7 @@ var
                         op^.token.rval := rop1;
                         end; {else if}
                      end; {if}
-                  end; {if}
+3:                end; {if}
                end; {if}
             end {else if castoper}
 
@@ -1773,8 +1799,8 @@ if token.kind in startExpression then begin
                            if op^.token.kind = castoper then
                               if op^.casttype^.kind = scalarType then
                                  if op^.casttype^.baseType in [cgByte,cgUByte,
-                                    cgWord,cgUWord,cgLong,cgULong] then
-                                    goto 3;
+                                    cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad]
+                                    then goto 3;
                      while op <> nil do begin
                         if op^.token.kind = sizeofsy then
                            goto 3;
