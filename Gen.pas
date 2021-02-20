@@ -39,12 +39,14 @@ procedure Gen (blk: blockPtr);
 implementation
 
 const
-   A_X          =       1;              {longword locations}
+                                        {longword/quadword locations}
+   A_X          =       1;              {longword only}
    onStack      =       2;
    inPointer    =       4;
    localAddress =       8;
    globalLabel  =      16;
    constant     =      32;
+   nowhere      =      64;
 
                                         {stack frame locations}
                                         {---------------------}
@@ -61,9 +63,19 @@ type
       lval: longint;                    {value}
       lab: stringPtr;                   {global label name}
       end;
+                                        {possible locations for 8 byte values}
+                                        {note: these always have fixed disp}
+   quadType = record                    {description of current 8 byte value}
+      preference: integer;              {where you want the value}
+      where: integer;                   {where the value is at}
+      disp: integer;                    {fixed displacement/local addr}
+      lval: longlong;                   {value}
+      lab: stringPtr;                   {global label name}
+      end;
 
 var
    gLong: longType;                     {info about last long value}
+   gQuad: quadType;                     {info about last quad value}
    namePushed: boolean;			{has a name been pushed in this proc?}
    skipLoad: boolean;			{skip load for a pc_lli, etc?}
    stackSaveDepth: integer;		{nesting depth of saved stack positions}
@@ -689,7 +701,9 @@ procedure GenAdqSbq (op: icptr);
 {    op - pc_adq or pc_sbq operation				}
 
 begin {GenAdqSbq}
+gQuad.preference := onStack;
 GenTree(op^.right);
+gQuad.preference := onStack;
 GenTree(op^.left);
 if op^.opcode = pc_adq then begin
    GenImplied(m_clc);
@@ -721,6 +735,7 @@ else {if op^.opcode = pc_sbq then} begin
    GenNative(m_sbc_s, direct, 7, nil, 0);
    GenNative(m_sta_s, direct, 7, nil, 0);
    end; {else}
+gQuad.where := onStack;
 end; {GenAdqSbq}
 
 
@@ -1162,11 +1177,15 @@ else
 
       cgQuad: begin
          if op^.opcode = pc_geq then begin
+            gQuad.preference := onStack;
             GenTree(op^.left);
+            gQuad.preference := onStack;
             GenTree(op^.right);
             end {if}
          else {if op^.opcode = pc_grt then} begin
+            gQuad.preference := onStack;
             GenTree(op^.right);
+            gQuad.preference := onStack;
             GenTree(op^.left);
             end; {else}
          GenCall(88);
@@ -1192,7 +1211,9 @@ else
          end; {case optype of cgQuad}
 
       cgUQuad: begin
+         gQuad.preference := onStack;
          GenTree(op^.left);
+         gQuad.preference := onStack;
          GenTree(op^.right);
          if op^.opcode = pc_geq then
             GenNative(m_ldx_imm, immediate, 1, nil, 0)
@@ -1355,6 +1376,7 @@ begin {GenCnv}
 lLong := gLong;
 gLong.preference := onStack+A_X+constant;
 gLong.where := onStack;
+gQuad.preference := onStack;
 if ((op^.q & $00F0) >> 4) in [cDouble,cExtended,cComp] then begin
    op^.q := (op^.q & $000F) | (cReal * 16);
    fromReal := true;
@@ -1364,6 +1386,7 @@ else
 if (op^.q & $000F) in [cDouble,cExtended,cComp] then
    op^.q := (op^.q & $00F0) | cReal;
 GenTree(op^.left);
+gQuad.where := onStack; {unless overridden below}
 if op^.q in [wordToLong,wordToUlong] then begin
    lab1 := GenLabel;
    GenNative(m_ldx_imm, immediate, 0, nil, 0);
@@ -1991,7 +2014,9 @@ else
          end; {case optype of cgReal..cgExtended}
 
       cgQuad,cgUQuad: begin
+         gQuad.preference := onStack;
          GenTree(op^.left);
+         gQuad.preference := onStack;
          GenTree(op^.right);
 
          lab1 := GenLabel;
@@ -2931,6 +2956,7 @@ case optype of
                GenImplied(m_pha);
                end; {else}
          end; {else}
+      gQuad.where := onStack;
       end; {case cgQuad,cgUQuad}
    otherwise: Error(cge1);
    end; {case}
@@ -3773,6 +3799,7 @@ case optype of
       end; {case CGLong, cgULong}
 
    cgQuad, cgUQuad: begin
+      gQuad.preference := onStack;
       GenTree(op^.left);
       if opcode = pc_sro then
          GenImplied(m_pla)
@@ -3806,6 +3833,8 @@ case optype of
          GenNative(m_sta_abs, absolute, q+6, lab, 0)
       else
          GenNative(m_sta_long, longabsolute, q+6, lab, 0);
+      if opcode = pc_cpo then
+         gQuad.where := onStack;
       end; {case cgQuad, cgUQuad}
    end; {case}
 end; {GenSroCpo}
@@ -3920,6 +3949,7 @@ case optype of
       end; {case cgReal,cgDouble,cgComp,cgExtended}
 
    cgQuad,cgUQuad: begin
+      gQuad.preference := onStack;
       GenTree(op^.right);
       gLong.preference := A_X;
       GenTree(op^.left);
@@ -3954,6 +3984,8 @@ case optype of
       else {if op^.opcode = pc_cpi then}
          GenNative(m_lda_s, direct, 7, nil, 0);
       GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
+      if op^.opcode = pc_cpi then
+         gQuad.where := onStack;
       end; {case cgQuad,cgUQuad}
 
    cgLong,cgULong: begin
@@ -4454,6 +4486,7 @@ case optype of
       end;
 
    cgQuad, cgUQuad: begin
+      gQuad.preference := onStack;
       GenTree(op^.left);
       if disp < 250 then begin
          if op^.opcode = pc_str then
@@ -4500,6 +4533,8 @@ case optype of
             GenNative(m_lda_s, direct, 7, nil, 0);
          GenNative(m_sta_dirX, direct, 6, nil, 0);
          end; {else}
+      if op^.opcode = pc_cop then
+         gQuad.where := onStack;
       end;
 
    otherwise: Error(cge1);
@@ -4545,6 +4580,7 @@ procedure GenUnaryQuad (op: icptr);
 { generate a pc_bnq or pc_ngq					}
 
 begin {GenUnaryQuad}
+gQuad.preference := onStack;
 GenTree(op^.left);
 case op^.opcode of			{do the operation}
 
@@ -4580,6 +4616,7 @@ case op^.opcode of			{do the operation}
       GenNative(m_sta_s, direct, 7, nil, 0);
       end; {case pc_ngq}
    end; {case}
+gQuad.where := onStack;
 end; {GenUnaryQuad}
 
 
@@ -4774,7 +4811,9 @@ procedure GenTree {op: icptr};
       end; {GenOp}
 
    begin {GenBinQuad}
+   gQuad.preference := onStack;
    GenTree(op^.left);
+   gQuad.preference := onStack;
    GenTree(op^.right);
    case op^.opcode of
       pc_bqr: GenOp(m_ora_s);
@@ -4833,6 +4872,7 @@ procedure GenTree {op: icptr};
 
       otherwise: Error(cge1);
       end; {case}
+   gQuad.where := onStack;
    end; {GenBinQuad}
 
 
@@ -4982,6 +5022,7 @@ procedure GenTree {op: icptr};
 
    {save the returned value}
    gLong.where := A_X;
+   gQuad.where := onStack;
    SaveRetValue(op^.optype);
    argsSize := lArgsSize;
    end; {GenCui}
@@ -5076,6 +5117,7 @@ procedure GenTree {op: icptr};
 
    {save the returned value}
    gLong.where := A_X;
+   gQuad.where := onStack;
    SaveRetValue(op^.optype);
    argsSize := lArgsSize;
    end; {GenCup}
@@ -5402,6 +5444,7 @@ procedure GenTree {op: icptr};
          GenNative(m_pea, immediate, long(op^.qval.hi).lsw, nil, 0);
          GenNative(m_pea, immediate, long(op^.qval.lo).msw, nil, 0);
          GenNative(m_pea, immediate, long(op^.qval.lo).lsw, nil, 0);
+         gQuad.where := onStack;
          end;
 
       otherwise:
@@ -5500,6 +5543,7 @@ procedure GenTree {op: icptr};
             GenNative(m_lda_long, longabsolute, op^.q, op^.lab, 0);
             GenImplied(m_pha);
             end; {else}
+         gQuad.where := onStack;
          end; {case cgQuad,cgUQuad}
 
       otherwise:
@@ -5573,6 +5617,7 @@ procedure GenTree {op: icptr};
             GenNative(m_pei_dir, direct, disp+2, nil, 0);
             GenNative(m_pei_dir, direct, disp, nil, 0);
             end; {else}
+         gQuad.where := onStack;
          end;
 
       cgLong, cgULong: begin
@@ -5929,6 +5974,7 @@ procedure GenTree {op: icptr};
 
    begin {GenPop}
    glong.preference := A_X;		{generate the operand}
+   gQuad.preference := nowhere;
    isIncLoad := op^.left^.opcode in
       [pc_lil,pc_lli,pc_ldl,pc_lld,pc_gil,pc_gli,pc_gdl,pc_gld,
        pc_iil,pc_ili,pc_idl,pc_ild];
@@ -5954,10 +6000,12 @@ procedure GenTree {op: icptr};
                {else do nothing}
 
 	 cgQuad, cgUQuad: begin
-            GenImplied(m_tsc);
-            GenImplied(m_clc);
-            GenNative(m_adc_imm, immediate, 8, nil, 0);
-            GenImplied(m_tcs);
+            if gQuad.where = onStack then begin
+               GenImplied(m_tsc);
+               GenImplied(m_clc);
+               GenNative(m_adc_imm, immediate, 8, nil, 0);
+               GenImplied(m_tcs);
+               end; {if}
             end;
          
 	 cgReal, cgDouble, cgComp, cgExtended: begin
@@ -6301,6 +6349,7 @@ procedure GenTree {op: icptr};
          otherwise: Error(cge1);
          end; {case}
    glong.preference := onStack;		{generate the operand}
+   gQuad.preference := onStack;
    GenTree(op^.left);
    if op^.optype in			{do the stk}
       [cgByte, cgUByte, cgWord, cgUWord] then
