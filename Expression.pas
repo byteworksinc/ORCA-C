@@ -1101,13 +1101,14 @@ var
          op^.right := Pop;
          op^.middle := Pop;
          op^.left := Pop;
-         if op^.right^.token.kind in
-            [intconst,uintconst,longconst,ulongconst] then
-            if op^.left^.token.kind in
-               [intconst,uintconst,longconst,ulongconst] then
-               if op^.middle^.token.kind in
-                  [intconst,uintconst,longconst,ulongconst] then begin
-                  if IntVal(op^.left^.token) <> 0 then
+         if op^.right^.token.kind in [intconst,uintconst,
+            longconst,ulongconst,longlongconst,ulonglongconst] then
+            if op^.left^.token.kind in [intconst,uintconst,
+               longconst,ulongconst,longlongconst,ulonglongconst] then
+               if op^.middle^.token.kind in [intconst,uintconst,
+                  longconst,ulongconst,longlongconst,ulonglongconst] then begin
+                  GetLongLongVal(llop1, op^.left^.token);
+                  if (llop1.lo <> 0) or (llop1.hi <> 0) then
                      op^.token := op^.middle^.token
                   else
                      op^.token := op^.right^.token;
