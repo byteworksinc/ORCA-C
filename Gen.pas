@@ -55,7 +55,7 @@ const
 type
                                         {possible locations for 4 byte values}
    longType = record                    {description of current four byte value}
-      preference: integer;              {where you want the value}
+      preference: integer;              {where you want the value (bitmask)}
       where: integer;                   {where the value is at}
       fixedDisp: boolean;               {is the displacement a fixed value?}
       isLong: boolean;                  {is long addr required for named labs?}
@@ -66,7 +66,7 @@ type
                                         {possible locations for 8 byte values}
                                         {note: these always have fixed disp}
    quadType = record                    {description of current 8 byte value}
-      preference: integer;              {where you want the value}
+      preference: integer;              {where you want the value (single value)}
       where: integer;                   {where the value is at}
       disp: integer;                    {fixed displacement/local addr}
       lval: longlong;                   {value}
@@ -236,6 +236,61 @@ else if icode^.opcode in [pc_lod,pc_str] then
 else {if icode^.opcode in [pc_ldo, pc_sro] then}
    GenNative(op_abs, absolute, icode^.q + disp, icode^.lab, 0);
 end; {DoOp}
+
+
+procedure StoreWordOfQuad(offset: integer);
+
+{ Store one word of a quad value to the location specified by   }
+{ gQuad.preference.  The word value to store must be in A.      }
+{                                                               }
+{ The generated code may modify X, and may set Y to offset.     }
+{ It does not modify A or the carry flag.                       }
+{                                                               }
+{ parameters:                                                   }
+{    offset - offset of the word to store (0, 2, 4, or 6)       }
+{                                                               }
+{ Note: If gQuad.preference is onStack, this just generates a   }
+{    PHA.  That is suitable if loading a value starting from    }
+{    the most significant word, but not in other cases.  For    }
+{    other gQuad.preference values, any order is okay.          }
+
+begin {StoreWordOfQuad}
+case gQuad.preference of
+   localAddress: begin
+      if gQuad.disp+offset <= 255 then
+         GenNative(m_sta_dir, direct, gQuad.disp+offset, nil, 0)
+      else begin
+         GenNative(m_ldx_imm, immediate, gQuad.disp+offset, nil, 0);
+         GenNative(m_sta_dirX, direct, 0, nil, 0);
+         end; {else}
+      end;
+
+   globalLabel: begin
+      if smallMemoryModel then
+         GenNative(m_sta_abs, absolute, gQuad.disp+offset, gQuad.lab, 0)
+      else
+         GenNative(m_sta_long, longabsolute, gQuad.disp+offset, gQuad.lab, 0);
+      end;
+
+   inPointer: begin
+      if (gQuad.disp > 255) or (gQuad.disp < 0) then
+         Error(cge1);
+      if offset = 0 then
+         GenNative(m_sta_indl, direct, gQuad.disp, nil, 0)
+      else begin
+         GenNative(m_ldy_imm, immediate, offset, nil, 0);
+         GenNative(m_sta_indly, direct, gQuad.disp, nil, 0);
+         end; {else}
+      end;
+
+   onStack:
+      GenImplied(m_pha);
+
+   nowhere: ;                           {discard the value}
+
+   otherwise: Error(cge1);
+   end; {case}
+end; {StoreWordOfQuad}
 
 
 procedure GetPointer (op: icptr);
@@ -1376,7 +1431,10 @@ begin {GenCnv}
 lLong := gLong;
 gLong.preference := onStack+A_X+constant;
 gLong.where := onStack;
-gQuad.preference := onStack;
+if op^.q in [quadToVoid,uQuadToVoid] then
+   gQuad.preference := nowhere
+else
+   gQuad.preference := onStack;
 if ((op^.q & $00F0) >> 4) in [cDouble,cExtended,cComp] then begin
    op^.q := (op^.q & $000F) | (cReal * 16);
    fromReal := true;
@@ -1386,7 +1444,6 @@ else
 if (op^.q & $000F) in [cDouble,cExtended,cComp] then
    op^.q := (op^.q & $00F0) | cReal;
 GenTree(op^.left);
-gQuad.where := onStack; {unless overridden below}
 if op^.q in [wordToLong,wordToUlong] then begin
    lab1 := GenLabel;
    GenNative(m_ldx_imm, immediate, 0, nil, 0);
@@ -1552,6 +1609,7 @@ else if op^.q in [ubyteToQuad,ubyteToUQuad,uwordToQuad,uwordToUQuad] then begin
    GenImplied(m_phy);
    GenImplied(m_phy);
    GenImplied(m_pha);
+   gQuad.where := onStack;
    end {else if}
 else if op^.q in [byteToQuad,byteToUQuad] then begin
    lab1 := GenLabel;
@@ -1565,6 +1623,7 @@ else if op^.q in [byteToQuad,byteToUQuad] then begin
    GenImplied(m_phx);
    GenImplied(m_phx);
    GenImplied(m_pha);
+   gQuad.where := onStack;
    end {else if}
 else if op^.q in [wordToQuad,wordToUQuad] then begin
    lab1 := GenLabel;
@@ -1577,6 +1636,7 @@ else if op^.q in [wordToQuad,wordToUQuad] then begin
    GenImplied(m_phx);
    GenImplied(m_phx);
    GenImplied(m_pha);
+   gQuad.where := onStack;
    end {else if}
 else if op^.q in [ulongToQuad,ulongToUQuad] then begin
    if gLong.where = A_X then begin
@@ -1599,6 +1659,7 @@ else if op^.q in [ulongToQuad,ulongToUQuad] then begin
       GenImplied(m_phx);
       GenImplied(m_pha);
       end; {else}
+   gQuad.where := onStack;
    end {else if}
 else if op^.q in [longToQuad,longToUQuad] then begin
    if gLong.where = constant then begin
@@ -1632,11 +1693,16 @@ else if op^.q in [longToQuad,longToUQuad] then begin
       GenImplied(m_phx);
       GenImplied(m_pha);
       end; {else}
+   gQuad.where := onStack;
    end {else if}
-else if op^.q = realToQuad then
-   GenCall(89)
-else if op^.q = realToUQuad then
-   GenCall(90)
+else if op^.q = realToQuad then begin
+   GenCall(89);
+   gQuad.where := onStack;
+   end {else if}
+else if op^.q = realToUQuad then begin
+   GenCall(90);
+   gQuad.where := onStack;
+   end {else if}
 else if op^.q in [quadToWord,uquadToWord,quadToUWord,uquadToUWord] then begin
    GenImplied(m_pla);
    GenImplied(m_plx);
@@ -1677,10 +1743,12 @@ else if op^.q in [quadToLong,uquadToLong,quadToULong,uquadToULong] then begin
       end; {else}
    end {else if}
 else if op^.q in [quadToVoid,uquadToVoid] then begin
-   GenImplied(m_tsc);
-   GenImplied(m_clc);
-   GenNative(m_adc_imm, immediate, 8, nil, 0);
-   GenImplied(m_tcs);
+   if gQuad.where = onStack then begin
+      GenImplied(m_tsc);
+      GenImplied(m_clc);
+      GenNative(m_adc_imm, immediate, 8, nil, 0);
+      GenImplied(m_tcs);
+      end; {if}
    end {else if}
 else if op^.q = quadToReal then
    GenCall(83)
@@ -2583,6 +2651,7 @@ procedure GenInd (op: icptr);
 var
    lab1: integer;			{label}
    lLong: longType;			{requested address type}
+   lQuad: quadType;			{requested quad address type}
    optype: baseTypeEnum;		{op^.optype}
    q: integer;				{op^.q}
 
@@ -2794,23 +2863,26 @@ case optype of
       end; {case cgByte,cgUByte,cgWord,cgUWord}
 
    cgQuad,cgUQuad: begin
+      lQuad := gQuad;
       GetPointer(op^.left);
+      gQuad := lQuad;
+      gQuad.where := gQuad.preference; {unless overridden later}
       if gLong.where = inPointer then begin
          if q = 0 then begin
             if gLong.fixedDisp then begin
                GenNative(m_ldy_imm, immediate, 6, nil, 0);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(6);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(4);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(2);
                GenNative(m_lda_indl, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(0);
                end {if}
             else begin
                GenImplied(m_tya);
@@ -2818,38 +2890,38 @@ case optype of
                GenNative(m_adc_imm, immediate, 6, nil, 0);
                GenImplied(m_tay);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(6);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(4);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(2);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(0);
                end; {else}
             end {if q = 0}
          else begin
             if gLong.fixedDisp then begin
                GenNative(m_ldy_imm, immediate, q+6, nil, 0);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(6);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(4);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(2);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(0);
                end {if}
             else begin
                GenImplied(m_tya);
@@ -2857,19 +2929,19 @@ case optype of
                GenNative(m_adc_imm, immediate, q+6, nil, 0);
                GenImplied(m_tay);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(6);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(4);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(2);
                GenImplied(m_dey);
                GenImplied(m_dey);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(0);
                end; {else}
             end; {else}
          end {if glong.where = inPointer}
@@ -2877,12 +2949,25 @@ case optype of
          gLong.disp := gLong.disp+q;
          if gLong.fixedDisp then
             if (gLong.disp < 250) and (gLong.disp >= 0) then begin
-               GenNative(m_pei_dir, direct, gLong.disp+6, nil, 0);
-               GenNative(m_pei_dir, direct, gLong.disp+4, nil, 0);
-               GenNative(m_pei_dir, direct, gLong.disp+2, nil, 0);
-               GenNative(m_pei_dir, direct, gLong.disp, nil, 0);
+               if gQuad.preference = onStack then begin
+                  GenNative(m_pei_dir, direct, gLong.disp+6, nil, 0);
+                  GenNative(m_pei_dir, direct, gLong.disp+4, nil, 0);
+                  GenNative(m_pei_dir, direct, gLong.disp+2, nil, 0);
+                  GenNative(m_pei_dir, direct, gLong.disp, nil, 0);
+                  end {if}
+               else begin
+                  GenNative(m_lda_dir, direct, gLong.disp+6, nil, 0);
+                  StoreWordOfQuad(6);
+                  GenNative(m_lda_dir, direct, gLong.disp+4, nil, 0);
+                  StoreWordOfQuad(4);
+                  GenNative(m_lda_dir, direct, gLong.disp+2, nil, 0);
+                  StoreWordOfQuad(2);
+                  GenNative(m_lda_dir, direct, gLong.disp, nil, 0);
+                  StoreWordOfQuad(0);
+                  end; {else}
                end {if}
             else begin
+               gQuad.where := onStack;
                GenNative(m_ldx_imm, immediate, gLong.disp, nil, 0);
                GenNative(m_lda_dirX, direct, 6, nil, 0);
                GenImplied(m_pha);
@@ -2894,6 +2979,7 @@ case optype of
                GenImplied(m_pha);
                end {else}
          else begin
+            gQuad.where := onStack;
             if (gLong.disp >= 250) or (gLong.disp < 0) then begin
                GenImplied(m_txa);
                GenImplied(m_clc);
@@ -2916,26 +3002,27 @@ case optype of
          if gLong.fixedDisp then
             if smallMemoryModel then begin
                GenNative(m_lda_abs, absolute, gLong.disp+6, gLong.lab, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(6);
                GenNative(m_lda_abs, absolute, gLong.disp+4, gLong.lab, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(4);
                GenNative(m_lda_abs, absolute, gLong.disp+2, gLong.lab, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(2);
                GenNative(m_lda_abs, absolute, gLong.disp, gLong.lab, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(0);
                end {if}
             else begin
                GenNative(m_lda_long, longAbs, gLong.disp+6, gLong.lab, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(6);
                GenNative(m_lda_long, longAbs, gLong.disp+4, gLong.lab, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(4);
                GenNative(m_lda_long, longAbs, gLong.disp+2, gLong.lab, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(2);
                GenNative(m_lda_long, longAbs, gLong.disp, gLong.lab, 0);
-               GenImplied(m_pha);
+               StoreWordOfQuad(6);
                end {else}
          else
             if smallMemoryModel then begin
+               gQuad.where := onStack;
                GenNative(m_lda_absX, absolute, gLong.disp+6, gLong.lab, 0);
                GenImplied(m_pha);
                GenNative(m_lda_absX, absolute, gLong.disp+4, gLong.lab, 0);
@@ -2946,6 +3033,7 @@ case optype of
                GenImplied(m_pha);
                end {if}
             else begin
+               gQuad.where := onStack;
                GenNative(m_lda_longX, longAbs, gLong.disp+6, gLong.lab, 0);
                GenImplied(m_pha);
                GenNative(m_lda_longX, longAbs, gLong.disp+4, gLong.lab, 0);
@@ -2956,7 +3044,6 @@ case optype of
                GenImplied(m_pha);
                end; {else}
          end; {else}
-      gQuad.where := onStack;
       end; {case cgQuad,cgUQuad}
    otherwise: Error(cge1);
    end; {case}
@@ -3799,42 +3886,48 @@ case optype of
       end; {case CGLong, cgULong}
 
    cgQuad, cgUQuad: begin
-      gQuad.preference := onStack;
+      if opcode = pc_sro then begin
+         gQuad.preference := globalLabel;
+         gQuad.lab := lab;
+         gQuad.disp := q;
+         end {if}
+      else {if opcode = pc_cpo then}
+         gQuad.preference := onStack;
       GenTree(op^.left);
-      if opcode = pc_sro then
-         GenImplied(m_pla)
-      else {if opcode = pc_cpo then}
-         GenNative(m_lda_s, direct, 1, nil, 0);
-      if smallMemoryModel then
-         GenNative(m_sta_abs, absolute, q, lab, 0)
-      else
-         GenNative(m_sta_long, longabsolute, q, lab, 0);
-      if opcode = pc_sro then
-         GenImplied(m_pla)
-      else {if opcode = pc_cpo then}
-         GenNative(m_lda_s, direct, 3, nil, 0);
-      if smallMemoryModel then
-         GenNative(m_sta_abs, absolute, q+2, lab, 0)
-      else
-         GenNative(m_sta_long, longabsolute, q+2, lab, 0);
-      if opcode = pc_sro then
-         GenImplied(m_pla)
-      else {if opcode = pc_cpo then}
-         GenNative(m_lda_s, direct, 5, nil, 0);
-      if smallMemoryModel then
-         GenNative(m_sta_abs, absolute, q+4, lab, 0)
-      else
-         GenNative(m_sta_long, longabsolute, q+4, lab, 0);
-      if opcode = pc_sro then
-         GenImplied(m_pla)
-      else {if opcode = pc_cpo then}
-         GenNative(m_lda_s, direct, 7, nil, 0);
-      if smallMemoryModel then
-         GenNative(m_sta_abs, absolute, q+6, lab, 0)
-      else
-         GenNative(m_sta_long, longabsolute, q+6, lab, 0);
-      if opcode = pc_cpo then
-         gQuad.where := onStack;
+      if gQuad.where = onStack then begin
+         if opcode = pc_sro then
+            GenImplied(m_pla)
+         else {if opcode = pc_cpo then}
+            GenNative(m_lda_s, direct, 1, nil, 0);
+         if smallMemoryModel then
+            GenNative(m_sta_abs, absolute, q, lab, 0)
+         else
+            GenNative(m_sta_long, longabsolute, q, lab, 0);
+         if opcode = pc_sro then
+            GenImplied(m_pla)
+         else {if opcode = pc_cpo then}
+            GenNative(m_lda_s, direct, 3, nil, 0);
+         if smallMemoryModel then
+            GenNative(m_sta_abs, absolute, q+2, lab, 0)
+         else
+            GenNative(m_sta_long, longabsolute, q+2, lab, 0);
+         if opcode = pc_sro then
+            GenImplied(m_pla)
+         else {if opcode = pc_cpo then}
+            GenNative(m_lda_s, direct, 5, nil, 0);
+         if smallMemoryModel then
+            GenNative(m_sta_abs, absolute, q+4, lab, 0)
+         else
+            GenNative(m_sta_long, longabsolute, q+4, lab, 0);
+         if opcode = pc_sro then
+            GenImplied(m_pla)
+         else {if opcode = pc_cpo then}
+            GenNative(m_lda_s, direct, 7, nil, 0);
+         if smallMemoryModel then
+            GenNative(m_sta_abs, absolute, q+6, lab, 0)
+         else
+            GenNative(m_sta_long, longabsolute, q+6, lab, 0);
+         end; {if}
       end; {case cgQuad, cgUQuad}
    end; {case}
 end; {GenSroCpo}
@@ -3950,42 +4043,52 @@ case optype of
 
    cgQuad,cgUQuad: begin
       gQuad.preference := onStack;
+      if opcode = pc_sto then
+         if op^.left^.opcode = pc_lod then begin
+            disp := LabelToDisp(op^.left^.r) + op^.left^.q;
+            if disp <= 255 then begin
+               gQuad.preference := inPointer;
+               gQuad.disp := disp;
+               end; {if}
+            end; {if}
       GenTree(op^.right);
-      gLong.preference := A_X;
-      GenTree(op^.left);
-      if gLong.where = onStack then begin
-         GenImplied(m_pla);
-         GenImplied(m_plx);
+      if gQuad.where = onStack then begin
+         gLong.preference := A_X;
+         GenTree(op^.left);
+         if gLong.where = onStack then begin
+            GenImplied(m_pla);
+            GenImplied(m_plx);
+            end; {if}
+         GenNative(m_sta_dir, direct, dworkLoc, nil, 0);
+         GenNative(m_stx_dir, direct, dworkLoc+2, nil, 0);
+         if opcode = pc_sto then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cpi then}
+            GenNative(m_lda_s, direct, 1, nil, 0);
+         GenNative(m_sta_indl, direct, dworkLoc, nil, 0);
+         GenNative(m_ldy_imm, immediate, 2, nil, 0);
+         if opcode = pc_sto then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cpi then}
+            GenNative(m_lda_s, direct, 3, nil, 0);
+         GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
+         GenImplied(m_iny);
+         GenImplied(m_iny);
+         if opcode = pc_sto then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cpi then}
+            GenNative(m_lda_s, direct, 5, nil, 0);
+         GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
+         GenImplied(m_iny);
+         GenImplied(m_iny);
+         if opcode = pc_sto then
+            GenImplied(m_pla)
+         else {if op^.opcode = pc_cpi then}
+            GenNative(m_lda_s, direct, 7, nil, 0);
+         GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
+         if op^.opcode = pc_cpi then
+            gQuad.where := onStack;
          end; {if}
-      GenNative(m_sta_dir, direct, dworkLoc, nil, 0);
-      GenNative(m_stx_dir, direct, dworkLoc+2, nil, 0);
-      if opcode = pc_sto then
-         GenImplied(m_pla)
-      else {if op^.opcode = pc_cpi then}
-         GenNative(m_lda_s, direct, 1, nil, 0);
-      GenNative(m_sta_indl, direct, dworkLoc, nil, 0);
-      GenNative(m_ldy_imm, immediate, 2, nil, 0);
-      if opcode = pc_sto then
-         GenImplied(m_pla)
-      else {if op^.opcode = pc_cpi then}
-         GenNative(m_lda_s, direct, 3, nil, 0);
-      GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
-      GenImplied(m_iny);
-      GenImplied(m_iny);
-      if opcode = pc_sto then
-         GenImplied(m_pla)
-      else {if op^.opcode = pc_cpi then}
-         GenNative(m_lda_s, direct, 5, nil, 0);
-      GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
-      GenImplied(m_iny);
-      GenImplied(m_iny);
-      if opcode = pc_sto then
-         GenImplied(m_pla)
-      else {if op^.opcode = pc_cpi then}
-         GenNative(m_lda_s, direct, 7, nil, 0);
-      GenNative(m_sta_indly, direct, dworkLoc, nil, 0);
-      if op^.opcode = pc_cpi then
-         gQuad.where := onStack;
       end; {case cgQuad,cgUQuad}
 
    cgLong,cgULong: begin
@@ -4486,55 +4589,60 @@ case optype of
       end;
 
    cgQuad, cgUQuad: begin
-      gQuad.preference := onStack;
+      if op^.opcode = pc_str then begin
+         gQuad.preference := localAddress;
+         gQuad.disp := disp;
+         end {if}
+      else {if op^.opcode = pc_cop then}
+         gQuad.preference := onStack;
       GenTree(op^.left);
-      if disp < 250 then begin
-         if op^.opcode = pc_str then
-            GenImplied(m_pla)
-         else {if op^.opcode = pc_cop then}
-            GenNative(m_lda_s, direct, 1, nil, 0);
-         GenNative(m_sta_dir, direct, disp, nil, 0);
-         if op^.opcode = pc_str then
-            GenImplied(m_pla)
-         else {if op^.opcode = pc_cop then}
-            GenNative(m_lda_s, direct, 3, nil, 0);
-         GenNative(m_sta_dir, direct, disp+2, nil, 0);
-         if op^.opcode = pc_str then
-            GenImplied(m_pla)
-         else {if op^.opcode = pc_cop then}
-            GenNative(m_lda_s, direct, 5, nil, 0);
-         GenNative(m_sta_dir, direct, disp+4, nil, 0);
-         if op^.opcode = pc_str then
-            GenImplied(m_pla)
-         else {if op^.opcode = pc_cop then}
-            GenNative(m_lda_s, direct, 7, nil, 0);
-         GenNative(m_sta_dir, direct, disp+6, nil, 0);
-         end {else if}
-      else begin
-         GenNative(m_ldx_imm, immediate, disp, nil, 0);
-         if op^.opcode = pc_str then
-            GenImplied(m_pla)
-         else {if op^.opcode = pc_cop then}
-            GenNative(m_lda_s, direct, 1, nil, 0);
-         GenNative(m_sta_dirX, direct, 0, nil, 0);
-         if op^.opcode = pc_str then
-            GenImplied(m_pla)
-         else {if op^.opcode = pc_cop then}
-            GenNative(m_lda_s, direct, 3, nil, 0);
-         GenNative(m_sta_dirX, direct, 2, nil, 0);
-         if op^.opcode = pc_str then
-            GenImplied(m_pla)
-         else {if op^.opcode = pc_cop then}
-            GenNative(m_lda_s, direct, 5, nil, 0);
-         GenNative(m_sta_dirX, direct, 4, nil, 0);
-         if op^.opcode = pc_str then
-            GenImplied(m_pla)
-         else {if op^.opcode = pc_cop then}
-            GenNative(m_lda_s, direct, 7, nil, 0);
-         GenNative(m_sta_dirX, direct, 6, nil, 0);
-         end; {else}
-      if op^.opcode = pc_cop then
-         gQuad.where := onStack;
+      if gQuad.where = onStack then begin
+         if disp < 250 then begin
+            if op^.opcode = pc_str then
+               GenImplied(m_pla)
+            else {if op^.opcode = pc_cop then}
+               GenNative(m_lda_s, direct, 1, nil, 0);
+            GenNative(m_sta_dir, direct, disp, nil, 0);
+            if op^.opcode = pc_str then
+               GenImplied(m_pla)
+            else {if op^.opcode = pc_cop then}
+               GenNative(m_lda_s, direct, 3, nil, 0);
+            GenNative(m_sta_dir, direct, disp+2, nil, 0);
+            if op^.opcode = pc_str then
+               GenImplied(m_pla)
+            else {if op^.opcode = pc_cop then}
+               GenNative(m_lda_s, direct, 5, nil, 0);
+            GenNative(m_sta_dir, direct, disp+4, nil, 0);
+            if op^.opcode = pc_str then
+               GenImplied(m_pla)
+            else {if op^.opcode = pc_cop then}
+               GenNative(m_lda_s, direct, 7, nil, 0);
+            GenNative(m_sta_dir, direct, disp+6, nil, 0);
+            end {else if}
+         else begin
+            GenNative(m_ldx_imm, immediate, disp, nil, 0);
+            if op^.opcode = pc_str then
+               GenImplied(m_pla)
+            else {if op^.opcode = pc_cop then}
+               GenNative(m_lda_s, direct, 1, nil, 0);
+            GenNative(m_sta_dirX, direct, 0, nil, 0);
+            if op^.opcode = pc_str then
+               GenImplied(m_pla)
+            else {if op^.opcode = pc_cop then}
+               GenNative(m_lda_s, direct, 3, nil, 0);
+            GenNative(m_sta_dirX, direct, 2, nil, 0);
+            if op^.opcode = pc_str then
+               GenImplied(m_pla)
+            else {if op^.opcode = pc_cop then}
+               GenNative(m_lda_s, direct, 5, nil, 0);
+            GenNative(m_sta_dirX, direct, 4, nil, 0);
+            if op^.opcode = pc_str then
+               GenImplied(m_pla)
+            else {if op^.opcode = pc_cop then}
+               GenNative(m_lda_s, direct, 7, nil, 0);
+            GenNative(m_sta_dirX, direct, 6, nil, 0);
+            end; {else}
+         end; {if}
       end;
 
    otherwise: Error(cge1);
@@ -5440,11 +5548,23 @@ procedure GenTree {op: icptr};
             end;
 
       cgQuad,cgUQuad: begin
-         GenNative(m_pea, immediate, long(op^.qval.hi).msw, nil, 0);
-         GenNative(m_pea, immediate, long(op^.qval.hi).lsw, nil, 0);
-         GenNative(m_pea, immediate, long(op^.qval.lo).msw, nil, 0);
-         GenNative(m_pea, immediate, long(op^.qval.lo).lsw, nil, 0);
-         gQuad.where := onStack;
+         if gQuad.preference = onStack then begin
+            GenNative(m_pea, immediate, long(op^.qval.hi).msw, nil, 0);
+            GenNative(m_pea, immediate, long(op^.qval.hi).lsw, nil, 0);
+            GenNative(m_pea, immediate, long(op^.qval.lo).msw, nil, 0);
+            GenNative(m_pea, immediate, long(op^.qval.lo).lsw, nil, 0);
+            end {if}
+         else begin
+            GenNative(m_lda_imm, immediate, long(op^.qval.hi).msw, nil, 0);
+            StoreWordOfQuad(6);
+            GenNative(m_lda_imm, immediate, long(op^.qval.hi).lsw, nil, 0);
+            StoreWordOfQuad(4);
+            GenNative(m_lda_imm, immediate, long(op^.qval.lo).msw, nil, 0);
+            StoreWordOfQuad(2);
+            GenNative(m_lda_imm, immediate, long(op^.qval.lo).lsw, nil, 0);
+            StoreWordOfQuad(0);
+            end; {else}
+         gQuad.where := gQuad.preference;
          end;
 
       otherwise:
@@ -5525,25 +5645,25 @@ procedure GenTree {op: icptr};
       cgQuad, cgUQuad: begin
          if smallMemoryModel then begin
             GenNative(m_lda_abs, absolute, op^.q+6, op^.lab, 0);
-            GenImplied(m_pha);
+            StoreWordOfQuad(6);
             GenNative(m_lda_abs, absolute, op^.q+4, op^.lab, 0);
-            GenImplied(m_pha);
+            StoreWordOfQuad(4);
             GenNative(m_lda_abs, absolute, op^.q+2, op^.lab, 0);
-            GenImplied(m_pha);
+            StoreWordOfQuad(2);
             GenNative(m_lda_abs, absolute, op^.q, op^.lab, 0);
-            GenImplied(m_pha);
+            StoreWordOfQuad(0);
             end {if}
          else begin
             GenNative(m_lda_long, longabsolute, op^.q+6, op^.lab, 0);
-            GenImplied(m_pha);
+            StoreWordOfQuad(6);
             GenNative(m_lda_long, longabsolute, op^.q+4, op^.lab, 0);
-            GenImplied(m_pha);
+            StoreWordOfQuad(4);
             GenNative(m_lda_long, longabsolute, op^.q+2, op^.lab, 0);
-            GenImplied(m_pha);
+            StoreWordOfQuad(2);
             GenNative(m_lda_long, longabsolute, op^.q, op^.lab, 0);
-            GenImplied(m_pha);
+            StoreWordOfQuad(0);
             end; {else}
-         gQuad.where := onStack;
+         gQuad.where := gQuad.preference;
          end; {case cgQuad,cgUQuad}
 
       otherwise:
@@ -5610,14 +5730,27 @@ procedure GenTree {op: icptr};
             GenImplied(m_pha);
             GenNative(m_lda_dirx, direct, 0, nil, 0);
             GenImplied(m_pha);
+            gQuad.where := onStack;
             end {if}
          else begin
-            GenNative(m_pei_dir, direct, disp+6, nil, 0);
-            GenNative(m_pei_dir, direct, disp+4, nil, 0);
-            GenNative(m_pei_dir, direct, disp+2, nil, 0);
-            GenNative(m_pei_dir, direct, disp, nil, 0);
+            if gQuad.preference = onStack then begin
+               GenNative(m_pei_dir, direct, disp+6, nil, 0);
+               GenNative(m_pei_dir, direct, disp+4, nil, 0);
+               GenNative(m_pei_dir, direct, disp+2, nil, 0);
+               GenNative(m_pei_dir, direct, disp, nil, 0);
+               end {if}
+            else begin
+               GenNative(m_lda_dir, direct, disp+6, nil, 0);
+               StoreWordOfQuad(6);
+               GenNative(m_lda_dir, direct, disp+4, nil, 0);
+               StoreWordOfQuad(4);
+               GenNative(m_lda_dir, direct, disp+2, nil, 0);
+               StoreWordOfQuad(2);
+               GenNative(m_lda_dir, direct, disp, nil, 0);
+               StoreWordOfQuad(0);
+               end; {else}
+            gQuad.where := gQuad.preference;
             end; {else}
-         gQuad.where := onStack;
          end;
 
       cgLong, cgULong: begin
