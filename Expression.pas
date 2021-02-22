@@ -983,7 +983,7 @@ var
       end; {Pop}
 
 
-      function RealVal (token: tokenType): double;
+      function RealVal (token: tokenType): extended;
 
       { convert an operand to a real value                      }
 
@@ -1004,6 +1004,10 @@ var
          else
             RealVal := token.lval;
          end {else if}
+      else if token.kind = longlongconst then
+         RealVal := CnvLLX(token.qval)
+      else if token.kind = ulonglongconst then
+         RealVal := CnvULLX(token.qval)
       else
          RealVal := token.rval;
       end; {RealVal}
@@ -1434,14 +1438,24 @@ var
                end; {if}
             end; {if}
 
-         if op^.right^.token.kind in
-            [intconst,uintconst,longconst,ulongconst,doubleconst] then
-            if op^.left^.token.kind in
-               [intconst,uintconst,longconst,ulongconst,doubleconst] then
+         if op^.right^.token.kind in [intconst,uintconst,longconst,ulongconst,
+            longlongconst,ulonglongconst,doubleconst] then
+            if op^.left^.token.kind in [intconst,uintconst,longconst,ulongconst,
+               longlongconst,ulonglongconst,doubleconst] then
                begin
                ekind := doubleconst; {evaluate a constant operation}
-               rop1 := RealVal(op^.left^.token);
-               rop2 := RealVal(op^.right^.token);
+               extop1 := RealVal(op^.left^.token);
+               rop1 := extop1;
+               if op^.left^.token.kind in [longlongconst,ulonglongconst] then
+                  if rop1 <> extop1 then
+                     if not (op^.token.kind in [barbarop,andandop]) then
+                        goto 1;
+               extop1 := RealVal(op^.right^.token);
+               rop2 := extop1;
+               if op^.right^.token.kind in [longlongconst,ulonglongconst] then
+                  if rop2 <> extop1 then
+                     if not (op^.token.kind in [barbarop,andandop]) then
+                        goto 1;
                dispose(op^.right);
                op^.right := nil;
                dispose(op^.left);
@@ -1496,16 +1510,7 @@ var
                   op^.token.class := doubleConstant;
                   op^.token.kind := doubleConst;
                   end; {else}
-               goto 1;
                end; {if}
-
-         if op^.right^.token.kind in [intconst,uintconst,longconst,
-            ulongconst,longlongconst,ulonglongconst,doubleconst] then
-            if op^.left^.token.kind in [intconst,uintconst,longconst,
-               ulongconst,longlongconst,ulonglongconst,doubleconst] then
-               if not (kind in [normalExpression,autoInitializerExpression])
-                  then
-                  Error(157);
 1:
          end;
 
