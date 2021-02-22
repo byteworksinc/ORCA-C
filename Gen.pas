@@ -5036,6 +5036,7 @@ procedure GenTree {op: icptr};
    var
       lab1: integer;			{return point}
       lLong: longType;			{used to reserve gLong}
+      lQuad: quadType;			{saved copy of gQuad}
       lArgsSize: integer;		{saved copy of argsSize}
       extraStackSize: integer;		{size of extra stuff pushed on stack}
 
@@ -5045,12 +5046,13 @@ procedure GenTree {op: icptr};
    extraStackSize := 0;
    
    {For functions returning cg(U)Quad, make space for result}
-   if op^.optype in [cgQuad,cgUQuad] then begin
-      GenImplied(m_tsc);
-      GenImplied(m_sec);
-      GenNative(m_sbc_imm, immediate, 8, nil, 0);
-      GenImplied(m_tcs);
-      end; {if}
+   if op^.optype in [cgQuad,cgUQuad] then
+      if gQuad.preference <> localAddress then begin
+         GenImplied(m_tsc);
+         GenImplied(m_sec);
+         GenNative(m_sbc_imm, immediate, 8, nil, 0);
+         GenImplied(m_tcs);
+         end; {if}
 
    {save the stack register}
    if saveStack or checkStack or (op^.q <> 0) then begin
@@ -5066,6 +5068,7 @@ procedure GenTree {op: icptr};
 
    {generate parameters}
    {place the operands on the stack}
+   lQuad := gQuad;
    lLong := gLong;
    GenTree(op^.left);
 
@@ -5073,14 +5076,22 @@ procedure GenTree {op: icptr};
    gLong.preference := onStack;
    GenTree(op^.right);
    gLong := lLong;
+   gQuad := lQuad;
    
    {For functions returning cg(U)Quad, x = address to store result in}
-   if op^.optype in [cgQuad,cgUQuad] then begin
-      GenImplied(m_tsc);
-      GenImplied(m_clc);
-      GenNative(m_adc_imm, immediate, argsSize+extraStackSize+4+1, nil, 0);
-      GenImplied(m_tax);
-      end; {if}
+   if op^.optype in [cgQuad,cgUQuad] then 
+      if gQuad.preference = localAddress then begin
+         GenImplied(m_tdc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, gQuad.disp, nil, 0);
+         GenImplied(m_tax);
+         end {if}
+      else begin
+         GenImplied(m_tsc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, argsSize+extraStackSize+4+1, nil, 0);
+         GenImplied(m_tax);
+         end; {else}
 
    {create a return label}
    lab1 := GenLabel;
@@ -5130,7 +5141,10 @@ procedure GenTree {op: icptr};
 
    {save the returned value}
    gLong.where := A_X;
-   gQuad.where := onStack;
+   if gQuad.preference = localAddress then
+      gQuad.where := localAddress
+   else
+      gQuad.where := onStack;
    SaveRetValue(op^.optype);
    argsSize := lArgsSize;
    end; {GenCui}
@@ -5142,6 +5156,7 @@ procedure GenTree {op: icptr};
 
    var
       lLong: longType;                  {used to reserve gLong}
+      lQuad: quadType;                  {saved copy of gQuad}
       lArgsSize: integer;               {saved copy of argsSize}
       extraStackSize: integer;          {size of extra stuff pushed on stack}
 
@@ -5151,12 +5166,13 @@ procedure GenTree {op: icptr};
    extraStackSize := 0;
    
    {For functions returning cg(U)Quad, make space for result}
-   if op^.optype in [cgQuad,cgUQuad] then begin
-      GenImplied(m_tsc);
-      GenImplied(m_sec);
-      GenNative(m_sbc_imm, immediate, 8, nil, 0);
-      GenImplied(m_tcs);
-      end; {if}
+   if op^.optype in [cgQuad,cgUQuad] then
+      if gQuad.preference <> localAddress then begin
+         GenImplied(m_tsc);
+         GenImplied(m_sec);
+         GenNative(m_sbc_imm, immediate, 8, nil, 0);
+         GenImplied(m_tcs);
+         end; {if}
 
    {save the stack register}
    if saveStack or checkStack or (op^.q <> 0) then begin
@@ -5171,13 +5187,21 @@ procedure GenTree {op: icptr};
       end; {if}
 
    {generate parameters}
+   lQuad := gQuad;
    lLong := gLong;
    GenTree(op^.left);
    gLong := lLong;
+   gQuad := lQuad;
 
    {For functions returning cg(U)Quad, x = address to store result in}
    if op^.optype in [cgQuad,cgUQuad] then
-      if argsSize + extraStackSize in [0,1,2] then begin
+      if gQuad.preference = localAddress then begin
+         GenImplied(m_tdc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, gQuad.disp, nil, 0);
+         GenImplied(m_tax);
+         end {if}
+      else if argsSize + extraStackSize in [0,1,2] then begin
          GenImplied(m_tsx);
          GenImplied(m_inx);
          if argsSize + extraStackSize in [1,2] then begin
@@ -5225,7 +5249,10 @@ procedure GenTree {op: icptr};
 
    {save the returned value}
    gLong.where := A_X;
-   gQuad.where := onStack;
+   if gQuad.preference = localAddress then
+      gQuad.where := localAddress
+   else
+      gQuad.where := onStack;
    SaveRetValue(op^.optype);
    argsSize := lArgsSize;
    end; {GenCup}
