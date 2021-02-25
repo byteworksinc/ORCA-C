@@ -238,6 +238,126 @@ else {if icode^.opcode in [pc_ldo, pc_sro] then}
 end; {DoOp}
 
 
+procedure OpOnWordOfQuad (mop: integer; op: icptr; offset: integer);
+
+{ Do an operation that has addr modes equivalent to LDA on the  }
+{ subword at specified offset of the location specified by op.  }
+{                                                               }
+{ The generated code may modify X, and may set Y to offset.     }
+{                                                               }
+{ parameters:                                                   }
+{    mop - machine opcode                                       }
+{    op - node to generate the leaf for                         }
+{    offset - offset of the word to access (0, 2, 4, or 6)      }
+
+var
+   loc: integer;                        {stack frame position}
+   val: integer;                        {immediate value}
+
+begin {OpOnWordOfQuad}
+case op^.opcode of
+
+   pc_ldo: begin
+      case mop of
+         m_lda_imm: mop := m_lda_abs;
+         m_cmp_imm: mop := m_cmp_abs;
+         m_adc_imm: mop := m_adc_abs;
+         m_and_imm: mop := m_and_abs;
+         m_ora_imm: mop := m_ora_abs;
+         m_sbc_imm: mop := m_sbc_abs;
+         m_eor_imm: mop := m_eor_abs;
+         otherwise: Error(cge1);
+         end; {case}
+      if smallMemoryModel then
+         GenNative(mop, absolute, op^.q+offset, op^.lab, 0)
+      else
+         GenNative(mop+2, longAbs, op^.q+offset, op^.lab, 0);
+      end; {case pc_ldo}
+
+   pc_lod: begin
+      case mop of
+         m_lda_imm: mop := m_lda_dir;
+         m_cmp_imm: mop := m_cmp_dir;
+         m_adc_imm: mop := m_adc_dir;
+         m_and_imm: mop := m_and_dir;
+         m_ora_imm: mop := m_ora_dir;
+         m_sbc_imm: mop := m_sbc_dir;
+         m_eor_imm: mop := m_eor_dir;
+         otherwise: Error(cge1);
+         end; {case}
+      loc := LabelToDisp(op^.r) + op^.q + offset;
+      if loc < 256 then
+         GenNative(mop, direct, loc, nil, 0)
+      else begin
+         GenNative(m_ldx_imm, immediate, loc, nil, 0);
+         GenNative(mop+$10, direct, 0, nil, 0);
+         end; {else}
+      end; {case pc_lod}
+
+   pc_ldc: begin
+      case offset of
+         0: val := long(op^.qval.lo).lsw;
+         2: val := long(op^.qval.lo).msw;
+         4: val := long(op^.qval.hi).lsw;
+         6: val := long(op^.qval.hi).msw;
+         otherwise: Error(cge1);
+         end; {case}
+      GenNative(mop, immediate, val, nil, 0);
+      end; {case pc_ldc}
+
+   pc_ind: begin
+      case mop of
+         m_lda_imm: mop := m_lda_indl;
+         m_cmp_imm: mop := m_cmp_indl;
+         m_adc_imm: mop := m_adc_indl;
+         m_and_imm: mop := m_and_indl;
+         m_ora_imm: mop := m_ora_indl;
+         m_sbc_imm: mop := m_sbc_indl;
+         m_eor_imm: mop := m_eor_indl;
+         otherwise: Error(cge1);
+         end; {case}
+      if op^.left^.opcode = pc_lod then
+         loc := LabelToDisp(op^.left^.r) + op^.left^.q;
+      if (op^.left^.opcode <> pc_lod) or (loc > 255) then
+         Error(cge1);
+      if offset = 0 then
+         GenNative(mop, direct, loc, nil, 0)
+      else begin
+         GenNative(m_ldy_imm, immediate, offset, nil, 0);
+         GenNative(mop+$10, direct, loc, nil, 0);
+         end; {else}
+      end; {case pc_ind}
+
+   otherwise:
+      Error(cge1);
+   end; {case}
+end; {OpOnWordOfQuad}
+
+
+function SimpleQuadLoad(op: icptr): boolean;
+
+{ Is op a simple load operation on a cg(U)Quad, which can be    }
+{ broken up into word operations handled by OpOnWordOfQuad?     }
+{                                                               }
+{ parameters:                                                   }
+{    op - node to check                                         }
+
+begin {SimpleQuadLoad}
+case op^.opcode of
+   pc_ldo,pc_lod,pc_ldc:
+      SimpleQuadLoad := true;
+
+   pc_ind:
+      SimpleQuadLoad :=
+         (op^.left^.opcode = pc_lod)
+         and (LabelToDisp(op^.left^.r) + op^.left^.q < 256);
+
+   otherwise:
+      SimpleQuadLoad := false;
+   end; {case}
+end; {SimpleQuadLoad}
+
+
 procedure StoreWordOfQuad(offset: integer);
 
 { Store one word of a quad value to the location specified by   }
@@ -4896,91 +5016,126 @@ procedure GenTree {op: icptr};
    { generate one of: pc_bqr, pc_bqx, pc_baq, pc_mpq, pc_umq,   }
    {    pc_dvq, pc_udq, pc_mdq, pc_uqm                          }
 
-      procedure GenOp (ops: integer);
+      procedure GenBitwiseOp;
 
       { generate a 64-bit binary bitwise operation              }
       {                                                         }
       { parameters:                                             }
       {    ops - stack version of operation                     }
 
-      begin {GenOp}
-      GenImplied(m_pla);
-      GenNative(ops, direct, 7, nil, 0);
-      GenNative(m_sta_s, direct, 7, nil, 0);
-      GenImplied(m_pla);
-      GenNative(ops, direct, 7, nil, 0);
-      GenNative(m_sta_s, direct, 7, nil, 0);
-      GenImplied(m_pla);
-      GenNative(ops, direct, 7, nil, 0);
-      GenNative(m_sta_s, direct, 7, nil, 0);
-      GenImplied(m_pla);
-      GenNative(ops, direct, 7, nil, 0);
-      GenNative(m_sta_s, direct, 7, nil, 0);
-      end; {GenOp}
+      var
+         mop: integer;                  {machine opcode}
+
+      begin {GenBitwiseOp}
+      if SimpleQuadLoad(op^.left) and SimpleQuadLoad(op^.right) then begin
+         case op^.opcode of
+            pc_bqr: mop := m_ora_imm;
+            pc_bqx: mop := m_eor_imm;
+            pc_baq: mop := m_and_imm;
+            end; {case}
+         OpOnWordOfQuad(m_lda_imm, op^.left, 6);
+         OpOnWordOfQuad(mop, op^.right, 6);
+         StoreWordOfQuad(6);
+         OpOnWordOfQuad(m_lda_imm, op^.left, 4);
+         OpOnWordOfQuad(mop, op^.right, 4);
+         StoreWordOfQuad(4);
+         OpOnWordOfQuad(m_lda_imm, op^.left, 2);
+         OpOnWordOfQuad(mop, op^.right, 2);
+         StoreWordOfQuad(2);
+         OpOnWordOfQuad(m_lda_imm, op^.left, 0);
+         OpOnWordOfQuad(mop, op^.right, 0);
+         StoreWordOfQuad(0);
+         gQuad.where := gQuad.preference;
+         end {if}
+      else begin
+         case op^.opcode of
+            pc_bqr: mop := m_ora_s;
+            pc_bqx: mop := m_eor_s;
+            pc_baq: mop := m_and_s;
+            end; {case}
+         gQuad.preference := onStack;
+         GenTree(op^.left);
+         gQuad.preference := onStack;
+         GenTree(op^.right);
+         GenImplied(m_pla);
+         GenNative(mop, direct, 7, nil, 0);
+         GenNative(m_sta_s, direct, 7, nil, 0);
+         GenImplied(m_pla);
+         GenNative(mop, direct, 7, nil, 0);
+         GenNative(m_sta_s, direct, 7, nil, 0);
+         GenImplied(m_pla);
+         GenNative(mop, direct, 7, nil, 0);
+         GenNative(m_sta_s, direct, 7, nil, 0);
+         GenImplied(m_pla);
+         GenNative(mop, direct, 7, nil, 0);
+         GenNative(m_sta_s, direct, 7, nil, 0);
+         gQuad.where := onStack;
+         end; {else}
+      end; {GenBitwiseOp}
 
    begin {GenBinQuad}
-   gQuad.preference := onStack;
-   GenTree(op^.left);
-   gQuad.preference := onStack;
-   GenTree(op^.right);
-   case op^.opcode of
-      pc_bqr: GenOp(m_ora_s);
-      pc_bqx: GenOp(m_eor_s);
-      pc_baq: GenOp(m_and_s);
+   if op^.opcode in [pc_bqr,pc_bqx,pc_baq] then
+      GenBitwiseOp
+   else begin
+      gQuad.preference := onStack;
+      GenTree(op^.left);
+      gQuad.preference := onStack;
+      GenTree(op^.right);
+      case op^.opcode of
+         pc_mpq: GenCall(79);
       
-      pc_mpq: GenCall(79);
+         pc_umq: GenCall(80);
       
-      pc_umq: GenCall(80);
+         pc_dvq: begin
+                 GenCall(81);           {do division}
+                 GenImplied(m_pla);     {get quotient, discarding remainder}
+                 GenNative(m_sta_s, direct, 7, nil, 0);
+                 GenImplied(m_pla);
+                 GenNative(m_sta_s, direct, 7, nil, 0);
+                 GenImplied(m_pla);
+                 GenNative(m_sta_s, direct, 7, nil, 0);
+                 GenImplied(m_pla);
+                 GenNative(m_sta_s, direct, 7, nil, 0);
+                 end;
       
-      pc_dvq: begin
-              GenCall(81);              {do division}
-              GenImplied(m_pla);        {get quotient, discarding remainder}
-              GenNative(m_sta_s, direct, 7, nil, 0);
-              GenImplied(m_pla);
-              GenNative(m_sta_s, direct, 7, nil, 0);
-              GenImplied(m_pla);
-              GenNative(m_sta_s, direct, 7, nil, 0);
-              GenImplied(m_pla);
-              GenNative(m_sta_s, direct, 7, nil, 0);
-              end;
-      
-      pc_udq: begin
-              GenCall(82);              {do division}
-              GenImplied(m_pla);        {get quotient, discarding remainder}
-              GenNative(m_sta_s, direct, 7, nil, 0);
-              GenImplied(m_pla);
-              GenNative(m_sta_s, direct, 7, nil, 0);
-              GenImplied(m_pla);
-              GenNative(m_sta_s, direct, 7, nil, 0);
-              GenImplied(m_pla);
-              GenNative(m_sta_s, direct, 7, nil, 0);
-              end;
+         pc_udq: begin
+                 GenCall(82);           {do division}
+                 GenImplied(m_pla);     {get quotient, discarding remainder}
+                 GenNative(m_sta_s, direct, 7, nil, 0);
+                 GenImplied(m_pla);
+                 GenNative(m_sta_s, direct, 7, nil, 0);
+                 GenImplied(m_pla);
+                 GenNative(m_sta_s, direct, 7, nil, 0);
+                 GenImplied(m_pla);
+                 GenNative(m_sta_s, direct, 7, nil, 0);
+                 end;
 
-      pc_mdq: begin
-              GenCall(81);              {do division}          
-              GenImplied(m_tsc);        {discard quotient, leaving remainder}
-              GenImplied(m_clc);
-              GenNative(m_adc_imm, immediate, 8, nil, 0);
-              GenImplied(m_tcs);
-              end;
+         pc_mdq: begin
+                 GenCall(81);           {do division}          
+                 GenImplied(m_tsc);     {discard quotient, leaving remainder}
+                 GenImplied(m_clc);
+                 GenNative(m_adc_imm, immediate, 8, nil, 0);
+                 GenImplied(m_tcs);
+                 end;
 
-      pc_uqm: begin
-              GenCall(82);              {do division}          
-              GenImplied(m_tsc);        {discard quotient, leaving remainder}
-              GenImplied(m_clc);
-              GenNative(m_adc_imm, immediate, 8, nil, 0);
-              GenImplied(m_tcs);
-              end;
+         pc_uqm: begin
+                 GenCall(82);           {do division}          
+                 GenImplied(m_tsc);     {discard quotient, leaving remainder}
+                 GenImplied(m_clc);
+                 GenNative(m_adc_imm, immediate, 8, nil, 0);
+                 GenImplied(m_tcs);
+                 end;
 
-      pc_slq: GenCall(85);
+         pc_slq: GenCall(85);
       
-      pc_sqr: GenCall(86);
+         pc_sqr: GenCall(86);
       
-      pc_wsr: GenCall(87);
+         pc_wsr: GenCall(87);
 
-      otherwise: Error(cge1);
-      end; {case}
-   gQuad.where := onStack;
+         otherwise: Error(cge1);
+         end; {case}
+      gQuad.where := onStack;
+      end; {else}
    end; {GenBinQuad}
 
 
