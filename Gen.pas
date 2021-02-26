@@ -2308,7 +2308,18 @@ else
          end; {case optype of cgReal..cgExtended}
 
       cgQuad,cgUQuad: begin
-         if SimpleQuadLoad(op^.left) and SimpleQuadLoad(op^.right)
+         if SimpleQuadLoad(op^.left) and (op^.right^.opcode = pc_ldc)
+            and (op^.right^.qval.hi = 0) and (op^.right^.qval.lo = 0) then begin
+            lab1 := GenLabel;
+            OpOnWordOfQuad(m_lda_imm, op^.left, 0);
+            if not volatile then
+               GenNative(m_bne, relative, lab1, nil, 0);
+            OpOnWordOfQuad(m_ora_imm, op^.left, 2);
+            OpOnWordOfQuad(m_ora_imm, op^.left, 4);
+            OpOnWordOfQuad(m_ora_imm, op^.left, 6);
+            GenLab(lab1);
+            end {if}
+         else if SimpleQuadLoad(op^.left) and SimpleQuadLoad(op^.right)
             and not volatile then begin
             lab1 := GenLabel;
             OpOnWordOfQuad(m_lda_imm, op^.left, 0);
@@ -5019,6 +5030,8 @@ case op^.opcode of			{do the operation}
 end; {GenUnaryQuad}
 
 
+{$segment 'gen2'}
+
 procedure GenTree {op: icptr};
 
 { generate code for op and its children				}
@@ -7115,8 +7128,6 @@ case op^.opcode of
 end; {GenTree}
 
 {---------------------------------------------------------------}
-
-{$segment 'gen2'}
 
 procedure Gen {blk: blockPtr};
 
