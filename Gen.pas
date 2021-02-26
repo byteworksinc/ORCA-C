@@ -4869,43 +4869,89 @@ procedure GenUnaryQuad (op: icptr);
 { generate a pc_bnq or pc_ngq					}
 
 begin {GenUnaryQuad}
-gQuad.preference := onStack;
-GenTree(op^.left);
 case op^.opcode of			{do the operation}
 
    pc_bnq: begin
-      GenNative(m_lda_s, direct, 1, nil, 0);
-      GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
-      GenNative(m_sta_s, direct, 1, nil, 0);
-      GenNative(m_lda_s, direct, 3, nil, 0);
-      GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
-      GenNative(m_sta_s, direct, 3, nil, 0);
-      GenNative(m_lda_s, direct, 5, nil, 0);
-      GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
-      GenNative(m_sta_s, direct, 5, nil, 0);
-      GenNative(m_lda_s, direct, 7, nil, 0);
-      GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
-      GenNative(m_sta_s, direct, 7, nil, 0);
+      if SimpleQuadLoad(op^.left) then begin
+         OpOnWordOfQuad(m_lda_imm, op^.left, 6);
+         GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+         StoreWordOfQuad(6);
+         OpOnWordOfQuad(m_lda_imm, op^.left, 4);
+         GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+         StoreWordOfQuad(4);
+         OpOnWordOfQuad(m_lda_imm, op^.left, 2);
+         GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+         StoreWordOfQuad(2);
+         OpOnWordOfQuad(m_lda_imm, op^.left, 0);
+         GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+         StoreWordOfQuad(0);
+         gQuad.where := gQuad.preference;
+         end {if}
+      else begin
+         gQuad.preference := onStack;
+         GenTree(op^.left);
+         GenNative(m_lda_s, direct, 1, nil, 0);
+         GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+         GenNative(m_sta_s, direct, 1, nil, 0);
+         GenNative(m_lda_s, direct, 3, nil, 0);
+         GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+         GenNative(m_sta_s, direct, 3, nil, 0);
+         GenNative(m_lda_s, direct, 5, nil, 0);
+         GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+         GenNative(m_sta_s, direct, 5, nil, 0);
+         GenNative(m_lda_s, direct, 7, nil, 0);
+         GenNative(m_eor_imm, immediate, $FFFF, nil, 0);
+         GenNative(m_sta_s, direct, 7, nil, 0);
+         gQuad.where := onStack;
+         end; {else}
       end; {case pc_bnq}
 
    pc_ngq: begin
-      GenImplied(m_sec);
-      GenNative(m_ldy_imm, immediate, 0, nil, 0);
-      GenImplied(m_tya);
-      GenNative(m_sbc_s, direct, 1, nil, 0);
-      GenNative(m_sta_s, direct, 1, nil, 0);
-      GenImplied(m_tya);
-      GenNative(m_sbc_s, direct, 3, nil, 0);
-      GenNative(m_sta_s, direct, 3, nil, 0);
-      GenImplied(m_tya);
-      GenNative(m_sbc_s, direct, 5, nil, 0);
-      GenNative(m_sta_s, direct, 5, nil, 0);
-      GenImplied(m_tya);
-      GenNative(m_sbc_s, direct, 7, nil, 0);
-      GenNative(m_sta_s, direct, 7, nil, 0);
+      if SimpleQuadLoad(op^.left) then begin
+         gQuad.where := gQuad.preference;
+         if gQuad.preference = onStack then begin
+            GenImplied(m_tsc);
+            GenImplied(m_sec);
+            GenNative(m_sbc_imm, immediate, 8, nil, 0);
+            GenImplied(m_tcs);
+            gQuad.preference := inStackLoc;
+            gQuad.disp := 1;
+            end; {if}
+         GenImplied(m_sec);
+         GenNative(m_lda_imm, immediate, 0, nil, 0);
+         OpOnWordOfQuad(m_sbc_imm, op^.left, 0);
+         StoreWordOfQuad(0);
+         GenNative(m_lda_imm, immediate, 0, nil, 0);
+         OpOnWordOfQuad(m_sbc_imm, op^.left, 2);
+         StoreWordOfQuad(2);
+         GenNative(m_lda_imm, immediate, 0, nil, 0);
+         OpOnWordOfQuad(m_sbc_imm, op^.left, 4);
+         StoreWordOfQuad(4);
+         GenNative(m_lda_imm, immediate, 0, nil, 0);
+         OpOnWordOfQuad(m_sbc_imm, op^.left, 6);
+         StoreWordOfQuad(6);
+         end {if}
+      else begin
+         gQuad.preference := onStack;
+         GenTree(op^.left);
+         GenImplied(m_sec);
+         GenNative(m_ldy_imm, immediate, 0, nil, 0);
+         GenImplied(m_tya);
+         GenNative(m_sbc_s, direct, 1, nil, 0);
+         GenNative(m_sta_s, direct, 1, nil, 0);
+         GenImplied(m_tya);
+         GenNative(m_sbc_s, direct, 3, nil, 0);
+         GenNative(m_sta_s, direct, 3, nil, 0);
+         GenImplied(m_tya);
+         GenNative(m_sbc_s, direct, 5, nil, 0);
+         GenNative(m_sta_s, direct, 5, nil, 0);
+         GenImplied(m_tya);
+         GenNative(m_sbc_s, direct, 7, nil, 0);
+         GenNative(m_sta_s, direct, 7, nil, 0);
+         gQuad.where := onStack;
+         end; {else}
       end; {case pc_ngq}
    end; {case}
-gQuad.where := onStack;
 end; {GenUnaryQuad}
 
 
@@ -7005,6 +7051,8 @@ case op^.opcode of
 end; {GenTree}
 
 {---------------------------------------------------------------}
+
+{$segment 'gen2'}
 
 procedure Gen {blk: blockPtr};
 
