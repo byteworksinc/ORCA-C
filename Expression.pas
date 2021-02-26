@@ -898,8 +898,9 @@ var
 
    {in the preprocessor, all identifiers (post macro replacement) become 0}
    if kind = preprocessorExpression then begin
-      stack^.token.kind := longconst;
-      stack^.token.lval := 0;
+      stack^.token.class := longlongConstant;
+      stack^.token.kind := longlongconst;
+      stack^.token.qval := longlong0;
       end {if}
 
    {if the id is not declared, create a function returning integer}
