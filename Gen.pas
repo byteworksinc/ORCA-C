@@ -2263,38 +2263,57 @@ else
          end; {case optype of cgReal..cgExtended}
 
       cgQuad,cgUQuad: begin
-         gQuad.preference := onStack;
-         GenTree(op^.left);
-         gQuad.preference := onStack;
-         GenTree(op^.right);
+         if SimpleQuadLoad(op^.left) and SimpleQuadLoad(op^.right)
+            and not volatile then begin
+            lab1 := GenLabel;
+            OpOnWordOfQuad(m_lda_imm, op^.left, 0);
+            OpOnWordOfQuad(m_eor_imm, op^.right, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            OpOnWordOfQuad(m_lda_imm, op^.left, 2);
+            OpOnWordOfQuad(m_eor_imm, op^.right, 2);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            OpOnWordOfQuad(m_lda_imm, op^.left, 4);
+            OpOnWordOfQuad(m_eor_imm, op^.right, 4);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            OpOnWordOfQuad(m_lda_imm, op^.left, 6);
+            OpOnWordOfQuad(m_eor_imm, op^.right, 6);
+            GenLab(lab1);
+            end {if}
+         else begin
+            gQuad.preference := onStack;
+            GenTree(op^.left);
+            gQuad.preference := onStack;
+            GenTree(op^.right);
 
-         lab1 := GenLabel;
-         lab2 := GenLabel;
-         GenImplied(m_pla);
-         GenImplied(m_plx);
-         GenImplied(m_ply);
-         GenNative(m_eor_s, direct, 3, nil, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
-         GenImplied(m_txa);
-         GenNative(m_eor_s, direct, 5, nil, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
-         GenImplied(m_tya);
-         GenNative(m_eor_s, direct, 7, nil, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
-         GenImplied(m_pla);
-         GenNative(m_eor_s, direct, 7, nil, 0);
-         GenNative(m_bra, relative, lab2, nil, 0);
-         GenLab(lab1);
-         GenImplied(m_plx);
-         GenLab(lab2);
-         GenImplied(m_tax);
+            lab1 := GenLabel;
+            lab2 := GenLabel;
+            GenImplied(m_pla);
+            GenImplied(m_plx);
+            GenImplied(m_ply);
+            GenNative(m_eor_s, direct, 3, nil, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenImplied(m_txa);
+            GenNative(m_eor_s, direct, 5, nil, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenImplied(m_tya);
+            GenNative(m_eor_s, direct, 7, nil, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenImplied(m_pla);
+            GenNative(m_eor_s, direct, 7, nil, 0);
+            GenNative(m_bra, relative, lab2, nil, 0);
+            GenLab(lab1);
+            GenImplied(m_plx);
+            GenLab(lab2);
+            GenImplied(m_tax);
 
-         GenImplied(m_tsc);
-         GenImplied(m_clc);
-         GenNative(m_adc_imm, immediate, 8, nil, 0);
-         GenImplied(m_tcs);
+            GenImplied(m_tsc);
+            GenImplied(m_clc);
+            GenNative(m_adc_imm, immediate, 8, nil, 0);
+            GenImplied(m_tcs);
+            
+            GenImplied(m_txa);
+            end; {else}
          
-         GenImplied(m_txa);
          if opcode in [pc_fjp,pc_tjp] then begin
             lab3 := GenLabel;
             if opcode = pc_fjp then
