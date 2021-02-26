@@ -359,6 +359,29 @@ case op^.opcode of
 end; {SimpleQuadLoad}
 
 
+function SimplestQuadLoad(op: icptr): boolean;
+
+{ Is op a simple load operation on a cg(U)Quad, which can be    }
+{ broken up into word operations handled by OpOnWordOfQuad      }
+{ and for which those operations will not modify X or Y.        }
+{                                                               }
+{ parameters:                                                   }
+{    op - node to check                                         }
+
+begin {SimplestQuadLoad}
+case op^.opcode of
+   pc_ldo,pc_ldc:
+      SimplestQuadLoad := true;
+   
+   pc_lod:
+      SimplestQuadLoad := LabelToDisp(op^.r) + op^.q < 250;
+
+   pc_ind,otherwise:
+      SimplestQuadLoad := false;
+   end; {case}
+end; {SimplestQuadLoad}
+
+
 procedure StoreWordOfQuad(offset: integer);
 
 { Store one word of a quad value to the location specified by   }
@@ -992,6 +1015,7 @@ var
    i: integer;				{loop variable}
    lab1,lab2,lab3,lab4: integer;	{label numbers}
    num: integer;			{constant to compare to}
+   simple: boolean;                     {is this a simple case?}
 
 
    procedure Switch;
@@ -1447,28 +1471,47 @@ else
          end; {case optype of cgQuad}
 
       cgUQuad: begin
-         gQuad.preference := onStack;
-         GenTree(op^.left);
-         gQuad.preference := onStack;
-         GenTree(op^.right);
+         simple := 
+            SimplestQuadLoad(op^.left) and SimplestQuadLoad(op^.right)
+            and not volatile;
+         if not simple then begin
+            gQuad.preference := onStack;
+            GenTree(op^.left);
+            gQuad.preference := onStack;
+            GenTree(op^.right);
+            end; {if}
          if op^.opcode = pc_geq then
             GenNative(m_ldx_imm, immediate, 1, nil, 0)
          else {if op^.opcode = pc_grt then}
             GenNative(m_ldx_imm, immediate, 0, nil, 0);
          lab1 := GenLabel;
          lab2 := GenLabel;
-         GenNative(m_lda_s, direct, 15, nil, 0);
-         GenNative(m_cmp_s, direct, 7, nil, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
-         GenNative(m_lda_s, direct, 13, nil, 0);
-         GenNative(m_cmp_s, direct, 5, nil, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
-         GenNative(m_lda_s, direct, 11, nil, 0);
-         GenNative(m_cmp_s, direct, 3, nil, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
-         GenNative(m_lda_s, direct, 9, nil, 0);
-         GenNative(m_cmp_s, direct, 1, nil, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
+         if simple then begin
+            OpOnWordOfQuad(m_lda_imm, op^.left, 6);
+            OpOnWordOfQuad(m_cmp_imm, op^.right, 6);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            OpOnWordOfQuad(m_lda_imm, op^.left, 4);
+            OpOnWordOfQuad(m_cmp_imm, op^.right, 4);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            OpOnWordOfQuad(m_lda_imm, op^.left, 2);
+            OpOnWordOfQuad(m_cmp_imm, op^.right, 2);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            OpOnWordOfQuad(m_lda_imm, op^.left, 0);
+            OpOnWordOfQuad(m_cmp_imm, op^.right, 0);
+            end {if}
+         else begin
+            GenNative(m_lda_s, direct, 15, nil, 0);
+            GenNative(m_cmp_s, direct, 7, nil, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenNative(m_lda_s, direct, 13, nil, 0);
+            GenNative(m_cmp_s, direct, 5, nil, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenNative(m_lda_s, direct, 11, nil, 0);
+            GenNative(m_cmp_s, direct, 3, nil, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenNative(m_lda_s, direct, 9, nil, 0);
+            GenNative(m_cmp_s, direct, 1, nil, 0);
+            end; {else}
          GenLab(lab1);
          if op^.opcode = pc_geq then begin
             GenNative(m_bcs, relative, lab2, nil, 0);
@@ -1480,10 +1523,12 @@ else
             GenImplied(m_inx);
             end; {else}
          GenLab(lab2);
-         GenImplied(m_tsc);
-         GenImplied(m_clc);
-         GenNative(m_adc_imm, immediate, 16, nil, 0);
-         GenImplied(m_tcs);
+         if not simple then begin
+            GenImplied(m_tsc);
+            GenImplied(m_clc);
+            GenNative(m_adc_imm, immediate, 16, nil, 0);
+            GenImplied(m_tcs);
+            end; {if}
          GenImplied(m_txa);
          if rOpcode = pc_fjp then begin
             lab3 := GenLabel;
