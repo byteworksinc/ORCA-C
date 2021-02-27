@@ -1,10 +1,10 @@
-ORCA/C 2.2.0 B4
+ORCA/C 2.2.0 B5
 Copyright 1997, Byte Works Inc.
-Updated by Stephen Heumann and Kelvin Sherlock, 2017-2020
+Updated by Stephen Heumann and Kelvin Sherlock, 2017-2021
 
 -- Change List --------------------------------------------------------------
 
-2.2.0 B4    1.	Bugs squashed.  See bug notes, below.
+2.2.0 B5    1.	Bugs squashed.  See bug notes, below.
 
             2.	New language features added (mainly features from C99 and C11).
               	See "New Language Features," below.
@@ -185,6 +185,10 @@ p. 263
 
 2. There is a new optimization bit for #pragma optimize.  See #pragma optimize, below.
 
+p. 269
+
+The 64-bit integer types long long and unsigned long long are now supported.  So is the type _Bool, a boolean type that can hold the values 0 or 1.  See "New Language Features," below.
+
 p. 275
 
 Several new declaration specifiers from C99 and C11 are now supported.  For details, see "New Language Features," below.
@@ -228,6 +232,10 @@ The ORCA/C compiler is intended as a faithful implementation of ANSI C with some
 
    The function strftime() is missing.
 
+p. 342
+
+Several new standard library functions from C99 and C11 are now provided.  See "Library Updates," below.
+
 p. 343
 
 The documentation states that assert() uses exit(-1) to exit a program.  Actually, it uses abort().
@@ -256,7 +264,7 @@ The fprintf() family of functions has been updated to support several new featur
 
 p. 367
 
-The fscanf() family of functions has been updated to support several new features specified by C99.  See "Library Updates," below.
+The fscanf() family of functions has been updated to support several new features specified by C99.  Also, the vscanf() family of functions have been added.  See "Library Updates," below.
 
 p. 375
 
@@ -312,7 +320,7 @@ ORCA/C 2.2.0 adds support for several new C language features.  Most are feature
    restrict
    inline (already treated as a keyword by ORCA/C)
 
-Of these, _Atomic, _Bool, _Complex, _Generic, _Imaginary, and _Thread_local are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
+Of these, _Atomic, _Complex, _Generic, _Imaginary, and _Thread_local are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
 
 2.  (C99) Statements and declarations may now be mixed within a block; declarations are no longer required to come before statements.  The first clause of a for loop statement may also be a declaration (with auto or register storage class only).  Variables may only be referred to by name in code syntactically after their declaration, but their lifetime continues as long as control remains in the enclosing block scope, even if it returns to a point before the declaration.  Initializers for variables with automatic storage duration are evaluated whenever execution reaches the point where they appear in the code.
 
@@ -376,6 +384,12 @@ __STDC_HOSTED__ normally expands to the integer constant 1, indicating that ORCA
 __STDC_NO_ATOMICS__, __STDC_NO_COMPLEX__, __STDC_NO_THREADS__, and __STDC_NO_VLA__ all expand to the integer constant 1.  These indicate that ORCA/C does not implement certain C language features that are optional under the C11 and later standards (atomics, complex numbers, threads, and variable length arrays).
 
 18. (C99) The _Bool type is now supported.  This is a boolean type that can hold the values 0 or 1.  When a value of another type is converted to _Bool, the result is 0 if the value compares equal to 0, or 1 otherwise.
+
+19. (C99) The types "long long" and "unsigned long long" are now supported.  In ORCA/C, these are 64-bit integer types, capable of representing a larger range of values than the existing smaller integer types.  All operations that can be done on other integer types can now be done on these types as well.
+
+Several new library functions in <stdlib.h> support operations on these types, and the fprintf() and fscanf() function families have been updated to support them.  Also, several new functions defined in <inttypes.h> operate on intmax_t and uintmax_t, which are now typedefs for long long and unsigned long long.  For details on these new and updated functions, see "Library Updates," below.
+
+The predefined macro __ORCAC_HAS_LONG_LONG__ is now defined, and expands to the integer constant 1.  This indicates that these long long types are supported.
 
 
 Multi-Character Character Constants
@@ -500,23 +514,34 @@ isblank returns non-zero if the argument is a standard blank character, and zero
 2.  (C99) The snprintf() and vsnprintf() functions have been added:
 
 #include <stdio.h>
-int snprintf(char * s, size_t n, const char * restrict, ...);
+int snprintf(char * restrict s, size_t n, const char * restrict format, ...);
 
 #include <stdarg.h>
 #include <stdio.h>
-int vsnprintf(char * s, size_t n, const char * format, va_list arg);
+int vsnprintf(char * restrict s, size_t n, const char * restrict format,
+   va_list arg);
 
 These are equivalent to sprintf and vsprintf, except that they take an additional argument giving the maximum number of characters to be written.  If n is 0, no characters are written.  Otherwise, at most n-1 characters are written based on the format string, followed by a terminating null character.  They return the number of characters (not including the terminating null character) that would have been written if there was no size limit.
 
-3.  (C99) The fprintf() and fscanf() families of functions have been updated to support some additional length modifiers and conversion specifiers:
+3.  (C99) The vscanf(), vfscanf(), anf vsscanf() functions have been added:
 
-The length modifiers 'z', 't', and 'j', and 'hh' are now allowed in the format strings for the fprintf and fscanf families of functions.  They may be used with the 'd', 'i', 'o', 'u', 'x', 'X', or 'n' conversion specifiers.  These each correspond to integer types, as follows: 'z' to size_t or the corresponding signed integer type, 't' to ptrdiff_t or the corresponding unsigned integer type, 'j' to intmax_t or uintmax_t, and 'hh' to signed char or unsigned char.    The corresponding argument must be an integer of an appropriate type, or a pointer to such an integer, as appropriate for the conversion specifier and function.  (In the case of 'hh', arguments of character types will have been promoted to int according to the integer promotions, but their values should be within the range of signed char or unsigned char.)
+#include <stdarg.h>
+#include <stdio.h>
+int vscanf(const char * restrict format, va_list arg);
+int vfscanf(FILE * restrict stream, const char * restrict format, va_list arg);
+int vsscanf(const char * restrict s, const char * restrict format, va_list arg);
 
-The conversion specifiers 'F', 'a', and 'A' are now allowed in the format strings for the fscanf family of functions.  These are all equivalent to 'f' (but none of them accept numbers in the hexadecimal format allowed by C99).
+These functions are equivalent to scanf, fscanf, and sscanf, except that the variable portion of the arguments is instead supplied by arg, a variable argument list that should have been initialized by va_start.
 
-The conversion specifier 'F' is now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.  The conversion specifiers 'a' and 'A' (both also used with floating-point numbers) are also recognized in the format strings for the fprintf family of functions, but they do not currently print the numbers in the hexadecimal format required by the C99 standard.
+4.  (C99) The fprintf() and fscanf() families of functions have been updated to support some additional length modifiers and conversion specifiers:
 
-4.  (C99 and C11) The _Exit(), quick_exit(), and at_quick_exit() functions have been added:
+The length modifiers 'z', 't', 'j', 'hh', and 'll' are now allowed in the format strings for the fprintf and fscanf families of functions.  They may be used with the 'd', 'i', 'o', 'u', 'x', 'X', or 'n' conversion specifiers.  These each correspond to integer types, as follows: 'z' to size_t or the corresponding signed integer type, 't' to ptrdiff_t or the corresponding unsigned integer type, 'j' to intmax_t or uintmax_t, 'hh' to signed char or unsigned char, and 'll' to long long or unsigned long long.  The corresponding argument must be an integer of an appropriate type, or a pointer to such an integer, as appropriate for the function and conversion specifier.
+
+The conversion specifiers 'F', 'a', and 'A' are now allowed in the format strings for the fscanf family of functions.  These are all equivalent to 'f' (but none of them accept numbers in the hexadecimal format allowed by C99).  The 'F' conversion specifier is also now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.  The conversion specifiers 'a' and 'A' (both also used with floating-point numbers) are also recognized in the format strings for the fprintf family of functions, but they do not currently print the numbers in the hexadecimal format required by the C99 standard.
+
+The ORCA/C-specific conversion specifier 'P' is now allowed in the format strings for the fprintf and fscanf families of functions.  This works exactly the same as the existing 'b' conversion specifier, printing or reading input to a string with a leading length byte (a p-string).  This new specifier was introduced because the 'b' specifier may be used for a different purpose in future C standards.  For the time being, the 'b' specifier is still available with its existing meaning, but it is considered deprecated.  Code should be migrated to use the 'P' conversion specifier instead.
+
+5.  (C99 and C11) The _Exit(), quick_exit(), and at_quick_exit() functions have been added:
 
 #include <stdlib.h>
 _Noreturn void _Exit(int status);
@@ -529,14 +554,38 @@ quick_exit() calls any functions registered with at_quick_exit(), then exits the
 
 at_quick_exit() registers a function to be called by quick_exit().  It works similarly to atexit(), except that it maintains a separate list of functions that are called only if the program exits via quick_exit().  It returns zero if the function is registered successfully, and a non-zero value if there is not enough memory to satisfy the request.
 
-5.  (C11) The aligned_alloc function has beed added:
+6.  (C11) The aligned_alloc function has beed added:
 
 #include <stdlib.h>
 void *aligned_alloc(size_t alignment, size_t size);
 
 This is equivalent to malloc, except that it specifies an alignment for the block of memory to be allocated.  In ORCA/C, the only supported alignment value is 1 (which is the alignment of all object types).
 
-6.  (C11) If the second argument to fopen() or freopen() starts with "w", it can optionally have an "x" at the end (e.g. "wbx").  This is equivalent to the corresponding form without an "x", except that the operation will only succeed if the file does not already exist (so that it can be newly created).  If the file already exists, the operation will fail: it will leave the file alone, set errno to EEXIST, and return NULL.
+7.  (C11) If the second argument to fopen() or freopen() starts with "w", it can optionally have an "x" at the end (e.g. "wbx").  This is equivalent to the corresponding form without an "x", except that the operation will only succeed if the file does not already exist (so that it can be newly created).  If the file already exists, the operation will fail: it will leave the file alone, set errno to EEXIST, and return NULL.
+
+8.  (C99) Several functions operating on long long types have been added:
+
+#include <stdlib.h>
+typedef struct {long long quot,rem;} lldiv_t;
+long long atoll(const char *str);
+long long llabs(long long x);
+lldiv_t lldiv(long long numer, long long denom);
+long long strtoll(const char * restrict str, char ** restrict ptr, int base);
+unsigned long long strtoull(const char * restrict str, char ** restrict ptr,
+   int base);
+
+The atoll(), strtoll(), and strtoull() functions convert a string to a long long or unsigned long long number.  llabs() computes the absolute value of a long long value.  lldiv() divides one long long value by another, returning a structure with both the quotient and the remainder.  Except for the types used and the range of numbers that can be represented, these functions behave the same as atol(), strtol(), strtoul(), labs(), and ldiv(), respectively.
+
+There are also several functions operating on the type intmax_t or uintmax_t:
+
+#include <inttypes.h>
+typedef struct {intmax_t quot,rem;} imaxdiv_t;
+intmax_t  imaxabs(intmax_t);
+imaxdiv_t imaxdiv(intmax_t, intmax_t);
+intmax_t  strtoimax(const char * restrict, char ** restrict, int);
+uintmax_t strtoumax(const char * restrict, char ** restrict, int);
+
+Under ORCA/C, intmax_t is long long and uintmax_t is unsigned long long, so these functions behave the same as the ones above.
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
@@ -583,7 +632,7 @@ C supports the use of extended characters in strings, comments, identifiers, and
 
 Any character you can type from PRIZM (or for that matter, any character with an ordinal value in [1..12, 14..255]) can appear in a string or comment.  The ordinal value of the character matches the values shown in FontTest, as well as several official Apple publications.  Keep in mind that many output devices, including Apple's text console driver, do not support all of these characters.  ORCA/C will properly send extended characters to whatever output device you choose, but what happens when the output device tries to handle the character varies from device to device.
 
-Many of the characters in the extended character set are used in languages oter than English, and are now allowed in identifiers.  There are two ways to think about which characters will work in an identifier.
+Many of the characters in the extended character set are used in languages other than English, and are now allowed in identifiers.  There are two ways to think about which characters will work in an identifier.
 
 The simple way is to remember that all characters that look like a graphically modified ASCII alphabetic character or a Greek alphabetic character are allowed in identifiers.  For example, an a with two dots above it is now legal in an identifier.
 
@@ -733,7 +782,7 @@ If you use #pragma debug 0x0010 to enable stack check debug code, the compiler w
 
 33.  Within preprocessor expressions, keywords and typedef names were sometimes processed based on their usual semantics rather than being treated as identifiers.  They are now consistently treated as identifiers.
 
-34.  Preprocessor expressions were being evaluated using the normal type conversion rules (with many expressions evaluated as type int).  All preprocessor expressions are now evaluated using the long and unsigned long types, as required by the ANSI C89 standard.
+34.  Preprocessor expressions were being evaluated using the normal type conversion rules (with many expressions evaluated as type int).  All preprocessor expressions are now evaluated using the intmax_t and uintmax_t types, as required by the C standards.  (As of ORCA/C 2.2.0 B5, these are the 64-bit types long long and unsigned long long.)
 
 35.  The unary ! operator could not be applied to floating constants.
 
@@ -999,6 +1048,48 @@ int foo(int[42]);
 128. The ++ and -- operators often would not work correctly on bit-fields, or on floating-point values that were in a structure or were accessed via a pointer.
 
 129. Certain invalid compound assignment expressions were erroneously permitted.
+
+130. In the fprintf() family of functions, %#x or %#X conversions should not print the 0x or 0X prefix if the value is 0.
+
+131. In the fprintf() family of functions, if the field width or precision in a conversion specification was * (indicating that it will be specified by an argument to the function) and the corresponding argument was negative, the behavior could be incorrect.  It now behaves correctly, as follows: if a negative argument is given for the field width, it is treated like a positive field width with the - flag.  If a negative argument is given for the precision, it is treated as if the precision was not specified.
+
+132. In the fprintf() family of functions, if a d, i, o, u, x, or X conversion has a precision specified, the 0 flag should be ignored even if present.
+
+133. In certain cases where a cast expression was used in a language construct that implicitly compares its value against 0 (such as an if statement), the comparison could be mis-evaluated, leading to execution of the wrong code path.
+
+134. Negative values of type signed char could be handled incorrectly in several cases, making them behave as if they had a positive value outside the range representable by signed char.
+
+135. Hexadecimal and octal constants in the range 0x80000000 to 0xFFFFFFFF should have the type unsigned long int, but they were being treated as having the type signed long int (with negative values) instead.
+
+136. Numeric constants with duplicate suffixes (e.g. "123ulu") were incorrectly being accepted.
+
+137. Trying to define a macro to + or - on the command line (with the -d option) would actually define it to 0 instead.  Now this gives an error, indicating that the definition is unsupported.  (Currently, macros can only be defined via the command line to an identifier, a numeric constant, or a string literal.)
+
+138. In the fscanf() family of functions, the 'o', 'u', 'x', and 'X' conversions should accept an integer optionally preceded by a plus or minus sign.
+
+139. In the fscanf() family of functions, if the input item for an integer conversion contains a sign and/or (if applicable) an '0x' or '0X' prefix but does not contain any digits of the number, it is not a matching sequence.  This should be treated as a matching failure, causing no assignment to be done and causing the function to return without processing any further directives.
+
+140. In the fscanf() family of functions, a %% conversion should be able to consume leading whitespace before the % character.
+
+141. In the fscanf() family of functions, input failures on certain directives (before having performed any conversions) would not cause them to return EOF.
+
+142. In the fscanf() family of functions, if a 'd' or 'i' conversion specification includes a maximum field width, a leading + or - sign in the number should count toward that field width.
+
+143. In the fscanf() family of functions, if a directive fails and causes the function to return before it has done all the possible assignments, then it would trash a word on the stack, potentially causing a crash or other problems.
+
+144. In the fscanf() family of functions, the number of characters reported as read by an 'n' conversion could be off by one if a previous 's' or '[' conversion read to the end of the available input and encountered EOF.
+
+145. In expressions like "exp | -1" or "exp & 0", the intermediate code peephole optimizer could optimize away the evaluation of "exp" even though it had side effects (e.g. a function call or assignment).
+
+146. In initializers for static data, expressions where an integer with unsigned type was added to an array address (e.g. "a + 1U") would not be accepted.
+
+147. The <string.h> header includes several non-standard functions.  Their declarations should be omitted if __KeepNamespacePure__ is defined.
+
+148. When an expression that the intermediate code peephole optimizer could reduce to a constant was cast to a character type, the resulting value could be outside the range of that type.
+
+149. When qsort() was called with a count argument of 0 and certain values for the other arguments, it might behave incorrectly, likely causing a crash.
+
+(Kelvin Sherlock)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
