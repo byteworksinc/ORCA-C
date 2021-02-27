@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 8;                  {version number of .sym file format}
+   symFileVersion = 10;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -711,6 +711,10 @@ procedure EndInclude {chPtr: ptr};
 	    identifier:		WriteString(token.name);
 	    intConstant:	WriteWord(token.ival);
 	    longConstant:	WriteLong(token.lval);
+	    longlongConstant:	begin
+                		WriteLong(token.qval.lo);
+                		WriteLong(token.qval.hi);
+                		end;
 	    doubleConstant:	WriteDouble(token.rval);
 	    stringConstant:	begin
 				WriteLongString(token.sval);
@@ -1331,6 +1335,10 @@ var
 	 identifier:		token.name := ReadString;
 	 intConstant:		token.ival := ReadWord;
 	 longConstant:		token.lval := ReadLong;
+	 longlongConstant:	begin
+			        token.qval.lo := ReadLong;
+                	        token.qval.hi := ReadLong;
+                	        end;
 	 doubleConstant:	token.rval := ReadDouble;
 	 stringConstant:	begin
 			        token.sval := ReadLongString;

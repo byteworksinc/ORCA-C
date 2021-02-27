@@ -3,13 +3,14 @@
 {  dc_cns - generate a constant value                           }
 {                                                               }
 {  GenL1(dc_cns, lval, count);                                  }
+{  GenQ1(dc_cns, qval, count);                                  }
 {  GenR1t(dc_cns, rval, count, type);                           }
 {  Gen2t(dc_cns, ival, count, type);                            }
 {  GenS(dc_cns, sptr);                                          }
 {                                                               }
-{  Creates COUNT occurrences of the constant lval, rval or      }
-{  ival, based on the type.  In Gen2t can accept byte or word   }
-{  types.  In the case of GenS, the operand is a string         }
+{  Creates COUNT occurrences of the constant lval, qval, rval   }
+{  or ival, based on the type.  In Gen2t can accept byte or     }
+{  word types.  In the case of GenS, the operand is a string    }
 {  constant, and no repeat count is allowed.                    }
 {                                                               }
 {                                                               }
@@ -90,10 +91,12 @@
 {                                                               }
 {  pc_adi - integer addition                                    }
 {  pc_adl - long addition                                       }
+{  pc_adq - long long addition                                  }
 {  pc_adr - real addition                                       }
 {                                                               }
 {  Gen0(pc_adi)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_adl)         cgLong,cgULong                          }
+{  Gen0(pc_adq)         cgQuad,cgUQuad                          }
 {  Gen0(pc_adr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
@@ -117,9 +120,11 @@
 {                                                               }
 {  pc_bnd - bitwise and                                         }
 {  pc_bal - long bitwise and                                    }
+{  pc_baq - long long bitwise and                               }
 {                                                               }
 {  Gen0(pc_bnd)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_bal)         cgLong,cgULong                          }
+{  Gen0(pc_baq)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
 {  removed and anded.  The result is placed back on the stack.  }
@@ -140,9 +145,11 @@
 {                                                               }
 {  pc_bnt - bitwise negation                                    }
 {  pc_bnl - long bitwise negation                               }
+{  pc_bnq - long long bitwise negation                          }
 {                                                               }
 {  Gen0(pc_bnt)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_bnl)         cgLong,cgULong                          }
+{  Gen0(pc_bnq)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The value on the top of the evaluation stack is removed,     }
 {  exclusive ored with $FFFF, and replaced.  (One's compliment.)}
@@ -150,9 +157,11 @@
 {                                                               }
 {  pc_bor - bitwise or                                          }
 {  pc_blr - long bitwise or                                     }
+{  pc_bqr - long long bitwise or                                }
 {                                                               }
 {  Gen0(pc_bor)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_blr)         cgLong,cgULong                          }
+{  Gen0(pc_bqr)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
 {  removed and ored.  The result is placed back on the stack.   }
@@ -160,9 +169,11 @@
 {                                                               }
 {  pc_bxr - exclusive or                                        }
 {  pc_blx - long exclusive or                                   }
+{  pc_bqx - long long exclusive or                              }
 {                                                               }
 {  Gen0(pc_bxr)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_blx)         cgLong,cgULong                          }
+{  Gen0(pc_bqx)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
 {  removed and exclusive ored.  The result is placed back on    }
@@ -264,12 +275,16 @@
 {  pc_udi - unsigned integer divide                             }
 {  pc_dvl - long integer divide                                 }
 {  pc_udl - unsigned long divide                                }
+{  pc_dvq - long long integer divide                            }
+{  pc_udq - unsigned long long divide                           }
 {  pc_dvr - real divide                                         }
 {                                                               }
 {  Gen0(pc_dvi)         cgByte,cgWord                           }
 {  Gen0(pc_udi)         cgUByte,cgUWord                         }
 {  Gen0(pc_dvl)         cgLong                                  }
 {  Gen0(pc_udl)         cgULong                                 }
+{  Gen0(pc_dvq)         cgQuad                                  }
+{  Gen0(pc_udq)         cgUQuad                                 }
 {  Gen0(pc_dvr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
@@ -406,9 +421,10 @@
 {                                                               }
 {  Gen1t(pc_ldc, val, type)                                     }
 {  GenLdcLong(val)                                              }
+{  GenLdcQuad(val)                                              }
 {  GenLdcReal(val)                                              }
 {                                                               }
-{  Loads a constant value.  Special calls for long and real     }
+{  Loads a constant value.  Special calls for long, quad & real }
 {  values are provided due to the unique parameter requirements.}
 {                                                               }
 {                                                               }
@@ -453,11 +469,15 @@
 {  pc_uim - unsigned integer modulus/remainder                  }
 {  pc_mdl - long remainder                                      }
 {  pc_ulm - unsigned long modulus/remainder                     }
+{  pc_mdq - long long remainder                                 }
+{  pc_uqm - unsigned long long modulus/remainder                }
 {                                                               }
 {  Gen0(pc_mod)         cgByte,cgWord                           }
 {  Gen0(pc_uim)         cgUByte,cgUWord                         }
 {  Gen0(pc_mdl)         cgLong                                  }
 {  Gen0(pc_ulm)         cgULong                                 }
+{  Gen0(pc_mdq)         cgQuad                                  }
+{  Gen0(pc_uqm)         cgUQuad                                 }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
 {  removed and the remainder after division is calculated.      }
@@ -469,12 +489,16 @@
 {  pc_umi - unsigned integer multiply                           }
 {  pc_mpl - long integer multiply                               }
 {  pc_uml - unsigned long multiply                              }
+{  pc_mpq - long long integer multiply                          }
+{  pc_umq - unsigned long long multiply                         }
 {  pc_mpr - real multiply                                       }
 {                                                               }
 {  Gen0(pc_mpi)         cgByte,cgWord                           }
 {  Gen0(pc_umi)         cgUByte,cgUWord                         }
 {  Gen0(pc_mpl)         cgLong                                  }
 {  Gen0(pc_uml)         cgULong                                 }
+{  Gen0(pc_mpq)         cgQuad                                  }
+{  Gen0(pc_umq)         cgUQuad                                 }
 {  Gen0(pc_mpr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
@@ -484,10 +508,12 @@
 {                                                               }
 {  pc_ngi - integer negation                                    }
 {  pc_ngl - long negation                                       }
+{  pc_ngq - long long negation                                  }
 {  pc_ngr - real negation                                       }
 {                                                               }
 {  Gen0(pc_ngi)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_ngl)         cgLong,cgULong                          }
+{  Gen0(pc_ngq)         cgQuad,cgUQuad                          }
 {  Gen0(pc_ngr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The value on the top of the evaluation stack is removed,     }
@@ -537,10 +563,12 @@
 {                                                               }
 {  pc_sbi - integer subtraction                                 }
 {  pc_sbl - long subtraction                                    }
+{  pc_sbq - long long subtraction                               }
 {  pc_sbr - real subtraction                                    }
 {                                                               }
 {  Gen0(pc_sbi)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_sbl)         cgLong,cgULong                          }
+{  Gen0(pc_sbq)         cgQuad,cgUQuad                          }
 {  Gen0(pc_sbr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The two values on the top of the evaluation stack are        }
@@ -549,25 +577,32 @@
 {                                                               }
 {  pc_shl - shift left                                          }
 {  pc_sll - shift left long                                     }
+{  pc_slq - shift left long long                                }
 {                                                               }
 {  Gen0(pc_shl)         cgByte,cgUByte,cgWord,cgUWord           }
 {  Gen0(pc_sll)         cgLong,cgULong                          }
+{  Gen0(pc_slq)         cgQuad,cgUQuad (tos-1) / cgWord (tos)   }
 {                                                               }
 {  The value at tos-1 is shifted left by the number of bits     }
 {  specified by tos.  The result is an integer, which replaces  }
 {  the operands on the stack.  The right bit positions are      }
-{  filled with zeros.                                           }
+{  filled with zeros.  For pc_slq, only the value at tos-1 is   }
+{  cgQuad/cgUQuad; the shift count at tos is cgWord or cgUWord. }
 {                                                               }
 {                                                               }
 {  pc_shr - shift right                                         }
 {  pc_usr - unsigned shift right                                }
 {  pc_slr - long shift right                                    }
 {  pc_vsr - unsigned long shift right                           }
+{  pc_sqr - long long shift right                               }
+{  pc_wsr - unsigned long long shift right                      }
 {                                                               }
 {  Gen0(pc_shr)         cgByte,cgWord                           }
 {  Gen0(pc_usr)         cgUByte,cgUWord                         }
 {  Gen0(pc_slr)         cgLong                                  }
 {  Gen0(pc_vsr)         cgULong                                 }
+{  Gen0(pc_sqr)         cgQuad (tos-1) / cgWord (tos)           }
+{  Gen0(pc_wsr)         cgUQuad (tos-1) / cgWord (tos)          }
 {                                                               }
 {  The value at tos-1 is shifted right by the number of bits    }
 {  specified by tos.  The result is an integer, which replaces  }
@@ -577,7 +612,9 @@
 {                                                               }
 {  Pc_usr is the unsigned form.  The operation is the same,     }
 {  except that the leftmost bit is replaced with a zero.        }
-{  Pc_vsr is used for unsigned long operations.                 }
+{  Pc_vsr is used for unsigned long operations, and pc_wsr is   }
+{  used for unsigned long long operations.                      }
+{                                                               }
 {                                                               }
 {  pc_stk - stack an operand                                    }
 {                                                               }

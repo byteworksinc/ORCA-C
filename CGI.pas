@@ -11,7 +11,7 @@
 {  passed on to the code generator for optimization and         }
 {  native code generation.                                      }
 {                                                               }
-{$copy 'cgi.comments'}
+{ copy 'cgi.comments'}
 {---------------------------------------------------------------}
 
 unit CodeGeneratorInterface;
@@ -49,10 +49,12 @@ const
    m_adc_dir              =    $65;
    m_adc_imm              =    $69;
    m_adc_s                =    $63;
+   m_adc_indl             =    $67;
    m_and_abs              =    $2D;
    m_and_dir              =    $25;
    m_and_imm              =    $29;
    m_and_s                =    $23;
+   m_and_indl             =    $27;
    m_asl_a                =    $0A;
    m_bcc                  =    $90;
    m_bcs                  =    $B0;
@@ -71,6 +73,7 @@ const
    m_cmp_imm              =    $C9;
    m_cmp_long             =    $CF;
    m_cmp_s                =    $C3;
+   m_cmp_indl             =    $C7;
    m_cop                  =    $02;
    m_cpx_abs              =    236;
    m_cpx_dir              =    228;
@@ -86,6 +89,7 @@ const
    m_eor_dir              =     69;
    m_eor_imm              =     73;
    m_eor_s                =     67;
+   m_eor_indl             =    $47;
    m_ina                  =     26;
    m_inc_abs              =    238;
    m_inc_absX             =    $FE;
@@ -122,6 +126,7 @@ const
    m_ora_long             =     15;
    m_ora_longX            =     31;
    m_ora_s                =      3;
+   m_ora_indl             =    $07;
    m_pea                  =    244;
    m_pei_dir              =    212;
    m_pha                  =     72;
@@ -143,6 +148,7 @@ const
    m_sbc_dir              =    229;
    m_sbc_imm              =    233;
    m_sbc_s                =    227;
+   m_sbc_indl             =    $E7;
    m_sec                  =     56;
    m_sep                  =    226;
    m_sta_abs              =    141;
@@ -204,6 +210,7 @@ const
    cgByteSize           =       1;
    cgWordSize           =       2;
    cgLongSize           =       4;
+   cgQuadSize           =       8;
    cgPointerSize        =       4;
    cgRealSize           =       4;
    cgDoubleSize         =       8;
@@ -227,7 +234,9 @@ type
        pc_mdl,pc_sll,pc_slr,pc_bal,pc_ngl,pc_adl,pc_sbl,pc_blr,pc_blx,
        dc_sym,pc_lnd,pc_lor,pc_vsr,pc_uml,pc_udl,pc_ulm,pc_pop,pc_gil,
        pc_gli,pc_gdl,pc_gld,pc_cpi,pc_tri,pc_lbu,pc_lbf,pc_sbf,pc_cbf,dc_cns,
-       dc_prm,pc_nat,pc_bno,pc_nop,pc_psh,pc_ili,pc_iil,pc_ild,pc_idl);
+       dc_prm,pc_nat,pc_bno,pc_nop,pc_psh,pc_ili,pc_iil,pc_ild,pc_idl,
+       pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,pc_mpq,pc_umq,pc_dvq,
+       pc_udq,pc_mdq,pc_uqm,pc_slq,pc_sqr,pc_wsr);
 
                                         {intermediate code}
                                         {-----------------}
@@ -246,6 +255,8 @@ type
          cgUWord        : (opnd: longint; llab,slab: integer);
          cgLong,
          cgULong        : (lval: longint);
+         cgQuad,
+         cgUQuad        : (qval: longlong);
          cgReal,
          cgDouble,
          cgComp,
@@ -553,6 +564,15 @@ procedure GenL1 (fop: pcodes; lval: longint; fp1: integer);
 {       fp1 - integer parameter                                 }
 
 
+procedure GenQ1 (fop: pcodes; qval: longlong; fp1: integer);
+
+{ generate an instruction that uses a longlong and an int       }
+{                                                               }
+{ parameters:                                                   }
+{       qval - longlong parameter                               }
+{       fp1 - integer parameter                                 }
+
+
 procedure GenR1t (fop: pcodes; rval: double; fp1: integer; tp: baseTypeEnum);
 
 { generate an instruction that uses a real and an int           }
@@ -569,6 +589,14 @@ procedure GenLdcLong (lval: longint);
 {                                                               }
 { parameters:                                                   }
 {       lval - value to load                                    }
+
+
+procedure GenLdcQuad (qval: longlong);
+
+{ load a long long constant                                     }
+{                                                               }
+{ parameters:                                                   }
+{       qval - value to load                                    }
 
 
 procedure GenLdcReal (rval: double);
@@ -1191,6 +1219,28 @@ if codeGeneration then begin
 end; {GenL1}
 
 
+procedure GenQ1 {fop: pcodes; qval: longlong; fp1: integer};
+
+{ generate an instruction that uses a longlong and an int       }
+{                                                               }
+{ parameters:                                                   }
+{       qval - longlong parameter                               }
+{       fp1 - integer parameter                                 }
+
+var
+   lcode: icptr;                        {local copy of code}
+
+begin {GenQ1}
+if codeGeneration then begin
+   lcode := code;
+   lcode^.optype := cgQuad;
+   lcode^.qval := qval;
+   lcode^.q := fp1;
+   Gen0(fop);
+   end; {if}
+end; {GenQ1}
+
+
 procedure GenR1t {fop: pcodes; rval: double; fp1: integer; tp: baseTypeEnum};
 
 { generate an instruction that uses a real and an int           }
@@ -1232,6 +1282,26 @@ if codeGeneration then begin
    Gen0(pc_ldc);
    end; {if}
 end; {GenLdcLong}
+
+
+procedure GenLdcQuad {qval: longlong};
+
+{ load a long long constant                                     }
+{                                                               }
+{ parameters:                                                   }
+{       qval - value to load                                    }
+
+var
+   lcode: icptr;                        {local copy of code}
+
+begin {GenLdcQuad}
+if codeGeneration then begin
+   lcode := code;
+   lcode^.optype := cgQuad;
+   lcode^.qval := qval;
+   Gen0(pc_ldc);
+   end; {if}
+end; {GenLdcQuad}
 
 
 procedure GenTool {fop: pcodes; fp1, fp2: integer; dispatcher: longint};
@@ -1291,6 +1361,7 @@ case tp of
    cgByte,cgUByte:   TypeSize := cgByteSize;
    cgWord,cgUWord:   TypeSize := cgWordSize;
    cgLong,cgULong:   TypeSize := cgLongSize;
+   cgQuad,cgUQuad:   TypeSize := cgQuadSize;
    cgReal:           TypeSize := cgRealSize;
    cgDouble:         TypeSize := cgDoubleSize;
    cgComp:           TypeSize := cgCompSize;

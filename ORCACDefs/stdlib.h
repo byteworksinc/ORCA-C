@@ -29,6 +29,9 @@ typedef unsigned long size_t;
 
 typedef struct {int quot,rem;} div_t;
 typedef struct {long quot,rem;} ldiv_t;
+#if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
+typedef struct {long long quot,rem;} lldiv_t;
+#endif
 
 #ifndef __KeepNamespacePure__
    #define clalloc(x,y)    calloc((x),(y))
@@ -45,6 +48,9 @@ int             at_quick_exit(void (*__func)(void));
 double          atof(const char *);
 int             atoi(const char *);
 long            atol(const char *);
+#if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
+long long       atoll(const char *);
+#endif
 void           *bsearch(const void *, const void *, size_t, size_t, int (*__compar)(const void *, const void *));
 void           *calloc(size_t, size_t);
 div_t           div(int, int);
@@ -55,6 +61,10 @@ void            free(void *);
 char           *getenv(const char *);
 long            labs(long);
 ldiv_t          ldiv(long, long);
+#if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
+long long       llabs(long long);
+lldiv_t         lldiv(long long, long long);
+#endif
 void           *malloc(size_t);
 void            qsort(void *, size_t, size_t, int (*__compar)(const void *, const void *));
 void            quick_exit(int);
@@ -64,6 +74,10 @@ void            srand(unsigned);
 double          strtod(const char *, char **);
 long            strtol(const char *, char **, int);
 unsigned long   strtoul(const char *, char **, int);
+#if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
+long long       strtoll(const char * restrict, char ** restrict, int);
+unsigned long long strtoull(const char * restrict, char ** restrict, int);
+#endif
 int             system(const char *);
 
 #endif

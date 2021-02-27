@@ -29,5 +29,10 @@
 #define UINT_MAX        65535u
 #define ULONG_MAX       4294967295u
 #define USHRT_MAX       65535u
+#if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
+#define LLONG_MIN       (-9223372036854775807-1)
+#define LLONG_MAX       9223372036854775807
+#define ULLONG_MAX      18446744073709551615u
+#endif
 
 #endif

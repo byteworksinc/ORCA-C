@@ -98,7 +98,7 @@ type
    switchRecord = record
       next,last: switchPtr;             {doubly linked list (for inserts)}
       lab: integer;                     {label to branch to}
-      val: longint;                     {switch value}
+      val: longlong;                    {switch value}
       end;
 
                                         {token stack}
@@ -139,7 +139,6 @@ type
             );
          switchSt: (
             maxVal: longint;            {max switch value}
-            isLong: boolean;            {do long switch?}
             ln: integer;                {temp var number}
             size: integer;              {temp var size}
             labelCount: integer;        {# of switch labels}
@@ -187,6 +186,12 @@ var
    localDeclarationStart: tokenSet;
    declarationSpecifiersElement: tokenSet;
    structDeclarationStart: tokenSet;
+
+{-- External procedures ----------------------------------------}
+
+function slt64(a,b: longlong): boolean; extern;
+
+function sgt64(a,b: longlong): boolean; extern;
 
 {-- Parser Utility Procedures ----------------------------------}
 
@@ -454,38 +459,52 @@ var
    var
       stPtr: statementPtr;              {switch record for this case label}
       swPtr,swPtr2: switchPtr;          {work pointers for inserting new entry}
-      val: integer;                     {case label value}
+      val: longlong;                    {case label value}
 
    begin {CaseStatement}
    while token.kind = casesy do begin
       NextToken;                        {skip the 'case' token}
       stPtr := GetSwitchRecord;         {get the proper switch record}
       Expression(arrayExpression, [colonch]); {evaluate the branch condition}
-      val := long(expressionValue).lsw;
-      if val <> expressionValue then
-         if not stPtr^.isLong then
-            expressionValue := val;     {convert out-of-range value to (U)Word}
+      GetLLExpressionValue(val);
+      if stPtr^.size = cgLongSize then begin {convert out-of-range values}
+         if val.lo < 0 then
+            val.hi := -1
+         else
+            val.hi := 0;
+         end {if}
+      else if stPtr^.size = cgWordSize then begin
+         if long(val.lo).lsw < 0 then begin
+            val.hi := -1;
+            val.lo := val.lo | $FFFF0000;
+            end {if}
+         else begin
+            val.hi := 0;
+            val.lo := val.lo & $0000FFFF;
+            end; {else}
+         end; {else if}
       if stPtr = nil then
          Error(72)
       else begin
          new(swPtr2);                   {create the new label table entry}
          swPtr2^.lab := GenLabel;
          Gen1(dc_lab, swPtr2^.lab);
-         swPtr2^.val := expressionValue;
+         swPtr2^.val := val;
          swPtr := stPtr^.switchList;
+         if val.lo > stPtr^.maxVal then
+            stPtr^.maxVal := val.lo;
          if swPtr = nil then begin      {enter it in the table}
             swPtr2^.last := nil;
             swPtr2^.next := nil;
             stPtr^.switchList := swPtr2;
-            stPtr^.maxVal := expressionValue;
             stPtr^.labelCount := 1;
             end {if}
          else begin
-            while (swPtr^.next <> nil) and (swPtr^.val < expressionValue) do
+            while (swPtr^.next <> nil) and slt64(swPtr^.val, val) do
                swPtr := swPtr^.next;
-            if swPtr^.val = expressionValue then
+            if (swPtr^.val.lo = val.lo) and (swPtr^.val.hi = val.hi) then
                Error(73)
-            else if swPtr^.val > expressionValue then begin
+            else if sgt64(swPtr^.val, val) then begin
                swPtr2^.next := swPtr;
                if swPtr^.last = nil then
                   stPtr^.switchList := swPtr2
@@ -498,7 +517,6 @@ var
                swPtr2^.next := nil;
                swPtr2^.last := swPtr;
                swPtr^.next := swPtr2;
-               stPtr^.maxVal := expressionValue;
                end; {else}
             stPtr^.labelCount := stPtr^.labelCount + 1;
             end; {else}
@@ -751,12 +769,18 @@ var
          id := FindSymbol(tk, variableSpace, false, true);
          Gen1Name(pc_lao, 0, id^.name);
          size := fType^.size;
-         end; {if}
+         end {if}
+      else if fType^.kind = scalarType then
+         if fType^.baseType in [cgQuad,cgUQuad] then
+            Gen2t(pc_lod, 0, 0, cgULong);
       Expression(normalExpression, [semicolonch]);
       AssignmentConversion(fType, expressionType, lastWasConst, lastConst,
          true, false);
       case fType^.kind of
-         scalarType:    Gen2t(pc_str, 0, 0, fType^.baseType);
+         scalarType:    if fType^.baseType in [cgQuad,cgUQuad] then
+                           Gen0t(pc_sto, fType^.baseType)
+                        else
+                           Gen2t(pc_str, 0, 0, fType^.baseType);
          enumType:      Gen2t(pc_str, 0, 0, cgWord);
          pointerType:   Gen2t(pc_str, 0, 0, cgULong);
          structType,
@@ -792,7 +816,6 @@ var
    statementList := stPtr;
    stPtr^.kind := switchSt;
    stPtr^.maxVal := -maxint4;
-   stPtr^.isLong := false;
    stPtr^.labelCount := 0;
    stPtr^.switchLab := GenLabel;
    stPtr^.switchExit := GenLabel;
@@ -809,14 +832,17 @@ var
    case tp^.kind of
 
       scalarType:
-         if tp^.baseType in [cgLong,cgULong] then begin
-            stPtr^.isLong := true;
+         if tp^.baseType in [cgQuad,cgUQuad] then begin
+            stPtr^.size := cgQuadSize;
+            stPtr^.ln := GetTemp(cgQuadSize);
+            Gen2t(pc_str, stPtr^.ln, 0, cgQuad);
+            end {if}
+         else if tp^.baseType in [cgLong,cgULong] then begin
             stPtr^.size := cgLongSize;
             stPtr^.ln := GetTemp(cgLongSize);
             Gen2t(pc_str, stPtr^.ln, 0, cgLong);
             end {if}
          else if tp^.baseType in [cgByte,cgUByte,cgWord,cgUWord] then begin
-            stPtr^.isLong := false;
             stPtr^.size := cgWordSize;
             stPtr^.ln := GetTemp(cgWordSize);
             Gen2t(pc_str, stPtr^.ln, 0, cgWord);
@@ -825,7 +851,6 @@ var
             Error(71);
 
       enumType: begin
-         stPtr^.isLong := false;
          stPtr^.size := cgWordSize;
          stPtr^.ln := GetTemp(cgWordSize);
          Gen2t(pc_str, stPtr^.ln, 0, cgWord);
@@ -1069,13 +1094,15 @@ var
                                         {-------------------------------}
    exitLab: integer;                    {label at the end of the jump table}
    isLong: boolean;                     {is the case expression long?}
+   isLongLong: boolean;                 {is the case expression long long?}
    swPtr,swPtr2: switchPtr;             {switch label table list}
 
 begin {EndSwitchStatement}
 if c99Scope then PopTable;
 stPtr := statementList;                 {get the statement record}
 exitLab := stPtr^.switchExit;           {get the exit label}
-isLong := stPtr^.isLong;                {get the long flag}
+isLong := stPtr^.size = cgLongSize;     {get the long flag}
+isLongLong := stPtr^.size = cgQuadSize; {get the long long flag}
 swPtr := stPtr^.switchList;             {Skip further generation if there were}
 if swPtr <> nil then begin              { no labels.                          }
    default := stPtr^.switchDefault;     {get a default label}
@@ -1083,21 +1110,25 @@ if swPtr <> nil then begin              { no labels.                          }
       default := exitLab;
    Gen1(pc_ujp, exitLab);               {branch past the indexed jump}
    Gen1(dc_lab, stPtr^.switchLab);      {create the label for the xjp table}
-   if isLong then                       {decide on a base type}
+   if isLongLong then                   {decide on a base type}
+      ltp := cgQuad
+   else if isLong then
       ltp := cgLong
    else
       ltp := cgWord;
-   if stPtr^.isLong
-      or (((stPtr^.maxVal-swPtr^.val) div stPtr^.labelCount) > sparse) then
+   if isLong or isLongLong
+      or (((stPtr^.maxVal-swPtr^.val.lo) div stPtr^.labelCount) > sparse) then
       begin
 
       {Long expressions and sparse switch statements are handled as a   }
       {series of if-goto tests.                                         }
       while swPtr <> nil do begin       {generate the compares}
-         if isLong then
-            GenLdcLong(swPtr^.val)
+         if isLongLong then
+            GenLdcQuad(swPtr^.val)
+         else if isLong then
+            GenLdcLong(swPtr^.val.lo)
          else
-            Gen1t(pc_ldc, long(swPtr^.val).lsw, cgWord);
+            Gen1t(pc_ldc, long(swPtr^.val.lo).lsw, cgWord);
          Gen2t(pc_lod, stPtr^.ln, 0, ltp);
          Gen0t(pc_equ, ltp);
          Gen1(pc_tjp, swPtr^.lab);
@@ -1110,12 +1141,12 @@ if swPtr <> nil then begin              { no labels.                          }
    else begin
 
       {compact word switch statements are handled with xjp}
-      minVal := long(swPtr^.val).lsw;   {record the min label value}
+      minVal := long(swPtr^.val.lo).lsw; {record the min label value}
       Gen2t(pc_lod, stPtr^.ln, 0, ltp); {get the value}
       Gen1t(pc_dec, minVal, cgWord);    {adjust the range}
       Gen1(pc_xjp, ord(stPtr^.maxVal-minVal+1)); {do the indexed jump}
       while swPtr <> nil do begin       {generate the jump table}
-         while minVal < swPtr^.val do begin
+         while minVal < swPtr^.val.lo do begin
             Gen1(pc_add, default);
             minVal := minVal+1;
             end; {while}
@@ -1846,6 +1877,13 @@ var
                size := rtree^.token.ival
             else if rtree^.token.kind in [longconst,ulongconst] then
                size := rtree^.token.lval
+            else if rtree^.token.kind in [longlongconst,ulonglongconst] then begin
+               size := rtree^.token.qval.lo;
+               with rtree^.token.qval do
+                  if not (((hi = 0) and (lo & $ff000000 = 0)) or
+                     ((hi = -1) and (lo & $ff000000 = $ff000000))) then
+                     Error(6);
+               end {else if}
             else begin
                Error(18);
                errorFound := true;
@@ -1944,7 +1982,13 @@ var
       variable^.storage := global;
    if isConstant and (variable^.storage in [external,global,private]) then begin
       if bitsize = 0 then begin
-         iPtr^.iVal := expressionValue;
+         if etype^.baseType in [cgQuad,cgUQuad] then begin
+            iPtr^.qVal := llExpressionValue;
+            end {if}
+         else begin
+            iPtr^.qval.hi := 0;
+            iPtr^.iVal := expressionValue;
+            end; {else}
          iPtr^.itype := tp^.baseType;
          InitializeBitField;
          end; {if}
@@ -1952,13 +1996,20 @@ var
 
          scalarType: begin
             bKind := tp^.baseType;
-            if (bKind in [cgByte..cgULong])
-               and (etype^.baseType in [cgByte..cgULong]) then begin
-               if bKind in [cgLong,cgULong] then
+            if (etype^.baseType in [cgByte..cgULong,cgQuad,cgUQuad])
+               and (bKind in [cgByte..cgULong,cgQuad,cgUQuad]) then begin
+               if bKind in [cgLong,cgULong,cgQuad,cgUQuad] then
                   if eType^.baseType = cgUByte then
                      iPtr^.iVal := iPtr^.iVal & $000000FF
                   else if eType^.baseType = cgUWord then
                      iPtr^.iVal := iPtr^.iVal & $0000FFFF;
+               if bKind in [cgQuad,cgUQuad] then
+                  if etype^.baseType in [cgByte..cgULong] then
+                     if (etype^.baseType in [cgByte,cgWord,cgLong])
+                        and (iPtr^.iVal < 0) then
+                        iPtr^.qVal.hi := -1
+                     else
+                        iPtr^.qVal.hi := 0;
                goto 3;
                end; {if}
             if bKind in [cgReal,cgDouble,cgComp,cgExtended] then begin
@@ -2015,6 +2066,14 @@ var
                      Error(47);
                      errorFound := true;
                      end {else}
+               else if etype^.baseType in [cgQuad,cgUQuad] then
+                  if (llExpressionValue.hi = 0) and
+                     (llExpressionValue.lo = 0) then
+                     iPtr^.iType := cgULong
+                  else begin
+                     Error(47);
+                     errorFound := true;
+                     end {else}
                else begin
                   Error(48);
                   errorFound := true;
@@ -2056,11 +2115,25 @@ var
             operator := tree^.token.kind;
             while operator in [plusch,minusch] do begin
                with tree^.right^.token do
-                  if kind in [intConst,longConst] then begin
+                  if kind in [intConst,uintconst,longConst,ulongconst,
+                     longlongConst,ulonglongconst] then begin
                      if kind = intConst then
                         offSet2 := ival
-                     else
+                     else if kind = uintConst then
+                        offset2 := ival & $0000ffff
+                     else if kind in [longConst,ulongconst] then begin
                         offset2 := lval;
+                        if (lval & $ff000000 <> 0)
+                           and (lval & $ff000000 <> $ff000000) then
+                           Error(6);
+                        end {else if}
+                     else {if kind = longlongConst then} begin
+                        offset2 := qval.lo;
+                        with qval do
+                           if not (((hi = 0) and (lo & $ff000000 = 0)) or
+                              ((hi = -1) and (lo & $ff000000 = $ff000000))) then
+                              Error(6);
+                        end; {else}
                      if operator = plusch then
                         offset := offset + offset2
                      else
@@ -2602,6 +2675,8 @@ var
    mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
    myTypeSpec: typePtr;                 {value of typeSpec to generate}
    myDeclarationModifiers: tokenSet;    {all modifiers in this declaration}
+   
+   isLongLong: boolean;                 {is this a "long long" type?}
  
    procedure FieldList (tp: typePtr; kind: typeKind);
  
@@ -2799,11 +2874,19 @@ var
    else if (typeSpecifiers = [longsy])
       or (typeSpecifiers = [signedsy,longsy])
       or (typeSpecifiers = [longsy,intsy])
-      or (typeSpecifiers = [signedsy,longsy,intsy]) then
-      myTypeSpec := longPtr
+      or (typeSpecifiers = [signedsy,longsy,intsy]) then begin
+      if isLongLong then
+         myTypeSpec := longLongPtr
+      else
+         myTypeSpec := longPtr;
+      end {else if}
    else if (typeSpecifiers = [unsignedsy,longsy])
-      or (typeSpecifiers = [unsignedsy,longsy,intsy]) then
-      myTypeSpec := uLongPtr
+      or (typeSpecifiers = [unsignedsy,longsy,intsy]) then begin
+      if isLongLong then
+         myTypeSpec := uLongLongPtr
+      else
+         myTypeSpec := uLongPtr;
+      end {else if}
    else if typeSpecifiers = [floatsy] then
       myTypeSpec := floatPtr
    else if typeSpecifiers = [doublesy] then
@@ -2829,6 +2912,7 @@ myDeclarationModifiers := [];
 typeSpecifiers := [];
 typeDone := false;
 isConstant := false;
+isLongLong := false;
 while token.kind in allowedTokens do begin
    case token.kind of
       {storage class specifiers}
@@ -2918,9 +3002,11 @@ while token.kind in allowedTokens do begin
          if typeDone then
             UnexpectedTokenError(expectedNext)
          else if token.kind in typeSpecifiers then begin
-            if (token.kind = longsy)
-               and (typeSpecifiers <= [signedsy,unsignedsy,longsy,intsy]) then
-               Error(134)
+            if (token.kind = longsy) and 
+               ((myTypeSpec = longPtr) or (myTypeSpec = uLongPtr)) then begin
+               isLongLong := true;
+               ResolveType;
+               end
             else
                UnexpectedTokenError(expectedNext);
             end {if}
@@ -4166,12 +4252,19 @@ var
                                         {do assignment conversions}
          while tree^.token.kind = castoper do
             tree := tree^.left;
-         isConstant := tree^.token.class in [intConstant,longConstant];
+         isConstant :=
+            tree^.token.class in [intConstant,longConstant,longlongConstant];
          if isConstant then
             if tree^.token.class = intConstant then
                val := tree^.token.ival
-            else
-               val := tree^.token.lval;
+            else if tree^.token.class = longConstant then
+               val := tree^.token.lval
+            else {if tree^.token.class = longlongConstant then} begin
+               if (tree^.token.qval.hi = 0) and (tree^.token.qval.lo >= 0) then
+                  val := tree^.token.qval.lo
+               else
+                  isConstant := false;
+               end; {else}
 
 {        if isConstant then
             if tree^.token.class = intConstant then

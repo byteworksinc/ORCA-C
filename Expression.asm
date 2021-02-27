@@ -382,3 +382,559 @@ ml6      ror   a                        shift the answer
 ;
 ml7      return 4:ans                   fix the stack
          end
+
+****************************************************************
+*
+*  procedure umul64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+umul64   start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~UMUL8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure udiv64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+udiv64   start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~UDIV8
+         pl8   [x]
+         pla
+         pla
+         pla
+         pla
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure div64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+div64    start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~CDIV8
+         pl8   [x]
+         pla
+         pla
+         pla
+         pla
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure umod64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+umod64   start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~UDIV8
+         pla
+         pla
+         pla
+         pla
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure rem64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+rem64    start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~CDIV8
+         pla
+         pla
+         pla
+         pla
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure add64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+add64    start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~ADD8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure sub64 (var x: longlong; y: longlong);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+sub64    start exp
+
+         subroutine (4:x,4:y),0
+
+         ph8   [x]
+         ph8   [y]
+         jsl   ~SUB8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure shl64 (var x: longlong; y: integer);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+shl64    start exp
+
+         subroutine (4:x,2:y),0
+
+         ph8   [x]
+         lda   y
+         jsl   ~SHL8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure ashr64 (var x: longlong; y: integer);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+ashr64   start exp
+
+         subroutine (4:x,2:y),0
+
+         ph8   [x]
+         lda   y
+         jsl   ~ASHR8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  procedure lshr64 (var x: longlong; y: integer);
+*
+*  Inputs:
+*        x,y - operands
+*
+*  Outputs:
+*        x - result
+*
+****************************************************************
+*
+lshr64   start exp
+
+         subroutine (4:x,2:y),0
+
+         ph8   [x]
+         lda   y
+         jsl   ~LSHR8
+         pl8   [x]
+         
+         return
+         end
+
+****************************************************************
+*
+*  function ult64(a,b: longlong): integer;
+*
+****************************************************************
+*
+ult64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bge   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function uge64(a,b: longlong): integer;
+*
+****************************************************************
+*
+uge64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      blt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function ule64(a,b: longlong): integer;
+*
+****************************************************************
+*
+ule64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bgt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function ugt64(a,b: longlong): integer;
+*
+****************************************************************
+*
+ugt64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      ble   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function slt64(a,b: longlong): integer;
+*
+****************************************************************
+*
+slt64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bge   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function sge64(a,b: longlong): integer;
+*
+****************************************************************
+*
+sge64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      blt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function sle64(a,b: longlong): integer;
+*
+****************************************************************
+*
+sle64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bgt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function sgt64(a,b: longlong): integer;
+*
+****************************************************************
+*
+sgt64    start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #6
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      ble   lb2
+         inc   result
+
+lb2      return 2:result
+         end

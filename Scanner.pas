@@ -272,6 +272,7 @@ var
    lintErrors: set of 1..maxLint;       {lint error codes}
    spaceStr: string[2];                 {string ' ' (used in stringization)}
    quoteStr: string[2];                 {string '"' (used in stringization)}
+   numericConstants: set of tokenClass; {token classes for numeric constants}
 
 {-- External procedures; see expression evaluator for notes ----}
 
@@ -412,6 +413,11 @@ function Convertsl(var str: pString): longint; extern;
 
 { Return the integer equivalent of the string.  Assumes a valid }
 { 4-byte integer string; supports unsigned values.              }
+
+procedure Convertsll(var qval: longlong; var str: pString); extern;
+
+{ Save the integer equivalent of the string to qval.  Assumes a }
+{ valid 8-byte integer string; supports unsigned values.        }
 
 
 procedure SetDateTime; extern;
@@ -663,8 +669,8 @@ if list or (numErr <> 0) then begin
         131: msg := @'numeric constant is too long';
         132: msg := @'static assertion failed';
         133: msg := @'incomplete or function types may not be used here';
-        134: msg := @'''long long'' types are not supported by ORCA/C';
-        135: msg := @'the type _Bool is not supported by ORCA/C';
+       {134: msg := @'''long long'' types are not supported by ORCA/C';}
+       {135: msg := @'the type _Bool is not supported by ORCA/C';}
         136: msg := @'complex or imaginary types are not supported by ORCA/C';
         137: msg := @'atomic types are not supported by ORCA/C';
         138: msg := @'unsupported alignment';
@@ -742,6 +748,9 @@ case token.kind of
 
    longConst,
    ulongConst:       write(token.lval:1);
+   
+   longlongConst,
+   ulonglongConst:   write('0x...'); {TODO implement}
 
    doubleConst:      write(token.rval:1);
 
@@ -1043,7 +1052,7 @@ if class1 in [identifier,reservedWord] then begin
       str2 := tk2.name
    else if class2 = reservedWord then
       str2 := @reservedWords[kind2]
-   else if class2 in [intConstant,longConstant,doubleConstant] then
+   else if class2 in numericConstants then
       str2 := tk2.numString                   
    else begin
       Error(63);
@@ -1067,8 +1076,8 @@ if class1 in [identifier,reservedWord] then begin
    goto 1;
    end {class1 in [identifier,reservedWord]}
 
-else if class1 in [intConstant,longConstant,doubleConstant] then begin
-   if class2 in [intConstant,longConstant,doubleConstant] then
+else if class1 in numericConstants then begin
+   if class2 in numericConstants then
       str2 := tk2.numString
    else if class2 = identifier then
       str2 := tk2.name
@@ -1086,7 +1095,7 @@ else if class1 in [intConstant,longConstant,doubleConstant] then begin
    tk1 := token;
    token := lt;
    goto 1;
-   end {else if class1 in [intConstant,longConstant,doubleConstant]}
+   end {else if class1 in numericConstants}
 
 else if class1 = stringConstant then begin
    if class2 = stringConstant then begin
@@ -1106,7 +1115,7 @@ else if class1 = stringConstant then begin
    end {else if}
 
 else if kind1 = dotch then begin
-   if class2 in [intConstant,longConstant,doubleConstant] then begin
+   if class2 in numericConstants then begin
       workString := concat(tk1.numString^, tk2.numString^);
       lt := token;
       DoNumber(true);
@@ -1114,7 +1123,7 @@ else if kind1 = dotch then begin
       token := lt;
       goto 1;
       end; {if}
-   end {else if class1 in [intConstant,longConstant,doubleConstant]}
+   end {else if class1 in numericConstants}
 
 else if kind1 = poundch then begin
    if kind2 = poundch then begin
@@ -1481,7 +1490,7 @@ if macro^.readOnly then begin           {handle special macros}
       5: begin                          {__STDC__}
          token.kind := intConst;        {__ORCAC__}
          token.numString := @oneStr;    {__STDC_NO_...__}
-         token.class := intConstant;
+         token.class := intConstant;    {__ORCAC_HAS_LONG_LONG__}
          token.ival := 1;
          oneStr := '1';
          tokenStart := @oneStr[1];
@@ -1846,7 +1855,7 @@ else begin
       new(tempString);
       tempString^[0] := chr(0);
       while
-         (token.class in [reservedWord,intconstant,longconstant,doubleconstant])
+         (token.class in ([reservedWord] + numericConstants))
          or (token.kind in [dotch,ident]) do begin
          if token.kind = ident then
             tempString^ := concat(tempString^, token.name^)
@@ -1854,7 +1863,7 @@ else begin
             tempString^ := concat(tempString^, '.')
          else if token.class = reservedWord then
             tempString^ := concat(tempString^, reservedWords[token.kind])
-         else {if token.class in [intconst,longconst,doubleconst] then}
+         else {if token.class in numericConstants then}
             tempString^ := concat(tempString^, token.numstring^);
          NextToken;
          end; {while}
@@ -2316,6 +2325,10 @@ var
                            goto 3;
                      longConstant:
                         if tk1^.token.lval <> tk2^.token.lval then
+                           goto 3;
+                     longlongConstant:
+                        if (tk1^.token.qval.lo <> tk2^.token.qval.lo) or
+                           (tk1^.token.qval.hi <> tk2^.token.qval.hi) then
                            goto 3;
                      doubleConstant:
                         if tk1^.token.rval <> tk2^.token.rval then
@@ -2831,6 +2844,9 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {    16 - check for stack errors              }
 		     FlagPragmas(p_debug);
                      NumericDirective;
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgQuad,cgUQuad] then
+                           expressionValue := llExpressionValue.lo;
                      val := long(expressionValue).lsw;
                      rangeCheck  := odd(val);
                      debugFlag   := odd(val >> 1);
@@ -2845,7 +2861,10 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      end {else}
                   else if token.name^ = 'lint' then begin
 		     FlagPragmas(p_lint);
-                     NumericDirective;   
+                     NumericDirective;
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgQuad,cgUQuad] then
+                           expressionValue := llExpressionValue.lo;
                      lint := long(expressionValue).lsw;
                      lintIsError := true;
                      if token.kind = semicolonch then begin
@@ -2879,7 +2898,10 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {    16 - common subexpression elimination    }
                      {    32 - loop invariant removal		   }
 		     FlagPragmas(p_optimize);
-                     NumericDirective;    
+                     NumericDirective;
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgQuad,cgUQuad] then
+                           expressionValue := llExpressionValue.lo;
                      val := long(expressionValue).lsw;
                      peepHole  := odd(val);
                      npeepHole := odd(val >> 1);
@@ -2976,7 +2998,10 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     8 - allow // comments                           }
                      {    16 - allow mixed decls & use C99 scope rules     }
                      FlagPragmas(p_ignore);
-                     NumericDirective;    
+                     NumericDirective;
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgQuad,cgUQuad] then
+                           expressionValue := llExpressionValue.lo;
                      val := long(expressionValue).lsw;
                      skipIllegalTokens := odd(val);
                      allowLongIntChar := odd(val >> 1);
@@ -3145,12 +3170,14 @@ var
    isBin: boolean;                      {is the value a binary number?}
    isHex: boolean;                      {is the value a hex number?}
    isLong: boolean;                     {is the value a long number?}
+   isLongLong: boolean;                 {is the value a long long number?}
    isReal: boolean;                     {is the value a real number?}
    numIndex: 0..maxLine;                {index into workString}
    sp: stringPtr;                       {for saving identifier names}
    stringIndex: 0..maxLine;             {length of the number string}
    unsigned: boolean;                   {is the number unsigned?}
    val: integer;                        {value of a digit}
+   c1: char;                            {saved copy of last character}
 
    numString: pString;                  {characters in the number}
 
@@ -3212,11 +3239,29 @@ var
    end; {GetDigits}
 
 
+   procedure ShiftAndOrValue (shiftCount, nextDigit: integer);
+
+   {  Shift the 64-bit value of token.qval left by shiftCount,  }
+   {  then binary-or it with nextDigit.                         }
+   
+   begin {ShiftAndOrValue}
+   while shiftCount > 0 do begin
+      token.qval.hi := token.qval.hi << 1;
+      if (token.qval.lo & $80000000) <> 0 then
+         token.qval.hi := token.qval.hi | 1;
+      token.qval.lo := token.qval.lo << 1;
+      shiftCount := shiftCount - 1;
+      end; {while}
+   token.qval.lo := token.qval.lo | nextDigit;
+   end; {ShiftAndOrValue}
+   
+
 begin {DoNumber}
 isBin := false;                         {assume it's not binary}
 isHex := false;                         {assume it's not hex}
 isReal := false;                        {assume it's an integer}
 isLong := false;                        {assume a short integer}
+isLongLong := false;
 unsigned := false;                      {assume signed numbers}
 stringIndex := 0;                       {no digits so far...}
 if scanWork then begin                  {set up the scanner}
@@ -3276,11 +3321,17 @@ if c2 in ['e','E'] then begin           {handle an exponent}
    end; {if}
 1:
 while c2 in ['l','u','L','U'] do        {check for long or unsigned}
-   if c2 in ['l','L'] then begin
-      NextChar;
-      if isLong then
+   if c2 in ['l','L'] then begin   
+      if isLong or isLongLong then
          FlagError(156);
-      isLong := true;
+      c1 := c2;
+      NextChar;
+      if c2 = c1 then begin
+         NextChar;
+         isLongLong := true;
+         end {if}
+      else
+         isLong := true;
       end {if}
    else {if c2 in ['u','U'] then} begin
       NextChar;
@@ -3293,6 +3344,8 @@ while c2 in ['l','u','L','U'] do        {check for long or unsigned}
 if c2 in ['f','F'] then begin           {allow F designator on reals}
    if unsigned then
       FlagError(91);
+   if isLongLong then
+      FlagError(156);
    if not isReal then begin
       FlagError(100);
       isReal := true;
@@ -3300,6 +3353,8 @@ if c2 in ['f','F'] then begin           {allow F designator on reals}
    NextChar;
    end; {if}
 numString[0] := chr(stringIndex);       {set the length of the string}
+if doingPPExpression then
+   isLongLong := true;
 if isReal then begin                    {convert a real constant}
    token.kind := doubleConst;
    token.class := doubleConstant;
@@ -3315,22 +3370,34 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
       or (not unsigned and (stringIndex = 5) and (numString > '32767'))
       or (unsigned and (stringIndex = 5) and (numString > '65535')) then
       isLong := true;
-   if (stringIndex > 10) or
-      ((stringIndex = 10) and (numString > '4294967295')) then begin
+   if (stringIndex > 10)
+      or (not unsigned and (stringIndex = 10) and (numString > '2147483647'))
+      or (unsigned and (stringIndex = 10) and (numString > '4294967295')) then
+      isLongLong := true;
+   if (not unsigned and ((stringIndex > 19) or
+      ((stringIndex = 19) and (numString > '9223372036854775807')))) or
+      (unsigned and ((stringIndex > 20) or
+      ((stringIndex = 20) and (numString > '18446744073709551615')))) then begin
       numString := '0';
       if flagOverflows then
          FlagError(6);
       end; {if}
-   if isLong then begin
+   if isLongLong then begin
+      token.class := longlongConstant;
+      Convertsll(token.qval, numString);
+      if unsigned then
+         token.kind := ulonglongConst
+      else begin
+         token.kind := longlongConst;
+         end; {else}
+      end {if}
+   else if isLong then begin
       token.class := longConstant;
       token.lval := Convertsl(numString);
       if unsigned then
          token.kind := ulongConst
-      else begin
+      else
          token.kind := longConst;
-         if token.lval < 0 then
-            token.kind := ulongConst;
-         end; {else}
       end {if}
    else begin
       if unsigned then
@@ -3342,11 +3409,12 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
       end; {else}
    end {else if}
 else begin                            {hex, octal, & binary}
-   token.lval := 0;
+   token.qval.lo := 0;
+   token.qval.hi := 0;
    if isHex then begin
       i := 3;
       while i <= length(numString) do begin
-         if token.lval & $F0000000 <> 0 then begin
+         if token.qval.hi & $F0000000 <> 0 then begin
             i := maxint;
             if flagOverflows then
                FlagError(6);
@@ -3356,7 +3424,7 @@ else begin                            {hex, octal, & binary}
                val := (ord(numString[i])-7) & $000F
             else
                val := ord(numString[i]) & $000F;
-            token.lval := (token.lval << 4) | val;
+            ShiftAndOrValue(4, val);
             i := i+1;
             end; {else}
          end; {while}
@@ -3364,7 +3432,7 @@ else begin                            {hex, octal, & binary}
    else if isBin then begin
       i := 3;
       while i <= length(numString) do begin
-         if token.lval & $80000000 <> 0 then begin
+         if token.qval.hi & $80000000 <> 0 then begin
             i := maxint;
             if flagOverflows then
                FlagError(6);
@@ -3372,7 +3440,7 @@ else begin                            {hex, octal, & binary}
          else begin
             if not (numString[i] in ['0','1']) then
                FlagError(121);
-            token.lval := (token.lval << 1) | (ord(numString[i]) & $0001);
+            ShiftAndOrValue(1, ord(numString[i]) & $0001);
             i := i+1;
             end; {else}
          end; {while}
@@ -3380,7 +3448,7 @@ else begin                            {hex, octal, & binary}
    else begin
       i := 1;
       while i <= length(numString) do begin
-         if token.lval & $E0000000 <> 0 then begin
+         if token.qval.hi & $E0000000 <> 0 then begin
             i := maxint;
             if flagOverflows then
                FlagError(6);
@@ -3388,22 +3456,32 @@ else begin                            {hex, octal, & binary}
          else begin
             if numString[i] in ['8','9'] then
                FlagError(7);
-            token.lval := (token.lval << 3) | (ord(numString[i]) & $0007);
+            ShiftAndOrValue(3, ord(numString[i]) & $0007);
             i := i+1;
             end; {else}
          end; {while}
       end; {else}
-   if long(token.lval).msw <> 0 then
-      isLong := true;
-   if isLong then begin
-      if unsigned or (token.lval & $80000000 <> 0) then
+   if token.qval.hi <> 0 then
+      isLongLong := true;
+   if not isLongLong then
+      if long(token.qval.lo).msw <> 0 then
+         isLong := true;
+   if isLongLong then begin
+      if unsigned or (token.qval.hi & $80000000 <> 0) then
+         token.kind := ulonglongConst
+      else
+         token.kind := longlongConst;
+      token.class := longlongConstant;
+      end {if}
+   else if isLong then begin
+      if unsigned or (token.qval.lo & $80000000 <> 0) then
          token.kind := ulongConst
       else
          token.kind := longConst;
       token.class := longConstant;
       end {if}
    else begin
-      if (long(token.lval).lsw & $8000) <> 0 then
+      if (long(token.qval.lo).lsw & $8000) <> 0 then
          unsigned := true;
       if unsigned then
          token.kind := uintConst
@@ -3718,6 +3796,8 @@ lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155];
 
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';
+                                        {set of classes for numeric constants}
+numericConstants := [intConstant,longConstant,longlongConstant,doubleConstant];
 
 new(mp);                                {__LINE__}
 mp^.name := @'__LINE__';
@@ -3779,6 +3859,15 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.algorithm := 6;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__ORCAC_HAS_LONG_LONG__}
+mp^.name := @'__ORCAC_HAS_LONG_LONG__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 5;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -3877,7 +3966,7 @@ repeat
                         intConstant   : token.ival := -token.ival;
                         longConstant  : token.lval := -token.lval;
                         doubleConstant: token.rval := -token.rval;
-                        otherwise: ;
+                        longlongConstant,otherwise: Error(108);
                         end; {case}
                   end {if}
                else

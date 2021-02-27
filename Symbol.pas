@@ -36,6 +36,8 @@
 {  uInt32Ptr - pointer to the base type for 32-bit unsigned int }
 {  longPtr - pointer to the base type for long                  }
 {  uLongPtr - pointer to the base type for unsigned long        }
+{  longLongPtr - pointer to the base type for long long         }
+{  uLongLongPtr - pointer to base type for unsigned long long   }
 {  floatPtr - pointer to the base type for float                }
 {  doublePtr - pointer to the base type for double              }
 {  compPtr - pointer to the base type for comp                  }
@@ -77,8 +79,9 @@ var
 
                                         {base types}
    charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
-      uInt32Ptr,longPtr,uLongPtr,floatPtr,doublePtr,compPtr,extendedPtr,
-      boolPtr,stringTypePtr,voidPtr,voidPtrPtr,defaultStruct: typePtr;
+      uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
+      floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,voidPtr,
+      voidPtrPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
 
@@ -491,6 +494,8 @@ procedure DoGlobals;
                            end;
                         cgLong,cgULong:
                            GenL1(dc_cns, ip^.ival, ip^.count);
+                        cgQuad,cgUQuad:
+                           GenQ1(dc_cns, ip^.qval, ip^.count);
                         cgReal,cgDouble,cgComp,cgExtended:
                            GenR1t(dc_cns, ip^.rval, ip^.count, ip^.itype);
                         cgString:
@@ -580,6 +585,8 @@ procedure DoGlobals;
                         end;
                      cgLong,cgULong:
                         GenL1(dc_cns, ip^.ival, 1);
+                     cgQuad,cgUQuad:
+                        GenQ1(dc_cns, ip^.qval, 1);
                      cgReal,cgDouble,cgComp,cgExtended:
                         GenR1t(dc_cns, ip^.rval, 1, ip^.itype);
                      cgString:
@@ -979,6 +986,8 @@ var
          cgDouble:	val := $04;
          cgComp:	val := $0A;
          cgExtended:	val := $05;
+         cgQuad:	val := $0A; {same as comp}
+         cgUQuad:	val := $4A;
          otherwise:	val := $01;
          end; {case}
       CnOut(val | modifiers);		{write the format byte}
@@ -1305,6 +1314,24 @@ with uLongPtr^ do begin
    kind := scalarType;
    baseType := cgULong;
    cType := ctULong;
+   end; {with}
+new(longLongPtr);                       {long long}
+with longLongPtr^ do begin
+   size := cgQuadSize;
+   saveDisp := 0;
+   isConstant := false;
+   kind := scalarType;
+   baseType := cgQuad;
+   cType := ctLongLong;
+   end; {with}
+new(uLongLongPtr);                      {unsigned long long}
+with uLongLongPtr^ do begin
+   size := cgQuadSize;
+   saveDisp := 0;
+   isConstant := false;
+   kind := scalarType;
+   baseType := cgUQuad;
+   cType := ctULongLong;
    end; {with}
 new(floatPtr);                          {real}
 with floatPtr^ do begin

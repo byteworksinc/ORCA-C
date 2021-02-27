@@ -116,6 +116,17 @@ opt[dc_prm] := 'PRM';
 opt[pc_nat] := 'nat';
 opt[pc_bno] := 'bno';
 opt[pc_nop] := 'nop';
+opt[pc_bqr] := 'bqr';
+opt[pc_bqx] := 'bqx';
+opt[pc_baq] := 'baq';
+opt[pc_bnq] := 'bnq';
+opt[pc_ngq] := 'ngq';
+opt[pc_mpq] := 'mpq';
+opt[pc_umq] := 'umq';
+opt[pc_dvq] := 'dvq';
+opt[pc_udq] := 'udq';
+opt[pc_mdq] := 'mdq';
+opt[pc_uqm] := 'uqm';
 end; {InitWriteCode}
 
 
@@ -239,6 +250,8 @@ var
       cgUWord:  write('u');
       cgLong:   write('l');
       cgULong:  write('ul');
+      cgQuad:   write('q');
+      cgUQuad:  write('uq');
       cgReal:   write('r');
       cgDouble: write('d');
       cgComp:   write('c');
@@ -259,7 +272,7 @@ with code^ do
       pc_uml,pc_adr,pc_dvr,pc_mpr,pc_adi,pc_sbi,pc_mpi,pc_dvi,
       pc_umi,pc_shl,pc_nop,pc_and,pc_lnd,pc_bnd,pc_lor,pc_ior,pc_bxr,
       pc_bnt,pc_blx,pc_bnl,pc_ngi,pc_ngl,pc_ngr,pc_ixa,pc_mdl,
-      pc_udi,pc_udl: ;
+      pc_udi,pc_udl,pc_bqr,pc_bqx,pc_baq: ;
 
       dc_prm:
          write('  ', q:1, ':', r:1, ':', s:1);
@@ -331,6 +344,8 @@ with code^ do
                write(r:1);
             cgLong,cgULong:
                write(lval:1);
+            cgQuad,cgUQuad:
+               write('***');
             cgReal,cgDouble,cgComp,cgExtended:
                write('***');
             cgString: begin

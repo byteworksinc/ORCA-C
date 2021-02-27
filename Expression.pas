@@ -216,6 +216,11 @@ function UsualUnaryConversions: baseTypeEnum;
 { outputs:                                                      }
 {       expressionType - set to result type                     }
 
+procedure GetLLExpressionValue (var val: longlong);
+
+{ get the value of the last integer constant expression as a    }
+{ long long (whether it had long long type or not).             }
+
 {---------------------------------------------------------------}
 
 implementation
@@ -268,6 +273,55 @@ function ult (x,y: longint): longint; extern;
 function umod (x,y: longint): longint; extern;
 
 function umul (x,y: longint): longint; extern;
+
+{-- External 64-bit math routines ------------------------------}
+{ Procedures for arithmetic and shifts compute "x := x OP y".   }
+
+procedure umul64 (var x: longlong; y: longlong); extern;
+
+procedure udiv64 (var x: longlong; y: longlong); extern;
+
+procedure div64 (var x: longlong; y: longlong); extern;
+
+procedure umod64 (var x: longlong; y: longlong); extern;
+
+procedure rem64 (var x: longlong; y: longlong); extern;
+
+procedure add64 (var x: longlong; y: longlong); extern;
+
+procedure sub64 (var x: longlong; y: longlong); extern;
+
+procedure shl64 (var x: longlong; y: integer); extern;
+
+procedure ashr64 (var x: longlong; y: integer); extern;
+
+procedure lshr64 (var x: longlong; y: integer); extern;
+
+function ult64(a,b: longlong): integer; extern;
+
+function uge64(a,b: longlong): integer; extern;
+
+function ule64(a,b: longlong): integer; extern;
+
+function ugt64(a,b: longlong): integer; extern;
+
+function slt64(a,b: longlong): integer; extern;
+
+function sge64(a,b: longlong): integer; extern;
+
+function sle64(a,b: longlong): integer; extern;
+
+function sgt64(a,b: longlong): integer; extern;
+
+{-- External conversion functions; imported from CGC.pas -------}
+
+procedure CnvXLL (var result: longlong; val: extended); extern;
+
+procedure CnvXULL (var result: longlong; val: extended); extern;
+
+function CnvLLX (val: longlong): extended; extern;
+
+function CnvULLX (val: longlong): extended; extern;
 
 {---------------------------------------------------------------}
 
@@ -337,16 +391,40 @@ if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
    rt := Unary(rType^.baseType);
    if lt <> rt then begin
       if lt = cgExtended then begin
-         if rt in [cgWord,cgUWord,cgLong,cgULong] then
+         if rt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
             Gen2(pc_cnv, ord(rt), ord(cgExtended));
          UsualBinaryConversions := cgExtended;
          expressionType := extendedPtr;
          end {if}
       else if rt = cgExtended then begin
-         if lt in [cgWord,cgUWord,cgLong,cgULong] then
+         if lt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
             Gen2(pc_cnn, ord(lt), ord(cgExtended));
          UsualBinaryConversions := cgExtended;
          expressionType := extendedPtr;
+         end {else if}
+      else if lt = cgUQuad then begin
+         if rt in [cgWord,cgUWord,cgLong,cgULong] then
+            Gen2(pc_cnv, ord(rt), ord(cgUQuad));
+         UsualBinaryConversions := cgUQuad;
+         expressionType := uLongLongPtr;
+         end {else if}
+      else if rt = cgUQuad then begin
+         if lt in [cgWord,cgUWord,cgLong,cgULong] then
+            Gen2(pc_cnn, ord(lt), ord(cgUQuad));
+         UsualBinaryConversions := cgUQuad;
+         expressionType := uLongLongPtr;
+         end {else if}
+      else if lt = cgQuad then begin
+         if rt in [cgWord,cgUWord,cgLong,cgULong] then
+            Gen2(pc_cnv, ord(rt), ord(cgQuad));
+         UsualBinaryConversions := cgQuad;
+         expressionType := longLongPtr;
+         end {else if}
+      else if rt = cgQuad then begin
+         if lt in [cgWord,cgUWord,cgLong,cgULong] then
+            Gen2(pc_cnn, ord(lt), ord(cgQuad));
+         UsualBinaryConversions := cgQuad;
+         expressionType := longLongPtr;
          end {else if}
       else if lt = cgULong then begin
          if rt in [cgWord,cgUWord] then
@@ -820,8 +898,9 @@ var
 
    {in the preprocessor, all identifiers (post macro replacement) become 0}
    if kind = preprocessorExpression then begin
-      stack^.token.kind := longconst;
-      stack^.token.lval := 0;
+      stack^.token.class := longlongConstant;
+      stack^.token.kind := longlongconst;
+      stack^.token.qval := longlong0;
       end {if}
 
    {if the id is not declared, create a function returning integer}
@@ -866,7 +945,7 @@ var
 
    { do an operation                                                }
 
-   label 1;
+   label 1,2,3;
 
    var
       baseType: baseTypeEnum;           {base type of value to cast}
@@ -877,6 +956,8 @@ var
       op: tokenPtr;                     {work pointer}
       op1,op2: longint;                 {for evaluating constant expressions}
       rop1,rop2: double;                {for evaluating double expressions}
+      llop1, llop2: longlong;           {for evaluating long long expressions}
+      extop1: extended;                 {temporary for conversions}
       tp: typePtr;                      {cast type}
       unsigned: boolean;                {is the term unsigned?}
 
@@ -903,7 +984,7 @@ var
       end; {Pop}
 
 
-      function RealVal (token: tokenType): double;
+      function RealVal (token: tokenType): extended;
 
       { convert an operand to a real value                      }
 
@@ -924,6 +1005,10 @@ var
          else
             RealVal := token.lval;
          end {else if}
+      else if token.kind = longlongconst then
+         RealVal := CnvLLX(token.qval)
+      else if token.kind = ulonglongconst then
+         RealVal := CnvULLX(token.qval)
       else
          RealVal := token.rval;
       end; {RealVal}
@@ -945,15 +1030,48 @@ var
       end; {IntVal}
 
 
+      procedure GetLongLongVal (var result: longlong; token: tokenType);
+
+      { convert an operand to a long long value                 }
+
+      begin {LongLongVal}
+      if token.kind = intconst then begin
+         result.lo := token.ival;
+         if result.lo < 0 then
+            result.hi := -1
+         else
+            result.hi := 0;
+         end {if}
+      else if token.kind = uintconst then begin
+         result.lo := token.ival & $0000FFFF;
+         result.hi := 0;
+         end {else if}
+      else if token.kind = longconst then begin
+         result.lo := token.lval;
+         if result.lo < 0 then
+            result.hi := -1
+         else
+            result.hi := 0;
+         end {else if}
+      else if token.kind = ulongconst then begin
+         result.lo := token.lval;
+         result.hi := 0;
+         end {else if}
+      else {if token.kind in [longlongconst,ulonglongconst] then} begin
+         result := token.qval;
+         end; {else}
+      end; {LongLongVal}
+
+
       function PPKind (token: tokenType): tokenEnum;
 
       { adjust kind of token for use in preprocessor expression }
 
       begin {PPKind}
-      if token.kind = intconst then
-         PPKind := longconst
-      else if token.kind = uintconst then
-         PPKind := ulongconst
+      if token.kind in [intconst,longconst] then
+         PPKind := longlongconst
+      else if token.kind in [uintconst,ulongconst] then
+         PPKind := ulonglongconst
       else
          PPKind := token.kind;
       end; {PPKind}
@@ -988,13 +1106,14 @@ var
          op^.right := Pop;
          op^.middle := Pop;
          op^.left := Pop;
-         if op^.right^.token.kind in
-            [intconst,uintconst,longconst,ulongconst] then
-            if op^.left^.token.kind in
-               [intconst,uintconst,longconst,ulongconst] then
-               if op^.middle^.token.kind in
-                  [intconst,uintconst,longconst,ulongconst] then begin
-                  if IntVal(op^.left^.token) <> 0 then
+         if op^.right^.token.kind in [intconst,uintconst,
+            longconst,ulongconst,longlongconst,ulonglongconst] then
+            if op^.left^.token.kind in [intconst,uintconst,
+               longconst,ulongconst,longlongconst,ulonglongconst] then
+               if op^.middle^.token.kind in [intconst,uintconst,
+                  longconst,ulongconst,longlongconst,ulonglongconst] then begin
+                  GetLongLongVal(llop1, op^.left^.token);
+                  if (llop1.lo <> 0) or (llop1.hi <> 0) then
                      op^.token := op^.middle^.token
                   else
                      op^.token := op^.right^.token;
@@ -1036,10 +1155,8 @@ var
          kindLeft := op^.left^.token.kind;
          if kindRight in [intconst,uintconst,longconst,ulongconst] then begin
             if kindLeft in [intconst,uintconst,longconst,ulongconst] then begin
-               if kind = preprocessorExpression then begin
-                  kindLeft := PPKind(op^.left^.token);
-                  kindRight := PPKind(op^.right^.token);
-                  end; {if}
+               if kind = preprocessorExpression then
+                  goto 2;
 
                {do the usual binary conversions}
                if (kindRight = ulongconst) or (kindLeft = ulongconst) then
@@ -1172,14 +1289,174 @@ var
                goto 1;
                end; {if}
             end; {if}
-         if op^.right^.token.kind in
-            [intconst,uintconst,longconst,ulongconst,doubleconst] then
-            if op^.left^.token.kind in
-               [intconst,uintconst,longconst,ulongconst,doubleconst] then
+2:
+         if kindRight in [intconst,uintconst,longconst,ulongconst,
+            longlongconst,ulonglongconst] then begin
+            if kindLeft in [intconst,uintconst,longconst,ulongconst,
+               longlongconst,ulonglongconst] then begin
+
+               if kind = preprocessorExpression then begin
+                  kindLeft := PPKind(op^.left^.token);
+                  kindRight := PPKind(op^.right^.token);
+                  end; {if}
+
+               {do the usual binary conversions}
+               if (kindRight = ulonglongconst) or (kindLeft = ulonglongconst) then
+                  ekind := ulonglongconst
+               else 
+                  ekind := longlongconst;
+
+               unsigned := ekind = ulonglongconst;
+               GetLongLongVal(llop1, op^.left^.token);
+               GetLongLongVal(llop2, op^.right^.token);
+               
+               case op^.token.kind of
+                  barbarop    : begin                                   {||}
+                                llop1.hi := 0;
+                                llop1.lo :=
+                                   ord((llop1.lo <> 0) or (llop1.hi <> 0) or
+                                       (llop2.lo <> 0) or (llop2.hi <> 0));
+                                ekind := intconst;
+                                end;
+                  andandop    : begin                                   {&&}
+                                llop1.hi := 0;
+                                llop1.lo :=
+                                   ord(((llop1.lo <> 0) or (llop1.hi <> 0)) and
+                                       ((llop2.lo <> 0) or (llop2.hi <> 0)));
+                                ekind := intconst;
+                                end;
+                  carotch     : begin                                   {^}
+                                llop1.lo := llop1.lo ! llop2.lo;
+                                llop1.hi := llop1.hi ! llop2.hi;
+                                end;
+                  barch       : begin                                   {|}
+                                llop1.lo := llop1.lo | llop2.lo;
+                                llop1.hi := llop1.hi | llop2.hi;
+                                end;
+                  andch       : begin                                   {&}
+                                llop1.lo := llop1.lo & llop2.lo;
+                                llop1.hi := llop1.hi & llop2.hi;
+                                end;
+                  eqeqop      : begin                                   {==}
+                                llop1.hi := 0;
+                                llop1.lo := ord((llop1.lo = llop2.lo) and
+                                                (llop1.hi = llop2.hi));
+                                ekind := intconst;
+                                end;
+                  exceqop     : begin                                   {!=}
+                                llop1.hi := 0;
+                                llop1.lo := ord((llop1.lo <> llop2.lo) or
+                                                (llop1.hi <> llop2.hi));
+                                ekind := intconst;
+                                end;
+                  ltch        : begin                                   {<}
+                                if unsigned then
+                                   llop1.lo := ult64(llop1, llop2)
+                                else
+                                   llop1.lo := slt64(llop1, llop2);
+                                llop1.hi := 0;
+                                ekind := intconst;
+                                end;
+                  gtch        : begin                                   {>}
+                                if unsigned then
+                                   llop1.lo := ugt64(llop1, llop2)
+                                else
+                                   llop1.lo := sgt64(llop1, llop2);
+                                llop1.hi := 0;
+                                ekind := intconst;
+                                end;
+                  lteqop      : begin                                   {<=}
+                                if unsigned then
+                                   llop1.lo := ule64(llop1, llop2)
+                                else
+                                   llop1.lo := sle64(llop1, llop2);
+                                llop1.hi := 0;
+                                ekind := intconst;
+                                end;
+                  gteqop      : begin                                   {>=}
+                                if unsigned then
+                                   llop1.lo := uge64(llop1, llop2)
+                                else
+                                   llop1.lo := sge64(llop1, llop2);
+                                llop1.hi := 0;
+                                ekind := intconst;
+                                end;
+                  ltltop      : begin                                   {<<}
+                                shl64(llop1, long(llop2.lo).lsw);
+                                ekind := kindLeft;
+                                end;
+                  gtgtop      : begin                                   {>>}
+                                if kindleft = ulonglongconst then
+                                   lshr64(llop1, long(llop2.lo).lsw)
+                                else
+                                   ashr64(llop1, long(llop2.lo).lsw);
+                                ekind := kindLeft;
+                                end;
+                  plusch      : add64(llop1, llop2);                    {+}
+                  minusch     : sub64(llop1, llop2);                    {-}
+                  asteriskch  : umul64(llop1, llop2);                   {*}
+                  slashch     : begin                                   {/}
+                                if (llop2.lo = 0) and (llop2.hi = 0) then begin
+                                   Error(109);
+                                   llop2 := longlong1;
+                                   end; {if}
+                                if unsigned then
+                                   udiv64(llop1, llop2)
+                                else
+                                   div64(llop1, llop2);
+                                end;
+                  percentch   : begin                                   {%}
+                                if (llop2.lo = 0) and (llop2.hi = 0) then begin
+                                   Error(109);
+                                   llop2 := longlong1;
+                                   end; {if}
+                                if unsigned then
+                                   umod64(llop1, llop2)
+                                else
+                                   rem64(llop1, llop2);
+                                end;
+                  otherwise: Error(57);
+                  end; {case}
+                  
+               dispose(op^.right);
+               op^.right := nil;
+               dispose(op^.left);
+               op^.left := nil;
+               op^.token.kind := ekind;
+               if ekind in [longlongconst,ulonglongconst] then begin
+                  op^.token.qval := llop1;
+                  op^.token.class := longlongConstant;
+                  end {if}
+               else if ekind in [longconst,ulongconst] then begin
+                  op^.token.lval := llop1.lo;
+                  op^.token.class := longConstant;
+                  end {if}
+               else begin
+                  op^.token.ival := long(llop1.lo).lsw;
+                  op^.token.class := intConstant;
+                  end; {else}
+               goto 1;
+               end; {if}
+            end; {if}
+
+         if op^.right^.token.kind in [intconst,uintconst,longconst,ulongconst,
+            longlongconst,ulonglongconst,doubleconst] then
+            if op^.left^.token.kind in [intconst,uintconst,longconst,ulongconst,
+               longlongconst,ulonglongconst,doubleconst] then
                begin
                ekind := doubleconst; {evaluate a constant operation}
-               rop1 := RealVal(op^.left^.token);
-               rop2 := RealVal(op^.right^.token);
+               extop1 := RealVal(op^.left^.token);
+               rop1 := extop1;
+               if op^.left^.token.kind in [longlongconst,ulonglongconst] then
+                  if rop1 <> extop1 then
+                     if not (op^.token.kind in [barbarop,andandop]) then
+                        goto 1;
+               extop1 := RealVal(op^.right^.token);
+               rop2 := extop1;
+               if op^.right^.token.kind in [longlongconst,ulonglongconst] then
+                  if rop2 <> extop1 then
+                     if not (op^.token.kind in [barbarop,andandop]) then
+                        goto 1;
                dispose(op^.right);
                op^.right := nil;
                dispose(op^.left);
@@ -1282,27 +1559,32 @@ var
 
          else if op^.token.kind = castoper then begin
             class := op^.left^.token.class;
-            if class in [intConstant,longConstant,doubleConstant] then begin
+            if class in [intConstant,longConstant,longlongconstant,
+               doubleConstant] then begin
                tp := op^.castType;
                while tp^.kind = definedType do
                   tp := tp^.dType;
                if tp^.kind = scalarType then begin
                   baseType := tp^.baseType;
-                  if baseType < cgString then begin
+                  if (baseType < cgString) or (baseType in [cgQuad,cgUQuad])
+                     then begin
                      if class = doubleConstant then begin
                         rop1 := RealVal(op^.left^.token);
-                        op1 := trunc(rop1);
-                        end {if}
-                     else {if class in [intConstant,longConstant] then} begin
-                        op1 := IntVal(op^.left^.token);
-                        if op1 >= 0 then
-                           rop1 := op1
-                        else if op^.left^.token.kind = uintConst then
-                           rop1 := (op1 & $7FFF) + 32768.0
-                        else if op^.left^.token.kind = ulongConst then
-                           rop1 := (op1 & $7FFFFFFF) + 2147483648.0
+                        if baseType = cgUQuad then
+                           CnvXULL(llop1, rop1)
                         else
-                           rop1 := op1;
+                           CnvXLL(llop1, rop1);
+                        end {if}
+                     else begin                      {handle integer constants}
+                        GetLongLongVal(llop1, op^.left^.token);
+                        if op^.left^.token.kind = ulonglongconst then
+                           extop1 := CnvULLX(llop1)
+                        else
+                           extop1 := CnvLLX(llop1);
+                        rop1 := extop1;          
+                        if baseType in [cgExtended,cgComp] then
+                           if rop1 <> extop1 then
+                              goto 3;
                         end; {else if}
                      dispose(op^.left);
                      op^.left := nil;
@@ -1312,7 +1594,7 @@ var
                         if tp^.cType = ctBool then
                            op^.token.ival := ord(rop1 <> 0.0)
                         else
-                           op^.token.ival := long(op1).lsw;
+                           op^.token.ival := long(llop1.lo).lsw;
                         if baseType = cgByte then
                            with op^.token do begin
                               ival := ival & $00FF;
@@ -1323,23 +1605,33 @@ var
                      else if baseType = cgUWord then begin
                         op^.token.kind := uintConst;         
                         op^.token.class := intConstant;
-                        op^.token.ival := long(op1).lsw;
+                        op^.token.ival := long(llop1.lo).lsw;
                         end {else if}
                      else if baseType = cgUByte then begin
                         op^.token.kind := intConst;         
                         op^.token.class := intConstant;
-                        op^.token.ival := long(op1).lsw;
+                        op^.token.ival := long(llop1.lo).lsw;
                         op^.token.ival := op^.token.ival & $00FF;
                         end {else if}
                      else if baseType = cgLong then begin
                         op^.token.kind := longConst;
                         op^.token.class := longConstant;
-                        op^.token.lval := op1;
+                        op^.token.lval := llop1.lo;
                         end {else if}
                      else if baseType = cgULong then begin
                         op^.token.kind := ulongConst;
                         op^.token.class := longConstant;
-                        op^.token.lval := op1;
+                        op^.token.lval := llop1.lo;
+                        end {else if}
+                     else if baseType = cgQuad then begin
+                        op^.token.kind := longlongConst;
+                        op^.token.class := longlongConstant;
+                        op^.token.qval := llop1;
+                        end {else if}
+                     else if baseType = cgUQuad then begin
+                        op^.token.kind := ulonglongConst;
+                        op^.token.class := longlongConstant;
+                        op^.token.qval := llop1;
                         end {else if}
                      else begin
                         op^.token.kind := doubleConst;
@@ -1347,20 +1639,18 @@ var
                         op^.token.rval := rop1;
                         end; {else if}
                      end; {if}
-                  end; {if}
+3:                end; {if}
                end; {if}
             end {else if castoper}
 
          else if not (op^.token.kind in
             [typedef,plusplusop,minusminusop,opplusplus,opminusminus,uand]) then
             begin
-            if (op^.left^.token.kind
+            if (kind <> preprocessorExpression) and (op^.left^.token.kind
                in [intconst,uintconst,longconst,ulongconst]) then begin
 
                {evaluate a constant operation}
                ekind := op^.left^.token.kind;
-               if kind = preprocessorExpression then
-                  ekind := PPKind(op^.left^.token);
                op1 := IntVal(op^.left^.token);
                dispose(op^.left);
                op^.left := nil;
@@ -1384,6 +1674,45 @@ var
                   op^.token.ival := long(op1).lsw;
                   end; {else}
                end {if}
+            else if op^.left^.token.kind in [longlongconst,ulonglongconst,
+               intconst,uintconst,longconst,ulongconst] then begin
+               
+               {evaluate a constant operation with long long operand}
+               ekind := op^.left^.token.kind;
+               if kind = preprocessorExpression then
+                  ekind := PPKind(op^.left^.token);
+               GetLongLongVal(llop1, op^.left^.token);
+               dispose(op^.left);
+               op^.left := nil;
+               case op^.token.kind of
+                  tildech     : begin                           {~}
+                     llop1.lo := ~llop1.lo;
+                     llop1.hi := ~llop1.hi;
+                     end;
+                  excch       : begin                           {!}
+                     op1 := ord((llop1.hi = 0) and (llop1.lo = 0));
+                     ekind := intconst;
+                     end;
+                  uminus      : begin                           {unary -}
+                     llop1.lo := ~llop1.lo;
+                     llop1.hi := ~llop1.hi;
+                     llop1.lo := llop1.lo + 1;
+                     if llop1.lo = 0 then
+                        llop1.hi := llop1.hi + 1;
+                     end;
+                  uasterisk   : Error(79);                      {unary *}
+                  otherwise: Error(57);
+                  end; {case}
+               op^.token.kind := ekind;
+               if ekind in [longlongconst,ulonglongconst] then begin
+                  op^.token.class := longlongConstant;
+                  op^.token.qval := llop1;
+                  end {if}
+               else begin
+                  op^.token.class := intConstant;
+                  op^.token.ival := long(op1).lsw;
+                  end; {else}
+               end {else if}
             else if op^.left^.token.kind = doubleconst then begin
                ekind := doubleconst; {evaluate a constant operation}
                rop1 := RealVal(op^.left^.token);
@@ -1477,8 +1806,8 @@ if token.kind in startExpression then begin
                            if op^.token.kind = castoper then
                               if op^.casttype^.kind = scalarType then
                                  if op^.casttype^.baseType in [cgByte,cgUByte,
-                                    cgWord,cgUWord,cgLong,cgULong] then
-                                    goto 3;
+                                    cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad]
+                                    then goto 3;
                      while op <> nil do begin
                         if op^.token.kind = sizeofsy then
                            goto 3;
@@ -1733,6 +2062,8 @@ if expressionType^.kind = scalarType then begin
          Gen1t(pc_ldc, 0, cgWord);
       cgLong,cgULong:
          GenLdcLong(0);
+      cgQuad,cgUQuad:
+         GenLdcQuad(longlong0);
       cgReal,cgDouble,cgComp,cgExtended:
          GenLdcReal(0.0);
       otherwise:
@@ -2089,10 +2420,12 @@ case tp of
          Gen0(op);
          end;
       end;
-   cgLong,cgULong: begin
+   cgLong,cgULong,cgQuad,cgUQuad: begin
+      if tp in [cgQuad,cgUQuad] then 
+         Gen2(pc_cnv, ord(tp), ord(cgLong));
       if size <> 1 then begin
          GenLdcLong(size);
-         if tp = cgLong then
+         if tp in [cgLong,cgQuad] then
             Gen0(pc_mpl)
          else
             Gen0(pc_uml);
@@ -2340,6 +2673,14 @@ var
                      Gen0(pc_sbl);
                   end;
 
+               cgQuad,cgUQuad: begin
+                  GenLdcQuad(longlong1);
+                  if inc then
+                     Gen0(pc_adq)
+                  else
+                     Gen0(pc_sbq);
+                  end;
+
                cgReal,cgDouble,cgComp,cgExtended: begin
                   GenLdcReal(1.0);
                   if inc then
@@ -2382,7 +2723,7 @@ var
          if iType^.kind = scalarType then begin
             iSize := 1;
             baseType := iType^.baseType;
-            if (baseType in [cgReal,cgDouble,cgComp,cgExtended])
+            if (baseType in [cgReal,cgDouble,cgComp,cgExtended,cgQuad,cgUQuad])
                or (iType^.cType = ctBool) then begin
 
                {do real or bool inc or dec}
@@ -2414,6 +2755,10 @@ var
                      IncOrDec(pc_l = pc_lld);
                if iType^.cType = ctBool then
                   expressionType := boolPtr
+               else if baseType = cgQuad then
+                  expressionType := longLongPtr
+               else if baseType = cgUQuad then
+                  expressionType := ulongLongPtr
                else
                   expressionType := doublePtr;
                goto 1;
@@ -2783,9 +3128,12 @@ var
 
    begin {CheckDivByZero}
    if opType^.kind = scalarType then
-      if opType^.baseType in [cgByte,cgWord,cgUByte,cgUWord,cgLong,cgULong] then
+      if opType^.baseType in 
+         [cgByte,cgWord,cgUByte,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
          if ((divisor.class = intConstant) and (divisor.ival = 0))
             or ((divisor.class = longConstant) and (divisor.lval = 0))
+            or ((divisor.class = longlongConstant) 
+               and (divisor.qval.lo = 0) and (divisor.qval.hi = 0))
             or ((divisor.class = doubleConstant) and (divisor.rval = 0.0)) then
             Error(129);
    end; {CheckDivByZero}
@@ -2807,6 +3155,12 @@ var
       shiftCount := shiftCountTok.ival
    else if shiftCountTok.class = longConstant then
       shiftCount := shiftCountTok.lval
+   else if shiftCountTok.class = longlongConstant then begin
+      if shiftCountTok.qval.hi = 0 then
+         shiftCount := shiftCountTok.qval.lo
+      else
+         shiftCount := -1;
+      end {else if}
    else
       shiftCount := 0;
 
@@ -2816,6 +3170,9 @@ var
             Error(130);
       if opType^.baseType in [cgLong,cgULong] then
          if (shiftCount < 0) or (shiftCount > 31) then
+            Error(130);
+      if opType^.baseType in [cgQuad,cgUQuad] then
+         if (shiftCount < 0) or (shiftCount > 63) then
             Error(130);
       end; {if}
    end; {CheckShiftOverflow}
@@ -2886,6 +3243,18 @@ case tree^.token.kind of
       lastwasconst := true;
       lastconst := tree^.token.lval;
       end; {case longConst}
+
+   longlongConst,ulonglongConst: begin
+      GenLdcQuad(tree^.token.qval);
+      if tree^.token.kind = longlongConst then
+         expressionType := longlongPtr
+      else
+         expressionType := ulonglongPtr;
+      if (tree^.token.qval.hi = 0) and (tree^.token.qval.lo >= 0) then begin
+         lastwasconst := true;
+         lastconst := tree^.token.qval.lo;
+         end; {if}
+      end; {case longlongConst}
 
    doubleConst: begin
       GenLdcReal(tree^.token.rval);
@@ -3019,10 +3388,17 @@ case tree^.token.kind of
                   [cgReal,cgDouble,cgComp,cgExtended,cgVoid] then
                   Error(66);
                et := UsualUnaryConversions;
-               if et <> Unary(ltype^.baseType) then begin
-                  Gen2(pc_cnv, et, ord(Unary(ltype^.baseType)));
+               if ltype^.baseType in [cgQuad,cgUQuad] then begin
+                  if not (et in [cgWord,cgUWord]) then begin
+                     Gen2(pc_cnv, et, ord(cgWord));
+                     end; {if}
                   expressionType := lType;
-                  end; {if}
+                  end {if}
+               else
+                  if et <> Unary(ltype^.baseType) then begin
+                     Gen2(pc_cnv, et, ord(Unary(ltype^.baseType)));
+                     expressionType := lType;
+                     end; {if}
                end; {if}
       if kind <> pointerType then
          et := UsualBinaryConversions(lType)
@@ -3039,6 +3415,8 @@ case tree^.token.kind of
                Gen0(pc_adi)
             else if et in [cgLong,cgULong] then
                Gen0(pc_adl)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_adq)
             else if et = cgExtended then
                Gen0(pc_adr)
             else
@@ -3053,6 +3431,8 @@ case tree^.token.kind of
                Gen0(pc_sbi)
             else if et in [cgLong,cgULong] then
                Gen0(pc_sbl)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_sbq)
             else if et = cgExtended then
                Gen0(pc_sbr)
             else
@@ -3067,6 +3447,10 @@ case tree^.token.kind of
                Gen0(pc_mpl)
             else if et = cgULong then
                Gen0(pc_uml)
+            else if et = cgQuad then
+               Gen0(pc_mpq)
+            else if et = cgUQuad then
+               Gen0(pc_umq)
             else if et = cgExtended then
                Gen0(pc_mpr)
             else
@@ -3081,6 +3465,10 @@ case tree^.token.kind of
                Gen0(pc_dvl)
             else if et = cgULong then
                Gen0(pc_udl)
+            else if et = cgQuad then
+               Gen0(pc_dvq)
+            else if et = cgUQuad then
+               Gen0(pc_udq)
             else if et = cgExtended then
                Gen0(pc_dvr)
             else
@@ -3095,6 +3483,10 @@ case tree^.token.kind of
                Gen0(pc_mdl)
             else if et = cgULong then
                Gen0(pc_ulm)
+            else if et = cgQuad then
+               Gen0(pc_mdq)
+            else if et = cgUQuad then
+               Gen0(pc_uqm)
             else
                Error(66);
 
@@ -3103,6 +3495,8 @@ case tree^.token.kind of
                Gen0(pc_shl)
             else if et in [cgLong,cgULong] then
                Gen0(pc_sll)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_slq)
             else
                Error(66);
 
@@ -3115,6 +3509,10 @@ case tree^.token.kind of
                Gen0(pc_slr)
             else if et = cgULong then
                Gen0(pc_vsr)
+            else if et = cgQuad then
+               Gen0(pc_sqr)
+            else if et = cgUQuad then
+               Gen0(pc_wsr)
             else
                Error(66);
 
@@ -3123,6 +3521,8 @@ case tree^.token.kind of
                Gen0(pc_bnd)
             else if et in [cgLong,cgULong] then
                Gen0(pc_bal)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_baq)
             else
                Error(66);
 
@@ -3131,6 +3531,8 @@ case tree^.token.kind of
                Gen0(pc_bxr)
             else if et in [cgLong,cgULong] then
                Gen0(pc_blx)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_bqx)
             else
                Error(66);
 
@@ -3139,6 +3541,8 @@ case tree^.token.kind of
                Gen0(pc_bor)
             else if et in [cgLong,cgULong] then
                Gen0(pc_blr)
+            else if et in [cgQuad,cgUQuad] then
+               Gen0(pc_bqr)
             else
                Error(66);
 
@@ -3189,20 +3593,36 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
-      else if UsualUnaryConversions = cgExtended then begin
-         GenLdcReal(0.0);
-         Gen0t(pc_neq, cgExtended);
-         expressionType := intPtr;
-         end; {if}
+      else begin
+         et := UsualUnaryConversions;
+         if et = cgExtended then begin
+            GenLdcReal(0.0);
+            Gen0t(pc_neq, cgExtended);
+            expressionType := intPtr;
+            end {if}
+         else if et in [cgQuad,cgUQuad] then begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_neq, et);
+            expressionType := intPtr;
+            end; {else if}
+         end; {else}
       lType := expressionType;
       GenerateCode(tree^.right);
       if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
-      else if UsualUnaryConversions = cgExtended then begin
-         GenLdcReal(0.0);
-         Gen0t(pc_neq, cgExtended);
-         expressionType := intPtr;
-         end; {if}
+      else begin
+         et := UsualUnaryConversions;
+         if et = cgExtended then begin
+            GenLdcReal(0.0);
+            Gen0t(pc_neq, cgExtended);
+            expressionType := intPtr;
+            end {if}
+         else if et in [cgQuad,cgUQuad] then begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_neq, et);
+            expressionType := intPtr;
+            end; {else if}
+         end; {else}
       case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_ior);
@@ -3218,20 +3638,36 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
-      else if UsualUnaryConversions = cgExtended then begin
-         GenLdcReal(0.0);
-         Gen0t(pc_neq, cgExtended);
-         expressionType := intPtr;
-         end; {if}
+      else begin
+         et := UsualUnaryConversions;
+         if et = cgExtended then begin
+            GenLdcReal(0.0);
+            Gen0t(pc_neq, cgExtended);
+            expressionType := intPtr;
+            end {if}
+         else if et in [cgQuad,cgUQuad] then begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_neq, et);
+            expressionType := intPtr;
+            end; {else if}
+         end; {else}
       lType := expressionType;
       GenerateCode(tree^.right);
       if expressionType^.kind in [pointerType,arrayType] then
          expressionType := uLongPtr
-      else if UsualUnaryConversions = cgExtended then begin
-         GenLdcReal(0.0);
-         Gen0t(pc_neq, cgExtended);
-         expressionType := intPtr;
-         end; {if}
+      else begin
+         et := UsualUnaryConversions;
+         if et = cgExtended then begin
+            GenLdcReal(0.0);
+            Gen0t(pc_neq, cgExtended);
+            expressionType := intPtr;
+            end {if}
+         else if et in [cgQuad,cgUQuad] then begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_neq, et);
+            expressionType := intPtr;
+            end; {else if}
+         end; {else}
       case UsualBinaryConversions(lType) of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_and);
@@ -3254,6 +3690,8 @@ case tree^.token.kind of
             Gen0(pc_bxr);
          cgLong,cgULong:
             Gen0(pc_blx);
+         cgQuad,cgUQuad:
+            Gen0(pc_bqx);
          otherwise:
             error(66);
          end; {case}
@@ -3270,6 +3708,8 @@ case tree^.token.kind of
             Gen0(pc_bor);
          cgLong,cgULong:
             Gen0(pc_blr);
+         cgQuad,cgUQuad:
+            Gen0(pc_bqr);
          otherwise:
             error(66);
          end; {case}
@@ -3286,6 +3726,8 @@ case tree^.token.kind of
             Gen0(pc_bnd);
          cgLong,cgULong:
             Gen0(pc_bal);
+         cgQuad,cgUQuad:
+            Gen0(pc_baq);
          otherwise:
             error(66);
          end; {case}
@@ -3300,15 +3742,22 @@ case tree^.token.kind of
       GenerateCode(tree^.right);
       if (expressionType^.kind <> scalarType)
          or not (expressionType^.baseType in
-         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong]) then
+         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad]) then
          error(66);
-      if expressionType^.baseType <> et then
-         Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
+      if et in [cgQuad,cgUQuad] then begin
+         if not (expressionType^.baseType in [cgWord,cgUWord]) then
+            Gen2(pc_cnv, ord(expressionType^.baseType), ord(cgWord));
+         end {if}
+      else
+         if expressionType^.baseType <> et then
+            Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
       case et of
          cgByte,cgUByte,cgWord,cgUWord:
             Gen0(pc_shl);
          cgLong,cgULong:
             Gen0(pc_sll);
+         cgQuad,cgUQuad:
+            Gen0(pc_slq);
          otherwise:
             error(66);
          end; {case}
@@ -3326,10 +3775,15 @@ case tree^.token.kind of
       GenerateCode(tree^.right);
       if (expressionType^.kind <> scalarType)
          or not (expressionType^.baseType in
-         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong]) then
+         [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad]) then
          error(66);
-      if expressionType^.baseType <> et then
-         Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
+      if et in [cgQuad,cgUQuad] then begin
+         if not (expressionType^.baseType in [cgWord,cgUWord]) then
+            Gen2(pc_cnv, ord(expressionType^.baseType), ord(cgWord));
+         end {if}
+      else
+         if expressionType^.baseType <> et then
+            Gen2(pc_cnv, ord(expressionType^.baseType), ord(et));
       case et of
          cgByte,cgWord:
             Gen0(pc_shr);
@@ -3339,6 +3793,10 @@ case tree^.token.kind of
             Gen0(pc_slr);
          cgULong:
             Gen0(pc_vsr);
+         cgQuad:
+            Gen0(pc_sqr);
+         cgUQuad:
+            Gen0(pc_wsr);
          otherwise:
             error(66);
          end; {case}
@@ -3386,6 +3844,8 @@ case tree^.token.kind of
                Gen0(pc_adi);
             cgLong,cgULong:
                Gen0(pc_adl);
+            cgQuad,cgUQuad:
+               Gen0(pc_adq);
             cgExtended:
                Gen0(pc_adr);
             otherwise:
@@ -3442,6 +3902,8 @@ case tree^.token.kind of
                Gen0(pc_sbi);
             cgLong,cgULong:
                Gen0(pc_sbl);
+            cgQuad,cgUQuad:
+               Gen0(pc_sbq);
             cgExtended:
                Gen0(pc_sbr);
             otherwise:
@@ -3465,6 +3927,10 @@ case tree^.token.kind of
             Gen0(pc_mpl);
          cgULong:
             Gen0(pc_uml);
+         cgQuad:
+            Gen0(pc_mpq);
+         cgUQuad:
+            Gen0(pc_umq);
          cgExtended:
             Gen0(pc_mpr);
          otherwise:
@@ -3487,6 +3953,10 @@ case tree^.token.kind of
             Gen0(pc_dvl);
          cgULong:
             Gen0(pc_udl);
+         cgQuad:
+            Gen0(pc_dvq);
+         cgUQuad:
+            Gen0(pc_udq);
          cgExtended:
             Gen0(pc_dvr);
          otherwise:
@@ -3511,6 +3981,10 @@ case tree^.token.kind of
             Gen0(pc_mdl);
          cgULong:
             Gen0(pc_ulm);
+         cgQuad:
+            Gen0(pc_mdq);
+         cgUQuad:
+            Gen0(pc_uqm);
          otherwise:
             error(66);
          end; {case}
@@ -3561,6 +4035,8 @@ case tree^.token.kind of
             Gen0(pc_ngi);
          cgLong,cgULong:
             Gen0(pc_ngl);
+         cgQuad,cgUQuad:
+            Gen0(pc_ngq);
          cgExtended:
             Gen0(pc_ngr);
          otherwise:
@@ -3577,6 +4053,8 @@ case tree^.token.kind of
             Gen0(pc_bnt);
          cgLong,cgULong:
             Gen0(pc_bnl);
+         cgQuad,cgUQuad:
+            Gen0(pc_bnq);
          otherwise:
             error(66);
          end; {case}
@@ -3594,6 +4072,11 @@ case tree^.token.kind of
          cgLong,cgULong: begin
             GenLdcLong(0);
             Gen0t(pc_equ, cgLong);
+            end;
+
+         cgQuad,cgUQuad: begin
+            GenLdcQuad(longlong0);
+            Gen0t(pc_equ, cgQuad);
             end;
 
          cgExtended: begin
@@ -3817,6 +4300,9 @@ if kind = normalExpression then begin   {generate code from the expression tree}
 else begin                              {record the expression for an initializer}
    initializerTree := tree;
    isConstant := false;
+   llExpressionValue.lo := 0;
+   llExpressionValue.hi := 0;
+   expressionIsLongLong := false;
    if errorFound then begin
       DisposeTree(initializerTree);
       initializerTree := nil;
@@ -3872,6 +4358,29 @@ else begin                              {record the expression for an initialize
          expressionType := ulongPtr;
          isConstant := true;
          end {else if}
+      else if tree^.token.kind = longlongconst then begin
+         llExpressionValue := tree^.token.qval;
+         expressionIsLongLong := true;
+         if ((llExpressionValue.hi = 0) and (llExpressionValue.lo >= 0))
+            or ((llExpressionValue.hi = -1) and (llExpressionValue.lo < 0)) then
+            expressionValue := llExpressionValue.lo
+         else if llExpressionValue.hi < 0 then
+            expressionValue := $80000000
+         else
+            expressionValue := $7fffffff;
+         expressionType := longLongPtr;
+         isConstant := true;
+         end {else if}
+      else if tree^.token.kind = ulonglongconst then begin
+         llExpressionValue := tree^.token.qval;
+         expressionIsLongLong := true;
+         if llExpressionValue.hi = 0 then
+            expressionValue := llExpressionValue.lo
+         else
+            expressionValue := $FFFFFFFF;
+         expressionType := ulongLongPtr;
+         isConstant := true;
+         end {else if}
       else if tree^.token.kind = doubleconst then begin
          realExpressionValue := tree^.token.rval;
          expressionType := extendedPtr;
@@ -3902,13 +4411,32 @@ else begin                              {record the expression for an initialize
 end; {Expression}
 
 
+procedure GetLLExpressionValue {var val: longlong};
+
+{ get the value of the last integer constant expression as a    }
+{ long long (whether it had long long type or not).             }
+
+begin {GetLLExpressionValue}
+   if expressionIsLongLong then
+      val := llExpressionValue
+   else begin
+      val.lo := expressionValue;
+      val.hi := 0;
+      if expressionValue < 0 then
+         if expressionType^.kind = scalarType then
+            if expressionType^.baseType in [cgByte,cgWord,cgLong] then
+               val.hi := -1;
+      end;
+end; {GetLLExpressionValue}
+
+
 procedure InitExpression;
 
 { initialize the expression handler                             }
 
 begin {InitExpression}
-startTerm := [ident,intconst,uintconst,longconst,ulongconst,doubleconst,
-              stringconst,_Genericsy];
+startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
+              ulonglongconst,doubleconst,stringconst,_Genericsy];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
               plusplusop,minusminusop,typedef,_Alignofsy];

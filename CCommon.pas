@@ -114,6 +114,7 @@ type
                                         {Misc.}
                                         {-----}
    long = record lsw,msw: integer; end; {for extracting words from longints}
+   longlong = record lo,hi: longint; end; {64-bit integer representation}
  
    cString = packed array [1..256] of char; {null terminated string}
    cStringPtr = ^cString;
@@ -148,7 +149,7 @@ type
  
    baseTypeEnum = (cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,
                    cgReal,cgDouble,cgComp,cgExtended,cgString,
-                   cgVoid,ccPointer);
+                   cgVoid,cgQuad,cgUQuad,ccPointer);
 
    { Basic types (plus the void type) as defined by the C language.      }
    { This differs from baseTypeEnum in that different types with the     }
@@ -157,7 +158,7 @@ type
 
    cTypeEnum = (ctChar, ctSChar, ctUChar, ctShort, ctUShort, ctInt, ctUInt,
                 ctLong, ctULong, ctFloat, ctDouble, ctLongDouble, ctComp,
-                ctVoid, ctInt32, ctUInt32, ctBool);
+                ctVoid, ctInt32, ctUInt32, ctBool, ctLongLong, ctULongLong);
 
                                         {tokens}
                                         {------}
@@ -166,7 +167,8 @@ type
    tokenEnum = (                        {enumeration of the tokens}
                ident,                   {identifiers}
                                         {constants}
-               intconst,uintconst,longconst,ulongconst,doubleconst,
+               intconst,uintconst,longconst,ulongconst,longlongconst,
+               ulonglongconst,doubleconst,
                stringconst,
                                         {reserved words}
                _Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy,
@@ -207,7 +209,7 @@ type
 
    tokenSet = set of tokenEnum;
    tokenClass = (reservedWord,reservedSymbol,identifier,intConstant,longConstant,
-                 doubleConstant,stringConstant,macroParameter);
+                 longlongConstant,doubleConstant,stringConstant,macroParameter);
    identPtr = ^identRecord;             {^ to a symbol table entry}
    tokenType = record                   {a token}
       kind: tokenEnum;                  {kind of token}
@@ -219,6 +221,7 @@ type
                           symbolPtr: identPtr);
          intConstant   : (ival: integer);
          longConstant  : (lval: longint);
+         longlongConstant: (qval: longlong);
          doubleConstant: (rval: double);
          stringConstant: (sval: longstringPtr;
                           ispstring: boolean);
@@ -308,7 +311,7 @@ type
       isStructOrUnion: boolean;         {is this a struct or union initializer?}
       case isConstant: boolean of       {is this a constant initializer?}
          false: (iTree: tokenPtr);
-         true : (
+         true : (                       {Note: qVal.lo must overlap iVal}
             case itype: baseTypeEnum of
                cgByte,
                cgUByte,
@@ -316,6 +319,8 @@ type
                cgUWord,
                cgLong,
                cgULong   : (iVal: longint);
+               cgQuad,
+               cgUQuad   : (qVal: longlong);
                cgString  : (sVal: longstringPtr);
                cgReal,
                cgDouble,
@@ -479,15 +484,19 @@ var
    partialFileGS: gsosOutString;        {partial compile list}
    sourceFileGS: gsosOutString;		{debug source file name}
    tempList: tempPtr;                   {list of temp work variables}
+   longlong0: longlong;                 {the value 0 as a longlong}
+   longlong1: longlong;                 {the value 1 as a longlong}
 
                                         {expression results}
                                         {------------------}
    doDispose: boolean;                  {dispose of the expression tree as we go?}
    realExpressionValue: double;         {value of the last real constant expression}
+   llExpressionValue: longlong;         {value of the last long long constant expression}
    expressionValue: longint;            {value of the last constant expression}
    expressionType: typePtr;             {the type of the expression}
    initializerTree: tokenPtr;           {for non-constant initializers}
    isConstant: boolean;                 {is the initializer expression constant?}
+   expressionIsLongLong: boolean;       {is the last constant expression long long?}
 
                                         {type specifier results}
                                         {----------------------}
@@ -845,6 +854,10 @@ spinner[0] := '|';			{set up the spinner characters}
 spinner[1] := '/';
 spinner[2] := '-';
 spinner[3] := '\';
+longlong0.hi := 0;
+longlong0.lo := 0;
+longlong1.hi := 0;
+longlong1.lo := 1;
 end; {InitCCommon}
 
 
