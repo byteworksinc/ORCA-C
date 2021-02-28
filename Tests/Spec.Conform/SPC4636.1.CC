@@ -2,6 +2,8 @@
 /* arrays defined in the main source file.  Part of Special Conformance  */
 /* Test 4.6.3.6                                                          */
 
+#include <math.h>
+#include <stdio.h>
 
 int ExternTest (void)
   {
