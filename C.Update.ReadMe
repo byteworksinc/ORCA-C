@@ -1,6 +1,6 @@
-Welcome to ORCA/C 2.2.0 B4!  This is an update release containing
+Welcome to ORCA/C 2.2.0 B5!  This is an update release containing
 patches from community members (Stephen Heumann and Kelvin Sherlock),
-which fix several bugs and also add some new features.  For details on
+which fix bugs and also add several new features.  For details on
 these changes, see the cc.notes file in the Release.Notes directory.
 
 This package is designed to be applied as an update to an existing
@@ -13,12 +13,11 @@ on top of your ORCA installation, overwriting all modified files.)
 
 In addition to the ORCA shell environment, this update can also be
 used under other environments that are compatible with ORCA/C, such as
-GNO and Golden Gate.  In these cases, only the directories containing
-files from a standard ORCA installation (normally /lang/orca for GNO)
-should be updated.  The GNO-specific libraries and headers in other
-directories should not be modified.  The ones provided with GNO 2.0.6
-can be used with this version of ORCA/C, although they do not contain
-all the updates and bug fixes described in the ORCA/C release notes.
+GNO and Golden Gate.  In these cases, the update files should be copied
+into the directory containing files from a standard ORCA installation
+(normally /lang/orca for GNO).  An updated version of ORCALib suitable
+for use under GNO is available as a separate download at:
+https://github.com/byteworksinc/ORCALib/releases
 
 If you have any questions, or if you want to get involved in ORCA/C
 development, please get in touch.  The ORCA/C development project is
