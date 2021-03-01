@@ -1312,17 +1312,17 @@ var
                
                case op^.token.kind of
                   barbarop    : begin                                   {||}
-                                llop1.hi := 0;
                                 llop1.lo :=
                                    ord((llop1.lo <> 0) or (llop1.hi <> 0) or
                                        (llop2.lo <> 0) or (llop2.hi <> 0));
+                                llop1.hi := 0;
                                 ekind := intconst;
                                 end;
                   andandop    : begin                                   {&&}
-                                llop1.hi := 0;
                                 llop1.lo :=
                                    ord(((llop1.lo <> 0) or (llop1.hi <> 0)) and
                                        ((llop2.lo <> 0) or (llop2.hi <> 0)));
+                                llop1.hi := 0;
                                 ekind := intconst;
                                 end;
                   carotch     : begin                                   {^}
@@ -1338,15 +1338,15 @@ var
                                 llop1.hi := llop1.hi & llop2.hi;
                                 end;
                   eqeqop      : begin                                   {==}
-                                llop1.hi := 0;
                                 llop1.lo := ord((llop1.lo = llop2.lo) and
                                                 (llop1.hi = llop2.hi));
+                                llop1.hi := 0;
                                 ekind := intconst;
                                 end;
                   exceqop     : begin                                   {!=}
-                                llop1.hi := 0;
                                 llop1.lo := ord((llop1.lo <> llop2.lo) or
                                                 (llop1.hi <> llop2.hi));
+                                llop1.hi := 0;
                                 ekind := intconst;
                                 end;
                   ltch        : begin                                   {<}
