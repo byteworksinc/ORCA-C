@@ -1775,12 +1775,15 @@ case op^.opcode of			{check for optimizations of this node}
       end; {case pc_ixa}
 
    pc_leq, pc_les, pc_geq, pc_grt: begin  {pc_leq, pc_les, pc_geq, pc_grt}
-      if (op^.opcode = pc_leq) and (op^.optype in [cgWord,cgUWord]) then
-         if op^.right^.opcode = pc_ldc then
-            if op^.right^.q < maxint then begin
-               op^.right^.q := op^.right^.q + 1;
-               op^.opcode := pc_les;
-               end; {if}
+      if op^.left^.opcode = pc_ldc then begin
+         ReverseChildren(op);
+         case op^.opcode of
+            pc_leq: op^.opcode := pc_geq;
+            pc_les: op^.opcode := pc_grt;
+            pc_geq: op^.opcode := pc_leq;
+            pc_grt: op^.opcode := pc_les;
+            end; {case}
+         end; {if}
       if (op^.optype = cgWord) then
          if (TypeOf(op^.right) = cgUByte)
             or ((op^.right^.opcode = pc_ldc) and (op^.right^.q >= 0)
@@ -1789,6 +1792,32 @@ case op^.opcode of			{check for optimizations of this node}
                or ((op^.left^.opcode = pc_ldc) and (op^.left^.q >= 0)
                    and (op^.left^.optype in [cgByte,cgUByte,cgWord])) then
                op^.optype := cgUWord;
+      if op^.right^.opcode = pc_ldc then
+         if ((op^.optype = cgUWord) and (op^.right^.q = 0))
+            or ((op^.optype = cgULong) and (op^.right^.lval = 0))
+            or ((op^.optype = cgUQuad) 
+               and (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0)) then
+            begin
+            case op^.opcode of
+               pc_leq: op^.opcode := pc_equ;
+               pc_grt: op^.opcode := pc_neq;
+               pc_les: if not SideEffects(op^.left) then begin
+                          op^.right^.optype := cgWord;
+                          op^.right^.q := 0;
+                          opv := op^.right;
+                          end; {if}
+               pc_geq: if not SideEffects(op^.left) then begin
+                          op^.right^.optype := cgWord;
+                          op^.right^.q := 1;
+                          opv := op^.right;
+                          end; {if}
+               end; {case}
+            end {if}
+         else if (op^.opcode = pc_leq) and (op^.optype in [cgWord,cgUWord]) then
+            if op^.right^.q < maxint then begin
+               op^.right^.q := op^.right^.q + 1;
+               op^.opcode := pc_les;
+               end; {if}
       end; {case pc_leq, pc_les, pc_geq, pc_grt}
 
    pc_lnd: begin			{pc_lnd}
