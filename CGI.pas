@@ -50,11 +50,13 @@ const
    m_adc_imm              =    $69;
    m_adc_s                =    $63;
    m_adc_indl             =    $67;
+   m_adc_indly            =    $77;
    m_and_abs              =    $2D;
    m_and_dir              =    $25;
    m_and_imm              =    $29;
    m_and_s                =    $23;
    m_and_indl             =    $27;
+   m_and_indly            =    $37;
    m_asl_a                =    $0A;
    m_bcc                  =    $90;
    m_bcs                  =    $B0;
@@ -74,6 +76,7 @@ const
    m_cmp_long             =    $CF;
    m_cmp_s                =    $C3;
    m_cmp_indl             =    $C7;
+   m_cmp_indly            =    $D7;
    m_cop                  =    $02;
    m_cpx_abs              =    236;
    m_cpx_dir              =    228;
@@ -90,6 +93,7 @@ const
    m_eor_imm              =     73;
    m_eor_s                =     67;
    m_eor_indl             =    $47;
+   m_eor_indly             =   $57;
    m_ina                  =     26;
    m_inc_abs              =    238;
    m_inc_absX             =    $FE;
@@ -127,6 +131,7 @@ const
    m_ora_longX            =     31;
    m_ora_s                =      3;
    m_ora_indl             =    $07;
+   m_ora_indly            =    $17;
    m_pea                  =    244;
    m_pei_dir              =    212;
    m_pha                  =     72;
@@ -149,6 +154,7 @@ const
    m_sbc_imm              =    233;
    m_sbc_s                =    227;
    m_sbc_indl             =    $E7;
+   m_sbc_indly            =    $F7;
    m_sec                  =     56;
    m_sep                  =    226;
    m_sta_abs              =    141;

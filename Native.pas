@@ -774,7 +774,9 @@ case p_opcode of
    m_and_s,m_asl_a,m_dea,m_eor_abs,m_eor_dir,m_eor_imm,m_eor_s,m_lda_absx,
    m_lda_dirx,m_lda_indl,m_lda_indly,m_lda_longx,m_lda_s,m_lsr_a,m_ora_abs,
    m_ora_dir,m_ora_dirX,m_ora_imm,m_ora_long,m_ora_longX,m_ora_s,m_pla,
-   m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,m_tdc,m_tsc:
+   m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,m_tdc,m_tsc,m_adc_indl,m_adc_indly,
+   m_and_indl,m_and_indly,m_ora_indl,m_ora_indly,m_sbc_indl,m_sbc_indly,
+   m_eor_indl,m_eor_indly:
       aRegister.condition := regUnknown;
 
    m_ldy_absX,m_ldy_dirX,m_ply:
@@ -784,8 +786,8 @@ case p_opcode of
       xRegister.condition := regUnknown;
 
    m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvs,m_clc,m_cmp_abs,
-   m_cmp_dir,m_cmp_imm,m_cmp_s,m_cpx_imm,m_jml,m_pha,m_phb,m_phd,
-   m_phx,m_phy,m_plb,m_rtl,m_rts,m_sec,m_tcs,d_add,d_pin,
+   m_cmp_dir,m_cmp_imm,m_cmp_s,m_cmp_indl,m_cmp_indly,m_cpx_imm,m_jml,
+   m_pha,m_phb,m_phd,m_phx,m_phy,m_plb,m_rtl,m_rts,m_sec,m_tcs,d_add,d_pin,
    m_pei_dir,m_cpx_abs,m_cpx_dir,m_cmp_dirx,m_php,m_plp,m_cop,d_wrd:   ;
 
    m_pea: begin
