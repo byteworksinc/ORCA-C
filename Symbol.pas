@@ -47,6 +47,7 @@
 {  voidPtrPtr - typeless pointer, for some type casting         }
 {  stringTypePtr - pointer to the base type for string          }
 {       constants                                               }
+{  constCharPtr - pointer to the type const char                }
 {  defaultStruct - default for structures with errors           }
 {                                                               }
 {---------------------------------------------------------------}
@@ -76,12 +77,13 @@ var
    noDeclarations: boolean;             {have we declared anything at this level?}
    table: symbolTablePtr;               {current symbol table}
    globalTable: symbolTablePtr;         {global symbol table}
+   functionTable: symbolTablePtr;       {table for top level of current function}
 
                                         {base types}
    charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
       uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
       floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,voidPtr,
-      voidPtrPtr,defaultStruct: typePtr;
+      voidPtrPtr,constCharPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
 
@@ -1215,6 +1217,7 @@ table := nil;                           {initialize the global symbol table}
 PushTable;
 globalTable := table;
 noDeclarations := false;
+functionTable := nil;
                                         {declare base types}
 new(sCharPtr);                          {signed char}
 with sCharPtr^ do begin
@@ -1369,7 +1372,7 @@ with extendedPtr^ do begin
    baseType := cgExtended;
    cType := ctLongDouble;
    end; {with}
-new(boolPtr);                            {_Bool}
+new(boolPtr);                           {_Bool}
 with boolPtr^ do begin
    size := cgWordSize;
    saveDisp := 0;
@@ -1422,6 +1425,9 @@ with defaultStruct^ do begin            {(for structures with errors)}
       bitdisp := 0;
       end; {with}
    end; {with}
+new(constCharPtr);                      {const char}
+constCharPtr^ := charPtr^;
+constCharPtr^.isConstant := true;
 end; {InitSymbol}
 
 

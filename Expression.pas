@@ -256,6 +256,18 @@ procedure TypeName; extern;
 { outputs:                                                      }
 {       typeSpec - pointer to the type                          }
 
+
+function MakeFuncIdentifier: identPtr; extern;
+
+{ Make the predefined identifier __func__.                      }
+{                                                               }
+{ It is inserted in the symbol table as if the following        }
+{ declaration appeared at the beginning of the function body:   }
+{                                                               }
+{     static const char __func__[] = "function-name";           }
+{                                                               }
+{ This must only be called within a function body.              }
+
 {-- External unsigned math routines ----------------------------}
 
 function lshr (x,y: longint): longint; extern;
@@ -905,7 +917,9 @@ var
 
    {if the id is not declared, create a function returning integer}
    else if id = nil then begin
-      if token.kind = lparench then begin
+      if (fToken.name^ = '__func__') and (functionTable <> nil) then
+         id := MakeFuncIdentifier
+      else if token.kind = lparench then begin
          fnPtr := pointer(GCalloc(sizeof(typeRecord)));
          {fnPtr^.size := 0;}
          {fnPtr^.saveDisp := 0;}

@@ -57,6 +57,18 @@ procedure AutoInit (variable: identPtr; line: integer);
 {       line - line number (used for debugging)                 }
 
 
+function MakeFuncIdentifier: identPtr;
+
+{ Make the predefined identifier __func__.                      }
+{                                                               }
+{ It is inserted in the symbol table as if the following        }
+{ declaration appeared at the beginning of the function body:   }
+{                                                               }
+{     static const char __func__[] = "function-name";           }
+{                                                               }
+{ This must only be called within a function body.              }
+
+
 procedure InitParser;
 
 { Initialize the parser                                         }
@@ -152,6 +164,7 @@ type
 var
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
+   functionName: stringPtr;             {name of the current function}
    isForwardDeclared: boolean;          {is the field list component           }
                                         { referencing a forward struct/union?  }
    isFunction: boolean;                 {is the declaration a function?}
@@ -356,6 +369,8 @@ if not doingFunction then begin         {if so, finish it off}
    nameFound := false;                  {no pc_nam for the next function (yet)}
    volatile := savedVolatile;           {local volatile vars are out of scope}
    fIsNoreturn := false;                {not doing a noreturn function}
+   functionTable := nil;
+   functionName := nil;
    end; {if}
 PopTable;				{remove this symbol table}
 dispose(stPtr);                         {dump the record}
@@ -3732,6 +3747,7 @@ if isFunction then begin
       Gen0 (dc_pin);
       if not isAsm then
          Gen1Name(pc_ent, 0, variable^.name);
+      functionName := variable^.name;
       nextLocalLabel := 1;              {initialize GetLocalLabel}
       returnLabel := GenLabel;          {set up an exit point}
       tempList := nil;                  {initialize the work label list}
@@ -3792,6 +3808,7 @@ if isFunction then begin
          else
             GenParameters(fnType^.parameterList); 
          savedVolatile := volatile;
+         functionTable := table;
          CompoundStatement(false);      {process the statements}
          end; {else}
       end; {else}
@@ -4434,6 +4451,61 @@ if variable^.class <> staticsy then begin
    Initialize(variable, 0, variable^.itype);
    end; {if}
 end; {AutoInit}
+
+
+function MakeFuncIdentifier{: identPtr};
+
+{ Make the predefined identifier __func__.                      }
+{                                                               }
+{ It is inserted in the symbol table as if the following        }
+{ declaration appeared at the beginning of the function body:   }
+{                                                               }
+{     static const char __func__[] = "function-name";           }
+{                                                               }
+{ This must only be called within a function body.              }
+
+var
+   lTable: symbolTablePtr;              {saved copy of current symbol table}
+   tp: typePtr;                         {the type of __func__}
+   id: identPtr;                        {the identifier for __func__}
+   sval: longstringPtr;                 {the initializer string}
+   iPtr: initializerPtr;                {the initializer}
+   i: integer;                          {loop variable}
+   len: integer;                        {string length}
+
+begin {MakeFuncIdentifier}
+lTable := table;
+table := functionTable;
+
+len := ord(functionName^[0]) + 1;
+tp := pointer(GCalloc(sizeof(typeRecord)));
+tp^.size := len;
+tp^.saveDisp := 0;
+tp^.isConstant := false;
+tp^.kind := arrayType;
+tp^.aType := constCharPtr;
+tp^.elements := len;
+id := NewSymbol(@'__func__', tp, staticsy, variableSpace, initialized);
+
+sval := pointer(GCalloc(len + sizeof(integer)));
+sval^.length := len;
+for i := 1 to len-1 do
+   sval^.str[i] := functionName^[i];
+sval^.str[len] := chr(0);
+iPtr := pointer(GCalloc(sizeof(initializerRecord)));
+iPtr^.next := nil;
+iPtr^.count := 1;
+iPtr^.bitdisp := 0;
+iPtr^.bitsize := 0;
+iPtr^.isStructOrUnion := false;
+iPtr^.isConstant := true;
+iPtr^.itype := cgString;
+iPtr^.sval := sval;
+id^.iPtr := iPtr;
+
+table := lTable;
+MakeFuncIdentifier := id;
+end; {MakeFuncIdentifier}
 
 
 procedure InitParser;

@@ -391,6 +391,10 @@ Several new library functions in <stdlib.h> support operations on these types, a
 
 The predefined macro __ORCAC_HAS_LONG_LONG__ is now defined, and expands to the integer constant 1.  This indicates that these long long types are supported.
 
+20. (C99) The predefined identifier __func__ is now supported, providing a way for code within a function to get the function's name.  Specifically, it behaves as if the following declaration appeared at the beginning of each function body (where function-name is the name of the function):
+
+   static const char __func__[] = "function-name";
+
 
 Multi-Character Character Constants
 -----------------------------------
