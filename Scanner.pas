@@ -752,7 +752,7 @@ case token.kind of
    longlongConst,
    ulonglongConst:   write('0x...'); {TODO implement}
 
-   doubleConst:      write(token.rval:1);
+   extendedConst:    write(token.rval:1);
 
    stringConst:      begin
                      write('"');
@@ -2330,7 +2330,7 @@ var
                         if (tk1^.token.qval.lo <> tk2^.token.qval.lo) or
                            (tk1^.token.qval.hi <> tk2^.token.qval.hi) then
                            goto 3;
-                     doubleConstant:
+                     realConstant:
                         if tk1^.token.rval <> tk2^.token.rval then
                            goto 3;
                      stringConstant: begin
@@ -3356,8 +3356,8 @@ numString[0] := chr(stringIndex);       {set the length of the string}
 if doingPPExpression then
    isLongLong := true;
 if isReal then begin                    {convert a real constant}
-   token.kind := doubleConst;
-   token.class := doubleConstant;
+   token.kind := extendedConst;
+   token.class := realConstant;
    if stringIndex > 80 then begin
       FlagError(131);
       token.rval := 0.0;
@@ -3797,7 +3797,7 @@ lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155];
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';
                                         {set of classes for numeric constants}
-numericConstants := [intConstant,longConstant,longlongConstant,doubleConstant];
+numericConstants := [intConstant,longConstant,longlongConstant,realConstant];
 
 new(mp);                                {__LINE__}
 mp^.name := @'__LINE__';
@@ -3965,7 +3965,7 @@ repeat
                      case token.class of
                         intConstant   : token.ival := -token.ival;
                         longConstant  : token.lval := -token.lval;
-                        doubleConstant: token.rval := -token.rval;
+                        realConstant  : token.rval := -token.rval;
                         longlongConstant,otherwise: Error(108);
                         end; {case}
                   end {if}

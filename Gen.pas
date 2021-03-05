@@ -5862,7 +5862,7 @@ procedure GenTree {op: icptr};
    { Generate code for a pc_ldc					}
 
    type
-      kind = (vint, vbyte, vreal);	{kinds of equivalenced data}
+      kind = (vint, vbyte);		{kinds of equivalenced data}
 
    var   
       i: integer;			{loop/index variable}
@@ -5871,7 +5871,6 @@ procedure GenTree {op: icptr};
 	 case rkind: kind of
             vint: (i: integer);
             vbyte: (b1, b2, b3, b4, b5, b6, b7, b8: byte);
-            vreal: (r: double);
 	 end;
                  
    begin {GenLdc}

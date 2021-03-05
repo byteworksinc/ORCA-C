@@ -489,7 +489,7 @@ var
    opcode: pcodes;			{temp opcode}
    optype: baseTypeEnum;		{temp optype}
    q: integer;				{temp for integer calculations}
-   rval: double;			{temp for real calculations}
+   rval: extended;			{temp for real calculations}
 
    fromtype, totype, firstType: record	{for converting numbers to optypes}
       case boolean of
@@ -1232,14 +1232,9 @@ case op^.opcode of			{check for optimizations of this node}
                      end;
                   cgQuad,cgUQuad: ;
                   cgDouble,cgExtended: begin
-                     {only convert values exactly representable in double}
                      rval := CnvLLX(op^.left^.qval);
-                     if rval = CnvLLX(op^.left^.qval) then begin
-                        op^.left^.qval := longlong0;
-                        op^.left^.rval := rval;
-                        end {if}
-                     else
-                        doit := false;
+                     op^.left^.qval := longlong0;
+                     op^.left^.rval := rval;
                      end;
                   cgReal,cgComp:
                      doit := false;
@@ -1259,14 +1254,9 @@ case op^.opcode of			{check for optimizations of this node}
                      end;
                   cgQuad,cgUQuad: ;
                   cgDouble,cgExtended: begin
-                     {only convert values exactly representable in double}
                      rval := CnvULLX(op^.left^.qval);
-                     if rval = CnvULLX(op^.left^.qval) then begin
-                        op^.left^.qval := longlong0;
-                        op^.left^.rval := rval;
-                        end {if}
-                     else
-                        doit := false;
+                     op^.left^.qval := longlong0;
+                     op^.left^.rval := rval;
                      end;
                   cgReal,cgComp:
                      doit := false;

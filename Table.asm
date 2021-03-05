@@ -285,7 +285,7 @@ charSym  start                          single character symbols
          enum  ident,0                  identifiers
 !                                       constants
          enum  (intconst,uintconst,longconst,ulongconst,longlongconst)
-         enum  (ulonglongconst,doubleconst)
+         enum  (ulonglongconst,extendedconst)
          enum  stringconst
 !                                       reserved words
          enum  (_Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy)
@@ -359,7 +359,7 @@ icp      start                          in-coming priority for expression
          dc    i1'200'                  ulongconst
          dc    i1'200'                  longlongconst
          dc    i1'200'                  ulonglongconst
-         dc    i1'200'                  doubleconst
+         dc    i1'200'                  extendedconst
          dc    i1'200'                  stringconst
          dc    i1'200'                  _Alignassy
          dc    i1'16'                   _Alignofsy
@@ -526,7 +526,7 @@ isp      start                          in stack priority for expression
          dc    i1'0'                    ulongconst
          dc    i1'0'                    longlongconst
          dc    i1'0'                    ulonglongconst
-         dc    i1'0'                    doubleconst
+         dc    i1'0'                    extendedconst
          dc    i1'0'                    stringconst
          dc    i1'0'                    _Alignassy
          dc    i1'16'                   _Alignofsy
@@ -899,7 +899,7 @@ wordHash start                          reserved word hash table
          enum  ident,0                  identifiers
 !                                       constants
          enum  (intconst,uintconst,longconst,ulongconst,longlongconst)
-         enum  (ulonglongconst,doubleconst)
+         enum  (ulonglongconst,extendedconst)
          enum  stringconst
 !                                       reserved words
          enum  (_Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy)

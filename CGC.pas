@@ -32,7 +32,7 @@ type
                                         {pcode code generation}
                                         {---------------------}
    realrec = record                     {used to convert from real to in-SANE}
-      itsReal: double;
+      itsReal: extended;
       inSANE: packed array[1..10] of byte;
       inCOMP: packed array[1..8] of byte;
       end;

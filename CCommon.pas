@@ -168,7 +168,7 @@ type
                ident,                   {identifiers}
                                         {constants}
                intconst,uintconst,longconst,ulongconst,longlongconst,
-               ulonglongconst,doubleconst,
+               ulonglongconst,extendedconst,
                stringconst,
                                         {reserved words}
                _Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy,
@@ -209,7 +209,7 @@ type
 
    tokenSet = set of tokenEnum;
    tokenClass = (reservedWord,reservedSymbol,identifier,intConstant,longConstant,
-                 longlongConstant,doubleConstant,stringConstant,macroParameter);
+                 longlongConstant,realConstant,stringConstant,macroParameter);
    identPtr = ^identRecord;             {^ to a symbol table entry}
    tokenType = record                   {a token}
       kind: tokenEnum;                  {kind of token}
@@ -222,7 +222,7 @@ type
          intConstant   : (ival: integer);
          longConstant  : (lval: longint);
          longlongConstant: (qval: longlong);
-         doubleConstant: (rval: double);
+         realConstant  : (rval: extended);
          stringConstant: (sval: longstringPtr;
                           ispstring: boolean);
          macroParameter: (pnum: integer);
@@ -325,7 +325,7 @@ type
                cgReal,
                cgDouble,
                cgComp,
-               cgExtended: (rVal: double);
+               cgExtended: (rVal: extended);
                cgVoid,
                ccPointer: (
                   pVal: longint;
@@ -490,7 +490,7 @@ var
                                         {expression results}
                                         {------------------}
    doDispose: boolean;                  {dispose of the expression tree as we go?}
-   realExpressionValue: double;         {value of the last real constant expression}
+   realExpressionValue: extended;       {value of the last real constant expression}
    llExpressionValue: longlong;         {value of the last long long constant expression}
    expressionValue: longint;            {value of the last constant expression}
    expressionType: typePtr;             {the type of the expression}

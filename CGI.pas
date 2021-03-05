@@ -266,7 +266,7 @@ type
          cgReal,
          cgDouble,
          cgComp,
-         cgExtended     : (rval: double);
+         cgExtended     : (rval: extended);
          cgString       : (str: longStringPtr);
          cgVoid,
          ccPointer      : (pval: longint; pstr: longStringPtr);
@@ -579,7 +579,7 @@ procedure GenQ1 (fop: pcodes; qval: longlong; fp1: integer);
 {       fp1 - integer parameter                                 }
 
 
-procedure GenR1t (fop: pcodes; rval: double; fp1: integer; tp: baseTypeEnum);
+procedure GenR1t (fop: pcodes; rval: extended; fp1: integer; tp: baseTypeEnum);
 
 { generate an instruction that uses a real and an int           }
 {                                                               }
@@ -605,7 +605,7 @@ procedure GenLdcQuad (qval: longlong);
 {       qval - value to load                                    }
 
 
-procedure GenLdcReal (rval: double);
+procedure GenLdcReal (rval: extended);
 
 { load a real constant                                          }
 {                                                               }
@@ -1247,7 +1247,7 @@ if codeGeneration then begin
 end; {GenQ1}
 
 
-procedure GenR1t {fop: pcodes; rval: double; fp1: integer; tp: baseTypeEnum};
+procedure GenR1t {fop: pcodes; rval: extended; fp1: integer; tp: baseTypeEnum};
 
 { generate an instruction that uses a real and an int           }
 {                                                               }
@@ -1335,7 +1335,7 @@ if codeGeneration then begin
 end; {GenTool}
 
 
-procedure GenLdcReal {rval: double};
+procedure GenLdcReal {rval: extended};
 
 { load a real constant                                          }
 {                                                               }

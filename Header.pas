@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 10;                 {version number of .sym file format}
+   symFileVersion = 11;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -280,19 +280,19 @@ if numErrors <> 0 then
 end; {CloseSymbols}
 
 
-function ReadDouble: double;
+function ReadExtended: extended;
 
-{ Read a double precision real from the symbol file		}
+{ Read an extended precision real from the symbol file		}
 {								}
 { Returns: value read						}
 
 type
-   doubleptr = ^double;
+   extendedptr = ^extended;
 
-begin {ReadDouble}
-ReadDouble := doubleptr(symPtr)^;
-symPtr := pointer(ord4(symPtr)+8);
-end; {ReadDouble}
+begin {ReadExtended}
+ReadExtended := extendedptr(symPtr)^;
+symPtr := pointer(ord4(symPtr)+10);
+end; {ReadExtended}
 
 
 function ReadLong: longint;
@@ -400,24 +400,24 @@ symPtr := pointer(ord4(symPtr) + len);
 end; {ReadChars}
 
 
-procedure WriteDouble (d: double);
+procedure WriteExtended (e: extended);
 
-{ Write a double constant to the symbol file			}
+{ Write an extended constant to the symbol file			}
 {								}
 { parameters:							}
-{    d - constant to write					}
+{    e - constant to write					}
 
 var
-   dPtr: ^double;			{work pointer}
+   ePtr: ^extended;			{work pointer}
 
-begin {WriteDouble}
-if bufLen < 8 then
+begin {WriteExtended}
+if bufLen < 10 then
    Purge;
-dPtr := pointer(bufPtr);
-dPtr^ := d;
-bufPtr := pointer(ord4(bufPtr) + 8);
-bufLen := bufLen - 8;
-end; {WriteDouble}
+ePtr := pointer(bufPtr);
+ePtr^ := e;
+bufPtr := pointer(ord4(bufPtr) + 10);
+bufLen := bufLen - 10;
+end; {WriteExtended}
 
 
 procedure WriteLong (i: longint);
@@ -715,7 +715,7 @@ procedure EndInclude {chPtr: ptr};
                 		WriteLong(token.qval.lo);
                 		WriteLong(token.qval.hi);
                 		end;
-	    doubleConstant:	WriteDouble(token.rval);
+	    realConstant:	WriteExtended(token.rval);
 	    stringConstant:	begin
 				WriteLongString(token.sval);
                 		WriteByte(ord(token.ispstring));
@@ -1339,7 +1339,7 @@ var
 			        token.qval.lo := ReadLong;
                 	        token.qval.hi := ReadLong;
                 	        end;
-	 doubleConstant:	token.rval := ReadDouble;
+	 realConstant:	token.rval := ReadExtended;
 	 stringConstant:	begin
 			        token.sval := ReadLongString;
                 	        token.ispstring := ReadByte <> 0;

@@ -10,8 +10,8 @@
 *
 CnvSX    start cg
 rec      equ   4                        record containing values
-rec_real equ   0                        disp to real value
-rec_ext  equ   8                        disp to extended (SANE) value
+rec_real equ   0                        disp to real (extended) value
+rec_ext  equ   10                       disp to extended (SANE) value
 
          tsc                            set up DP
          phd
@@ -25,7 +25,7 @@ rec_ext  equ   8                        disp to extended (SANE) value
          adc   #0
          pha
          phx
-         fd2x                           convert TOS to extended
+         fx2x                           convert TOS to extended
          move4 0,4                      return
          pld
          pla
@@ -44,32 +44,15 @@ rec_ext  equ   8                        disp to extended (SANE) value
 *
 CnvSC    start cg
 rec      equ   4                        record containing values
-rec_real equ   0                        disp to real value
-rec_ext  equ   8                        disp to extended (SANE) value
-rec_cmp  equ   18                       disp to comp (SANE) value
+rec_real equ   0                        disp to real (extended) value
+rec_ext  equ   10                       disp to extended (SANE) value
+rec_cmp  equ   20                       disp to comp (SANE) value
 
          tsc                            set up DP
          phd
          tcd
          ph4   rec                      push addr of real number
-         clc                            push addr of SANE number
-         lda   rec
-         adc   #rec_ext
-         tax
-         lda   rec+2
-         adc   #0
-         pha
-         phx
-         fd2x                           convert TOS to extended
-         clc                            push addr of SANE number
-         lda   rec
-         adc   #rec_ext
-         tax
-         lda   rec+2
-         adc   #0
-         pha
-         phx
-         clc                            push addr of COMP number
+         clc                            push addr of SANE comp number
          lda   rec
          adc   #rec_cmp
          tax
@@ -77,7 +60,7 @@ rec_cmp  equ   18                       disp to comp (SANE) value
          adc   #0
          pha
          phx
-         fx2c                           convert TOS to extended
+         fx2c                           convert TOS to SANE comp number
          move4 0,4                      return
          pld
          pla

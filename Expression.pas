@@ -969,9 +969,8 @@ var
       lCodeGeneration: boolean;         {local copy of codeGeneration}
       op: tokenPtr;                     {work pointer}
       op1,op2: longint;                 {for evaluating constant expressions}
-      rop1,rop2: double;                {for evaluating double expressions}
+      rop1,rop2: extended;              {for evaluating fp expressions}
       llop1, llop2: longlong;           {for evaluating long long expressions}
-      extop1: extended;                 {temporary for conversions}
       tp: typePtr;                      {cast type}
       unsigned: boolean;                {is the term unsigned?}
 
@@ -1454,23 +1453,13 @@ var
             end; {if}
 
          if op^.right^.token.kind in [intconst,uintconst,longconst,ulongconst,
-            longlongconst,ulonglongconst,doubleconst] then
+            longlongconst,ulonglongconst,extendedconst] then
             if op^.left^.token.kind in [intconst,uintconst,longconst,ulongconst,
-               longlongconst,ulonglongconst,doubleconst] then
+               longlongconst,ulonglongconst,extendedconst] then
                begin
-               ekind := doubleconst; {evaluate a constant operation}
-               extop1 := RealVal(op^.left^.token);
-               rop1 := extop1;
-               if op^.left^.token.kind in [longlongconst,ulonglongconst] then
-                  if rop1 <> extop1 then
-                     if not (op^.token.kind in [barbarop,andandop]) then
-                        goto 1;
-               extop1 := RealVal(op^.right^.token);
-               rop2 := extop1;
-               if op^.right^.token.kind in [longlongconst,ulonglongconst] then
-                  if rop2 <> extop1 then
-                     if not (op^.token.kind in [barbarop,andandop]) then
-                        goto 1;
+               ekind := extendedconst; {evaluate a constant operation}
+               rop1 := RealVal(op^.left^.token);
+               rop2 := RealVal(op^.right^.token);
                dispose(op^.right);
                op^.right := nil;
                dispose(op^.left);
@@ -1522,8 +1511,8 @@ var
                   end {if}
                else begin
                   op^.token.rval := rop1;
-                  op^.token.class := doubleConstant;
-                  op^.token.kind := doubleConst;
+                  op^.token.class := realConstant;
+                  op^.token.kind := extendedConst;
                   end; {else}
                end; {if}
 1:
@@ -1574,7 +1563,7 @@ var
          else if op^.token.kind = castoper then begin
             class := op^.left^.token.class;
             if class in [intConstant,longConstant,longlongconstant,
-               doubleConstant] then begin
+               realConstant] then begin
                tp := op^.castType;
                while tp^.kind = definedType do
                   tp := tp^.dType;
@@ -1582,7 +1571,7 @@ var
                   baseType := tp^.baseType;
                   if (baseType < cgString) or (baseType in [cgQuad,cgUQuad])
                      then begin
-                     if class = doubleConstant then begin
+                     if class = realConstant then begin
                         rop1 := RealVal(op^.left^.token);
                         if baseType = cgUQuad then
                            CnvXULL(llop1, rop1)
@@ -1592,13 +1581,9 @@ var
                      else begin                      {handle integer constants}
                         GetLongLongVal(llop1, op^.left^.token);
                         if op^.left^.token.kind = ulonglongconst then
-                           extop1 := CnvULLX(llop1)
+                           rop1 := CnvULLX(llop1)
                         else
-                           extop1 := CnvLLX(llop1);
-                        rop1 := extop1;          
-                        if baseType in [cgExtended,cgComp] then
-                           if rop1 <> extop1 then
-                              goto 3;
+                           rop1 := CnvLLX(llop1);
                         end; {else if}
                      dispose(op^.left);
                      op^.left := nil;
@@ -1648,8 +1633,8 @@ var
                         op^.token.qval := llop1;
                         end {else if}
                      else begin
-                        op^.token.kind := doubleConst;
-                        op^.token.class := doubleConstant;
+                        op^.token.kind := extendedConst;
+                        op^.token.class := realConstant;
                         op^.token.rval := rop1;
                         end; {else if}
                      end; {if}
@@ -1727,15 +1712,15 @@ var
                   op^.token.ival := long(op1).lsw;
                   end; {else}
                end {else if}
-            else if op^.left^.token.kind = doubleconst then begin
-               ekind := doubleconst; {evaluate a constant operation}
+            else if op^.left^.token.kind = extendedconst then begin
+               ekind := extendedconst; {evaluate a constant operation}
                rop1 := RealVal(op^.left^.token);
                dispose(op^.left);
                op^.left := nil;
                case op^.token.kind of
                   uminus      : begin                        {unary -}
-                     op^.token.class := doubleConstant;
-                     op^.token.kind := doubleConst;
+                     op^.token.class := realConstant;
+                     op^.token.kind := extendedConst;
                      op^.token.rval := -rop1;
                      end;
                   excch       : begin                        {!}
@@ -1745,8 +1730,8 @@ var
                      end;
                   otherwise   : begin                        {illegal operation}
                      Error(66);
-                     op^.token.class := doubleConstant;
-                     op^.token.kind := doubleConst;
+                     op^.token.class := realConstant;
+                     op^.token.kind := extendedConst;
                      op^.token.rval := rop1;
                      end;
                   end; {case}
@@ -1812,10 +1797,10 @@ if token.kind in startExpression then begin
             sp^.right := nil;
             stack := sp;
             if kind in [preprocessorExpression,arrayExpression] then
-               if token.kind in [stringconst,doubleconst] then begin
+               if token.kind in [stringconst,extendedconst] then begin
                   if kind = arrayExpression then begin
                      op := opStack;
-                     if token.kind = doubleconst then
+                     if token.kind = extendedconst then
                         if op <> nil then
                            if op^.token.kind = castoper then
                               if op^.casttype^.kind = scalarType then
@@ -3148,7 +3133,7 @@ var
             or ((divisor.class = longConstant) and (divisor.lval = 0))
             or ((divisor.class = longlongConstant) 
                and (divisor.qval.lo = 0) and (divisor.qval.hi = 0))
-            or ((divisor.class = doubleConstant) and (divisor.rval = 0.0)) then
+            or ((divisor.class = realConstant) and (divisor.rval = 0.0)) then
             Error(129);
    end; {CheckDivByZero}
 
@@ -3270,10 +3255,10 @@ case tree^.token.kind of
          end; {if}
       end; {case longlongConst}
 
-   doubleConst: begin
+   extendedConst: begin
       GenLdcReal(tree^.token.rval);
       expressionType := doublePtr;
-      end; {case doubleConst}
+      end; {case extendedConst}
 
    stringConst: begin
       GenS(pc_lca, tree^.token.sval);
@@ -4395,7 +4380,7 @@ else begin                              {record the expression for an initialize
          expressionType := ulongLongPtr;
          isConstant := true;
          end {else if}
-      else if tree^.token.kind = doubleconst then begin
+      else if tree^.token.kind = extendedconst then begin
          realExpressionValue := tree^.token.rval;
          expressionType := extendedPtr;
          isConstant := true;
@@ -4450,7 +4435,7 @@ procedure InitExpression;
 
 begin {InitExpression}
 startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
-              ulonglongconst,doubleconst,stringconst,_Genericsy];
+              ulonglongconst,extendedconst,stringconst,_Genericsy];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
               plusplusop,minusminusop,typedef,_Alignofsy];
