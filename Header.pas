@@ -1550,6 +1550,11 @@ var
          
          p_fenv_access: fenvAccess := boolean(ReadByte);
 
+         otherwise: begin
+            PurgeSymbols;
+            DestroySymbolFile;
+            TermError(12);
+            end;
          end; {case}
       end; {while}
    symPtr := pePtr;
@@ -1677,8 +1682,14 @@ var
         		end; {while}
         	     end;
 
-		  otherwise: ;
-         
+        	  enumType: ;
+
+        	  otherwise: begin
+        	     PurgeSymbols;
+        	     DestroySymbolFile;
+        	     TermError(12);
+        	     end;
+
         	  end; {case}
                end; {case 0}
 
@@ -1716,6 +1727,12 @@ var
             15: tp := uCharPtr;
             16: tp := shortPtr;
             17: tp := uShortPtr;
+
+            otherwise: begin
+               PurgeSymbols;
+               DestroySymbolFile;
+               TermError(12);
+               end;
             end; {case}
 	 end; {ReadType}
 
