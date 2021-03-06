@@ -13,7 +13,8 @@
 #ifndef __float__
 #define __float__
 
-#define FLT_ROUNDS      1
+int __get_flt_rounds(void);
+#define FLT_ROUNDS      (__get_flt_rounds())
 
 #define FLT_RADIX       2
 
