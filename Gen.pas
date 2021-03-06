@@ -621,7 +621,7 @@ NeedsCondition := opcode in
    [pc_and,pc_ior,pc_cui,pc_cup,pc_lor,pc_lnd,pc_ldl,pc_lil,pc_lld,
     pc_lli,pc_gil,pc_gli,pc_gdl,pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,
     pc_cop,pc_cpo,pc_cpi,pc_dvi,pc_mpi,pc_adi,pc_sbi,pc_mod,pc_bno,
-    pc_udi,pc_uim,pc_umi,pc_cnv];
+    pc_udi,pc_uim,pc_umi,pc_cnv,pc_rbo];
 end; {NeedsCondition}
 
 
@@ -6589,6 +6589,16 @@ procedure GenTree {op: icptr};
    end; {GenPsh}
 
 
+   procedure GenRbo (op: icptr);
+
+   { Generate code for a pc_rbo					}
+
+   begin {GenRbo}
+   GenTree(op^.left);
+   GenImplied(m_xba);
+   end; {GenRbo}
+
+
    procedure GenRealBinOp (op: icptr);
 
    { Generate code for a pc_adr, pc_dvr, pc_mpr or pc_sbr	}
@@ -7168,6 +7178,7 @@ case op^.opcode of
    pc_nop: ;
    pc_pop: GenPop(op);                
    pc_psh: GenPsh(op);
+   pc_rbo: GenRbo(op);
    pc_ret: GenRet(op);
    pc_sbf,pc_cbf: GenSbfCbf(op);
    pc_sbi: GenSbi(op);

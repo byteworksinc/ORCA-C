@@ -551,6 +551,14 @@
 {  source address onto the stack.                               }
 {                                                               }
 {                                                               }
+{  pc_rbo - reverse byte order                                  }
+{                                                               }
+{  Gen0(pc_rbo)         cgWord,cgUWord                          }
+{                                                               }
+{  The value on the top of the evaluation stack is removed, has }
+{  the order of its constituent bytes reversed, and is replaced.}
+{                                                               }
+{                                                               }
 {  pc_sbf - save bit field                                      }
 {                                                               }
 {  Gen2t(pc_sbf, disp, size, type)                              }

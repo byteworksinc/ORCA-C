@@ -1100,7 +1100,20 @@ case op^.opcode of			{check for optimizations of this node}
             end {if}
          else if op^.right^.q = 0 then
             opv := op^.left;
-         end; {else if}
+         end {else if}
+      else if ((op^.left^.opcode = pc_shl) and (op^.right^.opcode = pc_usr))
+         or ((op^.left^.opcode = pc_usr) and (op^.right^.opcode = pc_shl)) then
+         if op^.left^.right^.opcode = pc_ldc then
+            if op^.right^.right^.opcode = pc_ldc then
+               if op^.left^.right^.q = 8 then
+                  if op^.right^.right^.q = 8 then
+                     if CodesMatch(op^.left^.left, op^.right^.left, false) then
+                        if not SideEffects(op^.left^.left) then begin
+                           op^.opcode := pc_rbo;
+                           op^.left := op^.left^.left;
+                           op^.right := nil;
+                           end; {if}
+         
       end; {case pc_bor}
 
    pc_bxr: begin			{pc_bxr}
@@ -2733,7 +2746,7 @@ case op^.opcode of
    pc_neq, pc_ior, pc_lor, pc_mod, pc_mpi, pc_sbi, pc_shl, pc_shr:
       TypeOf := cgWord;
 
-   pc_udi, pc_uim, pc_umi, pc_usr:
+   pc_udi, pc_uim, pc_umi, pc_usr, pc_rbo:
       TypeOf := cgUWord;
                          
    pc_bnl, pc_ngl, pc_adl, pc_bal, pc_blr, pc_blx, pc_dvl, pc_mdl,
@@ -4544,7 +4557,7 @@ var
                    pc_ngl,pc_ngr,pc_not,pc_pop,pc_sbi,pc_sbl,pc_sbr,
                    pc_shl,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr,pc_tri,
                    pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,
-                   pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm]
+                   pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm,pc_rbo]
                   then begin
         	  op^.parents := icount;
                   icount := icount+1;
@@ -5412,7 +5425,7 @@ case code^.opcode of
    pc_bnt, pc_bnl, pc_cnv, pc_dec, pc_inc, pc_ind, pc_lbf, pc_lbu,
    pc_ngi, pc_ngl, pc_ngr, pc_not, pc_stk, pc_cop, pc_cpo, pc_tl1,
    pc_sro, pc_str, pc_fjp, pc_tjp, pc_xjp, pc_cup, pc_pop, pc_iil,
-   pc_ili, pc_idl, pc_ild, pc_bnq, pc_ngq:
+   pc_ili, pc_idl, pc_ild, pc_bnq, pc_ngq, pc_rbo:
       begin
       code^.left := Pop;
       Push(code);
