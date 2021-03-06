@@ -3936,12 +3936,24 @@ case optype of
             GenCall(67);
          end {if}
       else {if opcode = pc_cpo then} begin
-         if optype = cgReal then
-            GenCall(51)
-         else if optype = cgDouble then
-            GenCall(52)
-         else if optype = cgComp then
-            GenCall(68)
+         if optype = cgReal then begin
+            GenCall(9);            
+            GenNative(m_pea, immediate, q, lab, shift16);
+            GenNative(m_pea, immediate, q, lab, 0);
+            GenCall(21);
+            end {if}
+         else if optype = cgDouble then begin
+            GenCall(10);
+            GenNative(m_pea, immediate, q, lab, shift16);
+            GenNative(m_pea, immediate, q, lab, 0);
+            GenCall(22);
+            end {else if}
+         else if optype = cgComp then begin
+            GenCall(66);
+            GenNative(m_pea, immediate, q, lab, shift16);
+            GenNative(m_pea, immediate, q, lab, 0);
+            GenCall(70);
+            end {else if}
          else {if optype = cgExtended then}
             GenCall(69);
          end; {else}
@@ -4268,32 +4280,47 @@ optype := op^.optype;
 case optype of
 
    cgReal,cgDouble,cgComp,cgExtended: begin
-      GenTree(op^.right);
-      gLong.preference := onStack;
-      GenTree(op^.left);
-      if optype = cgReal then begin
-         if opcode = pc_sto then
+      if opcode = pc_sto then begin
+         GenTree(op^.right);
+         gLong.preference := onStack;
+         GenTree(op^.left);
+         if optype = cgReal then
             GenCall(9)
-         else
-            GenCall(51);
-         end {if}
-      else if optype = cgDouble then begin
-         if opcode = pc_sto then
+         else if optype = cgDouble then
             GenCall(10)
-         else
-            GenCall(52);
-         end {else if}
-      else if optype = cgComp then begin
-         if opcode = pc_sto then
+         else if optype = cgComp then
             GenCall(66)
-         else
-            GenCall(68);
-         end {else if}
-      else {if optype = cgExtended then} begin
-         if opcode = pc_sto then
-            GenCall(67)
-         else
+         else {if optype = cgExtended then}
+            GenCall(67);
+         end {if}
+      else {if opcode = pc_cpi then} begin
+         if optype = cgExtended then begin         
+            GenTree(op^.right);
+            gLong.preference := onStack;
+            GenTree(op^.left);
             GenCall(69);
+            end {if}
+         else begin
+            gLong.preference := onStack;
+            GenTree(op^.left);
+            GenTree(op^.right);
+            GenNative(m_lda_s, direct, 13, nil, 0);
+            GenImplied(m_pha);
+            GenNative(m_lda_s, direct, 13, nil, 0);
+            GenImplied(m_pha);
+            if optype = cgReal then begin
+               GenCall(9);
+               GenCall(21);
+               end {if}
+            else if optype = cgDouble then begin
+               GenCall(10);
+               GenCall(22);
+               end {else if}
+            else {if optype = cgComp then} begin
+               GenCall(66);
+               GenCall(70);
+               end; {else}
+            end; {else}
          end; {else}
       end; {case cgReal,cgDouble,cgComp,cgExtended}
 
@@ -4660,12 +4687,33 @@ case optype of
             GenCall(67);
          end {if}
       else begin
-         if optype = cgReal then
-            GenCall(51)
-         else if optype = cgDouble then
-            GenCall(52)
-         else if optype = cgComp then
-            GenCall(68)
+         if optype = cgReal then begin
+            GenCall(9);
+            GenNative(m_pea, immediate, 0, nil, 0);
+            GenImplied(m_tdc);
+            GenImplied(m_clc);
+            GenNative(m_adc_imm, immediate, disp, nil, 0);
+            GenImplied(m_pha);
+            GenCall(21);
+            end {if}
+         else if optype = cgDouble then begin
+            GenCall(10);
+            GenNative(m_pea, immediate, 0, nil, 0);
+            GenImplied(m_tdc);
+            GenImplied(m_clc);
+            GenNative(m_adc_imm, immediate, disp, nil, 0);
+            GenImplied(m_pha);
+            GenCall(22);
+            end {else if}
+         else if optype = cgComp then begin
+            GenCall(66);
+            GenNative(m_pea, immediate, 0, nil, 0);
+            GenImplied(m_tdc);
+            GenImplied(m_clc);
+            GenNative(m_adc_imm, immediate, disp, nil, 0);
+            GenImplied(m_pha);
+            GenCall(70);
+            end {else if}
          else {if optype = cgExtended then}
             GenCall(69);
          end; {else}
