@@ -6528,6 +6528,17 @@ procedure GenTree {op: icptr};
       skipLoad := true;
    if op^.left^.opcode = pc_mov then
       GenMov(op^.left, false)
+   else if op^.left^.opcode in [pc_cop,pc_cpo,pc_cpi,pc_cbf] then begin
+      if op^.left^.opcode = pc_cop then
+         op^.left^.opcode := pc_str
+      else if op^.left^.opcode = pc_cpo then
+         op^.left^.opcode := pc_sro
+      else if op^.left^.opcode = pc_cpi then
+         op^.left^.opcode := pc_sto
+      else {if op^.left^.opcode = pc_cbf then}
+         op^.left^.opcode := pc_sbf;
+      GenTree(op^.left);
+      end {else if}
    else begin
       GenTree(op^.left);
       if isIncLoad then
