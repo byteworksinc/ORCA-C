@@ -39,7 +39,7 @@ type
        p_nda,p_debug,p_lint,p_memorymodel,p_expand,
        p_optimize,p_stacksize,p_toolparms,p_databank,p_rtl,
        p_noroot,p_path,p_ignore,p_segment,p_nba,
-       p_xcmd,p_unix,p_line,p_endofenum);
+       p_xcmd,p_unix,p_line,p_fenv_access,p_endofenum);
 
                                         {preprocessor types}
                                         {------------------}
@@ -236,6 +236,8 @@ type
       elseFound: boolean;               {has an #else been found?}
       end;
 
+   onOffEnum = (on,off,default);        {on-off values in standard pragmas}
+
 var
    dateStr: longStringPtr;              {macro date string}
    doingPPExpression: boolean;          {are we processing a preprocessor expression?}
@@ -252,6 +254,7 @@ var
    includeCount: 0..maxint;		{nested include files (for EndInclude)}
    macroFound: macroRecordPtr;          {last macro found by IsDefined}
    needWriteLine: boolean;              {is there a line that needs to be written?}
+   onOffValue: onOffEnum;               {value of last on-off switch}
    wroteLine: boolean;                  {has the current line already been written?}
    numErr: 0..maxErr;                   {number of errors in this line}
    oneStr: string[2];                   {string form of __STDC__, etc.}
@@ -692,6 +695,7 @@ if list or (numErr <> 0) then begin
         154: msg := @'lint: function declared _Noreturn can return or has unreachable code';
         155: msg := @'lint: non-void function may not return a value or has unreachable code';
         156: msg := @'invalid suffix on numeric constant';
+        157: msg := @'unknown or malformed standard pragma';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -2034,6 +2038,41 @@ var
    end; {NumericDirective}
 
 
+   procedure OnOffSwitch;
+ 
+   { Process an of-off-switch, as used in standard pragmas.      }
+   
+   var
+      flaggedError: boolean;            {did we flag an error already?}
+ 
+   begin {OnOffSwitch}
+   onOffValue := off;
+   flaggedError := false;
+   NextToken;                           {skip the standard pragma name}
+   if token.kind = typedef then
+      token.kind := ident;
+   if token.kind <> ident then begin
+      Error(157);
+      flaggedError := true;
+      end {if}
+   else if token.name^ = 'ON' then
+      onOffValue := on
+   else if token.name^ = 'OFF' then
+      onOffValue := off
+   else if token.name^ = 'DEFAULT' then
+      onOffValue := default
+   else begin
+      Error(157);
+      flaggedError := true;
+      end; {else}
+   if not flaggedError then begin
+      NextToken;
+      if token.kind <> eolsy then
+         Error(11);
+      end; {if}
+   end; {OnOffSwitch}
+
+
    procedure ProcessIf (skip: boolean);
  
    { handle the processing for #if, #ifdef and #ifndef           }
@@ -3018,6 +3057,25 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      if token.kind <> eolsy then
                         Error(11);
                      end {else if}
+                  else if token.name^ = 'STDC' then begin
+                     expandMacros := false;
+                     NextToken;
+                     if token.name^ = 'FP_CONTRACT' then
+                        OnOffSwitch
+                     else if token.name^ = 'CX_LIMITED_RANGE' then
+                        OnOffSwitch
+                     else if token.name^ = 'FENV_ACCESS' then begin
+                        OnOffSwitch;
+                        FlagPragmas(p_fenv_access);
+                        fenvAccess := (onOffValue = on);
+                        if fenvAccess then
+                           if doingFunction then
+                              fenvAccessInFunction := true;
+                        end
+                     else
+                        Error(157);
+                     expandMacros := true;
+                     end {else if}
                   else if (lint & lintPragmas) <> 0 then
                      Error(110);
                   goto 2;
@@ -3789,6 +3847,7 @@ doingStringOrCharacter := false;        {not doing a string}
 doingPPExpression := false;             {not doing a preprocessor expression}
 unix_1 := false;			{int is 16 bits}
 lintIsError := true;                    {lint messages are considered errors}
+fenvAccess := false;                    {not accessing fp environment}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}

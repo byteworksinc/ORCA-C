@@ -131,6 +131,7 @@ type
       case kind: statementKind of
          compoundSt: (
             doingDeclaration: boolean;  {doing declarations? (or statements)}
+            lFenvAccess: boolean;       {previous value of fenvAccess just}
             );
          ifSt: (
             ifLab: integer;             {branch point}
@@ -302,8 +303,9 @@ var
    stPtr: statementPtr;                 {for creating a compound statement record}
 
 begin {CompoundStatement}
-Match(lbracech,27);                     {make sure there is an opening '{'}
 new(stPtr);                             {create a statement record}
+stPtr^.lFenvAccess := fenvAccess;       {save existing value of fenvAccess}
+Match(lbracech,27);                     {make sure there is an opening '{'}
 stPtr^.next := statementList;
 statementList := stPtr;
 stPtr^.kind := compoundSt;
@@ -373,6 +375,7 @@ if not doingFunction then begin         {if so, finish it off}
    functionName := nil;
    end; {if}
 PopTable;				{remove this symbol table}
+fenvAccess := stPtr^.lFenvAccess;       {restore old value of fenvAccess}
 dispose(stPtr);                         {dump the record}
 if dumpLocal then begin
    useGlobalPool := true;               {start using the global memory pool}
@@ -3797,6 +3800,7 @@ if isFunction then begin
          Gen1Name(pc_lao, 0, lp^.name);
          Gen2t(pc_str, 0, 0, cgULong);
          end; {if}
+      fenvAccessInFunction := fenvAccess;
       if isAsm then begin
          AsmFunction(variable);         {handle assembly language functions}
          PopTable;

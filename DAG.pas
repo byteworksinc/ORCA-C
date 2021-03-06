@@ -5291,7 +5291,8 @@ var
 
 
    begin {Generate}             
-   if peepHole then			{peephole optimization}
+   					{peephole optimization}
+   if peepHole and not fenvAccessInFunction then
       repeat
          rescan := false;
 	 PeepHoleOptimization(DAGhead);
@@ -5306,22 +5307,27 @@ var
    BasicBlocks;				{build the basic blocks}
    if commonSubexpression or loopOptimizations then
       if not volatile then
-         FlagIndirectUses;		{create a list of all indirect uses}
+         if not fenvAccessInFunction then
+            FlagIndirectUses;		{create a list of all indirect uses}
    if commonSubexpression then		{common sub-expression removal}
       if not volatile then
-         CommonSubexpressionElimination;
+         if not fenvAccessInFunction then
+            CommonSubexpressionElimination;
    if loopOptimizations then		{loop optimizations}
       if not volatile then
-         DoLoopOptimization;
+         if not fenvAccessInFunction then
+            DoLoopOptimization;
 {  if printSymbols then			{debug}
 {     PrintBlocks(@'DAG: ', DAGblocks);	{debug}
    if commonSubexpression or loopOptimizations then
       if not volatile then
-         DisposeOpList(c_ind);		{dispose of indirect use list}
+         if not fenvAccessInFunction then
+            DisposeOpList(c_ind);	{dispose of indirect use list}
    Gen(DAGblocks);			{generate native code}
    if loopOptimizations then		{dump and dynamic space}
       if not volatile then
-         DumpLoopLists;
+         if not fenvAccessInFunction then
+            DumpLoopLists;
    DAGhead := nil;			{reset the DAG pointers}
    end; {Generate}
    

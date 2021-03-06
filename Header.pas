@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 11;                 {version number of .sym file format}
+   symFileVersion = 12;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -888,6 +888,8 @@ procedure EndInclude {chPtr: ptr};
                      end;
 
                   p_unix: WriteByte(ord(unix_1));
+                  
+                  p_fenv_access: WriteByte(ord(fenvAccess));
 
                   end; {case}
                end; {if}
@@ -1545,6 +1547,8 @@ var
             end;
 
          p_unix: unix_1 := boolean(ReadByte);
+         
+         p_fenv_access: fenvAccess := boolean(ReadByte);
 
          end; {case}
       end; {while}

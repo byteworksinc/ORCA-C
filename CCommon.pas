@@ -525,6 +525,8 @@ var
    lintIsError: boolean;                {treat lint messages as errors?}
    fIsNoreturn: boolean;                {is the current function _Noreturn?}
    doingMain: boolean;                  {are we processing the main function?}
+   fenvAccess: boolean;                 {is the FENV_ACCESS pragma on?}
+   fenvAccessInFunction: boolean;       {was FENV_ACCESS on anywhere in current function?}
 
                                         {syntactic classes of tokens}
                                         {---------------------------}

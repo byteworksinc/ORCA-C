@@ -959,7 +959,7 @@ var
 
    { do an operation                                                }
 
-   label 1,2,3;
+   label 1,2,3,4;
 
    var
       baseType: baseTypeEnum;           {base type of value to cast}
@@ -1457,6 +1457,9 @@ var
             if op^.left^.token.kind in [intconst,uintconst,longconst,ulongconst,
                longlongconst,ulonglongconst,extendedconst] then
                begin
+               if fenvAccess then
+                  if kind in [normalExpression, autoInitializerExpression] then
+                     goto 1;
                ekind := extendedconst; {evaluate a constant operation}
                rop1 := RealVal(op^.left^.token);
                rop2 := RealVal(op^.right^.token);
@@ -1569,6 +1572,11 @@ var
                   tp := tp^.dType;
                if tp^.kind = scalarType then begin
                   baseType := tp^.baseType;
+                  if fenvAccess then
+                     if kind in [normalExpression, autoInitializerExpression] then
+                        if (baseType in [cgReal,cgDouble,cgComp,cgExtended])
+                           or (class = realConstant) then
+                           goto 3;
                   if (baseType < cgString) or (baseType in [cgQuad,cgUQuad])
                      then begin
                      if class = realConstant then begin
@@ -1713,6 +1721,9 @@ var
                   end; {else}
                end {else if}
             else if op^.left^.token.kind = extendedconst then begin
+               if fenvAccess then
+                  if kind in [normalExpression, autoInitializerExpression] then
+                     goto 4;
                ekind := extendedconst; {evaluate a constant operation}
                rop1 := RealVal(op^.left^.token);
                dispose(op^.left);
@@ -1737,6 +1748,7 @@ var
                   end; {case}
                end; {if}
             end; {if}
+4:
          end;
 
       otherwise: Error(57);
