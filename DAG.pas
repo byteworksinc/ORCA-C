@@ -586,7 +586,12 @@ var
 	 end;
 
    begin {RealStoreOptimizations}
-   if opl^.opcode = pc_ngr then begin
+   if opl^.opcode = pc_cnv then
+      if baseTypeEnum(opl^.q & $000F) = op^.optype then
+         opl^.q := (opl^.q & $FFF0) | ord(cgExtended);
+   if (op^.optype = cgComp) or not (op^.opcode in [pc_sro,pc_str,pc_sto]) then
+      {skip below optimizations}
+   else if opl^.opcode = pc_ngr then begin
       same := false;
       with opl^.left^ do
          if op^.opcode = pc_sro then begin
@@ -1451,6 +1456,16 @@ case op^.opcode of			{check for optimizations of this node}
                      end; {if}
          end; {else if}                     
       end; {case pc_cnv}
+
+   pc_cop,pc_cpo: begin			{pc_cop,pc_cpo}
+      if op^.optype in [cgReal,cgDouble,cgExtended,cgComp] then
+         RealStoreOptimizations(op, op^.left);
+      end; {case pc_cop,pc_cpo}
+
+   pc_cpi: begin			{pc_cpi}
+      if op^.optype in [cgReal,cgDouble,cgExtended,cgComp] then
+         RealStoreOptimizations(op, op^.right);
+      end; {case pc_cpi}
 
    pc_dec: begin			{pc_dec}
       if op^.q = 0 then
@@ -2427,12 +2442,12 @@ case op^.opcode of			{check for optimizations of this node}
       end; {case pc_slq}
 
    pc_sro, pc_str: begin		{pc_sro, pc_str}
-      if op^.optype in [cgReal,cgDouble,cgExtended] then
+      if op^.optype in [cgReal,cgDouble,cgExtended,cgComp] then
          RealStoreOptimizations(op, op^.left);
       end; {case pc_sro, pc_str}
 
    pc_sto: begin			{pc_sto}
-      if op^.optype in [cgReal,cgDouble,cgExtended] then
+      if op^.optype in [cgReal,cgDouble,cgExtended,cgComp] then
          RealStoreOptimizations(op, op^.right);
       if op^.left^.opcode = pc_lao then begin
          op^.q := op^.left^.q;

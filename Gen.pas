@@ -1731,11 +1731,14 @@ else if op^.q in [wordToByte,uwordToByte] then begin
    GenNative(m_ora_imm, immediate, $FF00, nil, 0);
    GenLab(lab1);
    end {else if}
-else if op^.q in [byteToReal,uByteToReal,wordToReal] then
-   GenCall(11)
+else if op^.q in [byteToReal,uByteToReal,wordToReal] then begin
+   GenCall(11);
+   toRealType := cgExtended;
+   end {else if}
 else if op^.q = uwordToReal then begin
    GenNative(m_ldx_imm, immediate, 0, nil, 0);
    GenCall(12);
+   toRealType := cgExtended;
    end {else if}
 else if op^.q in [longToUbyte,ulongToUbyte] then begin
    if gLong.where = A_X then
@@ -1786,6 +1789,8 @@ else if op^.q in [longToReal,uLongToReal] then begin
       GenCall(12)
    else
       GenCall(13);
+   if toRealType <> cgReal then
+      toRealType := cgExtended;
    end {else if}
 else if op^.q = realToWord then
    GenCall(14)
