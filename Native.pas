@@ -2047,6 +2047,9 @@ case callNum of
    88: sp := @'~SCMP8';
    89: sp := @'~CNVREALLONGLONG';
    90: sp := @'~CNVREALULONGLONG';
+   91: sp := @'~SINGLEPRECISION';
+   92: sp := @'~DOUBLEPRECISION';
+   93: sp := @'~COMPPRECISION';
    otherwise:
       Error(cge1);
    end; {case}

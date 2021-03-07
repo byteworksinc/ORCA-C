@@ -1161,6 +1161,7 @@ case op^.opcode of			{check for optimizations of this node}
                      end;
         	  cgReal,cgDouble,cgComp,cgExtended: begin
                      rval := op^.left^.q;
+                     LimitPrecision(rval, totype.optype);
                      op^.left^.q := 0;
                      op^.left^.rval := rval;
                      end;
@@ -1181,6 +1182,7 @@ case op^.opcode of			{check for optimizations of this node}
                      end;
         	  cgReal,cgDouble,cgComp,cgExtended: begin
                      rval := ord4(op^.left^.q) & $0000FFFF;
+                     LimitPrecision(rval, totype.optype);
                      op^.left^.q := 0;
                      op^.left^.rval := rval;
                      end;
@@ -1203,6 +1205,7 @@ case op^.opcode of			{check for optimizations of this node}
                      end;
         	  cgReal,cgDouble,cgComp,cgExtended: begin
                      rval := op^.left^.lval;
+                     LimitPrecision(rval, totype.optype);
                      op^.left^.lval := 0;
                      op^.left^.rval := rval;
                      end;
@@ -1227,6 +1230,7 @@ case op^.opcode of			{check for optimizations of this node}
                         rval := lval
                      else
                         rval := (lval & $7FFFFFFF) + 2147483648.0;
+                     LimitPrecision(rval, totype.optype);
                      op^.left^.rval := rval;
                      end;
                   otherwise: ;
@@ -1246,6 +1250,7 @@ case op^.opcode of			{check for optimizations of this node}
                   cgQuad,cgUQuad: ;
                   cgDouble,cgExtended: begin
                      rval := CnvLLX(op^.left^.qval);
+                     LimitPrecision(rval, totype.optype);
                      op^.left^.qval := longlong0;
                      op^.left^.rval := rval;
                      end;
@@ -1268,6 +1273,7 @@ case op^.opcode of			{check for optimizations of this node}
                   cgQuad,cgUQuad: ;
                   cgDouble,cgExtended: begin
                      rval := CnvULLX(op^.left^.qval);
+                     LimitPrecision(rval, totype.optype);
                      op^.left^.qval := longlong0;
                      op^.left^.rval := rval;
                      end;
@@ -1346,7 +1352,8 @@ case op^.opcode of			{check for optimizations of this node}
                      CnvXLL(op^.left^.qval, rval);
                   cgUQuad:
                      CnvXULL(op^.left^.qval, rval);
-        	  cgReal,cgDouble,cgComp,cgExtended: ;
+        	  cgReal,cgDouble,cgComp,cgExtended:
+        	     LimitPrecision(rval, totype.optype);
                   otherwise: ;
                   end;
                end; {case}        
@@ -1374,7 +1381,9 @@ case op^.opcode of			{check for optimizations of this node}
          firsttype.i := (op^.left^.q & $00F0) >> 4;
          if fromType.optype in [cgReal,cgDouble,cgComp,cgExtended] then begin
             if toType.optype in [cgReal,cgDouble,cgComp,cgExtended] then
-               doit := true;
+               if (baseTypeEnum(op^.left^.q & $000F) = toType.optype)
+                  or (baseTypeEnum(op^.left^.q & $000F) = cgExtended) then
+                  doit := true;
             end {if}
          else begin
             if firstType.optype in [cgByte,cgWord,cgLong] then

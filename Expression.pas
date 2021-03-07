@@ -567,6 +567,8 @@ else if kind2 in
 
       scalarType: begin
          baseType1 := t1^.baseType;
+         if baseType1 in [cgReal,cgDouble,cgComp] then
+            baseType1 := cgExtended;
          if baseType1 = cgString then
             Error(64)
          else if baseType1 = cgVoid then
@@ -1643,6 +1645,7 @@ var
                      else begin
                         op^.token.kind := extendedConst;
                         op^.token.class := realConstant;
+                        LimitPrecision(rop1, baseType);
                         op^.token.rval := rop1;
                         end; {else if}
                      end; {if}
@@ -2211,7 +2214,7 @@ if (tp^.kind = scalarType) and (tp^.cType = ctBool) then begin
 else if (tp^.kind = scalarType) and (expressionType^.kind = scalarType) then begin
    rt := tp^.baseType;
    et := expressionType^.baseType;
-   if rt <> et then
+   if (rt <> et) or (rt in [cgReal,cgDouble,cgComp]) then
       if et <> cgVoid then
          Gen2(pc_cnv, ord(et), ord(rt))
       else

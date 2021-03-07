@@ -648,6 +648,15 @@ function TypeSize (tp: baseTypeEnum): integer;
 { Parameters:                                                   }
 {    code - intermediate code instruction to write              }
 
+
+procedure LimitPrecision (var rval: extended; tp: baseTypeEnum);
+
+{ limit the precision and range of a real value to the type.    }
+{                                                               }
+{ parameters:                                                   }
+{       rval - real value                                       }
+{       tp - type to limit precision to                         }
+
 {------------------------------------------------------------------------------}
 
 implementation
@@ -884,10 +893,11 @@ if codeGeneration then begin
          end;
 
       pc_cnn,pc_cnv:
-         if fp1 = fp2 then
+         if (fp1 = fp2)
+            and not (baseTypeEnum(fp2) in [cgReal,cgDouble,cgComp]) then
             goto 1
          else if (baseTypeEnum(fp1) in [cgReal,cgDouble,cgComp,cgExtended])
-            and (baseTypeEnum(fp2) in [cgReal,cgDouble,cgComp,cgExtended]) then
+            and (baseTypeEnum(fp2) = cgExtended) then
             goto 1
          else if (baseTypeEnum(fp1) in [cgUByte,cgWord,cgUWord])
             and (baseTypeEnum(fp2) in [cgWord,cgUWord]) then
@@ -1376,5 +1386,37 @@ case tp of
    cgVoid,ccPointer: TypeSize := cgLongSize;
    end; {case}
 end; {TypeSize}
+
+
+procedure LimitPrecision {rval: var extended; tp: baseTypeEnum};
+
+{ limit the precision and range of a real value to the type.    }
+{                                                               }
+{ parameters:                                                   }
+{       rval - real value                                       }
+{       tp - type to limit precision to                         }
+
+var
+   d: double;
+   s: real;
+   c: comp;
+
+begin {LimitPrecision}
+case tp of
+   cgReal:   begin
+             s := rval;
+             rval := s;
+             end;
+   cgDouble: begin
+             d := rval;
+             rval := d;
+             end;
+   cgComp:   begin
+             c := rval;
+             rval := c;
+             end;
+   cgExtended: ;
+   end; {case}
+end; {LimitPrecision}
 
 end.

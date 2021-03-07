@@ -1649,7 +1649,7 @@ const                                {note: these constants list all legal }
    uquadToVoid       = $DB;
 
 var
-   fromReal: boolean;			{are we converting from a real?}
+   toRealType: baseTypeEnum;		{real type converted to}
    lab1: integer;			{used for branches}
    lLong: longType;			{used to reserve gLong}
 
@@ -1663,12 +1663,13 @@ else
    gQuad.preference := onStack;
 if ((op^.q & $00F0) >> 4) in [cDouble,cExtended,cComp] then begin
    op^.q := (op^.q & $000F) | (cReal * 16);
-   fromReal := true;
+   end; {if}
+if (op^.q & $000F) in [cDouble,cExtended,cComp,cReal] then begin
+   toRealType := baseTypeEnum(op^.q & $000F);
+   op^.q := (op^.q & $00F0) | cReal;
    end {if}
 else
-   fromReal := false;
-if (op^.q & $000F) in [cDouble,cExtended,cComp] then
-   op^.q := (op^.q & $00F0) | cReal;
+   toRealType := cgVoid;
 GenTree(op^.left);
 if op^.q in [wordToLong,wordToUlong] then begin
    lab1 := GenLabel;
@@ -1994,6 +1995,13 @@ else if (op^.q & $000F) in [cLong,cULong] then
          end; {else if}
       gLong.where := onStack;
       end; {if}
+if toRealType <> cgVoid then
+   case toRealType of
+      cgReal:   GenCall(91);
+      cgDouble: GenCall(92);
+      cgComp:   GenCall(93);
+      cgExtended: ;
+      end; {case}
 end; {GenCnv}
 
 
