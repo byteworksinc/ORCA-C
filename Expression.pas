@@ -352,11 +352,8 @@ function Unary(tp: baseTypeEnum): baseTypeEnum;
 {      Stack type.                                              }
 
 begin {Unary}
-if tp in [cgByte,cgUByte,cgReal,cgDouble,cgComp] then
-   if tp in [cgByte,cgUByte] then
-      tp := cgWord
-   else {if tp in [cgReal,cgDouble,cgComp] then}
-      tp := cgExtended;
+if tp in [cgByte,cgUByte] then
+   tp := cgWord;
 Unary := tp;
 end; {Unary}
 
@@ -381,6 +378,37 @@ var
    rType: typePtr;                      {right type}
    lt,rt: baseTypeEnum;                 {work variables}
 
+
+   function CommonRealType (lt, rt: baseTypeEnum): baseTypeEnum;
+   
+   { Compute the common real type of two types, where at least  }
+   { one of the types is a real type.                           }
+   {                                                            }
+   { inputs:                                                    }
+   {         lt, rt - the two operand types                     }
+   {                                                            }
+   { outputs:                                                   }
+   {         expressionType - set to result type                }
+   
+   begin {CommonRealType}
+   if (lt = cgComp) and (rt = cgComp) then
+      lt := cgComp
+   else if (lt in [cgExtended,cgComp]) or (rt in [cgExtended,cgComp]) then
+      lt := cgExtended
+   else if (lt = cgDouble) or (rt = cgDouble) then
+      lt := cgDouble
+   else
+      lt := cgReal;
+   CommonRealType := lt;
+   case lt of
+      cgReal:     expressionType := floatPtr;
+      cgDouble:   expressionType := doublePtr;
+      cgExtended: expressionType := extendedPtr;
+      cgComp:     expressionType := compPtr;
+      end; {case}
+   end; {CommonRealType}
+
+
 begin {UsualBinaryConversions}
 UsualBinaryConversions := cgULong;
 if lType^.kind = pointerType then
@@ -402,17 +430,15 @@ if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
    lt := Unary(lType^.baseType);
    rt := Unary(rType^.baseType);
    if lt <> rt then begin
-      if lt = cgExtended then begin
+      if lt in [cgReal,cgDouble,cgExtended,cgComp] then begin
          if rt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
             Gen2(pc_cnv, ord(rt), ord(cgExtended));
-         UsualBinaryConversions := cgExtended;
-         expressionType := extendedPtr;
+         UsualBinaryConversions := CommonRealType(lt, rt);
          end {if}
-      else if rt = cgExtended then begin
+      else if rt in [cgReal,cgDouble,cgExtended,cgComp] then begin
          if lt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
             Gen2(pc_cnn, ord(lt), ord(cgExtended));
-         UsualBinaryConversions := cgExtended;
-         expressionType := extendedPtr;
+         UsualBinaryConversions := CommonRealType(lt, rt);
          end {else if}
       else if lt = cgUQuad then begin
          if rt in [cgWord,cgUWord,cgLong,cgULong] then
@@ -470,9 +496,7 @@ if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
    else begin {types are the same}
       UsualBinaryConversions := lt;
       if lt = cgWord then               {update types that may have changed}
-         expressionType := intPtr
-      else if lt = cgExtended then
-         expressionType := extendedPtr;
+         expressionType := intPtr;
       end; {else}
    end {if}
 else
@@ -503,9 +527,7 @@ if expressionType^.kind = scalarType then begin
    et := Unary(expressionType^.baseType);
    UsualUnaryConversions := et;
    if et = cgWord then                  {update types that may have changed}
-      expressionType := intPtr
-   else if et = cgExtended then
-      expressionType := extendedPtr;
+      expressionType := intPtr;
    end {if}
 {else if expressionType^.kind in [arrayType,pointerType] then
    UsualUnaryConversions := cgULong};
@@ -3431,7 +3453,7 @@ case tree^.token.kind of
                Gen0(pc_adl)
             else if et in [cgQuad,cgUQuad] then
                Gen0(pc_adq)
-            else if et = cgExtended then
+            else if et in [cgReal,cgDouble,cgComp,cgExtended] then
                Gen0(pc_adr)
             else
                Error(66);
@@ -3447,7 +3469,7 @@ case tree^.token.kind of
                Gen0(pc_sbl)
             else if et in [cgQuad,cgUQuad] then
                Gen0(pc_sbq)
-            else if et = cgExtended then
+            else if et in [cgReal,cgDouble,cgComp,cgExtended] then
                Gen0(pc_sbr)
             else
                Error(66);
@@ -3465,7 +3487,7 @@ case tree^.token.kind of
                Gen0(pc_mpq)
             else if et = cgUQuad then
                Gen0(pc_umq)
-            else if et = cgExtended then
+            else if et in [cgReal,cgDouble,cgComp,cgExtended] then
                Gen0(pc_mpr)
             else
                Error(66);
@@ -3483,7 +3505,7 @@ case tree^.token.kind of
                Gen0(pc_dvq)
             else if et = cgUQuad then
                Gen0(pc_udq)
-            else if et = cgExtended then
+            else if et in [cgReal,cgDouble,cgComp,cgExtended] then
                Gen0(pc_dvr)
             else
                Error(66);
@@ -3609,7 +3631,7 @@ case tree^.token.kind of
          expressionType := uLongPtr
       else begin
          et := UsualUnaryConversions;
-         if et = cgExtended then begin
+         if et in [cgReal,cgDouble,cgComp,cgExtended] then begin
             GenLdcReal(0.0);
             Gen0t(pc_neq, cgExtended);
             expressionType := intPtr;
@@ -3626,7 +3648,7 @@ case tree^.token.kind of
          expressionType := uLongPtr
       else begin
          et := UsualUnaryConversions;
-         if et = cgExtended then begin
+         if et in [cgReal,cgDouble,cgComp,cgExtended] then begin
             GenLdcReal(0.0);
             Gen0t(pc_neq, cgExtended);
             expressionType := intPtr;
@@ -3654,7 +3676,7 @@ case tree^.token.kind of
          expressionType := uLongPtr
       else begin
          et := UsualUnaryConversions;
-         if et = cgExtended then begin
+         if et in [cgReal,cgDouble,cgComp,cgExtended] then begin
             GenLdcReal(0.0);
             Gen0t(pc_neq, cgExtended);
             expressionType := intPtr;
@@ -3671,7 +3693,7 @@ case tree^.token.kind of
          expressionType := uLongPtr
       else begin
          et := UsualUnaryConversions;
-         if et = cgExtended then begin
+         if et in [cgReal,cgDouble,cgComp,cgExtended] then begin
             GenLdcReal(0.0);
             Gen0t(pc_neq, cgExtended);
             expressionType := intPtr;
@@ -3860,7 +3882,7 @@ case tree^.token.kind of
                Gen0(pc_adl);
             cgQuad,cgUQuad:
                Gen0(pc_adq);
-            cgExtended:
+            cgReal,cgDouble,cgComp,cgExtended:
                Gen0(pc_adr);
             otherwise:
                error(66);
@@ -3918,7 +3940,7 @@ case tree^.token.kind of
                Gen0(pc_sbl);
             cgQuad,cgUQuad:
                Gen0(pc_sbq);
-            cgExtended:
+            cgReal,cgDouble,cgComp,cgExtended:
                Gen0(pc_sbr);
             otherwise:
                error(66);
@@ -3945,7 +3967,7 @@ case tree^.token.kind of
             Gen0(pc_mpq);
          cgUQuad:
             Gen0(pc_umq);
-         cgExtended:
+         cgReal,cgDouble,cgComp,cgExtended:
             Gen0(pc_mpr);
          otherwise:
             error(66);
@@ -3971,7 +3993,7 @@ case tree^.token.kind of
             Gen0(pc_dvq);
          cgUQuad:
             Gen0(pc_udq);
-         cgExtended:
+         cgReal,cgDouble,cgComp,cgExtended:
             Gen0(pc_dvr);
          otherwise:
             error(66);
@@ -4051,7 +4073,7 @@ case tree^.token.kind of
             Gen0(pc_ngl);
          cgQuad,cgUQuad:
             Gen0(pc_ngq);
-         cgExtended:
+         cgReal,cgDouble,cgComp,cgExtended:
             Gen0(pc_ngr);
          otherwise:
             error(66);
@@ -4093,7 +4115,7 @@ case tree^.token.kind of
             Gen0t(pc_equ, cgQuad);
             end;
 
-         cgExtended: begin
+         cgReal,cgDouble,cgComp,cgExtended: begin
             GenLdcReal(0.0);
             Gen0t(pc_equ, cgExtended);
             end;
