@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 12;                 {version number of .sym file format}
+   symFileVersion = 13;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1341,7 +1341,7 @@ var
 			        token.qval.lo := ReadLong;
                 	        token.qval.hi := ReadLong;
                 	        end;
-	 realConstant:	token.rval := ReadExtended;
+	 realConstant:		token.rval := ReadExtended;
 	 stringConstant:	begin
 			        token.sval := ReadLongString;
                 	        token.ispstring := ReadByte <> 0;

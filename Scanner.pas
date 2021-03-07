@@ -756,6 +756,9 @@ case token.kind of
    longlongConst,
    ulonglongConst:   write('0x...'); {TODO implement}
 
+   compConst,
+   floatConst,
+   doubleConst,
    extendedConst:    write(token.rval:1);
 
    stringConst:      begin
@@ -3229,6 +3232,7 @@ var
    isHex: boolean;                      {is the value a hex number?}
    isLong: boolean;                     {is the value a long number?}
    isLongLong: boolean;                 {is the value a long long number?}
+   isFloat: boolean;                    {is the value a number of type float?}
    isReal: boolean;                     {is the value a real number?}
    numIndex: 0..maxLine;                {index into workString}
    sp: stringPtr;                       {for saving identifier names}
@@ -3320,6 +3324,7 @@ isHex := false;                         {assume it's not hex}
 isReal := false;                        {assume it's an integer}
 isLong := false;                        {assume a short integer}
 isLongLong := false;
+isFloat := false;
 unsigned := false;                      {assume signed numbers}
 stringIndex := 0;                       {no digits so far...}
 if scanWork then begin                  {set up the scanner}
@@ -3408,13 +3413,19 @@ if c2 in ['f','F'] then begin           {allow F designator on reals}
       FlagError(100);
       isReal := true;
       end; {if}
+   isFloat := true;
    NextChar;
    end; {if}
 numString[0] := chr(stringIndex);       {set the length of the string}
 if doingPPExpression then
    isLongLong := true;
 if isReal then begin                    {convert a real constant}
-   token.kind := extendedConst;
+   if isFloat then
+      token.kind := floatConst
+   else if isLong then
+      token.kind := extendedConst
+   else
+      token.kind := doubleConst;
    token.class := realConstant;
    if stringIndex > 80 then begin
       FlagError(131);

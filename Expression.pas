@@ -1477,14 +1477,26 @@ var
             end; {if}
 
          if op^.right^.token.kind in [intconst,uintconst,longconst,ulongconst,
-            longlongconst,ulonglongconst,extendedconst] then
+            longlongconst,ulonglongconst,floatconst,doubleconst,extendedconst,
+            compconst] then
             if op^.left^.token.kind in [intconst,uintconst,longconst,ulongconst,
-               longlongconst,ulonglongconst,extendedconst] then
+               longlongconst,ulonglongconst,floatconst,doubleconst,extendedconst,
+               compconst] then
                begin
                if fenvAccess then
                   if kind in [normalExpression, autoInitializerExpression] then
                      goto 1;
-               ekind := extendedconst; {evaluate a constant operation}
+               if (op^.right^.token.kind = compConst)
+                  and (op^.left^.token.kind = compConst) then
+                  ekind := compconst
+               else if (op^.right^.token.kind in [extendedConst,compConst])
+                  or (op^.left^.token.kind in [extendedConst,compConst]) then
+                  ekind := extendedconst
+               else if (op^.right^.token.kind = doubleConst)
+                  or (op^.left^.token.kind = doubleConst) then
+                  ekind := doubleconst
+               else
+                  ekind := floatconst;
                rop1 := RealVal(op^.left^.token);
                rop2 := RealVal(op^.right^.token);
                dispose(op^.right);
@@ -1539,7 +1551,7 @@ var
                else begin
                   op^.token.rval := rop1;
                   op^.token.class := realConstant;
-                  op^.token.kind := extendedConst;
+                  op^.token.kind := ekind;
                   end; {else}
                end; {if}
 1:
@@ -1665,7 +1677,12 @@ var
                         op^.token.qval := llop1;
                         end {else if}
                      else begin
-                        op^.token.kind := extendedConst;
+                        case baseType of
+                           cgReal:      op^.token.kind := floatConst;
+                           cgDouble:    op^.token.kind := doubleConst;
+                           cgExtended:  op^.token.kind := extendedConst;
+                           cgComp:      op^.token.kind := compConst;
+                           end; {case}
                         op^.token.class := realConstant;
                         LimitPrecision(rop1, baseType);
                         op^.token.rval := rop1;
@@ -1745,18 +1762,19 @@ var
                   op^.token.ival := long(op1).lsw;
                   end; {else}
                end {else if}
-            else if op^.left^.token.kind = extendedconst then begin
+            else if op^.left^.token.kind in
+               [floatconst,doubleconst,extendedconst,compconst] then begin
                if fenvAccess then
                   if kind in [normalExpression, autoInitializerExpression] then
                      goto 4;
-               ekind := extendedconst; {evaluate a constant operation}
+               ekind := op^.left^.token.kind;
                rop1 := RealVal(op^.left^.token);
                dispose(op^.left);
                op^.left := nil;
                case op^.token.kind of
                   uminus      : begin                        {unary -}
                      op^.token.class := realConstant;
-                     op^.token.kind := extendedConst;
+                     op^.token.kind := ekind;
                      op^.token.rval := -rop1;
                      end;
                   excch       : begin                        {!}
@@ -1767,7 +1785,7 @@ var
                   otherwise   : begin                        {illegal operation}
                      Error(66);
                      op^.token.class := realConstant;
-                     op^.token.kind := extendedConst;
+                     op^.token.kind := ekind;
                      op^.token.rval := rop1;
                      end;
                   end; {case}
@@ -1834,10 +1852,11 @@ if token.kind in startExpression then begin
             sp^.right := nil;
             stack := sp;
             if kind in [preprocessorExpression,arrayExpression] then
-               if token.kind in [stringconst,extendedconst] then begin
+               if token.kind in [stringconst,floatconst,doubleconst,
+                  extendedconst,compconst] then begin
                   if kind = arrayExpression then begin
                      op := opStack;
-                     if token.kind = extendedconst then
+                     if token.kind <> stringconst then
                         if op <> nil then
                            if op^.token.kind = castoper then
                               if op^.casttype^.kind = scalarType then
@@ -3292,10 +3311,25 @@ case tree^.token.kind of
          end; {if}
       end; {case longlongConst}
 
-   extendedConst: begin
+   floatConst: begin
+      GenLdcReal(tree^.token.rval);
+      expressionType := floatPtr;
+      end; {case floatConst}
+
+   doubleConst: begin
       GenLdcReal(tree^.token.rval);
       expressionType := doublePtr;
+      end; {case doubleConst}
+
+   extendedConst: begin
+      GenLdcReal(tree^.token.rval);
+      expressionType := extendedPtr;
       end; {case extendedConst}
+
+   compConst: begin
+      GenLdcReal(tree^.token.rval);
+      expressionType := compPtr;
+      end; {case compConst}
 
    stringConst: begin
       GenS(pc_lca, tree^.token.sval);
@@ -4417,9 +4451,17 @@ else begin                              {record the expression for an initialize
          expressionType := ulongLongPtr;
          isConstant := true;
          end {else if}
-      else if tree^.token.kind = extendedconst then begin
+      else if tree^.token.kind in 
+         [floatconst,doubleconst,extendedconst,compconst] then begin
          realExpressionValue := tree^.token.rval;
-         expressionType := extendedPtr;
+         if tree^.token.kind = extendedconst then
+            expressionType := extendedPtr
+         else if tree^.token.kind = doubleconst then
+            expressionType := doublePtr
+         else if tree^.token.kind = floatconst then
+            expressionType := floatPtr
+         else {if tree^.token.kind = compconst then}
+            expressionType := compPtr;
          isConstant := true;
          if kind in [arrayExpression,preprocessorExpression] then begin
             expressionType := intPtr;
@@ -4472,7 +4514,8 @@ procedure InitExpression;
 
 begin {InitExpression}
 startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
-              ulonglongconst,extendedconst,stringconst,_Genericsy];
+              ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
+              stringconst,_Genericsy];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
               plusplusop,minusminusop,typedef,_Alignofsy];

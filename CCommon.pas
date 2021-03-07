@@ -168,7 +168,7 @@ type
                ident,                   {identifiers}
                                         {constants}
                intconst,uintconst,longconst,ulongconst,longlongconst,
-               ulonglongconst,extendedconst,
+               ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
                stringconst,
                                         {reserved words}
                _Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy,
