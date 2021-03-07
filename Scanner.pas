@@ -747,6 +747,9 @@ case token.kind of
    typedef,
    ident:            write(token.name^);
 
+   charconst,
+   scharconst,
+   ucharconst,
    intconst,
    uintconst:        write(token.ival:1);
 

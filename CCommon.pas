@@ -167,9 +167,12 @@ type
    tokenEnum = (                        {enumeration of the tokens}
                ident,                   {identifiers}
                                         {constants}
+                                        {Note: compconst and charconst, etc. }
+                                        { are not found in program code.     }
+                                        { They are created only by casts.    }
                intconst,uintconst,longconst,ulongconst,longlongconst,
                ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
-               stringconst,
+               charconst,scharconst,ucharconst,stringconst,
                                         {reserved words}
                _Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy,
                _Genericsy,_Imaginarysy,_Noreturnsy,_Static_assertsy,_Thread_localsy,

@@ -1026,7 +1026,7 @@ var
       { convert an operand to a real value                      }
 
       begin {RealVal}
-      if token.kind = intconst then
+      if token.kind in [intconst,charconst,scharconst,ucharconst] then
          RealVal := token.ival
       else if token.kind = uintconst then begin
          if token.ival < 0 then
@@ -1056,7 +1056,7 @@ var
       { convert an operand to a longint value                   }
 
       begin {IntVal}
-      if token.kind = intconst then
+      if token.kind in [intconst,charconst,scharconst,ucharconst] then
          IntVal := token.ival
       else if token.kind = uintconst then begin
          IntVal := token.ival & $0000FFFF;
@@ -1072,7 +1072,7 @@ var
       { convert an operand to a long long value                 }
 
       begin {LongLongVal}
-      if token.kind = intconst then begin
+      if token.kind in [intconst,charconst,scharconst,ucharconst] then begin
          result.lo := token.ival;
          if result.lo < 0 then
             result.hi := -1
@@ -1144,11 +1144,14 @@ var
          op^.middle := Pop;
          op^.left := Pop;
          if op^.right^.token.kind in [intconst,uintconst,
-            longconst,ulongconst,longlongconst,ulonglongconst] then
+            longconst,ulongconst,longlongconst,ulonglongconst,
+            charconst,scharconst,ucharconst] then
             if op^.left^.token.kind in [intconst,uintconst,
-               longconst,ulongconst,longlongconst,ulonglongconst] then
+               longconst,ulongconst,longlongconst,ulonglongconst,
+               charconst,scharconst,ucharconst] then
                if op^.middle^.token.kind in [intconst,uintconst,
-                  longconst,ulongconst,longlongconst,ulonglongconst] then begin
+                  longconst,ulongconst,longlongconst,ulonglongconst,
+                  charconst,scharconst,ucharconst] then begin
                   GetLongLongVal(llop1, op^.left^.token);
                   if (llop1.lo <> 0) or (llop1.hi <> 0) then
                      op^.token := op^.middle^.token
@@ -1190,8 +1193,10 @@ var
          op^.left := Pop;
          kindRight := op^.right^.token.kind;
          kindLeft := op^.left^.token.kind;
-         if kindRight in [intconst,uintconst,longconst,ulongconst] then begin
-            if kindLeft in [intconst,uintconst,longconst,ulongconst] then begin
+         if kindRight in [intconst,uintconst,longconst,ulongconst,
+            charconst,scharconst,ucharconst] then begin
+            if kindLeft in [intconst,uintconst,longconst,ulongconst,
+               charconst,scharconst,ucharconst] then begin
                if kind = preprocessorExpression then
                   goto 2;
 
@@ -1328,9 +1333,11 @@ var
             end; {if}
 2:
          if kindRight in [intconst,uintconst,longconst,ulongconst,
-            longlongconst,ulonglongconst] then begin
+            longlongconst,ulonglongconst,charconst,scharconst,ucharconst]
+            then begin
             if kindLeft in [intconst,uintconst,longconst,ulongconst,
-               longlongconst,ulonglongconst] then begin
+               longlongconst,ulonglongconst,charconst,scharconst,ucharconst]
+               then begin
 
                if kind = preprocessorExpression then begin
                   kindLeft := PPKind(op^.left^.token);
@@ -1478,10 +1485,10 @@ var
 
          if op^.right^.token.kind in [intconst,uintconst,longconst,ulongconst,
             longlongconst,ulonglongconst,floatconst,doubleconst,extendedconst,
-            compconst] then
+            compconst,charconst,scharconst,ucharconst] then
             if op^.left^.token.kind in [intconst,uintconst,longconst,ulongconst,
                longlongconst,ulonglongconst,floatconst,doubleconst,extendedconst,
-               compconst] then
+               compconst,charconst,scharconst,ucharconst] then
                begin
                if fenvAccess then
                   if kind in [normalExpression, autoInitializerExpression] then
@@ -1632,7 +1639,10 @@ var
                      dispose(op^.left);
                      op^.left := nil;
                      if baseType in [cgByte,cgWord] then begin
-                        op^.token.kind := intConst;
+                        if baseType = cgByte then
+                           op^.token.kind := scharConst
+                        else
+                           op^.token.kind := intConst;
                         op^.token.class := intConstant;
                         if tp^.cType = ctBool then
                            op^.token.ival := ord(rop1 <> 0.0)
@@ -1651,7 +1661,10 @@ var
                         op^.token.ival := long(llop1.lo).lsw;
                         end {else if}
                      else if baseType = cgUByte then begin
-                        op^.token.kind := intConst;         
+                        if tp^.cType = ctUChar then
+                           op^.token.kind := ucharConst
+                        else
+                           op^.token.kind := charConst;
                         op^.token.class := intConstant;
                         op^.token.ival := long(llop1.lo).lsw;
                         op^.token.ival := op^.token.ival & $00FF;
@@ -1696,10 +1709,13 @@ var
             [typedef,plusplusop,minusminusop,opplusplus,opminusminus,uand]) then
             begin
             if (kind <> preprocessorExpression) and (op^.left^.token.kind
-               in [intconst,uintconst,longconst,ulongconst]) then begin
+               in [intconst,uintconst,longconst,ulongconst,charconst,scharconst,
+               ucharconst]) then begin
 
                {evaluate a constant operation}
                ekind := op^.left^.token.kind;
+               if ekind in [charconst,scharconst,ucharconst] then
+                  ekind := intconst;
                op1 := IntVal(op^.left^.token);
                dispose(op^.left);
                op^.left := nil;
@@ -1724,10 +1740,13 @@ var
                   end; {else}
                end {if}
             else if op^.left^.token.kind in [longlongconst,ulonglongconst,
-               intconst,uintconst,longconst,ulongconst] then begin
+               intconst,uintconst,longconst,ulongconst,charconst,scharconst,
+               ucharconst] then begin
                
                {evaluate a constant operation with long long operand}
                ekind := op^.left^.token.kind;
+               if ekind in [charconst,scharconst,ucharconst] then
+                  ekind := intconst;
                if kind = preprocessorExpression then
                   ekind := PPKind(op^.left^.token);
                GetLongLongVal(llop1, op^.left^.token);
@@ -3279,15 +3298,21 @@ case tree^.token.kind of
          end; {case}
       end;
 
-   intConst,uintConst: begin
+   intConst,uintConst,charConst,scharConst,ucharConst: begin
       Gen1t(pc_ldc, tree^.token.ival, cgWord);
       lastwasconst := true;
       lastconst := tree^.token.ival;
       if tree^.token.kind = intConst then
          expressionType := intPtr
-      else
-         expressionType := uIntPtr;
-      end; {case intConst}
+      else if tree^.token.kind = uintConst then
+         expressionType := uIntPtr
+      else if tree^.token.kind = charConst then
+         expressionType := charPtr
+      else if tree^.token.kind = scharConst then
+         expressionType := scharPtr
+      else {if tree^.token.kind = ucharConst then}
+         expressionType := ucharPtr;
+      end; {case intConst,uintConst,charConst,scharConst,ucharConst}
 
    longConst,ulongConst: begin
       GenLdcLong(tree^.token.lval);
@@ -4391,7 +4416,8 @@ else begin                              {record the expression for an initialize
          castValue := tree^.left;
          while castValue^.token.kind = castoper do
             castValue := castValue^.left;
-         if castValue^.token.kind in [intconst,uintconst] then begin
+         if castValue^.token.kind in
+            [intconst,uintconst,charconst,scharconst,ucharconst] then begin
             expressionValue := castValue^.token.ival;
             isConstant := true;
             expressionType := tree^.castType;
@@ -4407,9 +4433,17 @@ else begin                              {record the expression for an initialize
             goto 1;
             end; {if}
          end; {if}
-      if tree^.token.kind = intconst then begin
+      if tree^.token.kind in [intconst,charconst,scharconst,ucharconst] then
+         begin
          expressionValue := tree^.token.ival;
-         expressionType := intPtr;
+         if tree^.token.kind = intconst then
+            expressionType := intPtr
+         else if tree^.token.kind = charconst then
+            expressionType := charPtr
+         else if tree^.token.kind = scharconst then
+            expressionType := scharPtr
+         else {if tree^.token.kind = ucharconst then}
+            expressionType := ucharPtr;
          isConstant := true;
          end {else if}
       else if tree^.token.kind = uintconst then begin
@@ -4515,7 +4549,7 @@ procedure InitExpression;
 begin {InitExpression}
 startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
               ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
-              stringconst,_Genericsy];
+              charconst,scharconst,ucharconst,stringconst,_Genericsy];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
               plusplusop,minusminusop,typedef,_Alignofsy];

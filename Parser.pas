@@ -1891,7 +1891,8 @@ var
          tree := tree^.left;
          if tree^.token.kind = plusch then begin
             rtree := tree^.right;
-            if rtree^.token.kind in [intconst,uintconst] then
+            if rtree^.token.kind in
+               [intconst,uintconst,charconst,scharconst,ucharconst] then
                size := rtree^.token.ival
             else if rtree^.token.kind in [longconst,ulongconst] then
                size := rtree^.token.lval
@@ -2134,8 +2135,9 @@ var
             while operator in [plusch,minusch] do begin
                with tree^.right^.token do
                   if kind in [intConst,uintconst,longConst,ulongconst,
-                     longlongConst,ulonglongconst] then begin
-                     if kind = intConst then
+                     longlongConst,ulonglongconst,charconst,scharconst,
+                     ucharconst] then begin
+                     if kind in [intConst,charconst,scharconst,ucharconst] then
                         offSet2 := ival
                      else if kind = uintConst then
                         offset2 := ival & $0000ffff
@@ -3611,7 +3613,8 @@ if isFunction then begin
          with fnType^ do begin
             NextToken;
             Match(lparench,13);
-            if token.kind in [intconst,uintconst] then begin
+            if token.kind in
+               [intconst,uintconst,charconst,scharconst,ucharconst] then begin
                toolNum := token.ival;
                NextToken;
                end {if}
@@ -3622,7 +3625,8 @@ if isFunction then begin
                dispatcher := token.lval;
                NextToken;
                end {if}
-            else if token.kind in [intconst,uintconst] then begin
+            else if token.kind in
+               [intconst,uintconst,charconst,scharconst,ucharconst] then begin
                dispatcher := token.ival;
                NextToken;
                end {if}
