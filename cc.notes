@@ -395,6 +395,20 @@ The predefined macro __ORCAC_HAS_LONG_LONG__ is now defined, and expands to the 
 
    static const char __func__[] = "function-name";
 
+21. (C99) ORCA/C now supports the following standard pragmas:
+
+   #pragma STDC FENV_ACCESS [ ON | OFF | DEFAULT ]
+   #pragma STDC FP_CONTRACT [ ON | OFF | DEFAULT ]
+   #pragma STDC CX_LIMITED_RANGE [ ON | OFF | DEFAULT ]
+
+These pragmas can be used either outside any external declarations or just after the opening brace of a compound statement.  In the former case, they remain in effect until the end of the translation unit, or until another instance of the same pragma is encountered.  In the latter case, they remain in effect until the end of the compound statement, and then revert to their previous setting.
+
+The FENV_ACCESS pragma should be set to ON if the code may access the floating-point environment (via functions in <fenv.h>) or run under non-default floating-point control modes.  Under ORCA/C, it is not strictly necessary to use this pragma when accessing the floating-point environment, but if it is not used then certain operations may not affect or be affected by the floating-point environment in the expected way.  Under ORCA/C, the default setting for FENV_ACCESS is OFF.  Note that setting it to ON will disable some optimizations.
+
+The FP_CONTRACT pragma controls whether the compiler may "contract" certain floating-point expressions, evaluating multiple operations together and rounding only at the end.  ORCA/C never does this.  Accordingly, the FP_CONTRACT pragma is accepted, but its setting has no effect.
+
+The CX_LIMITED_RANGE pragma relates to complex arithmetic, which ORCA/C does not support, so it is also accepted but has no effect.
+
 
 Multi-Character Character Constants
 -----------------------------------
@@ -492,15 +506,17 @@ ORCA/C now includes several new headers specified by recent C standards.
 
 1.  (C95) The <iso646.h> header contains macros giving alternative spellings for certain operators.  It may be useful in contexts where the characters in those operators cannot easily be typed or displayed.
 
-2.  (C99) The <stdint.h> header defines various integer types with certain sizes and properties, as well as macros related to integer types.  It largely complies with the C99 and later standards, but is missing 64-bit integer types because ORCA/C does not currently support them.  For the same reason, intmax_t and uintmax_t are 32-bit types, even though the standards require them to be 64-bit or larger types.
+2.  (C99) The <stdint.h> header defines various integer types with certain sizes and properties, as well as macros related to integer types.
 
-3.  (C99) The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  The macros provided generally conform to the C99 and later standards, but the functions that the standards specify should be declared in this header are not available.
+3.  (C99) The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  It also provides several functions operating on the types intmax_t or uintmax_t.
 
 4.  (C11) The <stdalign.h> header defines the macros "alignas" for _Alignas and "alignof" for _Alignof.
 
 5.  (C11) The <stdnoreturn.h> header defines the macro "noreturn" for _Noreturn.
 
 6.  (C99) The <stdbool.h> header defines the macro "bool" for _Bool, and the macros "true" and "false" for the boolean values 1 and 0.
+
+7.  (C99) The <fenv.h> header provides functions to access the floating-point environment, plus types and macros used by those functions and the macro FE_DFL_ENV representing the default floating-point environment.
 
 
 Library Updates
@@ -590,6 +606,27 @@ intmax_t  strtoimax(const char * restrict, char ** restrict, int);
 uintmax_t strtoumax(const char * restrict, char ** restrict, int);
 
 Under ORCA/C, intmax_t is long long and uintmax_t is unsigned long long, so these functions behave the same as the ones above.
+
+9.  (C99) Several functions for accessing the floating-point environment have been added:
+
+#include <fenv.h>
+int feclearexcept(int excepts);
+int fegetexceptflag(fexcept_t *flagp, int excepts);
+int feraiseexcept(int excepts);
+int fesetexceptflag(const fexcept_t *flagp, int excepts);
+int fetestexcept(int excepts);
+int fegetround(void);
+int fesetround(int round);
+int fegetenv(fenv_t *envp);
+int feholdexcept(fenv_t *envp);
+int fesetenv(const fenv_t *envp);
+int feupdateenv(const fenv_t *envp);
+
+For all the functions taking an argument called excepts, it is a bitwise OR of floating-point exception macros defined in <fenv.h>.  feclearexcept() clears the specified exceptions.  fegetexceptflag() saves a representation of the current state of the specified exceptions to *flagp.  feraiseexcept() raises the specified exceptions.  fesetexceptflag() sets the exception flags for the specified exceptions to the states saved in *flagp, but does not raise them.  fetestexcept() tests whether the specified exceptions are set, returning the bitwise OR of the specified exceptions that are set.
+
+fegetround() gets the current rounding direction.  fesetround() sets the rounding direction.  fegetenv() saves a representation of the current floating-point environment to *envp.  feholdexcept() saves a representation of the current environment, then clears all exception flags and disables halts for all floating-point exceptions.  fesetenv() sets the floating-point environment, but does not raise any exceptions.  feupdateenv() temporarily saves the currently raised floating-point exceptions, installs the specified floating-point environment, and then raises the saved exceptions.
+
+Except for fetestexcept() and fegetround(), these calls return 0 if they successfully carried out the operation, or non-zero otherwise.  Under ORCA/C, they always succeed if given valid arguments.  Under ORCA/C, these functions all correspond to operations on the SANE environment; see the Apple Numerics Manual for details on its behavior.  To ensure that these functions interact properly with floating-point operations in the program, #pragma STDC FENV_ACCESS ON should be in effect when they are called; see "New Language Features," above.
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
