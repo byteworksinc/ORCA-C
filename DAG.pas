@@ -609,10 +609,9 @@ var
                         same := true;
       if same then begin
          case op^.optype of
-            cgReal: disp := 3;
-            cgDouble: disp := 7;
-            cgExtended: disp := 9;
-            cgComp: disp := 11;
+            cgReal: disp := 2;
+            cgDouble: disp := 6;
+            cgExtended: disp := 8;
             end; {case}
          opl^.left^.optype := cgWord;
          opl^.left^.q := opl^.left^.q + disp;
@@ -621,7 +620,7 @@ var
          op2 := pointer(Calloc(sizeof(intermediate_code)));
          op2^.opcode := pc_ldc;
          op2^.optype := cgWord;
-         op2^.q := $0080;
+         op2^.q := $8000;
          opl^.right := op2;
          opl^.opcode := pc_bxr;
          end {if}
