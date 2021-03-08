@@ -409,6 +409,25 @@ The FP_CONTRACT pragma controls whether the compiler may "contract" certain floa
 
 The CX_LIMITED_RANGE pragma relates to complex arithmetic, which ORCA/C does not support, so it is also accepted but has no effect.
 
+22. (C11) ORCA/C now supports generic selection expressions, which can select which of several expressions they should evaluate to based on the type of one expression.  They have the following syntax:
+
+   generic-selection:
+      _Generic '(' assignment-expression ',' generic-assoc-list ')'
+   generic-assoc-list:
+      generic-association |
+      generic-assoc-list ',' generic-association
+   generic-association:
+      type-name ':' assignment-expression |
+      default ':' assignment-expression
+
+The generic-assoc-list provides a list of associations of types with expressions (and optionally a default association).  If the type of the the initial expression is compatible with one of those in the generic-assoc-list, the generic selection expression evaluates to the expression specified in that association.  If there is no compatible type but there is a default association, the expression specified there is used.  It is an error if there is no suitable association.  Only the expression from the selected association is evaluated and becomes the value of the overall generic selection expression; the initial expression and all those in other associations are not evaluated.
+
+As an example, this expression evaluates to 2 because the type of 1+2 is int:
+
+   _Generic(1+2, double: 1.0, int: 2, char*: 3, default: 4)
+
+Generic selection expressions are primarily useful within macros, which can give different behavior based on the types of the arguments passed to them.
+
 
 Multi-Character Character Constants
 -----------------------------------
@@ -437,7 +456,7 @@ Bit 5 (a value of 32) controls whether the types "char" and "unsigned char" are 
    unsigned char uc;
    char *p = &uc; /* &uc has type unsigned char *, incompatible with char *. */
 
-If bit 5 is set, it causes the "char" and "unsigned char" types to be treated as compatible, matching ORCA/C's historical behavior and permitting code like the above example.  If this bit is clear, the types will be treated as incompatible, as required by the C standards.  This will make ORCA/C give a "type conflict" error for code like the example above.  Currently, this bit is set by default, giving the more permissive behavior, but new code should avoid relying on this.
+If bit 5 is set, it causes the "char" and "unsigned char" types to be treated as compatible for most purposes, matching ORCA/C's historical behavior and permitting code like the above example.  If this bit is clear, the types will be treated as incompatible, as required by the C standards.  This will make ORCA/C give a "type conflict" error for code like the example above.  Currently, this bit is set by default, giving the more permissive behavior, but new code should avoid relying on this.
 
 (Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
 
