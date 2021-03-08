@@ -1892,6 +1892,13 @@ var
          controllingType.kind := pointerType;
          controllingType.pType := expressionType;
       end {if}
+   else if expressionType^.kind in [structType,unionType] then begin
+      controllingType.size := expressionType^.size;
+      controllingType.saveDisp := 0;
+      controllingType.isConstant := false;
+      controllingType.kind := definedType;
+      controllingType.dType := expressionType;
+      end {else if}
    else
       controllingType := expressionType^;
    if controllingType.kind = arrayType then
@@ -1910,7 +1917,7 @@ var
          TypeName;                      {get the type name}
          currentType := typeSpec;
          if (currentType^.size = 0) or (currentType^.kind = functionType) then
-            Error(161);
+            Error(133);
          tl := typesSeen;               {check if it is a duplicate}
          while tl <> nil do begin
             if CompTypes(currentType, tl^.theType) then begin
