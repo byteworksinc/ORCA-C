@@ -1920,7 +1920,7 @@ var
             Error(133);
          tl := typesSeen;               {check if it is a duplicate}
          while tl <> nil do begin
-            if CompTypes(currentType, tl^.theType) then begin
+            if StrictCompTypes(currentType, tl^.theType) then begin
                Error(158);
                goto 10;
                end; {if}
@@ -1931,7 +1931,7 @@ var
          tl^.theType := currentType;
          typesSeen := tl;
                                         {see if the types match}
-         typesMatch := CompTypes(currentType, controllingType);
+         typesMatch := StrictCompTypes(currentType, controllingType);
          if typesMatch then begin
             if foundMatch then begin    {sanity check - should never happen}
                typesMatch := false;

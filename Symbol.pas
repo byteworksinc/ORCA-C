@@ -97,6 +97,12 @@ function CompTypes (t1, t2: typePtr): boolean;
 { Determine if the two types are compatible                     }
 
 
+function StrictCompTypes (t1, t2: typePtr): boolean;
+
+{ Determine if the two types are compatible, strictly following }
+{ C standard rules.                                             }
+
+
 procedure DoGlobals;
 
 { declare the ~globals and ~arrays segments                     }
@@ -446,6 +452,145 @@ else
       end; {case t1^.kind}
 1:
 end; {CompTypes}
+
+
+function StrictCompTypes {t1, t2: typePtr): boolean};
+
+{ Determine if the two types are compatible, strictly following }
+{ C standard rules.                                             }
+
+label 1;
+
+var
+   el1,el2: longint;                    {array sizes}
+   kind1,kind2: typeKind;               {temp variables (for speed)}
+   p1, p2: parameterPtr;                {for tracing parameter lists}
+   tp1,tp2: typeRecord;                 {temporary types used in comparison}
+
+
+begin {StrictCompTypes}
+if t1 = t2 then begin                   {shortcut}
+   StrictCompTypes := true;
+   goto 1;
+   end; {if}
+StrictCompTypes := false;               {assume the types are not compatible}
+if t1^.isConstant <> t2^.isConstant then {qualifiers must be the same}
+   goto 1;
+{TODO: Check other qualifiers (currently not recorded)}
+while t1^.kind = definedType do         {scan past type definitions}
+   t1 := t1^.dType;
+while t2^.kind = definedType do
+   t2 := t2^.dType;
+kind1 := t1^.kind;                      {get these for efficiency}
+kind2 := t2^.kind;
+
+case kind1 of
+
+   scalarType:
+      if kind2 = scalarType then begin
+         StrictCompTypes :=
+            (t1^.baseType = t2^.baseType) and (t1^.cType = t2^.cType);
+         end {if}
+      else if kind2 = enumType then
+         StrictCompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);
+
+   arrayType:
+      if kind2 = arrayType then begin
+         el1 := t1^.elements;
+         el2 := t2^.elements;
+         if el1 = 0 then
+            el1 := el2
+         else if el2 = 0 then
+            el2 := el1;
+         if el1 = el2 then
+            StrictCompTypes := StrictCompTypes(t1^.atype, t2^.atype);
+         end; {if}
+
+   functionType:
+      if kind2 = functionType then begin
+         if not StrictCompTypes(t1^.ftype, t2^.ftype) then
+            goto 1;
+         if t1^.varargs <> t2^.varargs then
+            goto 1;
+         if t1^.prototyped and t2^.prototyped then begin
+            p1 := t1^.parameterList;
+            p2 := t2^.parameterList;
+            while (p1 <> nil) and (p2 <> nil) do begin
+               tp1 := p1^.parameterType^;
+               tp2 := p2^.parameterType^;
+               if p1^.parameterType = p2^.parameterType then
+                  {these parameters are compatible}
+               else begin
+                  tp1.isConstant := false;
+                  tp2.isConstant := false;
+                  if tp1.kind = arrayType then
+                     tp1.kind := pointerType
+                  else if tp1.kind = functionType then begin
+                     tp1.size := cgLongSize;
+                     tp1.isConstant := false;
+                     tp1.saveDisp := 0;
+                     tp1.kind := pointerType;
+                     tp1.pType := p1^.parameterType;
+                     end; {else if}
+                  if tp2.kind = arrayType then
+                     tp2.kind := pointerType
+                  else if tp2.kind = functionType then begin
+                     tp2.size := cgLongSize;
+                     tp2.isConstant := false;
+                     tp2.saveDisp := 0;
+                     tp2.kind := pointerType;
+                     tp2.pType := p2^.parameterType;
+                     end; {else if}
+                  if not StrictCompTypes(@tp1, @tp2) then
+                     goto 1;
+                  end; {else}
+                  p1 := p1^.next;
+                  p2 := p2^.next;
+               end; {while}
+            if p1 <> p2 then
+               goto 1;
+            end {if}
+         else if t1^.prototyped then begin
+            p1 := t1^.parameterList;
+            while p1 <> nil do begin
+               if p1^.parameterType^.kind = scalarType then
+                  if p1^.parameterType^.cType in [ctChar,ctSChar,ctUChar,
+                     ctShort,ctUShort,ctFloat,ctBool] then
+                     goto 1;
+               p1 := p1^.next;
+               end; {while}
+            end {else if}
+         else if t2^.prototyped then begin
+            p2 := t2^.parameterList;
+            while p2 <> nil do begin
+               if p2^.parameterType^.kind = scalarType then
+                  if p2^.parameterType^.cType in [ctChar,ctSChar,ctUChar,
+                     ctShort,ctUShort,ctFloat,ctBool] then
+                     goto 1;
+               p2 := p2^.next;
+               end; {while}
+            end; {else if}
+         StrictCompTypes := true;
+         end; {if}
+
+   pointerType:
+      if kind2 = pointertype then
+         StrictCompTypes := StrictCompTypes(t1^.ptype, t2^.ptype);
+
+   enumType:
+      if kind2 = scalarType then
+         StrictCompTypes := (t2^.baseType = cgWord) and (t2^.cType = ctInt)
+      else if kind2 = enumType then
+         StrictCompTypes := true;
+
+   structType,unionType:
+      StrictCompTypes := t1 = t2;
+
+   otherwise: ;
+
+   end; {case}
+1:
+end; {StrictCompTypes}
 
 
 procedure DoGlobals;
