@@ -1829,7 +1829,150 @@ var
       NextToken;
    errorFound := true;
    end; {Skip}
-    
+
+
+   procedure DoGeneric;
+
+   { process a generic selection expression                     }
+
+   label 10;
+
+   type
+      typeListPtr = ^typeList;
+      typeList = record
+         next: typeListPtr;
+         theType: typePtr;
+         end;
+
+   var
+      lCodeGeneration: boolean;         {local copy of codeGeneration}
+      tempExpr: tokenPtr;               {temporary to hold expression trees}
+      controllingType: typeRecord;      {type of controlling expression}
+      typesSeen: typeListPtr;           {types that already have associations}
+      tl: typeListPtr;                  {temporary type list pointer}
+      resultExpr: tokenPtr;             {the result expression}
+      defaultExpr: tokenPtr;            {the default expression}
+      currentType: typePtr;             {the type for the current association}
+      typesMatch: boolean;              {does the current type match}
+      foundMatch: boolean;              {have we found a matching type?}
+      foundDefault: boolean;            {have we found the default case?}
+
+   begin {DoGeneric}
+   if not expectingTerm then begin
+      Error(36);
+      Skip;
+      goto 1;
+      end; {if}
+   NextToken;
+   if token.kind <> lparench then begin
+      Error(36);
+      Skip;
+      goto 1;
+      end; {if}
+   new(op);                             {record it like a parenthesized expr}
+   op^.next := opStack;
+   op^.left := nil;
+   op^.middle := nil;
+   op^.right := nil;
+   opStack := op;
+   op^.token.kind := lparench;
+   op^.token.class := reservedSymbol;
+   parenCount := parenCount+1;
+   NextToken;                           {process the controlling expression}
+   tempExpr := ExpressionTree(normalExpression, [commach]);
+   lCodeGeneration := codeGeneration;
+   codeGeneration := false;
+   GenerateCode(tempExpr);
+   codeGeneration := lCodeGeneration and (numErrors = 0);
+                                        {get controlling type after conversions}
+   if expressionType^.kind = functionType then begin
+         controllingType.size := cgLongSize;
+         controllingType.saveDisp := 0;
+         controllingType.isConstant := false;
+         controllingType.kind := pointerType;
+         controllingType.pType := expressionType;
+      end {if}
+   else
+      controllingType := expressionType^;
+   if controllingType.kind = arrayType then
+      controllingType.kind := pointerType;
+   controllingType.isConstant := false;
+
+   typesSeen := nil;
+   resultExpr := nil;
+   defaultExpr := nil;
+   foundMatch := false;
+   foundDefault := false;
+   while token.kind = commach do begin  {process the generic associations}
+      NextToken;
+      typesMatch := false;
+      if token.kind <> defaultsy then begin   
+         TypeName;                      {get the type name}
+         currentType := typeSpec;
+         if (currentType^.size = 0) or (currentType^.kind = functionType) then
+            Error(161);
+         tl := typesSeen;               {check if it is a duplicate}
+         while tl <> nil do begin
+            if CompTypes(currentType, tl^.theType) then begin
+               Error(158);
+               goto 10;
+               end; {if}
+            tl := tl^.next;
+            end; {while}
+         new(tl);                       {record it as seen}
+         tl^.next := typesSeen;
+         tl^.theType := currentType;
+         typesSeen := tl;
+                                        {see if the types match}
+         typesMatch := CompTypes(currentType, controllingType);
+         if typesMatch then begin
+            if foundMatch then begin    {sanity check - should never happen}
+               typesMatch := false;
+               Error(158);
+               end; {if}
+            foundMatch := true;
+            end; {if}
+         end {if}
+      else begin                        {handle default association}
+         NextToken;
+         currentType := nil;
+         if foundDefault then
+            Error(159);
+         foundDefault := true;
+         end; {else}
+10:
+      if token.kind = colonch then      {skip the colon}
+         NextToken
+      else
+         Error(29);
+                                        {get the expression in this association}
+      if (currentType = nil) and (defaultExpr = nil) and not foundMatch then
+         defaultExpr := ExpressionTree(kind, [commach,rparench])
+      else if typesMatch then
+         resultExpr := ExpressionTree(kind, [commach,rparench])
+      else
+         tempExpr := ExpressionTree(normalExpression, [commach,rparench]);
+      end; {while}
+   if token.kind <> rparench then
+      Error(12);
+
+   if not foundMatch then               {use default if no match found}
+      if foundDefault then
+         resultExpr := defaultExpr;
+   if not (foundMatch or foundDefault) then begin
+      Error(160);                       {report error & synthesize a token}
+      resultExpr := pointer(Calloc(sizeof(tokenRecord)));
+      resultExpr^.token.kind := intconst;
+      resultExpr^.token.class := intConstant;
+      resultExpr^.token.ival := 0;
+      end; {if}
+   if resultExpr <> nil then begin
+      resultExpr^.next := stack;        {stack the resulting expression}
+      stack := resultExpr;
+      end; {if}
+   expectingTerm := false;
+   end; {DoGeneric}
+
 
 begin {ExpressionTree}
 opStack := nil;
@@ -1856,11 +1999,6 @@ if token.kind in startExpression then begin
 
             {handle a complex operand}
             DoOperand
-         else if token.kind = _Genericsy then begin
-            Error(144);
-            Skip;
-            goto 1;
-            end
          else begin
             {handle a constant operand}
             new(sp);
@@ -1982,6 +2120,8 @@ if token.kind in startExpression then begin
             parenCount := parenCount+1;
             end;
          end {else if}
+      else if token.kind = _Genericsy then {handle _Generic}
+         DoGeneric
       else begin                        {handle an operation...}
          if expectingTerm then          {convert unary operators to separate tokens}
             if token.kind in [asteriskch,minusch,plusch,andch] then
@@ -4549,10 +4689,10 @@ procedure InitExpression;
 begin {InitExpression}
 startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
               ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
-              charconst,scharconst,ucharconst,stringconst,_Genericsy];
+              charconst,scharconst,ucharconst,stringconst];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
-              plusplusop,minusminusop,typedef,_Alignofsy];
+              plusplusop,minusminusop,typedef,_Alignofsy,_Genericsy];
 end; {InitExpression}
 
 end.

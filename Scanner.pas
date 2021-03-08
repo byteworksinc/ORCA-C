@@ -682,7 +682,7 @@ if list or (numErr <> 0) then begin
         141: msg := @'_Noreturn specifier is only allowed on functions';
         142: msg := @'_Alignas may not be used in this declaration or type name';
         143: msg := @'only object pointer types may be restrict-qualified';
-        144: msg := @'generic selection expressions are not supported by ORCA/C';
+       {144: msg := @'generic selection expressions are not supported by ORCA/C';}
         145: msg := @'invalid universal character name';
         146: msg := @'Unicode character cannot be represented in execution character set';
         147: msg := @'lint: not all parameters were declared with a type';
@@ -696,6 +696,10 @@ if list or (numErr <> 0) then begin
         155: msg := @'lint: non-void function may not return a value or has unreachable code';
         156: msg := @'invalid suffix on numeric constant';
         157: msg := @'unknown or malformed standard pragma';
+        158: msg := @'_Generic expression includes two compatible types';
+        159: msg := @'_Generic expression includes multiple default cases';
+        160: msg := @'no matching association in _Generic expression';
+        161: msg := @'complete object type expected';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
