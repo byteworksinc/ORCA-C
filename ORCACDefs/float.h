@@ -16,11 +16,23 @@
 int __get_flt_rounds(void);
 #define FLT_ROUNDS      (__get_flt_rounds())
 
+#define FLT_EVAL_METHOD 2
+
+#define FLT_HAS_SUBNORM 1
+#define DBL_HAS_SUBNORM 1
+#define LDBL_HAS_SUBNORM 1
+
 #define FLT_RADIX       2
 
 #define FLT_MANT_DIG    24
 #define DBL_MANT_DIG    53
 #define LDBL_MANT_DIG   64
+
+#define FLT_DECIMAL_DIG 9
+#define DBL_DECIMAL_DIG 17
+#define LDBL_DECIMAL_DIG 21
+
+#define DECIMAL_DIG     21
 
 #define FLT_DIG         6
 #define DBL_DIG         15
@@ -53,5 +65,9 @@ int __get_flt_rounds(void);
 #define FLT_MIN         1.175494350822287508E-38F
 #define DBL_MIN         2.2250738585072013831E-308
 #define LDBL_MIN        1.6810515715560467531E-4932L
+
+#define FLT_TRUE_MIN    1.401298464324817070924E-45F
+#define DBL_TRUE_MIN    4.940656458412465441766E-324
+#define LDBL_TRUE_MIN   1.822599765941237E-4951L
 
 #endif
