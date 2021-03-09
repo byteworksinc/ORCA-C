@@ -13,7 +13,31 @@
 #ifndef __math__
 #define __math__
 
+typedef long double float_t;
+typedef long double double_t;
+
 #define HUGE_VAL 1e5000
+#define HUGE_VALF 1e5000F
+#define HUGE_VALL 1e5000L
+
+#define INFINITY 1e5000F
+
+#define NAN (0.0F/0.0F)
+
+#define FP_INFINITE  0xFE
+#define FP_NAN       0xFD
+#define FP_NORMAL    0x00
+#define FP_SUBNORMAL 0x01
+#define FP_ZERO      0xFF
+
+int __fpclassifyf(float);
+int __fpclassifyd(double);
+int __fpclassifyl(long double);
+
+#define fpclassify(x) _Generic((x), \
+   float: __fpclassifyf, \
+   double: __fpclassifyd, \
+   long double: __fpclassifyl)(x)
 
 #ifndef __KeepNamespacePure__
    #define arctan(x) atan(x)        
