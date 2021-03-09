@@ -33,6 +33,7 @@ typedef long double double_t;
 int __fpclassifyf(float);
 int __fpclassifyd(double);
 int __fpclassifyl(long double);
+int __signbit(long double);
 
 #define fpclassify(x) _Generic((x), \
    float: __fpclassifyf, \
@@ -43,6 +44,7 @@ int __fpclassifyl(long double);
 #define isinf(x)    (fpclassify(x) == FP_INFINITE)
 #define isnan(x)    (fpclassify((long double)(x)) == FP_NAN)
 #define isnormal(x) (fpclassify(x) == FP_NORMAL)
+#define signbit(x)  __signbit(x)
 
 #ifndef __KeepNamespacePure__
    #define arctan(x) atan(x)        
