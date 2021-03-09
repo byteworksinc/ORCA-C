@@ -1914,6 +1914,11 @@ var
       NextToken;
       typesMatch := false;
       if token.kind <> defaultsy then begin   
+         if not (token.kind in specifierQualifierListElement) then begin
+            Error(26);
+            while not (token.kind in [colonch,commach,rparench,eofsy]) do
+               NextToken;
+            end; {if}
          TypeName;                      {get the type name}
          currentType := typeSpec;
          if (currentType^.size = 0) or (currentType^.kind = functionType) then
