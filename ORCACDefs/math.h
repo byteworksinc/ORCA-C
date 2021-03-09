@@ -39,6 +39,11 @@ int __fpclassifyl(long double);
    double: __fpclassifyd, \
    long double: __fpclassifyl)(x)
 
+#define isfinite(x) (((fpclassify(x) + 1) & 0xF0) == 0)
+#define isinf(x)    (fpclassify(x) == FP_INFINITE)
+#define isnan(x)    (fpclassify((long double)(x)) == FP_NAN)
+#define isnormal(x) (fpclassify(x) == FP_NORMAL)
+
 #ifndef __KeepNamespacePure__
    #define arctan(x) atan(x)        
 #endif
