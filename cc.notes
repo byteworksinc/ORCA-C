@@ -1186,6 +1186,8 @@ int foo(int[42]);
 
 152. sizeof did not give the right values for certain expressions of floating-point and character types, including expressions cast to those types.
 
+153. The postfix ++ and -- operators might not return exactly the original value when applied to floating-point variables.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

@@ -2955,9 +2955,10 @@ var
                {do real or bool inc or dec}
                LoadScalar(tree^.id);    {load the value}
                if pc_l in [pc_lli,pc_lld] then
-                  if iType^.cType = ctBool then begin
-                     t1 := GetTemp(cgWordSize);
-                     Gen2t(pc_cop, t1, 0, cgWord);
+                  if iType^.cType in [ctBool,ctFloat,ctDouble,ctLongDouble,
+                     ctComp] then begin
+                     t1 := GetTemp(ord(iType^.size));
+                     Gen2t(pc_cop, t1, 0, iType^.baseType);
                      end; {if}
                tp := baseType;
                expressionType := iType;
@@ -2971,11 +2972,12 @@ var
                   end; {case}
                                         {correct the value for postfix ops}
                if pc_l in [pc_lli,pc_lld] then               
-                  if iType^.cType = ctBool then begin
-                     Gen0t(pc_pop, cgWord);
-                     Gen2t(pc_lod, t1, 0, cgWord);
-                     Gen0t(pc_bno, cgWord);
-                     FreeTemp(t1, cgWordSize);
+                  if iType^.cType in [ctBool,ctFloat,ctDouble,ctLongDouble,
+                     ctComp] then begin
+                     Gen0t(pc_pop, iType^.baseType);
+                     Gen2t(pc_lod, t1, 0, iType^.baseType);
+                     Gen0t(pc_bno, iType^.baseType);
+                     FreeTemp(t1, ord(iType^.size));
                      end {if}
                   else
                      IncOrDec(pc_l = pc_lld);
@@ -3068,9 +3070,10 @@ var
          else
             Gen1t(pc_ind, 0, tp);
          if pc_l in [pc_lli,pc_lld] then
-            if expressionType^.cType = ctBool then begin
-               t1 := GetTemp(cgWordSize);
-               Gen2t(pc_cop, t1, 0, cgWord);
+            if expressionType^.cType in [ctBool,ctFloat,ctDouble,ctLongDouble,
+               ctComp] then begin
+               t1 := GetTemp(ord(expressionType^.size));
+               Gen2t(pc_cop, t1, 0, expressionType^.baseType);
                end; {if}
          IncOrDec(pc_l in [pc_lli,pc_lil]); {do the ++ or --}
          if isBitField then             {copy the value}
@@ -3079,11 +3082,12 @@ var
             Gen0t(pc_cpi, tp);
          Gen0t(pc_bno, tp);
          if pc_l in [pc_lli,pc_lld] then {correct the value for postfix ops}
-            if expressionType^.cType = ctBool then begin
-               Gen0t(pc_pop, cgWord);
-               Gen2t(pc_lod, t1, 0, cgWord);
-               Gen0t(pc_bno, cgWord);
-               FreeTemp(t1, cgWordSize);
+            if expressionType^.cType in [ctBool,ctFloat,ctDouble,ctLongDouble,
+               ctComp] then begin
+               Gen0t(pc_pop, expressionType^.baseType);
+               Gen2t(pc_lod, t1, 0, expressionType^.baseType);
+               Gen0t(pc_bno, expressionType^.baseType);
+               FreeTemp(t1, ord(expressionType^.size));
                end {if}
             else
                IncOrDec(pc_l = pc_lld);
