@@ -1430,6 +1430,11 @@ case op^.opcode of			{check for optimizations of this node}
                op^.left^.optype := totype.optype;
                opv := op^.left;
                end; {if}
+         if totype.optype in [cgReal,cgDouble,cgExtended,cgComp] then
+            if (totype.optype = op^.left^.optype) or
+               (totype.optype = cgExtended) or
+               ((totype.optype = cgDouble) and (op^.left^.optype = cgReal)) then
+               opv := op^.left;
          end {else if}
       else if op^.q in [$40,$41,$50,$51] then begin
          {any long type to byte type}
