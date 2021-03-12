@@ -27,5 +27,6 @@
 #define ENOSPC                  11      /* the file is too large */
 
 extern int errno;
+#define errno errno
 
 #endif
