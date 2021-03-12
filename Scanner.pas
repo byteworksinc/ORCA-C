@@ -4418,8 +4418,10 @@ while charKinds[ord(ch)] in [illegal,ch_white,ch_eol] do begin
       end {if}
    else begin                           {skip white space}
       if printMacroExpansions then
-         if charKinds[ord(ch)] = ch_eol then
-            writeln
+         if charKinds[ord(ch)] = ch_eol then begin
+            StopSpin;
+            writeln;
+            end {if}
          else
             write(ch);
       NextCh;
