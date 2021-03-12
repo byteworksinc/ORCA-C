@@ -350,6 +350,21 @@ procedure TermHeader; extern;
 {    closes any open symbol file, and should take no action if	}
 {    called twice.						}
 
+function CnvLLX (val: longlong): extended; extern;
+
+{ convert a long long to a real number                          }
+{                                                               }
+{ parameters:                                                   }
+{       val - the long long value                               }
+
+
+function CnvULLX (val: longlong): extended; extern;
+
+{ convert an unsigned long long to a real number                }
+{                                                               }
+{ parameters:                                                   }
+{       val - the unsigned long long value                      }
+
 {-- Scanner support --------------------------------------------}
 
 procedure CheckDelimiters (var name: pString);
@@ -744,6 +759,7 @@ label 1;
 var
    ch: char;                            {work character}
    i: integer;                          {loop counter}
+   str: string[23];                     {temp string}
 
 begin {PrintToken}
 case token.kind of
@@ -759,8 +775,17 @@ case token.kind of
    longConst,
    ulongConst:       write(token.lval:1);
    
-   longlongConst,
-   ulonglongConst:   write('0x...'); {TODO implement}
+   longlongConst:    begin
+                     str := cnvds(CnvLLX(token.qval),1,1);
+                     str[0] := chr(ord(str[0]) - 2);
+                     write(str);
+                     end;
+
+   ulonglongConst:   begin
+                     str := cnvds(CnvULLX(token.qval),1,1);
+                     str[0] := chr(ord(str[0]) - 2);
+                     write(str);
+                     end;
 
    compConst,
    floatConst,
