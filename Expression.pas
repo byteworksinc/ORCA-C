@@ -2149,7 +2149,8 @@ if token.kind in startExpression then begin
                   end; {case}
          if icp[token.kind] = notAnOperation then
             done := true                {end of expression found...}
-         else if (token.kind in stopSym) and (parenCount = 0) then
+         else if (token.kind in stopSym) and (parenCount = 0) 
+            and ((opStack = nil) or (opStack^.token.kind <> questionch)) then
             done := true
          else begin
             if not (kind in [normalExpression, autoInitializerExpression]) then
