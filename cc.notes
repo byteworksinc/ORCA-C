@@ -672,7 +672,7 @@ int isnan(real-floating x);
 int isnormal(real-floating x);
 int signbit(real-floating x);
 
-These macros accept an argument of any real floating type, i.e. float, double, or long double.  They behave as if they convert the argument strictly to its semantic type before classifying it, removing any extra range and precision.
+These macros accept an argument of any real floating type, i.e. float, double, or long double.  They behave as if the argument is converted strictly to its semantic type before classifying it, removing any extra range and precision.
 
 fpclassify() returns one of the macro values FP_INFINITE, FP_NAN, FP_NORMAL, FP_SUBNORMAL, or FP_ZERO, indicating the classification of its argument.  isfinite() returns a non-zero value if its argument is normal, subnormal, or zero (not infinite or NAN).  isinf(), isnan(), and isnormal() return a non-zero value if their arguments are infinite, NAN, or normal, respectively.  signbit() returns zero if the argument has a positive sign, and non-zero if it has a negative sign (this applies to all floating-point values, even zeros and NANs).
 
@@ -1186,7 +1186,13 @@ int foo(int[42]);
 
 152. sizeof did not give the right values for certain expressions of floating-point and character types, including expressions cast to those types.
 
-153. The postfix ++ and -- operators might not return exactly the original value when applied to floating-point variables.
+153. The postfix ++ and -- operators might not give exactly the original value when applied to floating-point variables.
+
+154. If the upper byte of the int argument to memset() was nonzero, it could set the memory locations to the wrong value.  It now properly converts the int argument to unsigned char and uses that value (i.e. only the low-order byte).
+
+155. Extra characters (detritus from the on-screen spinner) could be left in the compiler's output when #pragma expand 1 was used.
+
+156. The second subexpression of a ? : expression may use the comma operator, even in a context where commas would otherwise separate items (such as arguments to a function).  For example, abs(1 ? 2,-3 : 4) is a valid call that passes one argument.  Code like this was causing spurious errors, but now it is accepted.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
