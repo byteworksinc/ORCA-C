@@ -3091,7 +3091,11 @@ while token.kind in allowedTokens do begin
                   Expression(arrayExpression,[commach,rbracech]);
                   enumVal := long(expressionValue).lsw;
                   if enumVal <> expressionValue then
-                     Error(6);
+                     Error(6)
+                  else if enumVal < 0 then
+                     if expressionType^.kind = scalarType then
+                        if expressionType^.baseType in [cgULong,cgUQuad] then
+                           Error(6);
                   end; {if}
                tPtr^.eval := enumVal;   {set the enumeration constant value}
                enumVal := enumVal+1;    {inc the default enumeration value}
