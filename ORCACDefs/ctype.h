@@ -81,11 +81,13 @@ int             isblank(int);
 #define isblank(c)      ((__ctype2)[(c)+1] & __blank)
 #ifndef __KeepNamespacePure__
    #define toascii(c)      ((c) & 0x7F)
+   int                     toint(char);
 #endif
-int                     toint(char);
 int                     tolower(int);
 int                     toupper(int);
-#define _tolower(c)     ((c) | 0x20)
-#define _toupper(c)     ((c) & 0x5F)
+#ifndef __KeepNamespacePure__
+   #define _tolower(c)     ((c) | 0x20)
+   #define _toupper(c)     ((c) & 0x5F)
+#endif
 
 #endif

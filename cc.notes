@@ -1172,7 +1172,7 @@ int foo(int[42]);
 
 146. In initializers for static data, expressions where an integer with unsigned type was added to an array address (e.g. "a + 1U") would not be accepted.
 
-147. The <string.h> header includes several non-standard functions.  Their declarations should be omitted if __KeepNamespacePure__ is defined.
+147. The <string.h> and <ctype.h> headers include several non-standard functions and macros.  Their declarations and definitions should be omitted if __KeepNamespacePure__ is defined.
 
 148. When an expression that the intermediate code peephole optimizer could reduce to a constant was cast to a character type, the resulting value could be outside the range of that type.
 
