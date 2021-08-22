@@ -25,7 +25,7 @@ typedef unsigned long size_t;
 #define RAND_MAX        32767
 #define EXIT_FAILURE    (-1)
 #define EXIT_SUCCESS    0
-#define MB_CUR_MAX      1
+#define MB_CUR_MAX      1UL
 
 typedef struct {int quot,rem;} div_t;
 typedef struct {long quot,rem;} ldiv_t;
