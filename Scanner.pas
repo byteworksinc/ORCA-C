@@ -2915,6 +2915,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     4 - generate profiles                   }
                      {     8 - generate traceback code             }
                      {    16 - check for stack errors              }
+                     { 32768 - generate inline function names      }
 		     FlagPragmas(p_debug);
                      NumericDirective;
                      if expressionType^.kind = scalarType then
@@ -2970,6 +2971,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     8 - remove stack checks                 }
                      {    16 - common subexpression elimination    }
                      {    32 - loop invariant removal		   }
+                     {    64 - remove stack checks for vararg calls}
 		     FlagPragmas(p_optimize);
                      NumericDirective;
                      if expressionType^.kind = scalarType then
@@ -3070,6 +3072,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     4 - allow tokens after #endif                   }
                      {     8 - allow // comments                           }
                      {    16 - allow mixed decls & use C99 scope rules     }
+                     {    32 - treat char and unsigned char as compatible  }
                      FlagPragmas(p_ignore);
                      NumericDirective;
                      if expressionType^.kind = scalarType then
