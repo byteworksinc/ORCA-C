@@ -324,7 +324,7 @@ ORCA/C 2.2.0 adds support for several new C language features.  Most are feature
    restrict
    inline (already treated as a keyword by ORCA/C)
 
-Of these, _Atomic, _Complex, _Generic, _Imaginary, and _Thread_local are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
+Of these, _Atomic, _Complex, _Imaginary, and _Thread_local are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
 
 2.  (C99) Statements and declarations may now be mixed within a block; declarations are no longer required to come before statements.  The first clause of a for loop statement may also be a declaration (with auto or register storage class only).  Variables may only be referred to by name in code syntactically after their declaration, but their lifetime continues as long as control remains in the enclosing block scope, even if it returns to a point before the declaration.  Initializers for variables with automatic storage duration are evaluated whenever execution reaches the point where they appear in the code.
 
@@ -1176,7 +1176,7 @@ int foo(int[42]);
 
 148. When an expression that the intermediate code peephole optimizer could reduce to a constant was cast to a character type, the resulting value could be outside the range of that type.
 
-149. When qsort() was called with a count argument of 0 and certain values for the other arguments, it might behave incorrectly, likely causing a crash.
+149. When qsort() was called with a count argument of 0 and certain values for the other arguments, it might behave incorrectly, possibly causing a crash.
 
 (Kelvin Sherlock)
 
@@ -1194,7 +1194,7 @@ int foo(int[42]);
 
 156. The second subexpression of a ? : expression may use the comma operator, even in a context where commas would otherwise separate items (such as arguments to a function).  For example, abs(1 ? 2,-3 : 4) is a valid call that passes one argument.  Code like this was causing spurious errors, but now it is accepted.
 
-157. An error was not reported if code tried to declare an enumeration constant with a value in the range 0xFFFF8000 to 0xFFFFFFFF.  (Enumeration constants are limited to values representable as an int.)
+157. An error was not reported if code tried to define an enumeration constant with a value in the range 0xFFFF8000 to 0xFFFFFFFF.  (Enumeration constants are limited to values representable as an int.)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
