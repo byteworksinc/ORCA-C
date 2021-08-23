@@ -1196,6 +1196,8 @@ int foo(int[42]);
 
 157. An error was not reported if code tried to define an enumeration constant with a value in the range 0xFFFF8000 to 0xFFFFFFFF.  (Enumeration constants are limited to values representable as an int.)
 
+158. An "illegal type cast" error would be reported when an illegal operator was used in a constant expression.  An appropriate error message is now produced.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

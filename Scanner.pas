@@ -714,6 +714,7 @@ if list or (numErr <> 0) then begin
         158: msg := @'_Generic expression includes two compatible types';
         159: msg := @'_Generic expression includes multiple default cases';
         160: msg := @'no matching association in _Generic expression';
+        161: msg := @'illegal operator in a constant expression';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

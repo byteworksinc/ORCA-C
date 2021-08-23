@@ -2163,7 +2163,7 @@ if token.kind in startExpression then begin
                       and (token.kind = sizeofsy))
                   or ((kind <> initializerExpression)
                       and (token.kind = uand)) then begin
-                  Error(40);
+                  Error(161);
                   errorFound := true;
                   end; {if}
             if token.kind in         {make sure we get what we want}
