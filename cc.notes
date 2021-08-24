@@ -254,6 +254,10 @@ p. 344
 
 The atexit() function actually returns zero if the function is registered successfully, and a non-zero value if there is not enough memory to satisfy the request (the reverse of what the manual says).
 
+p. 348
+
+The discussion of clock() should mention the standard macro CLOCKS_PER_SEC, which gives the number of clock ticks per second.  The CLK_TCK macro also gives the same value, but it is non-standard and should be considered deprecated.  Also, CLOCKS_PER_SEC and CLK_TCK may be either 50 or 60, depending on the system's video frequency setting; they now expand to code that will detect the setting and give the appropriate value.
+
 p. 353
 
 The discussion of _exit() should note that the _exit() function is an extension to ANSI C.
@@ -1197,6 +1201,8 @@ int foo(int[42]);
 157. An error was not reported if code tried to define an enumeration constant with a value in the range 0xFFFF8000 to 0xFFFFFFFF.  (Enumeration constants are limited to values representable as an int.)
 
 158. An "illegal type cast" error would be reported when an illegal operator was used in a constant expression.  An appropriate error message is now produced.
+
+159. The CLOCKS_PER_SEC and CLK_TCK macros were hard-coded as 60, but they should actually be 50 if the system is in 50Hz video mode.  This could throw off timing code that used these macros in conjunction with clock().  The macros now expand to code that will detect the video mode and give the appropriate value.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

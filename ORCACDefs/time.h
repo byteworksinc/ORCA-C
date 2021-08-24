@@ -28,10 +28,11 @@ struct tm {
         int tm_isdst;
         };
 
+clock_t         __clocks_per_sec(void);
 #ifndef __KeepNamespacePure__
-   #define CLK_TCK      60
+   #define CLK_TCK      (__clocks_per_sec())
 #endif
-#define CLOCKS_PER_SEC  60
+#define CLOCKS_PER_SEC  (__clocks_per_sec())
 
 #ifndef NULL
 #define NULL  (void *) 0L
