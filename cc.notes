@@ -244,9 +244,9 @@ p. 343
 
 The documentation states that assert() uses exit(-1) to exit a program.  Actually, it uses abort().
 
-Beginning with ORCA/C 2.1, assert() prints a string that includes the assertion itself, not just the line number and file name.  The assertion has the form
+Beginning with ORCA/C 2.1, assert() prints a string that includes the assertion itself, not just the line number and file name.  Beginning with ORCA/C 2.2.0 B5, it also includes the name of the enclosing function.  The assertion has the form
 
-   Assertion failed: file :hd:foo.cc, line 47; assertion: bar==1
+   Assertion failed: file :hd:foo.cc, line 47, function fn; assertion: bar==1
 
 The documentation states assert() writes to stdout.  Beginning with ORCA/C 2.1, it writes to stderr.
 
