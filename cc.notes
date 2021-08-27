@@ -296,7 +296,7 @@ The discussion of strrpbrk() should note that the strrpbrk() function is an exte
 
 p. 404
 
-The discussions of toascii() and _tolower should note that they are extensions to ANSI C.
+The discussions of toascii(), toint(), and _tolower should note that they are extensions to ANSI C.
 
 p. 405
 
