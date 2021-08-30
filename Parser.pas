@@ -3280,6 +3280,27 @@ if typeQualifiers <> [] then begin      {handle a qualified type}
       tPtr^.qualifiers := tPtr^.qualifiers + typeQualifiers;
       end; {else}
    typeSpec := tPtr;
+                                        {move array type quals to element type}
+   myTypeSpec := typeSpec;
+   while myTypeSpec^.kind = arrayType do begin
+      new(tPtr);
+      if myTypeSpec^.aType^.kind in [structType,unionType] then begin
+         with tPtr^ do begin
+            size := myTypeSpec^.aType^.size;
+            kind := definedType;
+            dType := myTypeSpec^.aType;
+            saveDisp := 0;
+            qualifiers := typeQualifiers;
+            end; {with}
+         end {if}
+      else begin
+         tPtr^ := myTypeSpec^.aType^;
+         tPtr^.qualifiers := tPtr^.qualifiers + typeQualifiers;
+         end; {else}
+      myTypeSpec^.aType := tPtr;
+      myTypeSpec^.qualifiers := [];     {remove for C23}
+      myTypeSpec := tPtr;
+      end; {if}
    end; {if}
 end; {DeclarationSpecifiers}
 
