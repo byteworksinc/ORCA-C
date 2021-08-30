@@ -274,11 +274,14 @@ type
      parameterType: typePtr;
      end;
 
+  typeQualifierEnum = (tqConst, tqVolatile, tqRestrict);
+  typeQualifierSet = set of typeQualifierEnum;
+
   typeKind = (scalarType,arrayType,pointerType,functionType,enumType,
               enumConst,structType,unionType,definedType);
   typeRecord = record                   {type}
      size: longint;                     {size of the type in bytes}
-     isConstant: boolean;               {is the type a constant?}
+     qualifiers: typeQualifierSet;      {type qualifiers}
      saveDisp: longint;			{disp in symbol file}
      case kind: typeKind of             {NOTE: aType,pType and fType must overlap}
         scalarType  : (baseType: baseTypeEnum;  {our internal type representation}

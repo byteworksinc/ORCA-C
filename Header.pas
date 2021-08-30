@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 14;                 {version number of .sym file format}
+   symFileVersion = 15;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1016,7 +1016,9 @@ procedure EndInclude {chPtr: ptr};
                WriteByte(0);
                tp^.saveDisp := GetMark;
                WriteLong(tp^.size);
-               WriteByte(ord(tp^.isConstant));
+               WriteByte(ord(tqConst in tp^.qualifiers)
+                  | (ord(tqVolatile in tp^.qualifiers) << 1)
+                  | (ord(tqRestrict in tp^.qualifiers) << 2));
                WriteByte(ord(tp^.kind));
                case tp^.kind of
         	  scalarType: begin
@@ -1636,7 +1638,17 @@ var
                tdisp^.tPtr := tp;
 	       tp^.size := ReadLong;
                tp^.saveDisp := 0;
-	       tp^.isConstant := boolean(ReadByte);
+	       val := ReadByte;
+	       if odd(val) then
+	          tp^.qualifiers := [tqConst]
+	       else
+	          tp^.qualifiers := [];
+	       if odd(val >> 1) then begin
+	          tp^.qualifiers := tp^.qualifiers + [tqVolatile];
+	          volatile := true;
+	          end; {if}
+	       if odd(val >> 2) then
+	          tp^.qualifiers := tp^.qualifiers + [tqRestrict];
 	       tp^.kind := typeKind(ReadByte);
 	       case tp^.kind of
         	  scalarType: begin

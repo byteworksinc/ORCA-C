@@ -1204,6 +1204,8 @@ int foo(int[42]);
 
 159. The CLOCKS_PER_SEC and CLK_TCK macros were hard-coded as 60, but they should actually be 50 if the system is in 50Hz video mode.  This could throw off timing code that used these macros in conjunction with clock().  The macros now expand to code that will detect the video mode and give the appropriate value.
 
+160. The volatile type qualifier was omitted from declarations recorded in a .sym file.  This could lead to volatile accesses being optimized away.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

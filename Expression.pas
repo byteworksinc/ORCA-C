@@ -575,7 +575,7 @@ var
 begin {AssignmentConversion}
 kind1 := t1^.kind;
 kind2 := t2^.kind;
-if t1^.isConstant then
+if tqConst in t1^.qualifiers then
    if genCode then
       if checkConst then
          Error(93);
@@ -947,7 +947,7 @@ var
          fnPtr := pointer(GCalloc(sizeof(typeRecord)));
          {fnPtr^.size := 0;}
          {fnPtr^.saveDisp := 0;}
-         {fnPtr^.isConstant := false;}
+         {fnPtr^.qualifiers := [];}
          fnPtr^.kind := functionType;
          fnPtr^.fType := intPtr;
          {fnPtr^.varargs := false;}
@@ -1888,14 +1888,14 @@ var
    if expressionType^.kind = functionType then begin
          controllingType.size := cgLongSize;
          controllingType.saveDisp := 0;
-         controllingType.isConstant := false;
+         controllingType.qualifiers := [];
          controllingType.kind := pointerType;
          controllingType.pType := expressionType;
       end {if}
    else if expressionType^.kind in [structType,unionType] then begin
       controllingType.size := expressionType^.size;
       controllingType.saveDisp := 0;
-      controllingType.isConstant := false;
+      controllingType.qualifiers := [];
       controllingType.kind := definedType;
       controllingType.dType := expressionType;
       end {else if}
@@ -1903,7 +1903,7 @@ var
       controllingType := expressionType^;
    if controllingType.kind = arrayType then
       controllingType.kind := pointerType;
-   controllingType.isConstant := false;
+   controllingType.qualifiers := [];
 
    typesSeen := nil;
    resultExpr := nil;
@@ -2778,7 +2778,7 @@ var
          eType := pointer(Malloc(sizeof(typeRecord)));
          eType^.size := cgLongSize;
          eType^.saveDisp := 0;
-         eType^.isConstant := false;
+         eType^.qualifiers := [];
          eType^.kind := pointerType;
          eType^.pType := iType;
          expressionType := eType;
@@ -2813,7 +2813,7 @@ var
          eType := pointer(Malloc(sizeof(typeRecord)));
          eType^.size := cgLongSize;
          eType^.saveDisp := 0;
-         eType^.isConstant := false;
+         eType^.qualifiers := [];
          eType^.kind := pointerType;
          eType^.pType := expressionType;
          expressionType := eType;
@@ -2830,7 +2830,7 @@ var
          eType := pointer(Malloc(sizeof(typeRecord)));
          eType^.size := cgLongSize;
          eType^.saveDisp := 0;
-         eType^.isConstant := false;
+         eType^.qualifiers := [];
          eType^.kind := pointerType;
          eType^.pType := expressionType;
          expressionType := eType;
@@ -2943,7 +2943,7 @@ var
       with tree^.id^ do begin
 
          {check for ++ or -- of a constant}
-         if iType^.isConstant then
+         if tqConst in iType^.qualifiers then
             Error(93);
 
          {do an efficient ++ or -- on a named location}
@@ -3560,6 +3560,8 @@ case tree^.token.kind of
             GenerateCode(tree^.right);
             AssignmentConversion(lType, expressionType, lastWasConst,
                lastConst, true, true);
+            while lType^.kind = definedType do
+               lType := lType^.dType;
             case lType^.kind of
                scalarType:
                   if lisBitField then
@@ -3623,7 +3625,7 @@ case tree^.token.kind of
          else
             Gen1t(pc_ind, 0, lType^.baseType);
          end; {else}
-      if lType^.isConstant then
+      if tqConst in lType^.qualifiers then
          Error(93);
       if doingScalar 
          and (ltype^.kind = arrayType) and (id^.storage = parameter) then
@@ -4082,7 +4084,7 @@ case tree^.token.kind of
             tType := pointer(Malloc(sizeof(typeRecord)));
             tType^.size := cgLongSize;
             tType^.saveDisp := 0;
-            tType^.isConstant := false;
+            tType^.qualifiers := [];
             tType^.kind := pointerType;
             tType^.pType := expressionType^.aType;
             expressionType := tType;
@@ -4138,7 +4140,7 @@ case tree^.token.kind of
             tType := pointer(Malloc(sizeof(typeRecord)));
             tType^.size := cgLongSize;
             tType^.saveDisp := 0;
-            tType^.isConstant := false;
+            tType^.qualifiers := [];
             tType^.kind := pointerType;
             tType^.pType := expressionType^.aType;
             expressionType := tType;

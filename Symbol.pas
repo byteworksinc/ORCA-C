@@ -474,9 +474,8 @@ if t1 = t2 then begin                   {shortcut}
    goto 1;
    end; {if}
 StrictCompTypes := false;               {assume the types are not compatible}
-if t1^.isConstant <> t2^.isConstant then {qualifiers must be the same}
+if t1^.qualifiers <> t2^.qualifiers then {qualifiers must be the same}
    goto 1;
-{TODO: Check other qualifiers (currently not recorded)}
 while t1^.kind = definedType do         {scan past type definitions}
    t1 := t1^.dType;
 while t2^.kind = definedType do
@@ -521,13 +520,13 @@ case kind1 of
                if p1^.parameterType = p2^.parameterType then
                   {these parameters are compatible}
                else begin
-                  tp1.isConstant := false;
-                  tp2.isConstant := false;
+                  tp1.qualifiers := [];
+                  tp2.qualifiers := [];
                   if tp1.kind = arrayType then
                      tp1.kind := pointerType
                   else if tp1.kind = functionType then begin
                      tp1.size := cgLongSize;
-                     tp1.isConstant := false;
+                     tp1.qualifiers := [];
                      tp1.saveDisp := 0;
                      tp1.kind := pointerType;
                      tp1.pType := p1^.parameterType;
@@ -536,7 +535,7 @@ case kind1 of
                      tp2.kind := pointerType
                   else if tp2.kind = functionType then begin
                      tp2.size := cgLongSize;
-                     tp2.isConstant := false;
+                     tp2.qualifiers := [];
                      tp2.saveDisp := 0;
                      tp2.kind := pointerType;
                      tp2.pType := p2^.parameterType;
@@ -1368,7 +1367,7 @@ new(sCharPtr);                          {signed char}
 with sCharPtr^ do begin
    size := cgByteSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgByte;
    cType := ctSChar;
@@ -1377,7 +1376,7 @@ new(charPtr);                           {char}
 with charPtr^ do begin
    size := cgByteSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgUByte;
    cType := ctChar;
@@ -1386,7 +1385,7 @@ new(uCharPtr);                          {unsigned char}
 with uCharPtr^ do begin
    size := cgByteSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgUByte;
    cType := ctUChar;
@@ -1395,7 +1394,7 @@ new(shortPtr);                          {short}
 with shortPtr^ do begin
    size := cgWordSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgWord;
    cType := ctShort;
@@ -1404,7 +1403,7 @@ new(uShortPtr);                         {unsigned short}
 with uShortPtr^ do begin
    size := cgWordSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgUWord;
    cType := ctUShort;
@@ -1413,7 +1412,7 @@ new(intPtr);                            {int}
 with intPtr^ do begin
    size := cgWordSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgWord;
    cType := ctInt;
@@ -1422,7 +1421,7 @@ new(uIntPtr);                           {unsigned int}
 with uIntPtr^ do begin
    size := cgWordSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgUWord;
    cType := ctUInt;
@@ -1431,7 +1430,7 @@ new(int32Ptr);                          {int (32-bit)}
 with int32Ptr^ do begin
    size := cgLongSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgLong;
    cType := ctInt32;
@@ -1440,7 +1439,7 @@ new(uInt32Ptr);                         {unsigned int (32-bit)}
 with uInt32Ptr^ do begin
    size := cgLongSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgULong;
    cType := ctUInt32;
@@ -1449,7 +1448,7 @@ new(longPtr);                           {long}
 with longPtr^ do begin
    size := cgLongSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgLong;
    cType := ctLong;
@@ -1458,7 +1457,7 @@ new(uLongPtr);                          {unsigned long}
 with uLongPtr^ do begin
    size := cgLongSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgULong;
    cType := ctULong;
@@ -1467,7 +1466,7 @@ new(longLongPtr);                       {long long}
 with longLongPtr^ do begin
    size := cgQuadSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgQuad;
    cType := ctLongLong;
@@ -1476,7 +1475,7 @@ new(uLongLongPtr);                      {unsigned long long}
 with uLongLongPtr^ do begin
    size := cgQuadSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgUQuad;
    cType := ctULongLong;
@@ -1485,7 +1484,7 @@ new(floatPtr);                          {real}
 with floatPtr^ do begin
    size := cgRealSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgReal;
    cType := ctFloat;
@@ -1494,7 +1493,7 @@ new(doublePtr);                         {double}
 with doublePtr^ do begin
    size := cgDoubleSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgDouble;
    cType := ctDouble;
@@ -1503,7 +1502,7 @@ new(compPtr);                           {comp}
 with compPtr^ do begin
    size := cgCompSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgComp;
    cType := ctComp;
@@ -1512,7 +1511,7 @@ new(extendedPtr);                       {extended, aka long double}
 with extendedPtr^ do begin
    size := cgExtendedSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgExtended;
    cType := ctLongDouble;
@@ -1521,7 +1520,7 @@ new(boolPtr);                           {_Bool}
 with boolPtr^ do begin
    size := cgWordSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgWord;
    cType := ctBool;
@@ -1530,7 +1529,7 @@ new(stringTypePtr);                     {string constant type}
 with stringTypePtr^ do begin
    size := 0;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := arrayType;
    aType := charPtr;
    elements := 1;
@@ -1539,7 +1538,7 @@ new(voidPtr);                           {void}
 with voidPtr^ do begin
    size := 0;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := scalarType;
    baseType := cgVoid;
    cType := ctVoid;
@@ -1548,7 +1547,7 @@ new(voidPtrPtr);                        {typeless pointer}
 with voidPtrPtr^ do begin
    size := 4;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := pointerType;
    pType := voidPtr;
    end; {with}
@@ -1556,7 +1555,7 @@ new(defaultStruct);                     {default structure}
 with defaultStruct^ do begin            {(for structures with errors)}
    size := cgWordSize;
    saveDisp := 0;
-   isConstant := false;
+   qualifiers := [];
    kind := structType;
    sName := nil;
    new(fieldList);
@@ -1572,7 +1571,7 @@ with defaultStruct^ do begin            {(for structures with errors)}
    end; {with}
 new(constCharPtr);                      {const char}
 constCharPtr^ := charPtr^;
-constCharPtr^.isConstant := true;
+constCharPtr^.qualifiers := [tqConst];
 end; {InitSymbol}
 
 

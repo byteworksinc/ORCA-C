@@ -33,8 +33,12 @@ procedure PrintOneSymbol {ip: identPtr};
    begin {PrintType}
    with tp^ do begin
       write('    ', size:1, ' byte ');
-      if isConstant then
+      if tqConst in qualifiers then
          write('constant ');
+      if tqVolatile in qualifiers then
+         write('volatile ');
+      if tqRestrict in qualifiers then
+         write('restricted ');
       case kind of
          scalarType  : writeln('scalar');
          arrayType   : begin

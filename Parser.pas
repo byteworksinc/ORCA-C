@@ -1237,7 +1237,7 @@ type
    pointerListPtr = ^pointerList;       {for stacking pointer types}
    pointerList = record
       next: pointerListPtr;
-      isConstant: boolean;
+      qualifiers: typeQualifierSet;
       end;
 
 var
@@ -1315,7 +1315,7 @@ var
                {tPtr2^.size := 0;}
                {tPtr2^.saveDisp := 0;}
                tPtr2^.kind := definedType;
-               {tPtr^.isConstant := false;}
+               {tPtr^.qualifiers := [];}
                tPtr2^.dType := tPtr;
                end {if}
             else
@@ -1342,14 +1342,16 @@ var
             new(cp);
             cp^.next := cpList;
             cpList := cp;
-            cp^.isConstant := false;
+            cp^.qualifiers := [];
             while token.kind in [_Alignassy..whilesy] do begin
                if token.kind = constsy then
-                  cpList^.isConstant := true
-               else if token.kind = volatilesy then
+                  cpList^.qualifiers := cpList^.qualifiers + [tqConst]
+               else if token.kind = volatilesy then begin
+                  cpList^.qualifiers := cpList^.qualifiers + [tqVolatile];
                   volatile := true
-               else if token.kind = restrictsy then
-                  {always allowed for now (not recorded as part of the type)}
+                  end {else if}
+               else if token.kind = restrictsy then  {always allowed for now}
+                  cpList^.qualifiers := cpList^.qualifiers + [tqRestrict]
                else
                   Error(9);
                NextToken;
@@ -1403,7 +1405,7 @@ var
          {tPtr2^.size := 0;}
          {tPtr2^.saveDisp := 0;}
          tPtr2^.kind := functionType;
-         {tPtr2^.isConstant := false;}
+         {tPtr2^.qualifiers := [];}
          {tPtr2^.varargs := false;}
          {tPtr2^.prototyped := false;}
          {tPtr2^.overrideKR := false;}
@@ -1548,7 +1550,7 @@ var
          tPtr2 := pointer(Calloc(sizeof(typeRecord)));
          {tPtr2^.size := 0;}
          {tPtr2^.saveDisp := 0;}
-         {tPtr2^.isConstant := false;}
+         {tPtr2^.qualifiers := [];}
          tPtr2^.kind := arrayType;
          {tPtr2^.elements := 0;}
          new(ttPtr);
@@ -1573,7 +1575,7 @@ var
       tPtr2 := pointer(Malloc(sizeof(typeRecord)));
       tPtr2^.size := cgPointerSize;
       tPtr2^.saveDisp := 0;
-      tPtr2^.isConstant := cpList^.isConstant;
+      tPtr2^.qualifiers := cpList^.qualifiers;
       tPtr2^.kind := pointerType;
       new(ttPtr);
       ttPtr^.next := typeStack;
@@ -2689,7 +2691,7 @@ var
    typeSpecifiers: tokenSet;            {set of tokens specifying the type}
    typeDone: boolean;                   {no more type specifiers can be accepted}
    
-   isConstant: boolean;                 {did we find a constsy?}
+   typeQualifiers: typeQualifierSet;    {set of type qualifiers found}
 
    myIsForwardDeclared: boolean;        {value of isForwardDeclared to generate}
    mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
@@ -2929,9 +2931,9 @@ myTypeSpec := nil;
 myIsForwardDeclared := false;           {not doing a forward reference (yet)}
 mySkipDeclarator := false;              {declarations are required (so far)}
 myDeclarationModifiers := [];
+typeQualifiers := [];
 typeSpecifiers := [];
 typeDone := false;
-isConstant := false;
 isLongLong := false;
 while token.kind in allowedTokens do begin
    case token.kind of
@@ -2981,18 +2983,20 @@ while token.kind in allowedTokens do begin
       {type qualifiers}
       constsy: begin
          myDeclarationModifiers := myDeclarationModifiers + [token.kind];
-         isConstant := true;
+         typeQualifiers := typeQualifiers + [tqConst];
          NextToken;
          end;
 
       volatilesy: begin
          myDeclarationModifiers := myDeclarationModifiers + [token.kind];
+         typeQualifiers := typeQualifiers + [tqVolatile];
          volatile := true;
          NextToken;
          end;
 
       restrictsy: begin
          myDeclarationModifiers := myDeclarationModifiers + [token.kind];
+         typeQualifiers := typeQualifiers + [tqRestrict];
          if typeDone or (typeSpecifiers <> []) then
             if (myTypeSpec^.kind <> pointerType)
                or (myTypeSpec^.pType^.kind = functionType) then
@@ -3063,7 +3067,7 @@ while token.kind in allowedTokens do begin
             tPtr := pointer(Malloc(sizeof(typeRecord)));
             tPtr^.size := cgWordSize;
             tPtr^.saveDisp := 0;
-            tPtr^.isConstant := false;
+            tPtr^.qualifiers := [];
             tPtr^.kind := enumType;
             variable :=
                NewSymbol(ttoken.name, tPtr, storageClass, tagSpace, defined);
@@ -3077,7 +3081,7 @@ while token.kind in allowedTokens do begin
                tPtr := pointer(Malloc(sizeof(typeRecord)));
                tPtr^.size := cgWordSize;
                tPtr^.saveDisp := 0;
-               tPtr^.isConstant := false;
+               tPtr^.qualifiers := [];
                tPtr^.kind := enumConst;
                if token.kind = ident then begin
                   variable :=
@@ -3157,7 +3161,7 @@ while token.kind in allowedTokens do begin
                   structTypePtr := pointer(Calloc(sizeof(typeRecord)));
                  {structTypePtr^.size := 0;}
                  {structTypePtr^.saveDisp := 0;}
-                 {structTypePtr^.isConstant := false;}
+                 {structTypePtr^.qualifiers := [];}
                   structTypePtr^.kind := tkind;
                  {structTypePtr^.fieldList := nil;}
                  {structTypePtr^.sName := nil;}
@@ -3189,7 +3193,7 @@ while token.kind in allowedTokens do begin
                structTypePtr := pointer(Calloc(sizeof(typeRecord)));
               {structTypePtr^.size := 0;}
               {structTypePtr^.saveDisp := 0;}
-              {structTypePtr^.isConstant := false;}
+              {structTypePtr^.qualifiers := [];}
                structTypePtr^.kind := tkind;
               {structTypePtr^.fieldList := nil;}
               {structTypePtr^.sName := nil;}
@@ -3260,7 +3264,7 @@ if typeSpec = nil then begin
    if (lint & lintC99Syntax) <> 0 then
       Error(151);
    end; {if}
-if isconstant then begin                {handle a constant type}
+if typeQualifiers <> [] then begin      {handle a qualified type}
    new(tPtr);
    if typeSpec^.kind in [structType,unionType] then begin
       with tPtr^ do begin
@@ -3268,11 +3272,13 @@ if isconstant then begin                {handle a constant type}
          kind := definedType;
          dType := typeSpec;
          saveDisp := 0;
+         qualifiers := typeQualifiers;
          end; {with}
       end {if}
-   else
+   else begin
       tPtr^ := typeSpec^;
-   tPtr^.isConstant := true;
+      tPtr^.qualifiers := tPtr^.qualifiers + typeQualifiers;
+      end; {else}
    typeSpec := tPtr;
    end; {if}
 end; {DeclarationSpecifiers}
@@ -3969,7 +3975,7 @@ var
             tp := pointer(Calloc(sizeof(typeRecord)));
             {tp^.size := 0;}
             {tp^.saveDisp := 0;}
-            {tp^.isConstant := false;}
+            {tp^.qualifiers := [];}
             tp^.kind := functionType;
             {tp^.varargs := false;}
             {tp^.prototyped := false;}
@@ -4004,13 +4010,17 @@ var
          tp := pointer(Malloc(sizeof(typeRecord)));
          tp^.size := cgLongSize;
          tp^.saveDisp := 0;
-         tp^.isConstant := false;
+         tp^.qualifiers := [];
          tp^.kind := pointerType;
-         while token.kind in [constsy,volatilesy] do begin
+         while token.kind in [constsy,volatilesy,restrictsy] do begin
             if token.kind = constsy then
-               tp^.isConstant := true
-            else {if token.kind = volatilesy then}
+               tp^.qualifiers := tp^.qualifiers + [tqConst]
+            else if token.kind = volatilesy then begin
+               tp^.qualifiers := tp^.qualifiers + [tqVolatile];
                volatile := true;
+               end {else}
+            else {if token.kind = restrictsy then}
+               tp^.qualifiers := tp^.qualifiers + [tqRestrict];
             NextToken;
             end; {while}
          AbstractDeclarator;
@@ -4053,7 +4063,7 @@ var
          tp := pointer(Calloc(sizeof(typeRecord)));
          {tp^.size := 0;}
          {tp.saveDisp := 0;}
-         {tp^.isConstant := false;}
+         {tp^.qualifiers := [];}
          tp^.kind := functionType;
          {tp^.varargs := false;}
          {tp^.prototyped := false;}
@@ -4493,7 +4503,7 @@ len := ord(functionName^[0]) + 1;
 tp := pointer(GCalloc(sizeof(typeRecord)));
 tp^.size := len;
 tp^.saveDisp := 0;
-tp^.isConstant := false;
+tp^.qualifiers := [];
 tp^.kind := arrayType;
 tp^.aType := constCharPtr;
 tp^.elements := len;
