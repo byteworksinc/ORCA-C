@@ -715,6 +715,7 @@ if list or (numErr <> 0) then begin
         159: msg := @'_Generic expression includes multiple default cases';
         160: msg := @'no matching association in _Generic expression';
         161: msg := @'illegal operator in a constant expression';
+        162: msg := @'invalid escape sequence';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3751,13 +3752,14 @@ var
       cnt: 0..3;                        {for counting octal escape sequences}
       dig: 0..15;                       {value of a hex digit}
       skipChar: boolean;                {get next char when done?}
-      val: 0..4095;                     {hex escape code value (scaled to 0..255)}
+      val: 0..maxint;                   {hex/octal escape code value}
 
    begin {EscapeCh}
 1: skipChar := true;
    if lch = '\' then begin
       NextCh;
-      if lch in ['0'..'7','a','b','t','n','v','f','p','r','x'] then
+      if lch in ['0'..'7','a','b','t','n','v','f','p','r','x',
+         '''','"','?','\'] then
          case lch of
             '0','1','2','3','4','5','6','7': begin
                val := 0;
@@ -3767,6 +3769,8 @@ var
                   cnt := cnt+1;
                   NextCh;
                   end; {while}
+               if (val & $FF00) <> 0 then
+                  Error(162);
                EscapeCh := val & $FF;
                skipChar := false;
                end;
@@ -3792,15 +3796,22 @@ var
                      dig := ord(lch)-ord('A')+10;
                      end; {else}
                   val := (val << 4) | dig;
+                  if (val & $FF00) <> 0 then begin
+                     Error(162);
+                     val := 0;
+                     end; {if}
                   NextCh;
                   end; {while}
                skipChar := false;
                EscapeCh := val & $FF;
                end;
+            '''','"','?','\': EscapeCh := ord(ch);
             otherwise: Error(57);
             end {case}
-      else
+      else begin
+         Error(162);
          EscapeCh := ord(lch);
+         end; {else}
       end {if}
    else
       EscapeCh := ord(lch);
@@ -4222,7 +4233,7 @@ var
       cnt: 0..3;                        {for counting octal escape sequences}
       dig: 0..15;                       {value of a hex digit}
       skipChar: boolean;                {get next char when done?}
-      val: 0..4095;                     {hex escape code value (scaled to 0..255)}
+      val: 0..maxint;                   {hex/octal escape code value}
       codePoint: ucsCodePoint;          {code point given by UCN}
       chFromUCN: integer;               {character given by UCN (converted)}
 
@@ -4230,7 +4241,8 @@ var
 1: skipChar := true;
    if ch = '\' then begin
       NextCh;
-      if ch in ['0'..'7','a','b','t','n','v','f','p','r','x','u','U'] then
+      if ch in ['0'..'7','a','b','t','n','v','f','p','r','x','u','U',
+         '''','"','?','\'] then
          case ch of
             '0','1','2','3','4','5','6','7': begin
                val := 0;
@@ -4240,6 +4252,8 @@ var
                   cnt := cnt+1;
                   NextCh;
                   end; {while}
+               if (val & $FF00) <> 0 then
+                  Error(162);
                EscapeCh := val & $FF;
                skipChar := false;
                end;
@@ -4265,6 +4279,10 @@ var
                      dig := ord(ch)-ord('A')+10;
                      end; {else}
                   val := (val << 4) | dig;
+                  if (val & $FF00) <> 0 then begin
+                     Error(162);
+                     val := 0;
+                     end; {if}
                   NextCh;
                   end; {while}
                skipChar := false;
@@ -4281,10 +4299,13 @@ var
                   Error(146);
                   end; {else}
                end;
+            '''','"','?','\': EscapeCh := ord(ch);
             otherwise: Error(57);
             end {case}
-      else
+      else begin
+         Error(162);
          EscapeCh := ord(ch);
+         end; {else}
       end {if}
    else
       EscapeCh := ord(ch);

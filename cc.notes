@@ -123,7 +123,9 @@ String and character constants may now contain universal character names, a type
 
 p. 240
 
-The discussion of escape sequences states that hexadecimal numeric escape sequences can contain from one to three digits.  This was true until ORCA/C 2.1, when the compiler was changed to respect the ANSI C standard.  The compiler will now scan a hexadecimal numeric escape sequence until no more hexadecimal characters are found.  The result is then anded with 0x00FF to yield a single character.  (ORCA/C 2.1 would also scan an octal escape sequence until no more octal characters were found, but this has been changed back to limit octal escape sequences to at most three octal digits, as required by the C standards.)
+The discussion of escape sequences states that hexadecimal numeric escape sequences can contain from one to three digits.  This was true until ORCA/C 2.1, when the compiler was changed to respect the ANSI C standard.  The compiler will now scan a hexadecimal escape sequence until no more hexadecimal characters are found.  (ORCA/C 2.1 would also scan an octal escape sequence until no more octal characters were found, but this has been changed back to limit octal escape sequences to at most three octal digits, as required by the C standards.)
+
+The value of an octal or hexadecimal escape sequence must be within the range of representable character values (0-255).  Also, \ may not be followed by a character other than one of the ones described as forming an escape sequence.  ORCA/C now gives an error in these cases.  Accordingly, the examples of "\410" and '\g' mentioned in the manual are now treated as errors.
 
 p. 241
 
