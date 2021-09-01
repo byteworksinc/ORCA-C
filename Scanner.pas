@@ -240,6 +240,7 @@ type
 
 var
    dateStr: longStringPtr;              {macro date string}
+   doingCommandLine: boolean;           {are we processing the cc= command line?}
    doingPPExpression: boolean;          {are we processing a preprocessor expression?}
    doingStringOrCharacter: boolean;     {used to suppress comments in strings}
    errors: array[1..maxErr] of errorType; {errors in this line}
@@ -511,7 +512,7 @@ end; {PutBackToken}
 
 procedure WriteLine;
 
-{ Write the current character to the screen.                    }
+{ Write the current line and any error messages to the screen.  }
 {                                                               }
 { Global Variables:                                             }
 {   firstPtr - points to the first char in the line             }
@@ -525,7 +526,7 @@ var
  
 begin {WriteLine}
 if list or (numErr <> 0) then begin
-   if not wroteLine then begin
+   if not wroteLine and not doingCommandLine then begin
       write(lineNumber:4, ' ');         {write the line #}
       cp := firstPtr;                   {write the characters in the line}
       while (cp <> eofPtr) and (charKinds[ord(cp^)] <> ch_eol) do begin
@@ -551,6 +552,8 @@ if list or (numErr <> 0) then begin
            end; {for}
          write('^ ');
          end {if}
+       else if doingCommandLine then
+         write('     Error in command line: ')
        else
          write('     Error in column ', col:1, ' of line ', line:1, ': ');
        case num of
@@ -661,7 +664,7 @@ if list or (numErr <> 0) then begin
         105: msg := @'lint: parameter list not prototyped';
         106: msg := @'cannot take the address of a bit field';
         107: msg := @'illegal use of forward declaration';
-        108: msg := @'unknown cc= option on command line';
+        108: msg := @'unknown cc= option';
         109: msg := @'illegal math operation in a constant expression';
         110: msg := @'lint: unknown pragma';
         111: msg := @'the & operator cannot be applied to arrays';
@@ -4042,6 +4045,7 @@ versionStrL^.str := versionStr;
 cp := @infoStringGS.theString.theString;
 tokenLine := 0;
 tokenColumn := 0;
+doingCommandLine := true;
 NextCh;
 repeat
    while lch in [' ', chr(9)] do        {skip leading blanks}
@@ -4108,7 +4112,7 @@ repeat
          mp^.tokens^.token := token;
          end {if}
       else if lch in ['i','I'] then begin
-         NextCh;                        {gat the pathname}
+         NextCh;                        {get the pathname}
          if lch = '"' then begin
             GetString;
             LongToPString(workString, token.sval);
@@ -4117,14 +4121,20 @@ repeat
          else
             Error(103);
          end {if}
-      else                              {not -p, -i: flag the error}
+      else begin                        {not -d, -i: flag the error}
          Error(108);
+         while not (lch in [chr(0),' ',chr(9)]) do
+            NextCh;
+         end; {else}
       end {if}
    else if lch <> chr(0) then begin
       Error(108);                       {unknown option: flag the error}
       lch := chr(0);
       end; {else}
 until lch = chr(0);                     {if more characters, loop}
+if numErr <> 0 then
+   WriteLine;
+doingCommandLine := false;
 end; {InitScanner}
 
 
