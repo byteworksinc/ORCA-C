@@ -34,6 +34,9 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2021
             11.	Some new library functions and features from C99 and C11 have
                	been added.  See "Library Updates."
 
+            12.	Floating-point constant expressions now use extended precision.
+               	See "Evaluation of Floating-Point Expressions and Constants."
+
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
 2.1.0       1.	Bugs squashed.  See bug notes, below.
@@ -666,7 +669,7 @@ For all the functions taking an argument called excepts, it is a bitwise OR of f
 
 fegetround() gets the current rounding direction.  fesetround() sets the rounding direction.  fegetenv() saves a representation of the current floating-point environment to *envp.  feholdexcept() saves a representation of the current environment, then clears all exception flags and disables halts for all floating-point exceptions.  fesetenv() sets the floating-point environment, but does not raise any exceptions.  feupdateenv() temporarily saves the currently raised floating-point exceptions, installs the specified floating-point environment, and then raises the saved exceptions.
 
-Except for fetestexcept() and fegetround(), these calls return 0 if they successfully carried out the operation, or non-zero otherwise.  Under ORCA/C, they always succeed if given valid arguments.  Under ORCA/C, these functions all correspond to operations on the SANE environment; see the Apple Numerics Manual for details on its behavior.  To ensure that these functions interact properly with floating-point operations in the program, #pragma STDC FENV_ACCESS ON should be in effect when they are called; see "New Language Features," above.
+Except for fetestexcept() and fegetround(), these calls return 0 if they successfully carried out the operation, or non-zero otherwise.  Under ORCA/C, they always succeed if given valid arguments.  To ensure that these functions interact properly with floating-point operations in the program, #pragma STDC FENV_ACCESS ON should be in effect when they are called; see "New Language Features," above.  Under ORCA/C, these functions all correspond to operations on the SANE environment; see the Apple Numerics Manual for details on its behavior.  Note that these functions may not behave as expected when using an FPE or compatible floating-point card.
 
 10. (C99) Several new function-like macros for classification of floating-point numbers have been added:
 
@@ -1207,6 +1210,8 @@ int foo(int[42]);
 159. The CLOCKS_PER_SEC and CLK_TCK macros were hard-coded as 60, but they should actually be 50 if the system is in 50Hz video mode.  This could throw off timing code that used these macros in conjunction with clock().  The macros now expand to code that will detect the video mode and give the appropriate value.
 
 160. The volatile type qualifier was omitted from declarations recorded in a .sym file.  This could lead to volatile accesses being optimized away.
+
+161. The system() function might return the wrong value when using the large memory model.  (This was a regression introduced in ORCA/C 2.2.0 B3.)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
