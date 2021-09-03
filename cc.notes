@@ -1213,6 +1213,8 @@ int foo(int[42]);
 
 161. The system() function might return the wrong value when using the large memory model.  (This was a regression introduced in ORCA/C 2.2.0 B3.)
 
+162. In certain cases, an assignment from a location with an 8-bit type to a location with a 16-bit type might store the wrong value.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

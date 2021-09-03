@@ -4278,6 +4278,18 @@ var
                GenNative(m_lda_abs, absolute, q, lab, 0)
             else
                GenNative(m_lda_long, longabsolute, q, lab, 0);
+      if not short then
+         if op^.right^.optype in [cgByte,cgUByte] then
+            if op^.right^.opcode <> pc_ldc then begin
+               GenNative(m_and_imm, immediate, $00FF, nil, 0);
+               if optype = cgByte then begin
+                  GenNative(m_bit_imm, immediate, $0080, nil, 0);
+                  lab1 := GenLabel;
+                  GenNative(m_beq, relative, lab1, nil, 0);
+                  GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+                  GenLab(lab1);
+                  end; {if}
+               end; {if}
       end {if} 
    else begin
       GenImplied(m_pla);
