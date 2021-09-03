@@ -34,12 +34,12 @@ main ()
        goto Fail;
 
    /* Test negative values. */
-   a = -1e+4932;
-   if (fabs(a - (-1.E4932)) > 1e4920)
+   a = -1e+4932L;
+   if (fabs(a - (-1.E4932L)) > 1e4920L)
        goto Fail;
 
-   a = -.1e-4943;
-   if (fabs(a - (-1.0e-4932)) > 1e-4935)
+   a = -.1e-4943L;
+   if (fabs(a - (-1.0e-4932L)) > 1e-4932L)
        goto Fail;
 
    /* Test other miscellaneous values. */

@@ -53,7 +53,7 @@ main ()
    if (i != 1)
        goto Fail3;
    string [53] = '\0';
-   if (strcmp (string, " +1.2345599999999999e-203  -4.700000E+00     5e+00  E"))
+   if (strcmp (string, " +1.2345600000000000e-203  -4.700000E+00     5e+00  E"))
        goto Fail;
 
    rewind (stdout);
@@ -61,10 +61,10 @@ main ()
    if (i != 1)
        goto Fail3;
    string [53] = '\0';
-   if (strcmp (string, " +1.2345599999999999e-203  -4.700000E+00     5e+00  E"))
+   if (strcmp (string, " +1.2345600000000000e-203  -4.700000E+00     5e+00  E"))
        goto Fail;
 
-   if (strcmp (sstring, " +1.2345599999999999e-203  -4.700000E+00     5e+00  E\n"))
+   if (strcmp (sstring, " +1.2345600000000000e-203  -4.700000E+00     5e+00  E\n"))
        goto Fail;
 
 

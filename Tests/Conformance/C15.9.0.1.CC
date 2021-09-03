@@ -10,7 +10,7 @@ main ()
 
 
    d1 = atof ("3.5e-22");
-   if (d1 != 3.5e-22)
+   if (d1 != (double)3.5e-22)
        goto Fail;
 
    i = atoi ("-32765");

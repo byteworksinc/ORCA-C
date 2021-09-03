@@ -35,11 +35,11 @@ main ()
 
    /* Test negative values. */
    a = -1e+308;
-   if (fabs(a - (-1.E308)) > 1e-302)
+   if (fabs(a - (double)(-1.E308)) > 1e-302)
        goto Fail;
 
    a = -.1e-307;
-   if (fabs(a - (-1.0e-308)) > 1e-302)
+   if (fabs(a - (double)(-1.0e-308)) > 1e-302)
        goto Fail;
 
    /* Test other miscellaneous values. */

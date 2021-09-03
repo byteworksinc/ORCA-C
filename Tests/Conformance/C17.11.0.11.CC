@@ -59,7 +59,7 @@ main ()
    if (i != 1)
        goto Fail3;
    string [47] = '\0';
-   if (strcmp (string, "%    +1.2345599999999999e-203  a string  %    N"))
+   if (strcmp (string, "%    +1.2345600000000000e-203  a string  %    N"))
        goto Fail;
 
    rewind (stdout);
@@ -67,10 +67,10 @@ main ()
    if (i != 1)
        goto Fail3;
    string [47] = '\0';
-   if (strcmp (string, "%    +1.2345599999999999e-203  a string  %    N"))
+   if (strcmp (string, "%    +1.2345600000000000e-203  a string  %    N"))
        goto Fail;
 
-   if (strcmp (sstring, "%    +1.2345599999999999e-203  a string  %    N\n"))
+   if (strcmp (sstring, "%    +1.2345600000000000e-203  a string  %    N\n"))
        goto Fail;
 
 

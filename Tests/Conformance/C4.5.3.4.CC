@@ -103,7 +103,7 @@ static  int  TestEm (void)
        d1 [i] = &d;                                /*  dimensioned array of  */
    d = 123.0e50;                                   /*  pointers to double    */
    for (k = 7; k >= 0; k--)
-       if (fabs(*(d1 [k]) - 0.123E53) > 0.00001)
+       if (fabs(*(d1 [k]) - (double)0.123E53) > 0.00001)
            goto Fail;
 
    for (k = 8; k >= 0; k--)            /* assign & check singly-dimensioned */
