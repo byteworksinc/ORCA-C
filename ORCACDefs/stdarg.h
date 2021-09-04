@@ -27,7 +27,9 @@ typedef char *__va_list[2];
 typedef __va_list va_list;
 #define va_end(a) __va_end(a)
 #define	va_start(ap,LastFixedParm) ((void) ((ap)[0] = (ap)[1] = (char *) (&LastFixedParm + 1)))
-#define	va_arg(ap,type)	((type *)((ap)[0] += sizeof(type)))[-1]
+#define	va_arg(ap,type)	_Generic(*(type *)0, \
+        double: (type)((long double *)((ap)[0] += sizeof(long double)))[-1], \
+        default: ((type *)((ap)[0] += sizeof(type)))[-1])
 
 void __va_end(va_list);
 

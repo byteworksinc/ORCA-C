@@ -1215,6 +1215,10 @@ int foo(int[42]);
 
 162. In certain cases, an assignment from a location with an 8-bit type to a location with a 16-bit type might store the wrong value.
 
+163. When an argument of type double was passed to a function taking variable arguments, va_arg(ap,double) would not retrieve it correctly.  
+
+(Devin Reade)
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
