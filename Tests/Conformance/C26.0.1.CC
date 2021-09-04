@@ -10,6 +10,7 @@
 #include <dialog.h>
 #include <errno.h>
 #include <event.h>
+#include <fenv.h>
 #include <font.h>
 #include <gsos.h>
 #include <intmath.h>
