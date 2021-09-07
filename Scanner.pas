@@ -3654,7 +3654,8 @@ while digits > 0 do begin
       digits := digits - 1;
       end {while}
    else begin
-      Error(145);
+      if not skipping then
+         Error(145);
       codePoint := $0000C0;
       digits := 0;
       end; {else}
@@ -4263,7 +4264,8 @@ var
                   NextCh;
                   end; {while}
                if (val & $FF00) <> 0 then
-                  Error(162);
+                  if not skipping then
+                     Error(162);
                EscapeCh := val & $FF;
                skipChar := false;
                end;
@@ -4290,7 +4292,8 @@ var
                      end; {else}
                   val := (val << 4) | dig;
                   if (val & $FF00) <> 0 then begin
-                     Error(162);
+                     if not skipping then
+                        Error(162);
                      val := 0;
                      end; {if}
                   NextCh;
@@ -4306,14 +4309,16 @@ var
                   EscapeCh := chFromUCN
                else begin
                   EscapeCh := 0;
-                  Error(146);
+                  if not skipping then
+                     Error(146);
                   end; {else}
                end;
             '''','"','?','\': EscapeCh := ord(ch);
             otherwise: Error(57);
             end {case}
       else begin
-         Error(162);
+         if not skipping then
+            Error(162);
          EscapeCh := ord(ch);
          end; {else}
       end {if}
