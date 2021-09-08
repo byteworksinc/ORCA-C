@@ -1967,6 +1967,11 @@ var
       end; {while}
    if token.kind <> rparench then
       Error(12);
+   while typesSeen <> nil do begin      {dispose of the list of types seen}
+      tl := typesSeen^.next;
+      dispose(typesSeen);
+      typesSeen := tl;
+      end; {while}
 
    if not foundMatch then               {use default if no match found}
       if foundDefault then
