@@ -1219,6 +1219,8 @@ int foo(int[42]);
 
 (Devin Reade)
 
+164. The fields of const-qualified structs and unions were not treated as being const-qualified.  Neither were the members of arrays declared like "const T a", where T is a typedef'd array type.  Now such fields and array members are treated as const-qualified, so assignments to them will give errors.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

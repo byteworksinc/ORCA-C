@@ -3257,51 +3257,13 @@ while token.kind in allowedTokens do begin
 3:
 isForwardDeclared := myIsForwardDeclared;
 skipDeclarator := mySkipDeclarator;
-typeSpec := myTypeSpec;
 declarationModifiers := myDeclarationModifiers;
-if typeSpec = nil then begin
-   typeSpec := intPtr;                  {under C89, default type is int}
+if myTypeSpec = nil then begin
+   myTypeSpec := intPtr;                {under C89, default type is int}
    if (lint & lintC99Syntax) <> 0 then
       Error(151);
    end; {if}
-if typeQualifiers <> [] then begin      {handle a qualified type}
-   new(tPtr);
-   if typeSpec^.kind in [structType,unionType] then begin
-      with tPtr^ do begin
-         size := typeSpec^.size;
-         kind := definedType;
-         dType := typeSpec;
-         saveDisp := 0;
-         qualifiers := typeQualifiers;
-         end; {with}
-      end {if}
-   else begin
-      tPtr^ := typeSpec^;
-      tPtr^.qualifiers := tPtr^.qualifiers + typeQualifiers;
-      end; {else}
-   typeSpec := tPtr;
-                                        {move array type quals to element type}
-   myTypeSpec := typeSpec;
-   while myTypeSpec^.kind = arrayType do begin
-      new(tPtr);
-      if myTypeSpec^.aType^.kind in [structType,unionType] then begin
-         with tPtr^ do begin
-            size := myTypeSpec^.aType^.size;
-            kind := definedType;
-            dType := myTypeSpec^.aType;
-            saveDisp := 0;
-            qualifiers := typeQualifiers;
-            end; {with}
-         end {if}
-      else begin
-         tPtr^ := myTypeSpec^.aType^;
-         tPtr^.qualifiers := tPtr^.qualifiers + typeQualifiers;
-         end; {else}
-      myTypeSpec^.aType := tPtr;
-      myTypeSpec^.qualifiers := [];     {remove for C23}
-      myTypeSpec := tPtr;
-      end; {if}
-   end; {if}
+typeSpec := MakeQualifiedType(myTypeSpec, typeQualifiers); {apply type qualifiers}
 end; {DeclarationSpecifiers}
 
 

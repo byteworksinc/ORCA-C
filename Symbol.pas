@@ -158,6 +158,18 @@ function LabelToDisp (lab: integer): integer; extern;
 {       lab - label number                                      }
 
 
+function MakeQualifiedType (origType: typePtr; qualifiers: typeQualifierSet):
+   typePtr;
+
+{ make a qualified version of a type                            }
+{                                                               }
+{ parameters:                                                   }
+{       origType - the original type                            }
+{       qualifiers - the type qualifier(s) to add               }
+{                                                               }
+{ returns: pointer to the qualified type                        }
+
+
 function NewSymbol (name: stringPtr; itype: typePtr; class: tokenEnum;
                    space: spaceType; state: stateKind): identPtr;
 
@@ -1573,6 +1585,60 @@ new(constCharPtr);                      {const char}
 constCharPtr^ := charPtr^;
 constCharPtr^.qualifiers := [tqConst];
 end; {InitSymbol}
+
+
+function MakeQualifiedType {origType: typePtr; qualifiers: typeQualifierSet):
+   typePtr};
+
+{ make a qualified version of a type                            }
+{                                                               }
+{ parameters:                                                   }
+{       origType - the original type                            }
+{       qualifiers - the type qualifier(s) to add               }
+{                                                               }
+{ returns: pointer to the qualified type                        }
+
+var
+   tp: typePtr;                         {the qualified type}
+   elemType: typePtr;                   {array element type}
+
+begin {MakeQualifiedType}
+if qualifiers <> [] then begin          {make qualified version of type}
+   tp := pointer(Malloc(sizeof(typeRecord)));
+   if origType^.kind in [structType,unionType] then begin
+      tp^.size := origType^.size;
+      tp^.kind := definedType;
+      tp^.dType := origType;
+      tp^.saveDisp := 0;
+      tp^.qualifiers := qualifiers;
+      end {if}
+   else begin
+      tp^ := origType^;
+      tp^.qualifiers := tp^.qualifiers + qualifiers;
+      end; {else}
+   MakeQualifiedType := tp;
+                                        {move array type quals to element type}
+   while tp^.kind = arrayType do begin
+      elemType := pointer(Malloc(sizeof(typeRecord)));
+      if tp^.aType^.kind in [structType,unionType] then begin
+         elemType^.size := tp^.aType^.size;
+         elemType^.kind := definedType;
+         elemType^.dType := tp^.aType;
+         elemType^.saveDisp := 0;
+         elemType^.qualifiers := qualifiers;
+         end {if}
+      else begin
+         elemType^ := tp^.aType^;
+         elemType^.qualifiers := elemType^.qualifiers + qualifiers;
+         end; {else}
+      tp^.aType := elemType;
+      tp^.qualifiers := [];             {remove for C23}
+      tp := elemType;
+      end; {if}
+   end {if}
+else
+   MakeQualifiedType := origType;
+end; {MakeQualifiedType}
 
 
 function NewSymbol {name: stringPtr; itype: typePtr; class: tokenEnum;

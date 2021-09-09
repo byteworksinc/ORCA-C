@@ -578,7 +578,8 @@ kind2 := t2^.kind;
 if tqConst in t1^.qualifiers then
    if genCode then
       if checkConst then
-         Error(93);
+         if kind2 <> definedType then
+            Error(93);
 if kind2 = definedType then
    AssignmentConversion(t1, t2^.dType, false, 0, genCode, checkConst)
 else if kind1 = definedType then
@@ -2527,13 +2528,17 @@ label 1;
 
 var
    ip: identPtr;                        {for scanning for the field}
+   qualifiers: typeQualifierSet;        {type qualifiers}
 
 begin {DoSelection}
 expressionType := intPtr;               {set defaults in case there is an error}
 size := 0;
 if tree^.token.class = identifier then begin
-   while lType^.kind = definedType do
+   qualifiers := lType^.qualifiers;
+   while lType^.kind = definedType do begin
       lType := lType^.dType;
+      qualifiers := qualifiers + lType^.qualifiers;
+      end; {while}
    if lType^.kind in [structType,unionType] then begin
       ip := lType^.fieldList;           {find a matching field}
       while ip <> nil do begin
@@ -2541,7 +2546,7 @@ if tree^.token.class = identifier then begin
             if ip^.isForwardDeclared then 
                ResolveForwardReference(ip);
             size := ip^.disp;           {match found - record parameters}
-            expressionType := ip^.itype;
+            expressionType := MakeQualifiedType(ip^.itype, qualifiers);
             bitDisp := ip^.bitDisp;
             bitSize := ip^.bitSize;
             isBitField := (bitSize+bitDisp) <> 0;
