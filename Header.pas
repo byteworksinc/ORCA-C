@@ -877,7 +877,7 @@ procedure EndInclude {chPtr: ptr};
                         | (ord(allowTokensAfterEndif) << 2)
                         | (ord(allowSlashSlashComments) << 3)
                         | (ord(allowMixedDeclarations) << 4)
-                        | (ord(looseCharTypeChecks) << 5));
+                        | (ord(looseTypeChecks) << 5));
 
                   p_segment: begin
                      for i := 1 to 10 do begin
@@ -1537,7 +1537,7 @@ var
             allowSlashSlashComments := odd(i >> 3);
             allowMixedDeclarations := odd(i >> 4);
             c99Scope := allowMixedDeclarations;
-            looseCharTypeChecks := odd(i >> 5);
+            looseTypeChecks := odd(i >> 5);
             end;
          
          p_segment: begin

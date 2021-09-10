@@ -633,12 +633,18 @@ else if kind2 in
       pointerType: begin
          if kind2 = pointerType then begin
             if not CompTypes(t1, t2) then
-               Error(47);
+               Error(47)
+            else if not looseTypeChecks then
+               if not (t1^.ptype^.qualifiers >= t2^.ptype^.qualifiers) then
+                  Error(163);
             end {if}
          else if kind2 = arrayType then begin
-            if not CompTypes(t1^.ptype, t2^.atype) then
-               if t1^.ptype^.baseType <> cgVoid then
-                  Error(47);
+            if not CompTypes(t1^.ptype, t2^.atype) and
+               (t1^.ptype^.baseType <> cgVoid) then
+               Error(47)
+            else if not looseTypeChecks then
+               if not (t1^.ptype^.qualifiers >= t2^.atype^.qualifiers) then
+                  Error(163);
             end {if}
          else if kind2 = scalarType then begin
             if isConstant and (value = 0) then begin

@@ -178,7 +178,7 @@ See "// Comments," below, for a complete description of // comments.
 
 Bit 4 controls whether C99-style scope rules are followed and whether mixed statements and declarations are allowed in blocks.  See "New Language Features," below.
 
-Bit 5 controls whether the types "char" and "unsigned char" are treated as compatible with each other.  See "Additions to #pragma ignore," below.
+Bit 5 controls whether type compatibility checks should strictly follow the C standards, or whether looser rules should be used in certain cases.  See "Additions to #pragma ignore," below.
 
 p. 259
 
@@ -475,12 +475,16 @@ Bit 2 (a value of 4) controls whether spurious tokens are allowed after an #endi
 
 Bit 4 (a value of 16) controls whether ORCA/C follows C99-style rules for declaration placement and block scopes.  See "New Language Features," above.
 
-Bit 5 (a value of 32) controls whether the types "char" and "unsigned char" are treated as compatible with each other.  These types have the same representation in ORCA/C, but the C standards specify that they are nonetheless two distinct types and are not mutually compatible.  Therefore, any standard-conforming C compiler should produce a diagnostic message if these two types or types derived from them are used in a situation where the types are required to be compatible, as in the following example:
+Bit 5 (a value of 32) controls whether type compatibility checks should strictly follow the C standards, or whether looser rules should be used in certain cases.  If this bit is set, the looser rules will be followed, matching ORCA/C's historical behavior.  Bit 5 is currently set by default, but new code should avoid relying on this.  There are two specific situations where bit 5 currently has an effect:
+
+First, setting bit 5 causes pointer assignments that discard type qualifiers to be allowed.  For example, this affects an assignment from an expression of type "const int *" to a variable of type "int *", because it discards the "const" qualifier from the type pointed to.  These assignments are prohibited by the C standards, but ORCA/C historically allowed them.  If bit 5 is set it will still allow them, but if bit 5 is clear it will give an error.
+
+Second, setting bit 5 causes the types "char" and "unsigned char" to be treated as compatible with each other for most purposes.  These types have the same representation in ORCA/C, but the C standards specify that they are nonetheless two distinct types and are not mutually compatible.  Therefore, any standard-conforming C compiler should produce a diagnostic message if these two types or types derived from them are used in a situation where the types are required to be compatible, as in the following example:
 
    unsigned char uc;
    char *p = &uc; /* &uc has type unsigned char *, incompatible with char *. */
 
-If bit 5 is set, it causes the "char" and "unsigned char" types to be treated as compatible for most purposes, matching ORCA/C's historical behavior and permitting code like the above example.  If this bit is clear, the types will be treated as incompatible, as required by the C standards.  This will make ORCA/C give a "type conflict" error for code like the example above.  Currently, this bit is set by default, giving the more permissive behavior, but new code should avoid relying on this.
+ORCA/C historically permitted code like the above, and when bit 5 is set it will still do so.  If bit 5 is clear, it will give a "type conflict" error.
 
 (Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
 

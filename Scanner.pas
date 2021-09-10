@@ -89,7 +89,7 @@ var
                                         {Note: The following two are set together}
    allowMixedDeclarations: boolean;     {allow mixed declarations & stmts (C99)?}
    c99Scope: boolean;                   {follow C99 rules for block scopes?}
-   looseCharTypeChecks: boolean;        {treat char and unsigned char as compatible?}
+   looseTypeChecks: boolean;            {loosen some standard type checks?}
 
 {---------------------------------------------------------------}
 
@@ -719,6 +719,7 @@ if list or (numErr <> 0) then begin
         160: msg := @'no matching association in _Generic expression';
         161: msg := @'illegal operator in a constant expression';
         162: msg := @'invalid escape sequence';
+        163: msg := @'pointer assignment discards qualifier(s)';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3077,7 +3078,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     4 - allow tokens after #endif                   }
                      {     8 - allow // comments                           }
                      {    16 - allow mixed decls & use C99 scope rules     }
-                     {    32 - treat char and unsigned char as compatible  }
+                     {    32 - loosen some standard type checks            }
                      FlagPragmas(p_ignore);
                      NumericDirective;
                      if expressionType^.kind = scalarType then
@@ -3089,7 +3090,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      allowTokensAfterEndif := odd(val >> 2);
                      allowSlashSlashComments := odd(val >> 3);
                      allowMixedDeclarations := odd(val >> 4);
-                     looseCharTypeChecks := odd(val >> 5);
+                     looseTypeChecks := odd(val >> 5);
                      if allowMixedDeclarations <> c99Scope then begin
                         if doingFunction then
                            Error(126)
@@ -3875,7 +3876,7 @@ allowTokensAfterEndif := false;         {allow tokens after #endif}
 allowSlashSlashComments := true;		{allow // comments}
 allowMixedDeclarations := true;         {allow mixed declarations & stmts (C99)}
 c99Scope := true;                       {follow C99 rules for block scopes}
-looseCharTypeChecks := true;            {make char and unsigned char compatible}
+looseTypeChecks := true;                {loosen some standard type checks}
 foundFunction := false;                 {no functions found so far}
 fileList := nil;                        {no included files}
 gettingFileName := false;               {not in GetFileName}
