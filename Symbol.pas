@@ -433,8 +433,12 @@ else
             end; {if}
 
       functionType:
-         if kind2 = functionType then
-            CompTypes := CompTypes(t1^.ftype,t2^.ftype)
+         if kind2 = functionType then begin
+            if looseTypeChecks or (t1^.prototyped <> t2^.prototyped) then
+               CompTypes := CompTypes(t1^.ftype,t2^.ftype)
+            else
+               CompTypes := StrictCompTypes(t1, t2);
+            end {if}
          else if kind2 = pointerType then
             if t2^.ptype^.kind = functionType then
                CompTypes := CompTypes(t1, t2^.ptype);
