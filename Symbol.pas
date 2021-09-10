@@ -170,6 +170,16 @@ function MakeQualifiedType (origType: typePtr; qualifiers: typeQualifierSet):
 { returns: pointer to the qualified type                        }
 
 
+function Unqualify (tp: typePtr): typePtr;
+
+{ returns the unqualified version of a type                     }
+{                                                               }
+{ parameters:                                                   }
+{       tp - the original type                                  }
+{                                                               }
+{ returns: pointer to the unqualified type                      }
+
+
 function NewSymbol (name: stringPtr; itype: typePtr; class: tokenEnum;
                    space: spaceType; state: stateKind): identPtr;
 
@@ -1643,6 +1653,32 @@ if qualifiers <> [] then begin          {make qualified version of type}
 else
    MakeQualifiedType := origType;
 end; {MakeQualifiedType}
+
+
+function Unqualify {tp: typePtr): typePtr};
+
+{ returns the unqualified version of a type                     }
+{                                                               }
+{ parameters:                                                   }
+{       tp - the original type                                  }
+{                                                               }
+{ returns: pointer to the unqualified type                      }
+
+var
+   tp2: typePtr;                        {unqualified type}
+
+begin {Unqualify}
+while tp^.kind = definedType do
+   tp := tp^.dType;
+Unqualify := tp;
+if tp^.qualifiers <> [] then
+   if not (tp^.kind in [structType,unionType]) then begin
+      tp2 := pointer(Malloc(sizeof(typeRecord)));
+      tp2^ := tp^;
+      tp2^.qualifiers := [];
+      Unqualify := tp2;
+      end;
+end; {Unqualify}
 
 
 function NewSymbol {name: stringPtr; itype: typePtr; class: tokenEnum;

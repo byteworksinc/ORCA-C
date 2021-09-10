@@ -1620,7 +1620,7 @@ while typeStack <> nil do begin         {reverse the type stack}
       functionType: begin
          while tPtr^.kind = definedType do
             tPtr := tPtr^.dType;
-         tPtr2^.fType := tPtr;
+         tPtr2^.fType := Unqualify(tPtr);
          if tPtr^.kind in [functionType,arrayType] then
             Error(103);
          end;
@@ -3967,7 +3967,7 @@ var
             {tp^.isPascal := false;}
             {tp^.toolNum := 0;}
             {tp^.dispatcher := 0;}
-            tp^.fType := tl;
+            tp^.fType := Unqualify(tl);
             tl := tp;
             NextToken;
             end {if}
@@ -4055,7 +4055,7 @@ var
          {tp^.isPascal := false;}
          {tp^.toolNum := 0;}
          {tp^.dispatcher := 0;}
-         tp^.fType := tl;
+         tp^.fType := Unqualify(tl);
          tl := tp;
          end; {if}
       end; {NonEmptyAbstractDeclarator}
