@@ -305,6 +305,7 @@ type
         structType,
         unionType   : (fieldList: identPtr;	{field list}
 		       sName: stringPtr;	{struct name; for forward refs}
+		       constMember: boolean;    {does it have a const member?}
                       );
      end;
 

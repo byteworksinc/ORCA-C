@@ -575,11 +575,14 @@ var
 begin {AssignmentConversion}
 kind1 := t1^.kind;
 kind2 := t2^.kind;
-if tqConst in t1^.qualifiers then
-   if genCode then
-      if checkConst then
-         if kind2 <> definedType then
-            Error(93);
+if genCode then
+   if checkConst then
+      if kind2 <> definedType then
+         if tqConst in t1^.qualifiers then
+            Error(93)
+         else if kind1 in [structType,unionType] then
+            if t1^.constMember then
+               Error(93);
 if kind2 = definedType then
    AssignmentConversion(t1, t2^.dType, false, 0, genCode, checkConst)
 else if kind1 = definedType then

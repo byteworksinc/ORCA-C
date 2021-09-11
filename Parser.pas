@@ -2819,6 +2819,25 @@ var
                end {if}
             else
                Error(116);
+
+            if variable <> nil then     {check for a const member}
+               tPtr := variable^.itype
+            else
+               tPtr := typeSpec;
+            while tPtr^.kind in [definedType,arrayType] do begin
+               if tqConst in tPtr^.qualifiers then
+                  tp^.constMember := true;
+               if tPtr^.kind = definedType then
+                  tPtr := tPtr^.dType
+               else {if tPtr^.kind = arrayType then}
+                  tPtr := tPtr^.aType;
+               end; {while}
+            if tqConst in tPtr^.qualifiers then
+               tp^.constMember := true
+            else if tPtr^.kind in [structType,unionType] then
+               if tPtr^.constMember then
+                  tp^.constMember := true;
+
             if token.kind = commach then {allow repeated declarations}
                begin
                NextToken;
@@ -3165,6 +3184,7 @@ while token.kind in allowedTokens do begin
                   structTypePtr^.kind := tkind;
                  {structTypePtr^.fieldList := nil;}
                  {structTypePtr^.sName := nil;}
+                 {structTypePtr^.constMember := false;}
                   structPtr := NewSymbol(ttoken.name, structTypePtr, ident,
                      tagSpace, defined);
                   structTypePtr^.sName := structPtr^.name;
@@ -3197,6 +3217,7 @@ while token.kind in allowedTokens do begin
                structTypePtr^.kind := tkind;
               {structTypePtr^.fieldList := nil;}
               {structTypePtr^.sName := nil;}
+              {structTypePtr^.constMember := false;}
                end; {if}
             if structPtr <> nil then
                structPtr^.itype := structTypePtr;
