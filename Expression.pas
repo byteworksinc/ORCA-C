@@ -3337,28 +3337,59 @@ var
    end; {FunctionCall}      
 
 
-   procedure CompareCompatible (var t1,t2: typePtr);
+   procedure CompareCompatible (var t1,t2: typePtr; equality: boolean);
 
    { Make sure that it is legal to compare t1 to t2             }
+   {                                                            }
+   { parameters:                                                }
+   {    t1,t2 - the types to compare                            }
+   {    equality - is this for an (in)equality comparison?      }
 
    begin {CompareCompatible}
    if (t1^.kind = functionType) or (t2^.kind = functionType) then begin
       if not CompTypes(t1, t2) then
+         Error(47)
+      else if not looseTypeChecks and not equality then
          Error(47);
       end {if}
    else if t1^.kind in [pointerType,arrayType] then begin
       if t2^.kind in [pointerType,arrayType] then begin
-         if (t1^.ptype = voidPtr) or (t2^.ptype = voidPtr) then
-         else if not CompTypes(t1^.ptype, t2^.ptype) then
+         if CompTypes(t1^.ptype, t2^.ptype) then begin
+            if not looseTypeChecks and not equality then
+               if t1^.ptype^.kind = functionType then
+                  Error(47);
+            end {if}
+         else if (t1^.ptype^.kind=scalarType) and (t1^.ptype^.basetype=cgVoid)
+         then begin
+            if not looseTypeChecks then begin
+               if not equality then
+                  Error(47)
+               else if (not tlastwasconst) or (tlastconst <> 0) then
+                  if t2^.ptype^.kind = functionType then
+                     Error(47);
+               end {if}
+            end {else if}
+         else if (t2^.ptype^.kind=scalarType) and (t2^.ptype^.basetype=cgVoid)
+         then begin
+            if not looseTypeChecks then begin
+               if not equality then
+                  Error(47)
+               else if (not lastwasconst) or (lastconst <> 0) then
+                  if t1^.ptype^.kind = functionType then
+                     Error(47);
+               end {if}
+            end {else if}
+         else
             Error(47);
          t2 := ulongPtr;
          end {if}
-      else if (not lastwasconst) or (lastconst <> 0) then
+      else if (not lastwasconst) or (lastconst <> 0) 
+         or (not equality and not looseTypeChecks) then
          Error(47);
       t1 := ulongPtr;
       end {if}
    else if expressionType^.kind in [pointerType,arrayType] then begin
-      if (not tlastwasconst) or (tlastconst <> 0) then
+      if (not equality) or (not tlastwasconst) or (tlastconst <> 0) then
          Error(47);
       t2 := ulongPtr;
       end; {else if}
@@ -4269,7 +4300,7 @@ case tree^.token.kind of
       tlastwasconst := lastwasconst;
       tlastconst := lastconst;
       GenerateCode(tree^.right);
-      CompareCompatible(ltype, expressionType);
+      CompareCompatible(ltype, expressionType, true);
       if tree^.token.kind = eqeqop then
          Gen0t(pc_equ, UsualBinaryConversions(lType))
       else
@@ -4284,7 +4315,7 @@ case tree^.token.kind of
       GenerateCode(tree^.left);
       lType := expressionType;
       GenerateCode(tree^.right);
-      CompareCompatible(ltype, expressionType);
+      CompareCompatible(ltype, expressionType, false);
       if tree^.token.kind = lteqop then
          Gen0t(pc_leq, UsualBinaryConversions(lType))
       else if tree^.token.kind = gteqop then
