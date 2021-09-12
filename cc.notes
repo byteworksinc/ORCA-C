@@ -475,7 +475,7 @@ Bit 2 (a value of 4) controls whether spurious tokens are allowed after an #endi
 
 Bit 4 (a value of 16) controls whether ORCA/C follows C99-style rules for declaration placement and block scopes.  See "New Language Features," above.
 
-Bit 5 (a value of 32) controls whether type compatibility checks should strictly follow the C standards, or whether looser rules should be used in certain cases.  If this bit is set, the looser rules will be followed, matching ORCA/C's historical behavior.  Bit 5 is currently set by default, but new code should avoid relying on this.  There are four specific situations where bit 5 currently has an effect:
+Bit 5 (a value of 32) controls whether type compatibility checks should strictly follow the C standards, or whether looser rules should be used in certain cases.  If this bit is set, the looser rules will be followed, matching ORCA/C's historical behavior.  Bit 5 is currently set by default, but new code should not rely on this.  There are four situations where bit 5 currently has an effect:
 
 First, setting bit 5 causes pointer assignments that discard type qualifiers to be allowed.  For example, this affects an assignment from an expression of type "const int *" to a variable of type "int *", because it discards the "const" qualifier from the type pointed to.  These assignments are prohibited by the C standards, but ORCA/C historically allowed them.  If bit 5 is set it will still allow them, but if bit 5 is clear it will give an error.
 
@@ -483,12 +483,9 @@ Second, setting bit 5 causes type compatibility checks involving function pointe
 
 Third, setting bit 5 causes certain comparisons involving pointers to be permitted even though they violate constraints specified in the C standards.  If bit 5 is clear, the rules in the standards will be followed strictly.
 
-Fourth, setting bit 5 causes the types "char" and "unsigned char" to be treated as compatible with each other for most purposes.  These types have the same representation in ORCA/C, but the C standards specify that they are nonetheless two distinct types and are not mutually compatible.  Therefore, any standard-conforming C compiler should produce a diagnostic message if these two types or types derived from them are used in a situation where the types are required to be compatible, as in the following example:
+Fourth, setting bit 5 causes ORCA/C to treat basic types with the same representation as mutually compatible.  This affects the following pairs of types: short and int, unsigned short and unsigned int, char and unsigned char.  Historically, ORCA/C essentially treated each of these pairs as being the same type, so it never reported type conflicts between them.  If bit 5 is set, it will continue to do so.  If bit 5 is clear, it will treat all of the above types as distinct and mutually incompatible, as specified by the C standards.
 
-   unsigned char uc;
-   char *p = &uc; /* &uc has type unsigned char *, incompatible with char *. */
-
-ORCA/C historically permitted code like the above, and when bit 5 is set it will still do so.  If bit 5 is clear, it will give a "type conflict" error.
+Note that _Generic expressions always use the stricter type compatibility rules for determining which association to use, regardless of the setting of bit 5.
 
 (Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
 
@@ -1149,7 +1146,7 @@ int foo(int[42]);
 
 (Bug fixes below here were added in ORCA/C 2.2.0 B5.)
 
-127. ORCA/C internally treated types with the same representation (e.g. short and int) as essentially being the same type, and therefore did not report type conflicts between these types, including in some circumstances where the C standards require a diagnostic message to be produced.  These type conflicts are now reported.  However, char and unsigned char are still treated as compatible by default (controlled by a new bit in #pragma ignore, described above).
+127. ORCA/C historically did not report a type conflict in several circumstances where the C standards say that there is one and require the compiler to report it.  ORCA/C can now detect the type conflicts in several of these cases.  However, to preserve compatibility with existing code, these new checks are currently off by default.  They can be enabled by clearing a new bit (bit 5) in #pragma ignore.  See "Additions to #pragma ignore" above for details.
 
 128. The ++ and -- operators often would not work correctly on bit-fields, or on floating-point values that were in a structure or were accessed via a pointer.
 

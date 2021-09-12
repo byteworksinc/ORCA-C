@@ -422,10 +422,9 @@ else
          if kind2 = scalarType then begin
             CompTypes := t1^.baseType = t2^.baseType;
             if t1^.cType <> t2^.cType then
-                if not (looseTypeChecks
-                   and (t1^.cType in [ctChar, ctUChar]) 
-                   and (t2^.cType in [ctChar, ctUChar])) then
-                   CompTypes := false;
+               if (not looseTypeChecks) 
+                  or (t1^.cType = ctBool) or (t2^.cType = ctBool) then
+                  CompTypes := false;
             end {if}
          else if kind2 = enumType then
             CompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);
