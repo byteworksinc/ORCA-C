@@ -69,6 +69,14 @@ function MakeFuncIdentifier: identPtr;
 { This must only be called within a function body.              }
 
 
+function MakeCompoundLiteral(tp: typePtr): identPtr;
+
+{ Make the identifier for a compound literal.                   }
+{                                                               }
+{ parameters:                                                   }
+{       tp - the type of the compound literal                   }
+
+
 procedure InitParser;
 
 { Initialize the parser                                         }
@@ -176,6 +184,8 @@ var
    statementList: statementPtr;         {list of open statements}
    savedVolatile: boolean;              {saved copy of volatile}
    doingForLoopClause1: boolean;        {doing the first clause of a for loop?}
+   compoundLiteralNumber: integer;      {number of compound literal}
+   compoundLiteralToAllocate: identPtr; {compound literal that needs space allocated}
 
                                         {parameter processing variables}
                                         {------------------------------}
@@ -325,6 +335,11 @@ var
    stPtr: statementPtr;                 {work pointer}
 
 begin {EndCompoundStatement}
+while compoundLiteralToAllocate <> nil do begin  {allocate compound literals}
+   Gen2(dc_loc, compoundLiteralToAllocate^.lln,
+      long(compoundLiteralToAllocate^.itype^.size).lsw);
+   compoundLiteralToAllocate := compoundLiteralToAllocate^.clnext;
+   end {while};
 dumpLocal := false;
 stPtr := statementList;                 {pop the statement record}
 statementList := stPtr^.next;
@@ -4093,7 +4108,7 @@ begin {TypeName}
 DeclarationSpecifiers(specifierQualifierListElement, rparench);
 
 {_Alignas is not allowed in most uses of type names.            }
-{It would be allowed in compound literals, if we supported them.}
+{TODO: _Alignas should be allowed in compound literals.         }
 if _Alignassy in declarationModifiers then
    Error(142);
 
@@ -4534,6 +4549,44 @@ MakeFuncIdentifier := id;
 end; {MakeFuncIdentifier}
 
 
+function MakeCompoundLiteral{tp: typePtr): identPtr};
+
+{ Make the identifier for a compound literal.                   }
+{                                                               }
+{ parameters:                                                   }
+{       tp - the type of the compound literal                   }
+
+type
+   nameString = packed array [0..24] of char;
+
+var
+   id: identPtr;                        {the identifier for the literal}
+   name: ^nameString;                   {the name for the identifier}
+   class: tokenEnum;                    {storage class}
+
+begin {MakeCompoundLiteral}
+if functionTable <> nil then begin
+   Error(164);
+   class := autosy
+   end {if}
+else
+   class := staticsy;
+name := pointer(Malloc(25));
+name^ := concat('~CompoundLiteral', cnvis(compoundLiteralNumber));
+id := NewSymbol(name, tp, class, variableSpace, defined);
+Initializer(id);
+MakeCompoundLiteral := id;
+compoundLiteralNumber := compoundLiteralNumber + 1;
+if compoundLiteralNumber = 0 then
+   Error(57);
+if class = autosy then begin
+   id^.lln := GetLocalLabel;
+   id^.clnext := compoundLiteralToAllocate;
+   compoundLiteralToAllocate := id;
+   end;
+end; {MakeFuncIdentifier}
+
+
 procedure InitParser;
 
 { Initialize the parser                                         }
@@ -4554,6 +4607,8 @@ statementList := nil;                   {no open statements}
 codegenStarted := false;                {code generator is not started}
 doingForLoopClause1 := false;           {not doing a for loop}
 fIsNoreturn := false;                   {not doing a noreturn function}
+compoundLiteralNumber := 1;             {no compound literals yet}
+compoundLiteralToAllocate := nil;       {no compound literals needing space yet}
 
                                         {init syntactic classes of tokens}
                                         {See C17 section 6.7 ff.}

@@ -720,6 +720,7 @@ if list or (numErr <> 0) then begin
         161: msg := @'illegal operator in a constant expression';
         162: msg := @'invalid escape sequence';
         163: msg := @'pointer assignment discards qualifier(s)';
+        164: msg := @'compound literals within functions are not supported by ORCA/C';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

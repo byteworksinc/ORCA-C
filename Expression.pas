@@ -268,6 +268,14 @@ function MakeFuncIdentifier: identPtr; extern;
 {                                                               }
 { This must only be called within a function body.              }
 
+
+function MakeCompoundLiteral(tp: typePtr): identPtr; extern;
+
+{ Make the identifier for a compound literal.                   }
+{                                                               }
+{ parameters:                                                   }
+{       tp - the type of the compound literal                   }
+
 {-- External unsigned math routines ----------------------------}
 
 function lshr (x,y: longint): longint; extern;
@@ -2001,6 +2009,49 @@ var
    end; {DoGeneric}
 
 
+   procedure DoCompoundLiteral;
+
+   { process a compound literal expression                      }
+   
+   label 1;
+   
+   var
+      id: identPtr;
+      sp: tokenPtr;
+   
+   begin {DoCompoundLiteral}
+   if kind in [preprocessorExpression,arrayExpression] then begin
+      op := opStack;
+      while op <> nil do begin
+         if op^.token.kind = sizeofsy then
+            goto 1;
+         op := op^.next;
+         end; {while}
+      Error(41);
+      errorFound := true;
+      end; {if}
+1:
+   id := MakeCompoundLiteral(opStack^.castType);
+   opStack := opStack^.next;
+   
+   {create an operand on the stack}
+   new(sp);
+   sp^.token.kind := ident;
+   sp^.token.class := identifier;
+   sp^.token.symbolPtr := id;
+   sp^.token.name := id^.name;
+   sp^.id := id;
+   sp^.next := stack;
+   sp^.left := nil;
+   sp^.middle := nil;
+   sp^.right := nil;
+   stack := sp;
+   
+   ComplexTerm;
+   expectingTerm := false;
+   end; {DoCompoundLiteral}
+
+
 begin {ExpressionTree}
 opStack := nil;
 stack := nil;
@@ -2146,6 +2197,10 @@ if token.kind in startExpression then begin
             op^.token.class := reservedSymbol;
             parenCount := parenCount+1;
             end;
+         end {else if}
+      else if (token.kind = lbracech)   {handle a compound literal}
+         and (opstack <> nil) and (opStack^.token.kind = castoper) then begin
+         DoCompoundLiteral
          end {else if}
       else if token.kind = _Genericsy then {handle _Generic}
          DoGeneric

@@ -360,10 +360,11 @@ type
      isForwardDeclared: boolean;        {does this var use a forward declared type?}
      class: tokenEnum;                  {storage class}
      case storage: storageType of
-        stackFrame: (lln: integer);     {local label #}
-        parameter: (pln: integer;       {paramater label #}
-                    pdisp: integer;     {disp of parameter}
-                    pnext: identPtr);   {next parameter}
+        stackFrame: (lln: integer;      {local label #}
+                     clnext: identPtr); {next compound literal}
+        parameter:  (pln: integer;      {paramater label #}
+                     pdisp: integer;    {disp of parameter}
+                     pnext: identPtr);  {next parameter}
         external: ();
         global,private: ();
         none: ();
