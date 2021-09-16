@@ -112,16 +112,16 @@ lb2      inc   disp                     next character
 *
 ****************************************************************
 *
-KeyPress start
+KeyPress start scanner
 
          KeyPressGS kpRec
-         lda   kpAvailable
+         lda   >kpAvailable
          beq   rts
          ReadKeyGS rkRec
-         lda   rkKey
+         lda   >rkKey
          cmp   #'.'
          bne   lb1
-         lda   rkModifiers
+         lda   >rkModifiers
          and   #$0100
          beq   lb1
          ph2   #4
@@ -639,7 +639,7 @@ db5      rts
 *
 ****************************************************************
 *
-SetDateTime private
+SetDateTime private scanner
 
          pha                            get the date/time
          pha
@@ -649,13 +649,13 @@ SetDateTime private
          lda   1,S                      set the minutes
          xba
          jsr   convert
-         sta   time+5
+         sta   >time+5
          pla                            set the seconds
          jsr   convert
-         sta   time+8
+         sta   >time+8
          lda   1,S                      set the hour
          jsr   convert
-         sta   time+2
+         sta   >time+2
          pla                            set the year
          xba
          and   #$00FF
@@ -668,10 +668,10 @@ yearloop sec
 yeardone clc
          adc   #100
          jsr   convert
-         sta   date+11
+         sta   >date+11
          tya
          jsr   convert
-         sta   date+9
+         sta   >date+9
          lda   1,S                      set the day
          inc   A
          jsr   convert
@@ -680,17 +680,17 @@ yeardone clc
          bne   dateOK
          lda   #' '
 dateOK   long  M
-         sta   date+6
+         sta   >date+6
          pla                            set the month
          xba
          and   #$00FF
          asl   A
          asl   A
          tax
-         lda   month,X
-         sta   date+2
-         lda   month+1,X
-         sta   date+3
+         lda   >month,X
+         sta   >date+2
+         lda   >month+1,X
+         sta   >date+3
          pla
          lla   timeStr,time             set the addresses
          lla   dateStr,date
