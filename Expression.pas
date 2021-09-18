@@ -2911,7 +2911,8 @@ var
          end; {if}
       end {else if}
 
-   else if ExpressionKind(tree) in [arrayType,pointerType] then
+   else if ExpressionKind(tree) in [arrayType,pointerType,structType,unionType]
+      then
       GenerateCode(tree)
    else begin
       expressionType := intPtr;         {set default type in case of error}
@@ -4461,8 +4462,11 @@ case tree^.token.kind of
    opminusminus:                        {postfix --}
       DoIncDec(tree^.left, pc_lld, pc_gld, pc_ild);
 
-   uand:                                {unary & (address operator)}
+   uand: begin                          {unary & (address operator)}
+      if not (tree^.left^.token.kind in [ident,uasterisk]) then
+         L_Value(tree^.left);
       LoadAddress(tree^.left);
+      end; {case uand}
 
    uasterisk: begin                     {unary * (indirection)}
       GenerateCode(tree^.left);
@@ -4493,7 +4497,7 @@ case tree^.token.kind of
    dotch: begin                         {.}
       LoadAddress(tree^.left);
       lType := expressionType;
-      if lType^.kind in [arrayType,pointerType] then begin
+      if lType^.kind in [arrayType,pointerType,structType,unionType] then begin
          if lType^.kind = arrayType then
             lType := lType^.aType
          else if lType^.kind = pointerType then
