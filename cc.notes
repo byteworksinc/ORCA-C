@@ -1,10 +1,10 @@
-ORCA/C 2.2.0 B5
+ORCA/C 2.2.0 B6
 Copyright 1997, Byte Works Inc.
 Updated by Stephen Heumann and Kelvin Sherlock, 2017-2021
 
 -- Change List --------------------------------------------------------------
 
-2.2.0 B5    1.	Bugs squashed.  See bug notes, below.
+2.2.0 B6    1.	Bugs squashed.  See bug notes, below.
 
             2.	New language features added (mainly features from C99 and C11).
               	See "New Language Features," below.
@@ -1225,6 +1225,10 @@ int foo(int[42]);
 (Devin Reade)
 
 164. The fields of const-qualified structs and unions were not treated as being const-qualified.  Neither were the members of arrays declared like "const T a", where T is a typedef'd array type.  Now such fields and array members are treated as const-qualified, so assignments to them will give errors.
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B6.)
+
+165. When assigning to multiple structures or unions using successive = operators (e.g. s1=s2=s3), assignments other than the rightmost one might store incorrect values, depending on the size of the structures or unions.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

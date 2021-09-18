@@ -6304,7 +6304,7 @@ procedure GenTree {op: icptr};
    {								}
    { parameters:						}
    {    op - pc_mov instruction					}
-   {    duplicate - should the source address be left on the	}
+   {    duplicate - should the dest address be left on the	}
    {       stack?						}
 
    var
