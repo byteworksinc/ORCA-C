@@ -235,10 +235,6 @@ The ORCA/C compiler is intended as a faithful implementation of ANSI C with some
 
    strcoll() and strxfrm() are missing.  These are related to locale.h.
 
-   time.h
-
-   The function strftime() is missing.
-
 p. 342
 
 Several new standard library functions from C99 and C11 are now provided.  See "Library Updates," below.
@@ -570,7 +566,7 @@ ORCA/C now includes several new headers specified by recent C standards.
 Library Updates
 ---------------
 
-ORCA/C now includes some new library functions and features specified by the C99 and C11 standards:
+ORCA/C now includes some new library functions and features, mostly specified by the C99 and C11 standards:
 
 1.  (C99) The isblank() function and macro have been added:
 
@@ -689,6 +685,64 @@ int signbit(real-floating x);
 These macros accept an argument of any real floating type, i.e. float, double, or long double.  They behave as if the argument is converted strictly to its semantic type before classifying it, removing any extra range and precision.
 
 fpclassify() returns one of the macro values FP_INFINITE, FP_NAN, FP_NORMAL, FP_SUBNORMAL, or FP_ZERO, indicating the classification of its argument.  isfinite() returns a non-zero value if its argument is normal, subnormal, or zero (not infinite or NAN).  isinf(), isnan(), and isnormal() return a non-zero value if their arguments are infinite, NAN, or normal, respectively.  signbit() returns zero if the argument has a positive sign, and non-zero if it has a negative sign (this applies to all floating-point values, even zeros and NANs).
+
+11. (C89 and C99) The strftime function has been added:
+
+#include <time.h>
+size_t strftime(char *restrict s, size_t maxsize, const char *restrict format,
+   const struct tm *restrict timeptr);
+
+The strftime function produces a string representing the date/time specified by timeptr in a format specified by the format string format.  It writes the output to s, writing at most maxsize characters (including a terminating null).  
+
+The format string can contain conversion specifiers starting with %, as well as other characters.  Conversion specifiers cause strftime() to write portions of the date/time in certain formats, as specified below.  Other characters are copied to the output unchanged.  If the field(s) of *timeptr relevant to a conversion specifier are outside of their normal ranges, the characters written are unspecified.  If a conversion specifier other than those specified below is used, the behavior is undefined.
+
+Portions of strftime()'s output could differ depending on the locale, but ORCA/C always follows the behavior for the C locale as specified below.
+
+The conversion specifiers are:
+
+%a - abbreviated weekday name (e.g. "Mon", in the C locale)
+%A - full weekday name (e.g. "Monday", in the C locale)
+%b - abbreviated month name (e.g. "Jan", in the C locale)
+%B - full month name (e.g. "January", in the C locale)
+%c - date and time (equivalent to "%a %b %e %T %Y" in the C locale)
+%C - year divided by 100 and truncated to an integer (e.g. "19")
+%d - day of the month (01-31)
+%D - equivalent to "%m/%d/%y"
+%e - day of the month (1-31, with a single digit preceded by a space)
+%F - equivalent to "%Y-%m-%d"
+%g - last two digits of ISO 8601 week-based year (00-99)
+%G - ISO 8601 week-based year (e.g. 1986)
+%h - equivalent to "%b"
+%H - hour of 24-hour clock (00-23)
+%I - hour of 12-hour clock (01-12)
+%j - day of the year (001-366)
+%m - month (as a number, 01-12)
+%M - minute (00-59)
+%n - replaced by a new-line character
+%p - AM/PM designation ("AM" or "PM", in the C locale)
+%r - 12-hour clock time (equivalent to "%I:%M:%S %p" in the C locale)
+%R - equivalent to "%H:%M"
+%S - second (00-60)
+%t - replaced by a horizontal-tab character
+%T - equivalent to "%H:%M:%S"
+%u - weekday number (1-7), where Monday is 1
+%U - week number of the year (00-53), where the first Sunday starts week 01
+%V - ISO 8601 week number (01-53)
+%w - weekday number (0-6), where Sunday is 0
+%W - week number of the year (00-53), where the first Monday starts week 01
+%x - date (equivalent to "%m/%d/%y" in the C locale)
+%X - time (equivalent to "%T" in the C locale)
+%y - last two digits of the year (00-99)
+%Y - year (e.g. 1986)
+%z - time zone offset from UTC, if available (writes nothing in ORCA/C)
+%Z - time zone name or abbreviation, if available (writes nothing in ORCA/C)
+%% - replaced by %
+
+Some conversion specifiers can also include an "E" or "O" modifier (e.g. "%Ec").  These might cause an alternate format to be used in certain locales, but in the C locale these modifiers are ignored.
+
+The %g, %G, and %V specifiers are based on the ISO 8601 week-based year, in which weeks begin on a Monday and week 01 of a year is the week that includes January 4.  According to this system, the first few days of some years are considered to be in week 52 or 53 of the previous year, and the last few days of some years are considered to be in week 01 of the next year.
+
+If strftime() is able to write the full formatted date/time string to s, it returns the total number of characters written, not including the terminating null.  If it is not able to do so because the full size exceeds maxsize, then it returns 0 and the contents of s are unspecified.
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
