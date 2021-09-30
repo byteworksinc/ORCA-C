@@ -66,6 +66,7 @@ long long       llabs(long long);
 lldiv_t         lldiv(long long, long long);
 #endif
 void           *malloc(size_t);
+int             mblen(const char *, size_t);
 void            qsort(void *, size_t, size_t, int (*__compar)(const void *, const void *));
 void            quick_exit(int);
 int             rand(void);
