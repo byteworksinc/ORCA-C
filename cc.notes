@@ -220,20 +220,11 @@ In the binary conversions, if either operand has a floating-point type, the sema
 
 p. 337
 
-The ORCA/C compiler is intended as a faithful implementation of ANSI C with some extensions, but there have always been some library functions from ANSI C that were missing in ORCA/C.  Chapter 19 should start with a summary of these omissions.  They are:
+The ORCA/C compiler is intended as a faithful implementation of ANSI C with some extensions, but there have always been some library functions from ANSI C that were missing in ORCA/C.  Chapter 19 should start with a summary of these omissions.
 
-   locale.h
+The missing functions from the original ANSI C standard are mbstowcs(), mbtowc(), wcstombs() and wctomb().  These <stdlib.h> functions relate to wide characters or strings, which ORCA/C does not currently support.
 
-   This header file is missing completely, along with all of its functions.
-
-   stdlib.h
-
-   The functions mblen(), mbstowcs(), mbtowc(), wcstombs() and wctomb() are
-   missing.  These are related to locale.h.
-                 
-   string.h
-
-   strcoll() and strxfrm() are missing.  These are related to locale.h.
+Various other functions added in later C standards are also not supported yet.
 
 p. 342
 
@@ -543,6 +534,26 @@ ORCA/C can now detect several elements of C syntax that were allowed in C89 but 
 If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects some situations where a function with a non-void return type may return an unpredictable value, either by executing a return statement with no value or by executing to the end of the function with no return statement.  (The former case is also detected by #pragma lint bit 6.)  It also detects some situations where a _Noreturn function could return.  Note that these checks only detect some cases of these problems, not all of them.  Also, they may report a potential problem in some situations where the code at the end of a function is not actually reachable.
 
 
+Locales
+-------
+
+Standard C defines the concept of locales, which can be used to localize certain aspects of the system's behavior to suit the conventions of different languages and cultures.  The <locale.h> header and its functions provide the main implementation of locales, but various other functions in the standard library may behave in a way that varies by locale.  The C standards define the C locale, which specifies a minimal environment for the execution of a C program and is the locale used if no other locale is explicitly selected.  Which (if any) other locales are supported is implementation-defined.
+
+Historically, ORCA/C did not support <locale.h> or certain other locale-related functions.  A minimalistic implementation of these functions has now been added.  However, ORCA/C currently only supports the C locale.  As such, any attempt to change to a different locale will fail, and the behavior of the library does not actually vary based on locale, since only one locale is supported.  This minimalistic locale implementation is not particularly useful, but it is intended to be conformant with the C standards, and it allows portable code that uses locale-related functions to compile and run under ORCA/C.  Future versions of ORCA/C might possibly have more extensive locale support.
+
+See "Library Updates" below for information on the new locale-related functions.
+
+
+Multibyte Characters
+--------------------
+
+Standard C defines a multibyte character as a sequence of one or more bytes representing a character, and certain library functions are specified as handling multibyte characters.  This definition is designed to allow for variable-length character encodings in which certain characters can be encoded with one byte but other extended characters need multiple bytes to encode.  However, ORCA/C does not use such an encoding.  Accordingly, under ORCA/C, "multibyte" characters will always just consist of a single byte.
+
+Standard C also allows for state-dependent encodings, where there can be shift sequences that are considered to change the shift state and thereby alter the interpretation of subsequent characters.  ORCA/C does not use such an encoding.
+
+The macros MB_LEN_MAX (in <limits.h>) and MB_CUR_MAX (in <stdlib.h>) give the maximum possible length for a multibyte character in any locale and in the current locale, respectively.  IN ORCA/C, these are both 1.
+
+
 New Headers
 -----------
 
@@ -562,6 +573,7 @@ ORCA/C now includes several new headers specified by recent C standards.
 
 7.  (C99) The <fenv.h> header provides functions to access the floating-point environment, plus types and macros used by those functions and the macro FE_DFL_ENV representing the default floating-point environment.
 
+8.  (C89 and C99) The <locale.h> header provides functions and definitions related to locale support.
 
 Library Updates
 ---------------
@@ -743,6 +755,43 @@ Some conversion specifiers can also include an "E" or "O" modifier (e.g. "%Ec").
 The %g, %G, and %V specifiers are based on the ISO 8601 week-based year, in which weeks begin on a Monday and week 01 of a year is the week that includes January 4.  According to this system, the first few days of some years are considered to be in week 52 or 53 of the previous year, and the last few days of some years are considered to be in week 01 of the next year.
 
 If strftime() is able to write the full formatted date/time string to s, it returns the total number of characters written, not including the terminating null.  If it is not able to do so because the full size exceeds maxsize, then it returns 0 and the contents of s are unspecified.
+
+12. (C89) The setlocale function has been added:
+
+#include <locale.h>
+char *setlocale(int category, const char *locale);
+
+This function can be used to set or query the locale.  Category should be one of the LC_* macros in <locale.h>.  If it is LC_ALL, the call relates to the whole locale; otherwise, it relates to only the specified portion of the locale.
+
+If locale is a null pointer, the call queries the current setting for (the specified portion of) the locale and returns a string representing it.  Otherwise, it attempts to set (the specified portion of) the locale to the specified value.  If it succeeds, it returns a string representing the new setting for (that portion of) the locale; if it fails, it returns NULL.
+
+The locale string may be "C" (representing the C locale), "" (representing the native environment, as determined by the C implementation or by user settings), or other implementation-defined values.  In the current version of ORCA/C, "" is treated as equivalent to "C" and no other strings are accepted.  Accordingly, the only locale available is the C locale.
+
+13. (C89 and C99) The localeconv function has been added:
+
+#include <locale.h>
+struct lconv *localeconv(void);
+
+This function returns a pointer to a structure containing information on how numeric and monetary quantities should be formatted in the current locale.  See the C standards or other references for information on the meaning of each of its fields.  In ORCA/C, this currently always gives the values appropriate for the C locale, as specified in the C standards.
+
+14. (C89 and C99) The strcoll and strxfrm functions have been added:
+
+#include <string.h>
+int strcoll(const char *s1, const char *s2);
+size_t strxfrm(char * restrict s1, const char * restrict s2, size_t n);
+
+The strcoll function compares two strings based on a locale-specific collation (sorting) order.  If returns a negative number if s1 is less that s2, 0 if the two strings are equal, or a positive number if s1 is greater than s2.  In the C locale as implemented by ORCA/C, it sorts strings in the same order as strcmp.
+
+The strxfrm function transforms the string s2 into s1, such that two output strings from strxfrm will compare the same way with strcmp that the input strings would with strcoll.  It writes at most n bytes to s1.  It returns the length needed for the output string, not including the terminating null.  If that length is less that n, it writes the output string to s1 (including a terminating null).  Otherwise, the contents of s1 are unspecified.
+
+15. (C89) The mblen function has been added:
+
+#include <stdlib.h>
+int mblen(const char *s, size_t n);
+
+If s is not a null pointer, the mblen function determines the length of the multibyte character pointed to by s, examining at most n bytes.  If it is a null character, mblen returns 0.  If it is another valid multibyte character, mblen returns its length in bytes.  If those n or fewer bytes do not form a valid multibyte character, mblen returns -1.  As discussed above, multibyte characters in ORCA/C always have length 1, so mblen never returns a value larger than 1.
+
+If s is a null pointer, mblen returns a nonzero value if multibyte characters have state-dependent encodings, or 0 if they do not.  On ORCA/C, it returns 0.
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
