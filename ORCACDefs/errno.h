@@ -25,6 +25,7 @@
 #define EACCESS                 9       /* alias for EACCES */
 #define EEXIST                  10      /* the file exists */
 #define ENOSPC                  11      /* the file is too large */
+#define EILSEQ                  12      /* encoding error */
 
 extern int errno;
 #define errno errno
