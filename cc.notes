@@ -575,6 +575,8 @@ ORCA/C now includes several new headers specified by recent C standards.
 
 8.  (C89 and C99) The <locale.h> header provides functions and definitions related to locale support.
 
+9.  (C11) The <uchar.h> header defines the types char16_t and char32_t suitable for holding UTF-16 and UTF-32 code units, and provides functions for handling Unicode characters.
+
 Library Updates
 ---------------
 
@@ -792,6 +794,24 @@ int mblen(const char *s, size_t n);
 If s is not a null pointer, the mblen function determines the length of the multibyte character pointed to by s, examining at most n bytes.  If it is a null character, mblen returns 0.  If it is another valid multibyte character, mblen returns its length in bytes.  If those n or fewer bytes do not form a valid multibyte character, mblen returns -1.  As discussed above, multibyte characters in ORCA/C always have length 1, so mblen never returns a value larger than 1.
 
 If s is a null pointer, mblen returns a nonzero value if multibyte characters have state-dependent encodings, or 0 if they do not.  On ORCA/C, it returns 0.
+
+16. (C11) The mbrtoc16, mbrtoc32, c16rtomb, and c32rtomb functions have been added:
+
+#include <uchar.h>
+size_t mbrtoc16(char16_t * restrict pc16, const char * restrict s, size_t n,
+   mbstate_t * restrict ps);
+size_t mbrtoc32(char32_t * restrict pc32, const char * restrict s, size_t n,
+   mbstate_t * restrict ps);
+
+These functions convert a multibyte character to Unicode, using the UTF-16 or UTF-32 encoding.  They read the multibyte character pointed to by s, examining at most n bytes.  If a valid multibyte character is found, it is converted to UTF-16 and written to *pc16 (in mbrtoc16), or converted to UTF-32 and written to *pc32 (in mbrtoc32); 0 is returned if processing the null character, or the number of bytes in the multibyte character otherwise.  In certain other cases, these functions may return a negative value cast to size_t, but those cases do not occur in ORCA/C provided that n>0.  The ps argument (if not null) points to an object that can hold any conversion state, but in ORCA/C it is not used.
+
+#include <uchar.h>
+size_t c16rtomb(char * restrict s, char16_t c16, mbstate_t * restrict ps);
+size_t c32rtomb(char * restrict s, char32_t c32, mbstate_t * restrict ps);
+
+These functions convert from a UTF-16-encoded or UTF-32-encoded Unicode character (c16 or c32) to a multibyte character, which is written to *s.  They return the number of bytes written to s, or return (size_t)(-1) and set errno to EILSEQ if a conversion cannot be performed (e.g. because there is no corresponding character in the multibyte character set).  The ps argument (if not null) points to an object that can hold any conversion state, but in ORCA/C it is currently not used.
+
+In ORCA/C, multibyte characters are always one byte and are considered to be encoded in the character set used by the IIGS desktop environment (known as Mac OS Roman), so these functions convert between that character set and Unicode.
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
