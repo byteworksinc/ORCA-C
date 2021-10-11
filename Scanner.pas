@@ -254,6 +254,7 @@ var
    includeChPtr: ptr;			{chPtr at start of current token}
    includeCount: 0..maxint;		{nested include files (for EndInclude)}
    macroFound: macroRecordPtr;          {last macro found by IsDefined}
+   mergingStrings: boolean;             {is NextToken trying to merge strings?}
    needWriteLine: boolean;              {is there a line that needs to be written?}
    onOffValue: onOffEnum;               {value of last on-off switch}
    wroteLine: boolean;                  {has the current line already been written?}
@@ -3911,6 +3912,7 @@ doingPPExpression := false;             {not doing a preprocessor expression}
 unix_1 := false;			{int is 16 bits}
 lintIsError := true;                    {lint messages are considered errors}
 fenvAccess := false;                    {not accessing fp environment}
+mergingStrings := false;                {not currently merging strings}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
@@ -4830,8 +4832,8 @@ tokenEnd := pointer(ord4(chPtr)-1);     {record the end of the token}
 if skipping then                        {conditional compilation branch}
    if not (token.kind in [eofsy,eolsy]) then
       goto 3;
-if token.kind = stringconst then        {handle adjacent strings}
-   repeat
+if (token.kind = stringconst) and not mergingStrings  {handle adjacent strings}
+   then repeat
       if reportEOL then begin
          while charKinds[ord(ch)] = ch_white do
             NextCh;
@@ -4841,7 +4843,9 @@ if token.kind = stringconst then        {handle adjacent strings}
       tToken := token;
       lPrintMacroExpansions := printMacroExpansions;
       printMacroExpansions := false;
+      mergingStrings := true;
       NextToken;
+      mergingStrings := false;
       printMacroExpansions := lPrintMacroExpansions;
       if token.kind = stringconst then begin
          Merge(tToken, token);
