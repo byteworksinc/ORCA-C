@@ -252,6 +252,8 @@ The discussion of clock() should mention the standard macro CLOCKS_PER_SEC, whic
 
 p. 353
 
+All error numbers used by errno are defined in <errno.h>, not <math.h>.
+
 The discussion of _exit() should note that the _exit() function is an extension to ANSI C.
 
 p. 354
@@ -347,11 +349,11 @@ The flexible array member does not contribute to the size of the struct as repor
 
 6.  (C99) Functions may be declared as "static inline".  These have the same semantics as other static functions.  The "inline" specifier suggests (but does not require) that calls to the function should be inlined or otherwise optimized.  ORCA/C currently does not inline these functions or apply any other special optimizations, but future versions might introduce such features.  Note that non-static inline functions are not currently supported.
 
-7.  Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+7.  (Draft C23) Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.
 
 (Kelvin Sherlock)
 
-8.  The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.  (This is a non-standard feature, but compatible with other common compilers such as GCC and Clang.)
+8.  (Draft C23) The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.
 
 9.  (C11) The _Alignof operator and _Alignas declaration specifier are now supported.  An expression "_Alignof(type-name)" gives the alignment of the specified type.  In a declaration, an alignment specifier "_Alignas(type-name)" or "_Alignas(constant-expression)" specifies the required alignment for the object being declared.  In ORCA/C, the alignment of all object types is 1, and that is the only alignment value supported.  (As such, these features are not particularly useful in ORCA/C-specific code, but they may be used to control alignment in portable programs.)
 
