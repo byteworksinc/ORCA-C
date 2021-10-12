@@ -168,8 +168,11 @@ var
 
 begin {GMalloc}
 if bytes > globalSize then begin        {allocate a new pool, if needed}
-   globalSize := poolSize;
-   myhandle := NewHandle(poolSize, globalID, $C010, nil);
+   if bytes > poolSize then
+      globalSize := bytes
+   else
+      globalSize := poolSize;
+   myhandle := NewHandle(globalSize, globalID, $C010, nil);
    if ToolError <> 0 then TermError(5);
    globalPtr := myhandle^;
    end; {if}
@@ -209,8 +212,11 @@ var
 
 begin {LMalloc}
 if bytes > localSize then begin         {allocate a new pool, if needed}
-   localSize := poolSize;
-   myhandle := NewHandle(poolSize, localID, $C010, nil);
+   if bytes > poolSize then
+      localSize := bytes
+   else
+      localSize := poolSize;
+   myhandle := NewHandle(localSize, localID, $C010, nil);
    if ToolError <> 0 then TermError(5);
    localPtr := myhandle^;
    end; {if}
