@@ -4351,21 +4351,36 @@ var
       arrayType: begin
          elements := itype^.elements;
          if elements = 0 then goto 1;   {don't init flexible array member}
-         if itype^.aType^.kind = scalarType then
-            if itype^.aType^.baseType in [cgByte,cgUByte] then
-               if iPtr^.iTree^.token.kind = stringConst then begin
-                  GenLdcLong(itype^.elements);
-                  Gen0t(pc_stk, cgULong);
-                  GenS(pc_lca, iPtr^.iTree^.token.sval);
-                  Gen0t(pc_stk, cgULong);
-                  Gen0t(pc_bno, cgULong);
-                  LoadAddress;
-                  Gen0t(pc_stk, cgULong);
-                  Gen0t(pc_bno, cgULong);
-                  Gen1tName(pc_cup, 0, cgVoid, @'strncpy');
-                  iPtr := iPtr^.next;
-                  goto 1;
-                  end; {if}
+         if iPtr^.iTree^.token.kind = stringConst then begin
+            size := iPtr^.iTree^.token.sval^.length+1;
+            if size >= elements then
+               size := ord(elements)
+            else
+               size := size-1;
+            if size <> 0 then begin
+               GenLdcLong(size);
+               Gen0t(pc_stk, cgULong);
+               GenS(pc_lca, iPtr^.iTree^.token.sval);
+               Gen0t(pc_stk, cgULong);
+               Gen0t(pc_bno, cgULong);
+               LoadAddress;
+               Gen0t(pc_stk, cgULong);
+               Gen0t(pc_bno, cgULong);
+               Gen1tName(pc_cup, 0, cgVoid, @'memcpy');
+               end; {if}
+            if size < elements then begin
+               elements := elements - size;     
+               disp := disp + size;                
+               LoadAddress;
+               Gen0t(pc_stk, cgULong);
+               Gen1t(pc_ldc, ord(elements), cgWord);
+               Gen0t(pc_stk, cgWord);
+               Gen0t(pc_bno, cgULong);
+               Gen1tName(pc_cup, 0, cgVoid, @'~ZERO');
+               end; {if}
+            iPtr := iPtr^.next;
+            goto 1;
+            end; {if}
          itype := itype^.atype;
          if ZeroFill(elements, itype, count, iPtr) then begin
             if itype^.kind = enumType then

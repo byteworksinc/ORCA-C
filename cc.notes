@@ -1357,6 +1357,8 @@ int foo(int[42]);
 
 166. The fields of structures and unions should be accessible from any expression of structure or union type, including assignments and function calls.  For example, if x and y have type "struct S {int i;}", then (x=y).i is a legal expression that performs an assignment and then gets the value of the i field.  Similarly, f().i is a legal expression if the function call f() has a return type of struct S.  These expressions were not being accepted, but now they are.
 
+167. If an array with automatic storage duration was initialized from a string literal containing an embedded null byte (e.g. char s[] = "a\0b"), characters after the null byte would not be properly initialized.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
