@@ -4276,20 +4276,10 @@ var
       { Load the address of the operand                         }
 
       begin {LoadAddress}
-      with id^ do                       {load the base address}
-         case storage of
-            stackFrame:     Gen2(pc_lda, lln, 0);
-            parameter:      if itype^.kind = arrayType then
-                               Gen2t(pc_lod, pln, 0, cgULong)
-                            else
-                               Gen2(pc_lda, pln, 0);
-            external,
-            global,
-            private:        Gen1Name(pc_lao, 0, name);
-            otherwise: ;
-            end; {case}
-      if disp <> 0 then
-         Gen1t(pc_inc, long(disp).lsw, cgULong)
+      if id^.storage = stackFrame then
+         Gen2(pc_lda, id^.lln, ord(disp))
+      else
+         Error(57);
       end; {LoadAddress}
 
 
