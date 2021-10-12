@@ -1909,7 +1909,7 @@ var
          if tree^.token.kind = plusch then begin
             rtree := tree^.right;
             if rtree^.token.kind in
-               [intconst,uintconst,charconst,scharconst,ucharconst] then
+               [intconst,uintconst,ushortconst,charconst,scharconst,ucharconst] then
                size := rtree^.token.ival
             else if rtree^.token.kind in [longconst,ulongconst] then
                size := rtree^.token.lval
@@ -2086,7 +2086,8 @@ var
             end;
 
          pointerType:
-            if etype = stringTypePtr then begin
+            if (etype = stringTypePtr) or (etype = utf16StringTypePtr)
+               or (etype = utf32StringTypePtr) then begin
                iPtr^.isConstant := true;
                iPtr^.iType := ccPointer;
                iPtr^.pval := 0;
@@ -2151,12 +2152,12 @@ var
             operator := tree^.token.kind;
             while operator in [plusch,minusch] do begin
                with tree^.right^.token do
-                  if kind in [intConst,uintconst,longConst,ulongconst,
-                     longlongConst,ulonglongconst,charconst,scharconst,
-                     ucharconst] then begin
+                  if kind in [intConst,uintconst,ushortconst,longConst,
+                     ulongconst,longlongConst,ulonglongconst,charconst,
+                     scharconst,ucharconst] then begin
                      if kind in [intConst,charconst,scharconst,ucharconst] then
                         offSet2 := ival
-                     else if kind = uintConst then
+                     else if kind in [uintConst,ushortconst] then
                         offset2 := ival & $0000ffff
                      else if kind in [longConst,ulongconst] then begin
                         offset2 := lval;
@@ -2322,6 +2323,8 @@ var
       kind: typeKind;                   {base type of an initializer}
       ktp: typePtr;			{array type with definedTypes removed}
       lPrintMacroExpansions: boolean;   {local copy of printMacroExpansions}
+      stringElementType: typePtr;       {element type of string literal}
+      stringLength: integer;            {elements in a string literal}
 
 
       procedure Fill (count: longint; tp: typePtr);
@@ -2450,44 +2453,61 @@ var
       kind := ktp^.kind;
 
       {handle string constants}
-      if (token.kind = stringConst) and (kind = scalarType)
-         and (ktp^.baseType in [cgByte,cgUByte]) then begin
-         if tp^.elements = 0 then begin
-            tp^.elements := token.sval^.length + 1;
-            RecomputeSizes(variable^.itype);
-            end {if}
-         else if tp^.elements < token.sval^.length then begin
-            Error(44);
-            errorFound := true;
-            end; {else if}
-         with ktp^ do begin
-            iPtr := pointer(Malloc(sizeof(initializerRecord)));
-            iPtr^.next := variable^.iPtr;
-            variable^.iPtr := iPtr;
-            iPtr^.count := 1;
-            iPtr^.bitdisp := 0;
-            iPtr^.bitsize := 0;
-            iPtr^.isStructOrUnion := false;
-            if (variable^.storage in [external,global,private]) then begin
-               iPtr^.isConstant := true;
-               iPtr^.itype := cgString;
-               iPtr^.sval := token.sval;
-               count := tp^.elements - token.sval^.length;
-               if count <> 0 then
-                  Fill(count, sCharPtr);
+      if token.kind = stringConst then begin
+         stringElementType := StringType(token.prefix)^.aType;
+         if (kind = scalarType) and 
+            (((ktp^.baseType in [cgByte,cgUByte])
+               and (stringElementType = charPtr))
+            or CompTypes(ktp,stringElementType)) then begin
+            stringLength := token.sval^.length div ord(stringElementType^.size);
+            if tp^.elements = 0 then begin
+               tp^.elements := stringLength;
+               RecomputeSizes(variable^.itype);
                end {if}
-            else begin
-               iPtr^.isConstant := false;
-               new(ep);
-               iPtr^.iTree := ep;
-               ep^.next := nil;
-               ep^.left := nil;
-               ep^.middle := nil;
-               ep^.right := nil;
-               ep^.token := token;
-               end; {else}
-            end; {with}
-         NextToken;
+            else if tp^.elements < stringLength-1 then begin
+               Error(44);
+               errorFound := true;
+               end; {else if}
+            with ktp^ do begin
+               iPtr := pointer(Malloc(sizeof(initializerRecord)));
+               iPtr^.next := variable^.iPtr;
+               variable^.iPtr := iPtr;
+               iPtr^.count := 1;
+               iPtr^.bitdisp := 0;
+               iPtr^.bitsize := 0;
+               iPtr^.isStructOrUnion := false;
+               if (variable^.storage in [external,global,private]) then begin
+                  iPtr^.isConstant := true;
+                  iPtr^.itype := cgString;
+                  iPtr^.sval := token.sval;
+                  count := tp^.elements - stringLength;
+                  if count > 0 then
+                     Fill(count, stringElementType)
+                  else if count = -1 then begin
+                     iPtr^.sval := pointer(GMalloc(token.sval^.length+2));
+                     CopyLongString(iPtr^.sval, token.sval);
+                     iPtr^.sval^.length :=
+                        iPtr^.sval^.length - ord(stringElementType^.size);
+                     end; {else if}
+                  end {if}
+               else begin
+                  iPtr^.isConstant := false;
+                  new(ep);
+                  iPtr^.iTree := ep;
+                  ep^.next := nil;
+                  ep^.left := nil;
+                  ep^.middle := nil;
+                  ep^.right := nil;
+                  ep^.token := token;
+                  end; {else}
+               end; {with}
+            NextToken;
+            end {if}
+         else begin
+            Error(47);
+            errorFound := true;
+            NextToken;
+            end; {else}
          end {if}
 
       {handle arrays of non-strings}
@@ -3643,7 +3663,8 @@ if isFunction then begin
             NextToken;
             Match(lparench,13);
             if token.kind in
-               [intconst,uintconst,charconst,scharconst,ucharconst] then begin
+               [intconst,uintconst,ushortconst,charconst,scharconst,ucharconst]
+               then begin
                toolNum := token.ival;
                NextToken;
                end {if}
@@ -3655,7 +3676,8 @@ if isFunction then begin
                NextToken;
                end {if}
             else if token.kind in
-               [intconst,uintconst,charconst,scharconst,ucharconst] then begin
+               [intconst,uintconst,ushortconst,charconst,scharconst,ucharconst]
+               then begin
                dispatcher := token.ival;
                NextToken;
                end {if}
@@ -4352,7 +4374,8 @@ var
          elements := itype^.elements;
          if elements = 0 then goto 1;   {don't init flexible array member}
          if iPtr^.iTree^.token.kind = stringConst then begin
-            size := iPtr^.iTree^.token.sval^.length+1;
+            elements := elements * itype^.aType^.size;
+            size := iPtr^.iTree^.token.sval^.length;
             if size >= elements then
                size := ord(elements)
             else

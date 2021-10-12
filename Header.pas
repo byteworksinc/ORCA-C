@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 16;                 {version number of .sym file format}
+   symFileVersion = 17;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -719,6 +719,7 @@ procedure EndInclude {chPtr: ptr};
 	    stringConstant:	begin
 				WriteLongString(token.sval);
                 		WriteByte(ord(token.ispstring));
+                		WriteByte(ord(token.prefix));
                 		end;
             macroParameter:	WriteWord(token.pnum);
             reservedSymbol:	if token.kind in [lbracech,rbracech,lbrackch,
@@ -1008,6 +1009,10 @@ procedure EndInclude {chPtr: ptr};
                WriteByte(16)
             else if tp = uShortPtr then
                WriteByte(17)
+            else if tp = utf16StringTypePtr then
+               WriteByte(18)
+            else if tp = utf32StringTypePtr then
+               WriteByte(19)
             else if tp^.saveDisp <> 0 then begin
                WriteByte(1);
                WriteLong(tp^.saveDisp);
@@ -1348,6 +1353,7 @@ var
 	 stringConstant:	begin
 			        token.sval := ReadLongString;
                 	        token.ispstring := ReadByte <> 0;
+                	        token.prefix := charStrPrefixEnum(ReadByte);
                 	        end;
          macroParameter:	token.pnum := ReadWord;
          reservedSymbol:	if token.kind in [lbracech,rbracech,lbrackch,
@@ -1741,6 +1747,8 @@ var
             15: tp := uCharPtr;
             16: tp := shortPtr;
             17: tp := uShortPtr;
+            18: tp := utf16StringTypePtr;
+            19: tp := utf32StringTypePtr;
 
             otherwise: begin
                PurgeSymbols;

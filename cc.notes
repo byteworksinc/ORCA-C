@@ -116,6 +116,8 @@ p. 237
 
 ORCA/C now supports character constants containing multiple characters.  See "Multi-Character Character Constants," below.
 
+Character and string constants may now have prefixes indicating they should use Unicode encodings.  See "New Language Features," below.
+
 p. 238
 
 The limit on the total length of string constants in a single function has been raised to 12500 characters.
@@ -128,7 +130,7 @@ p. 240
 
 The discussion of escape sequences states that hexadecimal numeric escape sequences can contain from one to three digits.  This was true until ORCA/C 2.1, when the compiler was changed to respect the ANSI C standard.  The compiler will now scan a hexadecimal escape sequence until no more hexadecimal characters are found.  (ORCA/C 2.1 would also scan an octal escape sequence until no more octal characters were found, but this has been changed back to limit octal escape sequences to at most three octal digits, as required by the C standards.)
 
-The value of an octal or hexadecimal escape sequence must be within the range of representable character values (0-255).  Also, \ may not be followed by a character other than one of the ones described as forming an escape sequence.  ORCA/C now gives an error in these cases.  Accordingly, the examples of "\410" and '\g' mentioned in the manual are now treated as errors.
+The value of an octal or hexadecimal escape sequence must be within the range of representable values in the relevant type (0-255 for char).  Also, \ may not be followed by a character other than one of the ones described as forming an escape sequence.  ORCA/C now gives an error in these cases.  Accordingly, the examples of "\410" and '\g' mentioned in the manual are now treated as errors.
 
 p. 241
 
@@ -373,7 +375,7 @@ and may appear wherever a declaration can (including inside and outside function
 
 These behave the same as the existing tokens [, ], {, }, #, and ## (respectively), apart from their spelling.
 
-14. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In a string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  For ORCA/C the source and execution character sets are both considered to be Mac OS Roman, the character set used in the IIGS desktop environment.
+14. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In an unprefixed string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  In ORCA/C the source and execution character sets are both considered to be the character set used in the IIGS desktop environment, known as Mac OS Roman.
 
 15. (C99) Function-like macros may take a variable number of arguments.  To specify such a macro, include "..." as the last (or only) member of its parameter list.  When the macro is used, one or more corresponding arguments may be provided.  To access these arguments within the macro, use the special identifier __VA_ARGS__.  This functions similarly to a normal macro parameter, but its expansion includes the tokens from all the corresponding arguments that were provided, including any commas separating arguments.
 
@@ -384,6 +386,8 @@ These behave the same as the existing tokens [, ], {, }, #, and ## (respectively
 __STDC_HOSTED__ normally expands to the integer constant 1, indicating that ORCA/C is a hosted implementation of the C language (where the full standard library is available and the program starts by executing the main function).  However, it will expand to 0 if one of the pragmas for special types of programs with different entry points has been used.
 
 __STDC_NO_ATOMICS__, __STDC_NO_COMPLEX__, __STDC_NO_THREADS__, and __STDC_NO_VLA__ all expand to the integer constant 1.  These indicate that ORCA/C does not implement certain C language features that are optional under the C11 and later standards (atomics, complex numbers, threads, and variable length arrays).
+
+__STDC_UTF_16__ and __STDC_UTF_32__ expand to the integer constant 1.  These indicate that the char16_t and char32_t types (discussed below) use UTF-16 and UTF-32 encodings.
 
 18. (C99) The _Bool type is now supported.  This is a boolean type that can hold the values 0 or 1.  When a value of another type is converted to _Bool, the result is 0 if the value compares equal to 0, or 1 otherwise.
 
@@ -430,11 +434,13 @@ As an example, this expression evaluates to 2 because the type of 1+2 is int:
 
 Generic selection expressions are primarily useful within macros, which can give different behavior based on the types of the arguments passed to them.
 
+23. (C11) Character constants and string literals may now have prefixes indicating they should use Unicode encodings.  The prefixes u8, u, and U indicate UTF-8, UTF-16, and UTF-32 encodings, respectively.  The u8 prefix may only be used on string literals.  The U and u prefixes may be used on string literals or character constants.  U- and u-prefixed character constants have the types char32_t and char16_t (as defined in <uchar.h>); U- and u-prefixed string literals are treated as arrays of those types.  For example, the string literal U"abc" designates an array with four members of type char32_t: the three letters encoded in UTF-32, plus a null terminator.
+
 
 Multi-Character Character Constants
 -----------------------------------
 
-Character constants containing multiple characters are now supported, as required by the C standards.  The value of such constants is implementation-defined.  In ORCA/C, the value is initially set to the ordinal value of the first character, as in a single-character constant.  For each subsequent character encountered, the existing value is shifted left by eight bit positions, and the ordinal value of the new character is placed in the lower eight bits.  (This is similar to the behavior of GCC and Clang.)
+Unprefixed character constants containing multiple characters are now supported, as required by the C standards.  The value of such constants is implementation-defined.  In ORCA/C, the value is initially set to the ordinal value of the first character, as in a single-character constant.  For each subsequent character encountered, the existing value is shifted left by eight bit positions, and the ordinal value of the new character is placed in the lower eight bits.  (This is similar to the behavior of GCC and Clang.)
 
 A new bit is also introduced in #pragma ignore that affects the interpretation of such constants.  Setting #pragma ignore bit 1 (a value of 2) causes character constants with three or more characters to be treated as having type long, rather than type int.  This non-standard feature effectively allows a character constant to contain the values of up to four characters, rather than only two.
 
@@ -578,6 +584,7 @@ ORCA/C now includes several new headers specified by recent C standards.
 8.  (C89 and C99) The <locale.h> header provides functions and definitions related to locale support.
 
 9.  (C11) The <uchar.h> header defines the types char16_t and char32_t suitable for holding UTF-16 and UTF-32 code units, and provides functions for handling Unicode characters.
+
 
 Library Updates
 ---------------

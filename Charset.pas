@@ -28,6 +28,14 @@ const
 
 type
    ucsCodePoint = 0..maxUCSCodePoint;
+   utf8Rec = record
+      length: integer;
+      bytes: packed array [1..4] of byte;
+      end;
+   utf16Rec = record
+      length: integer;
+      codeUnits: packed array [1..2] of integer;
+      end;
 
 
 function ConvertMacRomanToUCS(ch: char): ucsCodePoint;
@@ -36,6 +44,7 @@ function ConvertMacRomanToUCS(ch: char): ucsCodePoint;
 {                                                                }
 { Returns UCS code point value for the character.                }
 
+
 function ConvertUCSToMacRoman(ch: ucsCodePoint): integer;
 
 { convert a character from UCS (Unicode) to MacRoman charset     }
@@ -43,12 +52,31 @@ function ConvertUCSToMacRoman(ch: ucsCodePoint): integer;
 { Returns ordinal value of the character, or -1 if it can't be   }
 { converted.                                                     }
 
+
+procedure UTF16Encode(ch: ucsCodePoint; var utf16: utf16Rec);
+
+{ Encode a UCS code point in UTF-16                              }
+{                                                                }
+{ ch - the code point                                            }
+{ utf16 - set to the UTF-16 representation of the code point     }
+
+
+procedure UTF8Encode(ch: ucsCodePoint; var utf8: utf8Rec);
+
+{ Encode a UCS code point in UTF-8                               }
+{                                                                }
+{ ch - the code point                                            }
+{ utf16 - set to the UTF-8 representation of the code point      }
+
+
 function ValidUCNForIdentifier(ch: ucsCodePoint; initial: boolean): boolean;
 
 { Check if a code point is valid for a UCN in an identifier      }
 {                                                                }
 { ch - the code point                                            }
 { initial - is this UCN the initial element of the identifier?   }
+
+{----------------------------------------------------------------}
 
 implementation
 
@@ -98,6 +126,60 @@ else begin
    end; {else}
 1:
 end; {ConvertUCSToMacRoman}
+
+
+procedure UTF16Encode{ch: ucsCodePoint; var utf16: utf16Rec};
+
+{ Encode a UCS code point in UTF-16                              }
+{                                                                }
+{ ch - the code point                                            }
+{ utf16 - set to the UTF-16 representation of the code point     }
+
+begin {UTF16Encode}
+if ch <= $00ffff then begin
+   utf16.length := 1;
+   utf16.codeUnits[1] := ord(ch);
+   end {if}
+else begin
+   utf16.length := 2;
+   ch := ch - $010000;
+   utf16.codeUnits[1] := $D800 | ord(ch >> 10);
+   utf16.codeUnits[2] := $DC00 | ord(ch & $03ff);
+   end; {else}
+end; {UTF16Encode}
+
+
+procedure UTF8Encode{ch: ucsCodePoint; var utf8: utf8Rec};
+
+{ Encode a UCS code point in UTF-8                               }
+{                                                                }
+{ ch - the code point                                            }
+{ utf16 - set to the UTF-8 representation of the code point      }
+
+begin {UTF8Encode}
+if ch <= $00007f then begin
+   utf8.length := 1;
+   utf8.bytes[1] := ord(ch);
+   end {if}
+else if ch <= $0007ff then begin
+   utf8.length := 2;
+   utf8.bytes[1] := $C0 | ord(ch >> 6);
+   utf8.bytes[2] := $80 | ord(ch & $3f)
+   end {else if}
+else if ch <= $00ffff then begin
+   utf8.length := 3;
+   utf8.bytes[1] := $E0 | ord(ch >> 12);
+   utf8.bytes[2] := $80 | ord((ch >> 6) & $3f);
+   utf8.bytes[3] := $80 | ord(ch & $3f);
+   end {else if}
+else begin
+   utf8.length := 4;
+   utf8.bytes[1] := $F0 | ord(ch >> 18);
+   utf8.bytes[2] := $80 | ord((ch >> 12) & $3f);
+   utf8.bytes[3] := $80 | ord((ch >> 6) & $3f);
+   utf8.bytes[4] := $80 | ord(ch & $3f);
+   end; {else}
+end; {UTF8Encode}
 
 
 function ValidUCNForIdentifier{(ch: ucsCodePoint; initial: boolean): boolean};

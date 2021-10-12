@@ -407,7 +407,8 @@
 {  GenS(pc_lca, str)                                            }
 {                                                               }
 {  Loads the address of a string onto the stack.  Str is a      }
-{  pointer to a string constant.                                }
+{  pointer to a string constant.  No null terminator is added;  }
+{  it should be explicitly included in str if desired.          }
 {                                                               }
 {                                                               }
 {  pc_lda - load a local address                                }

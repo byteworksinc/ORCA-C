@@ -172,7 +172,7 @@ type
                                         { They are created only by casts.    }
                intconst,uintconst,longconst,ulongconst,longlongconst,
                ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
-               charconst,scharconst,ucharconst,stringconst,
+               charconst,scharconst,ucharconst,ushortconst,stringconst,
                                         {reserved words}
                _Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy,
                _Genericsy,_Imaginarysy,_Noreturnsy,_Static_assertsy,_Thread_localsy,
@@ -210,6 +210,9 @@ type
        ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,ch_colon,
        ch_backslash,letter,digit);
 
+                                        {prefixes of a character/string literal}
+   charStrPrefixEnum = (prefix_none,prefix_L,prefix_u16,prefix_U32,prefix_u8);
+
    tokenSet = set of tokenEnum;
    tokenClass = (reservedWord,reservedSymbol,identifier,intConstant,longConstant,
                  longlongConstant,realConstant,stringConstant,macroParameter);
@@ -227,7 +230,8 @@ type
          longlongConstant: (qval: longlong);
          realConstant  : (rval: extended);
          stringConstant: (sval: longstringPtr;
-                          ispstring: boolean);
+                          ispstring: boolean;
+                          prefix: charStrPrefixEnum);
          macroParameter: (pnum: integer);
      end;
  

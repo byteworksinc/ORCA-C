@@ -45,8 +45,11 @@
 {  boolPtr - pointer to the base type for _Bool                 }
 {  voidPtr - pointer to the base type for void                  }
 {  voidPtrPtr - typeless pointer, for some type casting         }
-{  stringTypePtr - pointer to the base type for string          }
-{       constants                                               }
+{  stringTypePtr - pointer to the base type for string literals }
+{  utf16StringTypePtr - pointer to the base type for UTF-16     }
+{       string literals                                         }
+{  utf32StringTypePtr - pointer to the base type for UTF-32     }
+{       string literals                                         }
 {  constCharPtr - pointer to the type const char                }
 {  defaultStruct - default for structures with errors           }
 {                                                               }
@@ -82,8 +85,8 @@ var
                                         {base types}
    charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
       uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
-      floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,voidPtr,
-      voidPtrPtr,constCharPtr,defaultStruct: typePtr;
+      floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,utf16StringTypePtr,
+      utf32StringTypePtr,voidPtr,voidPtrPtr,constCharPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
 
@@ -228,6 +231,14 @@ procedure ResolveForwardReference (iPtr: identPtr);
 {                                                               }
 { parameters:                                                   }
 {       iPtr - ptr to the forward declared identifier           }
+
+
+function StringType(prefix: charStrPrefixEnum): typePtr;
+
+{ returns the type of a string literal with specified prefix    }
+{                                                               }
+{ parameters:                                                   }
+{       prefix - the prefix                                     }
 
 {---------------------------------------------------------------}
 
@@ -1559,6 +1570,24 @@ with stringTypePtr^ do begin
    aType := charPtr;
    elements := 1;
    end; {with}
+new(utf16StringTypePtr);                {UTF-16 string constant type}
+with utf16StringTypePtr^ do begin
+   size := 0;
+   saveDisp := 0;
+   qualifiers := [];
+   kind := arrayType;
+   aType := uShortPtr;
+   elements := 1;
+   end; {with}
+new(utf32StringTypePtr);                {UTF-32 string constant type}
+with utf32StringTypePtr^ do begin
+   size := 0;
+   saveDisp := 0;
+   qualifiers := [];
+   kind := arrayType;
+   aType := uLongPtr;
+   elements := 1;
+   end; {with}
 new(voidPtr);                           {void}
 with voidPtr^ do begin
    size := 0;
@@ -1939,6 +1968,23 @@ if tPtr^.kind in [structType,unionType] then begin
       end; {while}
    end; {if}
 end; {ResolveForwardReference}
+
+
+function StringType{prefix: charStrPrefixEnum): typePtr};
+
+{ returns the type of a string literal with specified prefix    }
+{                                                               }
+{ parameters:                                                   }
+{       prefix - the prefix                                     }
+
+begin {StringType}
+if prefix in [prefix_none,prefix_u8] then
+   StringType := stringTypePtr
+else if prefix in [prefix_u16,prefix_L] then
+   StringType := utf16StringTypePtr
+else
+   StringType := utf32StringTypePtr;
+end; {StringType}
 
 end.
 

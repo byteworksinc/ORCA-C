@@ -5890,11 +5890,10 @@ procedure GenTree {op: icptr};
    gLong.where := onStack;
    GenNative(m_pea, immediate, stringSize, nil, stringReference+shift16);
    GenNative(m_pea, immediate, stringSize, nil, stringReference);
-   if maxString-stringSize >= op^.q+1 then begin
+   if maxString-stringSize >= op^.q then begin
       for i := 1 to op^.q do
          stringSpace[i+stringSize] := op^.str^.str[i];
-      stringSpace[stringSize+op^.q+1] := chr(0);
-      stringSize := stringSize+op^.q+1;
+      stringSize := stringSize+op^.q;
       end
    else
       Error(cge3);

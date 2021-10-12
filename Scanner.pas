@@ -239,6 +239,7 @@ type
    onOffEnum = (on,off,default);        {on-off values in standard pragmas}
 
 var
+   charStrPrefix: charStrPrefixEnum;    {prefix of character/string literal}
    dateStr: longStringPtr;              {macro date string}
    doingCommandLine: boolean;           {are we processing the cc= command line?}
    doingPPExpression: boolean;          {are we processing a preprocessor expression?}
@@ -256,6 +257,7 @@ var
    macroFound: macroRecordPtr;          {last macro found by IsDefined}
    mergingStrings: boolean;             {is NextToken trying to merge strings?}
    needWriteLine: boolean;              {is there a line that needs to be written?}
+   octHexEscape: boolean;               {octal/hex escape in char/string?}
    onOffValue: onOffEnum;               {value of last on-off switch}
    wroteLine: boolean;                  {has the current line already been written?}
    numErr: 0..maxErr;                   {number of errors in this line}
@@ -341,6 +343,14 @@ procedure StartInclude (name: gsosOutStringPtr); extern;
 {    1. Call this subroutine right after opening an include	}
 {       file.							}
 {    2. From Header.pas						}
+
+
+function StringType(prefix: charStrPrefixEnum): typePtr; extern;
+
+{ returns the type of a string literal with specified prefix    }
+{                                                               }
+{ parameters:                                                   }
+{       prefix - the prefix                                     }
 
 
 procedure TermHeader; extern;
@@ -722,6 +732,9 @@ if list or (numErr <> 0) then begin
         162: msg := @'invalid escape sequence';
         163: msg := @'pointer assignment discards qualifier(s)';
         164: msg := @'compound literals within functions are not supported by ORCA/C';
+        165: msg := @'''\p'' may not be used in a prefixed string';
+        166: msg := @'string literals with these prefixes may not be merged';
+        167: msg := @'''L''-prefixed character or string constants are not supported by ORCA/C';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -768,6 +781,34 @@ var
    ch: char;                            {work character}
    i: integer;                          {loop counter}
    str: string[23];                     {temp string}
+   c16ptr: ^integer;                    {pointer to char16_t value}
+   c32ptr: ^longint;                    {pointer to char32_t value}
+
+
+   procedure PrintHexDigits(i: longint; count: integer);
+
+   { Print a digit as a hex character                           }
+   {                                                            }
+   { Parameters:                                                }
+   {    i: value to print in hexadecimal                        }
+   {    count: number of digits to print                        }
+
+   var
+      digit: integer;                   {hex digit value}
+      shift: integer;                   {amount to shift by}
+
+   begin {PrintHexDigits}
+   shift := 4 * (count-1);
+   while shift >= 0 do begin
+      digit := ord(i >> shift) & $000F;
+      if digit < 10 then
+         write(chr(digit | ord('0')))
+      else
+         write(chr(digit + ord('A') - 10));
+      shift := shift - 4;
+      end; {while}
+   end; {PrintHexDigits}
+
 
 begin {PrintToken}
 case token.kind of
@@ -778,7 +819,8 @@ case token.kind of
    scharconst,
    ucharconst,
    intconst,
-   uintconst:        write(token.ival:1);
+   uintconst,
+   ushortconst:      write(token.ival:1);
 
    longConst,
    ulongConst:       write(token.lval:1);
@@ -801,21 +843,43 @@ case token.kind of
    extendedConst:    write(token.rval:1);
 
    stringConst:      begin
-                     write('"');
-                     for i := 1 to token.sval^.length do begin
-                        ch := token.sval^.str[i];
-                        if ch in [' '..'~'] then begin
-                           if ch in ['"','\','?'] then
+                     if token.prefix = prefix_u16 then begin
+                        write('u"');
+                        i := 1;
+                        while i < token.sval^.length-2 do begin
+                           write('\x');
+                           c16Ptr := pointer(@token.sval^.str[i]);
+                           PrintHexDigits(c16Ptr^, 4);
+                           i := i + 2;
+                           end; {while}
+                        end {if}
+                     else if token.prefix = prefix_U32 then begin
+                        write('U"');
+                        i := 1;
+                        while i < token.sval^.length-4 do begin
+                           write('\x');
+                           c32Ptr := pointer(@token.sval^.str[i]);
+                           PrintHexDigits(c32Ptr^, 8);
+                           i := i + 4;
+                           end; {while}
+                        end {else if}
+                     else begin
+                        write('"');
+                        for i := 1 to token.sval^.length-1 do begin
+                           ch := token.sval^.str[i];
+                           if ch in [' '..'~'] then begin
+                              if ch in ['"','\','?'] then
+                                 write('\');
+                              write(ch);
+                              end {if}
+                           else begin
                               write('\');
-                           write(ch);
-                           end {if}
-                        else begin
-                           write('\');
-                           write((ord(ch)>>6):1);
-                           write(((ord(ch)>>3) & $0007):1);
-                           write((ord(ch) & $0007):1);
-                           end; {else}
-                        end; {for}
+                              write((ord(ch)>>6):1);
+                              write(((ord(ch)>>3) & $0007):1);
+                              write((ord(ch) & $0007):1);
+                              end; {else}
+                           end; {for}
+                        end; {else}
                      write('"');
                      end;
 
@@ -1047,6 +1111,9 @@ procedure LongToPString (pstr: stringPtr; lstr: longStringPtr);
 
 { Convert a long string into a p string                         }
 {                                                               }
+{ The long string is assumed to include a terminating null byte,}
+{ which is not copied to the p-string.                          }
+{                                                               }
 { Parameters:                                                   }
 {       pstr - pointer to the p-string                          }
 {       lstr - pointer to the long string                       }
@@ -1056,7 +1123,7 @@ var
    len: integer;                        {string length}
 
 begin {LongToPString}
-len := lstr^.length;
+len := lstr^.length-1;
 if len > 255 then
    len := 255;
 pstr^[0] := chr(len);
@@ -1083,6 +1150,56 @@ var
    len,len1: integer;                   {length of strings}
    lt: tokenType;                       {local copy of token}
    str1,str2: stringPtr;                {identifier strings}
+   elementType: typePtr;                {string element type}
+
+
+   procedure ConvertString (var str: tokenType; prefix: charStrPrefixEnum);
+   
+   { Convert unprefixed string literal str to a prefixed one    }
+   
+   var
+      sPtr: longStringPtr;              {new string}
+      i,j,k: integer;                   {loop counters}
+      codePoint: ucsCodePoint;          {Unicode code point}
+      c16ptr: ^integer;                 {pointer to char16_t value}
+      c32ptr: ^longint;                 {pointer to char32_t value}
+      utf8: utf8Rec;                    {UTF-8 encoding of character}
+      utf16: utf16Rec;                  {UTF-16 encoding of character}
+   
+   begin {ConvertString}
+   sPtr := pointer(Malloc(str.sval^.length*4));
+   k := 0;
+   for i := 1 to str.sval^.length do begin
+      codePoint := ConvertMacRomanToUCS(str.sval^.str[i]);
+      if prefix = prefix_u8 then begin
+         UTF8Encode(codePoint, utf8);
+         for j := 1 to utf8.length do begin
+            sPtr^.str[k+1] := chr(utf8.bytes[j]);
+            k := k+1;
+            end; {for}
+         end {if}
+      else if prefix = prefix_u16 then begin
+         UTF16Encode(codePoint, utf16);
+         c16Ptr := pointer(@sPtr^.str[k+1]);
+         c16Ptr^ := utf16.codeUnits[1];
+         k := k+2;
+         if utf16.length = 2 then begin
+            c16ptr := pointer(@sPtr^.str[k+1]);
+            c16Ptr^ := utf16.codeUnits[2];
+            k := k+2;
+            end; {if}
+         end {else if}
+      else if prefix = prefix_U32 then begin
+         c32Ptr := pointer(@sPtr^.str[k+1]);
+         c32Ptr^ := codePoint;
+         k := k+4;
+         end; {else if}
+      end; {for}
+   sPtr^.length := k;
+   str.sval := sPtr;
+   str.prefix := prefix;
+   end; {ConvertString}
+
 
 begin {Merge}
 kind1 := tk1.kind;
@@ -1100,6 +1217,18 @@ if class1 in [identifier,reservedWord] then begin
       str2 := @reservedWords[kind2]
    else if class2 in numericConstants then
       str2 := tk2.numString                   
+   else if (class2 = stringConstant) and (tk2.prefix = prefix_none) then begin
+      if str1^ = 'u' then
+         ConvertString(tk2, prefix_u16)
+      else if str1^ = 'U' then
+         ConvertString(tk2, prefix_U32)
+      else if str1^ = 'u8' then
+         ConvertString(tk2, prefix_u8)
+      else
+         Error(63);
+      tk1 := tk2;
+      goto 1;
+      end {else if}
    else begin
       Error(63);
       goto 1;
@@ -1145,7 +1274,16 @@ else if class1 in numericConstants then begin
 
 else if class1 = stringConstant then begin
    if class2 = stringConstant then begin
-      len1 := tk1.sval^.length;
+      if tk1.prefix = tk2.prefix then
+         {OK - nothing to do}
+      else if tk1.prefix = prefix_none then
+         ConvertString(tk1, tk2.prefix)
+      else if tk2.prefix = prefix_none then
+         ConvertString(tk2, tk1.prefix)
+      else
+         Error(166);
+      elementType := StringType(tk1.prefix)^.aType;
+      len1 := tk1.sval^.length - ord(elementType^.size);
       len := len1+tk2.sval^.length;
       cp := pointer(Malloc(len+2));
       for i := 1 to len1 do
@@ -1154,7 +1292,7 @@ else if class1 = stringConstant then begin
          cp^.str[i+len1] := tk2.sval^.str[i];
       cp^.length := len;
       if tk1.ispstring then
-         cp^.str[1] := chr(len-1);
+         cp^.str[1] := chr(len-2);
       tk1.sval := cp;
       goto 1;
       end; {if}
@@ -1334,12 +1472,14 @@ begin {BuildStringToken}
 token.kind := stringconst;
 token.class := stringConstant;
 token.ispstring := false;
-token.sval := pointer(GMalloc(len+2));
+token.sval := pointer(GMalloc(len+3));
+token.prefix := prefix_none;
 for i := 1 to len do begin
    token.sval^.str[i] := chr(cp^);
    cp := pointer(ord4(cp)+1);
    end; {for}
-token.sval^.length := len;
+token.sval^.str[len+1] := chr(0);
+token.sval^.length := len+1;
 PutBackToken(token, true);
 end; {BuildStringToken}
 
@@ -1504,10 +1644,12 @@ if macro^.readOnly then begin           {handle special macros}
          token.kind := stringConst;
          token.class := stringConstant;
          token.ispstring := false;
-         sp := pointer(Malloc(5+sourceFileGS.theString.size));
-         sp^.length := sourceFileGS.theString.size;
+         token.prefix := prefix_none;
+         sp := pointer(Malloc(3+sourceFileGS.theString.size));
+         sp^.length := sourceFileGS.theString.size+1;
          for i := 1 to sourceFileGS.theString.size do
             sp^.str[i] := sourceFileGS.theString.theString[i];
+         sp^.str[i+1] := chr(0);
          token.sval := sp;
          tokenStart := @sp^.str;
          tokenEnd := pointer(ord4(tokenStart)+sp^.length);
@@ -1517,6 +1659,7 @@ if macro^.readOnly then begin           {handle special macros}
          token.kind := stringConst;
          token.class := stringConstant;
          token.ispstring := false;
+         token.prefix := prefix_none;
          token.sval := dateStr;
          tokenStart := @dateStr^.str;
          tokenEnd := pointer(ord4(tokenStart)+dateStr^.length);
@@ -1527,6 +1670,7 @@ if macro^.readOnly then begin           {handle special macros}
          token.kind := stringConst;
          token.class := stringConstant;
          token.ispstring := false;
+         token.prefix := prefix_none;
          token.sval := timeStr;
          tokenStart := @timeStr^.str;
          tokenEnd := pointer(ord4(tokenStart)+timeStr^.length);
@@ -1537,8 +1681,8 @@ if macro^.readOnly then begin           {handle special macros}
          token.kind := intConst;        {__ORCAC__}
          token.numString := @oneStr;    {__STDC_NO_...__}
          token.class := intConstant;    {__ORCAC_HAS_LONG_LONG__}
-         token.ival := 1;
-         oneStr := '1';
+         token.ival := 1;               {__STDC_UTF_16__}
+         oneStr := '1';                 {__STDC_UTF_32__}
          tokenStart := @oneStr[1];
          tokenEnd := pointer(ord4(tokenStart)+1);
          end;
@@ -1547,6 +1691,7 @@ if macro^.readOnly then begin           {handle special macros}
          token.kind := stringConst;
          token.class := stringConstant;
          token.ispstring := false;
+         token.prefix := prefix_none;
          token.sval := versionStrL;
          tokenStart := @versionStrL^.str;
          tokenEnd := pointer(ord4(tokenStart)+versionStrL^.length);
@@ -1606,7 +1751,7 @@ else begin
                   if tcPtr^.token.kind = stringconst then begin
                      BuildStringToken(@quoteStr[1], 1);
                      BuildStringToken(@tcPtr^.token.sval^.str,
-                        tcPtr^.token.sval^.length);
+                        tcPtr^.token.sval^.length-1);
                      BuildStringToken(@quoteStr[1], 1);
                      end {if}
                   else begin
@@ -1851,6 +1996,7 @@ if ch = '<' then begin			{process a library file...}
    token.kind := stringconst;		{convert a <> style name to a string}
    token.class := stringConstant;
    token.ispstring := false;
+   token.prefix := prefix_none;
    i := 0;
    while not (charKinds[ord(ch)] in [ch_eol,ch_gt]) do begin
       i := i+1;
@@ -1883,7 +2029,7 @@ else begin
    {handle file names that are strings or macro expansions}
    expandMacros := true;		{allow macros to be used in the name}
    NextToken;				{skip the command name}
-   if token.kind = stringConst then begin
+   if (token.kind = stringConst) and (token.prefix = prefix_none) then begin
       LongToPString(@workString, token.sval);
       CheckDelimiters(workString);
       if mustExist then begin
@@ -2417,6 +2563,10 @@ var
                      stringConstant: begin
                         if tk1^.token.sval^.length <> tk2^.token.sval^.length
                            then goto 3;
+                        if tk1^.token.ispstring <> tk2^.token.ispstring then
+                           goto 3;
+                        if tk1^.token.prefix <> tk2^.token.prefix then
+                           goto 3;
                         for i := 1 to tk1^.token.sval^.length do
                            if tk1^.token.sval^.str[i] <>
                               tk2^.token.sval^.str[i] then
@@ -2562,7 +2712,7 @@ var
    while not (token.kind in [eolsy, eofsy]) do begin
       msg^ := concat(msg^, ' ');
       if token.kind = stringConst then begin
-         len := token.sval^.length;
+         len := token.sval^.length-1;
          for i := 1 to len do
             msg^ := concat(msg^, token.sval^.str[i]);
          end {if}
@@ -2593,13 +2743,13 @@ var
    begin {DoFloat}
    FlagPragmas(p_float);
    NextToken;
-   if token.kind in [intconst,uintconst] then begin
+   if token.kind in [intconst,uintconst,ushortconst] then begin
       floatCard := token.ival;
       NextToken;
       end {if}
    else
       Error(18);
-   if token.kind in [intconst,uintconst] then begin
+   if token.kind in [intconst,uintconst,ushortconst] then begin
       floatSlot := $C080 | (token.ival << 4);
       NextToken;
       end {if}
@@ -2669,7 +2819,7 @@ var
          NextToken;
          isNegative := true;
          end; {else if}
-      if token.kind in [intconst,uintconst] then begin
+      if token.kind in [intconst,uintconst,ushortconst] then begin
 	 value := token.ival;
 	 NextToken;
 	 end {if}
@@ -2899,11 +3049,14 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      end {if}
                   else
                      Error(18);
-                  if token.kind = stringconst then begin
+                  if (token.kind = stringconst) 
+                     and (token.prefix = prefix_none) then begin
                      LongToPString(
                         pointer(ord4(@sourceFileGS.theString)+1),
                         token.sval);
-                     sourceFileGS.theString.size := token.sval^.length;
+                     sourceFileGS.theString.size := token.sval^.length-1;
+                     if sourceFileGS.theString.size > 255 then
+                        sourceFileGS.theString.size := 255;
                      NextToken;
                      end; {if}
                   if token.kind <> eolsy then
@@ -3866,7 +4019,9 @@ var
    token.sval := pointer(Malloc(i+3));  {put the string in the string pool}
    CopyLongString(token.sval, pointer(sPtr));
    dispose(sPtr);
-   token.sval^.str[i+1] := chr(0);      {add null in case the string is extended}
+   token.sval^.str[i+1] := chr(0);      {add null terminator}
+   token.sval^.length := i+1;
+   token.prefix := prefix_none;
    end; {GetString}
 
 
@@ -3912,6 +4067,7 @@ doingPPExpression := false;             {not doing a preprocessor expression}
 unix_1 := false;			{int is 16 bits}
 lintIsError := true;                    {lint messages are considered errors}
 fenvAccess := false;                    {not accessing fp environment}
+charStrPrefix := prefix_none;           {no char/str prefix seen}
 mergingStrings := false;                {not currently merging strings}
 
                                         {error codes for lint messages}
@@ -3986,6 +4142,24 @@ mp^.algorithm := 6;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
+new(mp);                                {__STDC_UTF_16__}
+mp^.name := @'__STDC_UTF_16__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 5;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__STDC_UTF_32__}
+mp^.name := @'__STDC_UTF_32__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.algorithm := 5;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
 new(mp);                                {__ORCAC_HAS_LONG_LONG__}
 mp^.name := @'__ORCAC_HAS_LONG_LONG__';
 mp^.parameters := -1;
@@ -4042,8 +4216,8 @@ mp^.next := bp^;
 bp^ := mp;
 SetDateTime;                            {set up the macro date/time strings}
 					{set up the version string}
-versionStrL := pointer(GMalloc(3 + length(versionStr)));
-versionStrL^.length := length(versionStr);
+versionStrL := pointer(GCalloc(3 + length(versionStr)));
+versionStrL^.length := length(versionStr)+1;
 versionStrL^.str := versionStr;
 
 {Scan the command line options}
@@ -4197,7 +4371,7 @@ procedure NextToken;
 
 { Read the next token from the file.                            }
 
-label 1,2,3,4,5;
+label 1,2,3,4,5,6;
 
 type
    three = (s100,s1000,s4000);          {these declarations are used for a}
@@ -4228,11 +4402,15 @@ var
    tToken: tokenType;                   {for merging tokens}
    sPtr,tsPtr: gstringPtr;              {for forming string constants}
    lLastWasReturn: boolean;             {local copy of lastWasReturn}
-   codePoint: ucsCodePoint;             {Unicode code point from UCN}
+   codePoint: longint;                  {Unicode character value}
    chFromUCN: integer;                  {character given by UCN (converted)}
+   c16ptr: ^integer;                    {pointer to char16_t value}
+   c32ptr: ^longint;                    {pointer to char32_t value}
+   utf8: utf8Rec;                       {UTF-8 encoding of character}
+   utf16: utf16Rec;                     {UTF-16 encoding of character}
 
 
-   function EscapeCh: integer;
+   function EscapeCh: longint;
  
    {  Find and return the next character in a string or char     }
    {  constant.  Handle escape sequences if they are found.      }
@@ -4241,19 +4419,20 @@ var
    {  Globals:                                                   }
    {     ch - first character in sequence; set to first char     }
    {             after sequence                                  }
- 
-   label 1;
- 
+   {     charStrPrefix - prefix of the char constant or string   }
+   {     octHexEscape - true if this was an octal/hex escape seq.}
+
    var
       cnt: 0..3;                        {for counting octal escape sequences}
       dig: 0..15;                       {value of a hex digit}
       skipChar: boolean;                {get next char when done?}
-      val: 0..maxint;                   {hex/octal escape code value}
+      val: longint;                     {hex/octal escape code value}
       codePoint: ucsCodePoint;          {code point given by UCN}
       chFromUCN: integer;               {character given by UCN (converted)}
 
    begin {EscapeCh}
-1: skipChar := true;
+   octHexEscape := false;
+   skipChar := true;
    if ch = '\' then begin
       NextCh;
       if ch in ['0'..'7','a','b','t','n','v','f','p','r','x','u','U',
@@ -4268,9 +4447,13 @@ var
                   NextCh;
                   end; {while}
                if (val & $FF00) <> 0 then
-                  if not skipping then
-                     Error(162);
-               EscapeCh := val & $FF;
+                  if charStrPrefix in [prefix_none,prefix_u8] then begin
+                     if not skipping then
+                        Error(162);
+                     val := 0;
+                     end; {if}
+               EscapeCh := val;
+               octHexEscape := true;
                skipChar := false;
                end;
             'a': EscapeCh := 7;
@@ -4294,28 +4477,41 @@ var
                      ch := chr(ord(ch)&$5F);
                      dig := ord(ch)-ord('A')+10;
                      end; {else}
-                  val := (val << 4) | dig;
-                  if (val & $FF00) <> 0 then begin
+                  if ((charStrPrefix = prefix_none) and ((val & $F0) <> 0)) or
+                     ((charStrPrefix = prefix_u8) and ((val & $F0) <> 0)) or
+                     ((charStrPrefix = prefix_u16) and ((val & $F000) <> 0)) or
+                     ((charStrPrefix = prefix_u32) and ((val & $F0000000) <> 0))
+                     then begin
                      if not skipping then
                         Error(162);
+                     while ch in ['0'..'9','a'..'f','A'..'F'] do
+                        NextCh;
                      val := 0;
-                     end; {if}
-                  NextCh;
+                     end {if}
+                  else begin
+                     val := (val << 4) | dig;
+                     NextCh;
+                     end; {else}
                   end; {while}
                skipChar := false;
-               EscapeCh := val & $FF;
+               EscapeCh := val;
+               octHexEscape := true;
                end;
             'u','U': begin
                codePoint := UniversalCharacterName;
-               chFromUCN := ConvertUCSToMacRoman(codePoint);
                skipChar := false;
-               if chFromUCN >= 0 then
-                  EscapeCh := chFromUCN
-               else begin
-                  EscapeCh := 0;
-                  if not skipping then
-                     Error(146);
-                  end; {else}
+               if charStrPrefix = prefix_none then begin
+                  chFromUCN := ConvertUCSToMacRoman(codePoint);
+                  if chFromUCN >= 0 then
+                     EscapeCh := chFromUCN
+                  else begin
+                     EscapeCh := 0;
+                     if not skipping then
+                        Error(146);
+                     end; {else}
+                  end {if}
+               else
+                  EscapeCh := codePoint;
                end;
             '''','"','?','\': EscapeCh := ord(ch);
             otherwise: Error(57);
@@ -4327,7 +4523,10 @@ var
          end; {else}
       end {if}
    else
-      EscapeCh := ord(ch);
+      if charStrPrefix = prefix_none then
+         EscapeCh := ord(ch)
+      else
+         EscapeCh := ConvertMacRomanToUCS(ord(ch));
    if skipChar then
       NextCh;
    end; {EscapeCh}
@@ -4353,11 +4552,20 @@ var
    {skip the leading quote}
    NextCh;
    
+   if charStrPrefix = prefix_L then begin
+      charStrPrefix := prefix_u16;
+      if not skipping then
+         Error(167);
+      end; {if}
+
    {read the characters in the constant}
    while (not (charKinds[ord(ch)] in [ch_char,ch_eol,ch_eof])) do begin
       if cnt < maxint then
          cnt := cnt + 1;
-      result := (result << 8) | EscapeCh;
+      if charStrPrefix = prefix_none then
+         result := (result << 8) | EscapeCh
+      else
+         result := EscapeCh;
       end; {while}
    doingStringOrCharacter := false;
    
@@ -4371,16 +4579,35 @@ var
       Error(2);
    
    {create the token}
-   if allowLongIntChar and (cnt >= 3) then begin
-      token.kind := longconst;
+   if charStrPrefix = prefix_none then begin
+      if allowLongIntChar and (cnt >= 3) then begin
+         token.kind := longconst;
+         token.class := longConstant;
+         token.lval := result;
+         end {if}
+      else begin
+         token.kind := intconst;
+         token.class := intConstant;
+         token.ival := long(result).lsw;
+         end; {else}
+      end {if}
+   else if charStrPrefix = prefix_u16 then begin
+      token.kind := ushortconst;
+      token.class := intConstant;
+      if octHexEscape then
+         token.ival := long(result).lsw
+      else begin
+         UTF16Encode(result, utf16);
+         token.ival := utf16.codeUnits[1];
+         end; {else}
+      end {else if}
+   else if charStrPrefix = prefix_U32 then begin
+      token.kind := ulongconst;
       token.class := longConstant;
       token.lval := result;
-      end {if}
-   else begin
-      token.kind := intconst;
-      token.class := intConstant;
-      token.ival := long(result).lsw;
-      end {else}
+      end; {else if}
+
+   charStrPrefix := prefix_none;        {no prefix for next char/str (so far)}
    end; {CharConstant}
 
 
@@ -4499,6 +4726,7 @@ while charKinds[ord(ch)] in [illegal,ch_white,ch_eol] do begin
 tokenLine := lineNumber;                {record the position of the token}
 tokenColumn := ord(ord4(chPtr)-ord4(firstPtr));
 tokenStart := pointer(ord4(chPtr)-1);
+6:
 token.class := reservedSymbol;          {default to the most common class}
 case charKinds[ord(ch)] of
 
@@ -4740,49 +4968,123 @@ case charKinds[ord(ch)] of
       doingStringOrCharacter := true;   {change character scanning}
       token.kind := stringconst;        {set up the token}
       token.class := stringConstant;
-      i := 0;                           {set up for the string scan}
-      ispstring := false;
+      ispstring := false;               {set up for the string scan}
       setLength := false;
-      new(sPtr,s100);
       NextCh;                           {skip the opening "}
                                         {read the characters}
-      while not (charKinds[ord(ch)] in [ch_string,ch_eol,ch_eof]) do begin
-         i := i+1;
-         if i = 101 then begin
-            sPtr^.len1 := 100;
-            new(tsPtr,s1000);
-            CopyLongString(pointer(tsPtr), pointer(sPtr));
-            dispose(sPtr);
-            sPtr := tsPtr;
-            end {if}
-         else if i = 1001 then begin
-            sPtr^.len2 := 1000;
-            new(tsPtr,s4000);
-            CopyLongString(pointer(tsPtr), pointer(sPtr));
-            dispose(sPtr);
-            sPtr := tsPtr;
-            end {else if}
-         else if i = longstringlen then begin
-            i := 1001;
-            Error(90);
-            end; {else if}
-         sPtr^.str1[i] := chr(EscapeCh);
-         if (i = 1) and ispstring then
-            setLength := true;
-         end; {while}
+      if charStrPrefix = prefix_none then begin
+         i := 0;
+         new(sPtr,s100);
+         while not (charKinds[ord(ch)] in [ch_string,ch_eol,ch_eof]) do begin
+            i := i+1;
+            if i = 101 then begin
+               sPtr^.len1 := 100;
+               new(tsPtr,s1000);
+               CopyLongString(pointer(tsPtr), pointer(sPtr));
+               dispose(sPtr);
+               sPtr := tsPtr;
+               end {if}
+            else if i = 1001 then begin
+               sPtr^.len2 := 1000;
+               new(tsPtr,s4000);
+               CopyLongString(pointer(tsPtr), pointer(sPtr));
+               dispose(sPtr);
+               sPtr := tsPtr;
+               end {else if}
+            else if i = longstringlen then begin
+               i := 1001;
+               Error(90);
+               end; {else if}
+            sPtr^.str1[i] := chr(ord(EscapeCh));
+            if (i = 1) and ispstring then
+               setLength := true;
+            end; {while}
+         end {if}
+      else begin
+         if charStrPrefix = prefix_L then begin
+            charStrPrefix := prefix_u16;
+            if not skipping then
+               Error(167);
+            end; {if}
+         i := 1;
+         new(sPtr,s4000);
+         while not (charKinds[ord(ch)] in [ch_string,ch_eol,ch_eof]) do begin
+            if i > longstringlen-8 then begin   {leave space for char and null}
+               i := 1;
+               Error(90);
+               end; {if}
+            codePoint := EscapeCh;
+            if charStrPrefix = prefix_u8 then begin
+               if octHexEscape then begin
+                  sPtr^.str1[i] := chr(ord(codePoint));
+                  i := i+1;
+                  end {if}
+               else begin
+                  UTF8Encode(codePoint, utf8);
+                  for j := 1 to utf8.length do begin
+                     sPtr^.str1[i] := chr(utf8.bytes[j]);
+                     i := i+1;
+                     end; {for}
+                  end; {else}
+               end {if}
+            else if charStrPrefix = prefix_u16 then begin
+               c16ptr := pointer(@sPtr^.str1[i]);
+               if octHexEscape then begin
+                  c16ptr^ := ord(codePoint);
+                  i := i+2;
+                  end {if}
+               else begin
+                  UTF16Encode(codePoint, utf16);
+                  c16Ptr^ := utf16.codeUnits[1];
+                  i := i+2;
+                  if utf16.length = 2 then begin
+                     c16ptr := pointer(@sPtr^.str1[i]);
+                     c16Ptr^ := utf16.codeUnits[2];
+                     i := i+2;
+                     end; {if}
+                  end {else}
+               end {else}
+            else if charStrPrefix = prefix_U32 then begin
+               c32ptr := pointer(@sPtr^.str1[i]);
+               c32ptr^ := codePoint;
+               i := i+4;
+               end {else}
+            end; {while}
+         i := i-1;
+         end; {else}
       doingStringOrCharacter := false;  {process the end of the string}
       if ch = '"' then
          NextCh
       else
          Error(3);
       if setLength then                 {check for a p-string}
-         sPtr^.str1[1] := chr(i-1);
+         if charStrPrefix <> prefix_none then begin
+            if not skipping then
+               Error(165);
+            setLength := false;
+            end {if}
+         else
+            sPtr^.str1[1] := chr(i-1);
       token.ispstring := setLength;
       sPtr^.len1 := i;                  {set the string length}
-      token.sval := pointer(Malloc(i+3)); {put the string in the string pool}
+      token.sval := pointer(Malloc(i+6)); {put the string in the string pool}
       CopyLongString(token.sval, pointer(sPtr));
       dispose(sPtr);
-      token.sval^.str[i+1] := chr(0);   {add null in case the string is extended}
+      token.sval^.str[i+1] := chr(0);   {add null terminator}
+      if charStrPrefix = prefix_u16 then begin
+         token.sval^.str[i+2] := chr(0);
+         token.sval^.length := i+2;
+         end {if}
+      else if charStrPrefix = prefix_U32 then begin
+         token.sval^.str[i+2] := chr(0);
+         token.sval^.str[i+3] := chr(0);
+         token.sval^.str[i+4] := chr(0);
+         token.sval^.length := i+4;
+         end {else if}
+      else
+         token.sval^.length := i+1;
+      token.prefix := charStrPrefix;    {record prefix}
+      charStrPrefix := prefix_none;     {no prefix for next char/str (so far)}
       end;
 
    letter,ch_backslash: begin           {reserved words and identifiers}
@@ -4819,6 +5121,25 @@ case charKinds[ord(ch)] of
             end; {if}
          end; {while}
       workString[0] := chr(i);
+      if i = 1 then begin               {detect prefixed char/string literal}
+         if charKinds[ord(ch)] in [ch_char,ch_string] then begin
+            if workString[1] in ['L','u','U'] then begin
+               if workString[1] = 'L' then
+                  charStrPrefix := prefix_L
+               else if workString[1] = 'u' then
+                  charStrPrefix := prefix_u16
+               else if workString[1] = 'U' then
+                  charStrPrefix := prefix_U32;
+               goto 6;
+               end; {if}
+            end; {if}
+         end {if}
+      else if i = 2 then
+         if charKinds[ord(ch)] = ch_string then
+            if workString = 'u8' then begin
+               charStrPrefix := prefix_u8;
+               goto 6;
+               end; {if}
       CheckIdentifier;
       end;
 
