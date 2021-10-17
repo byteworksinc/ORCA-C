@@ -132,6 +132,8 @@ The discussion of escape sequences states that hexadecimal numeric escape sequen
 
 The value of an octal or hexadecimal escape sequence must be within the range of representable values in the relevant type (0-255 for char).  Also, \ may not be followed by a character other than one of the ones described as forming an escape sequence.  ORCA/C now gives an error in these cases.  Accordingly, the examples of "\410" and '\g' mentioned in the manual are now treated as errors.
 
+Floating-point constants may now be written in a new hexadecimal format.  See "New Language Features," below. 
+
 p. 241
 
 The 'f', 'F', 'l', or 'L' suffixes on floating-point constants do now affect the semantic type of those constants, although they do not change the constant's precision or range (which are always those of the SANE extended format).
@@ -435,6 +437,8 @@ As an example, this expression evaluates to 2 because the type of 1+2 is int:
 Generic selection expressions are primarily useful within macros, which can give different behavior based on the types of the arguments passed to them.
 
 23. (C11) Character constants and string literals may now have prefixes indicating they should use Unicode encodings.  The prefixes u8, u, and U indicate UTF-8, UTF-16, and UTF-32 encodings, respectively.  The u8 prefix may only be used on string literals.  The U and u prefixes may be used on string literals or character constants.  U- and u-prefixed character constants have the types char32_t and char16_t (as defined in <uchar.h>); U- and u-prefixed string literals are treated as arrays of those types.  For example, the string literal U"abc" designates an array with four members of type char32_t: the three letters encoded in UTF-32, plus a null terminator.
+
+24. (C99) Floating-point constants may now be expressed in a hexadecimal format.  These consist of a leading 0X or 0x, followed by a sequence of hexadecimal digits optionally containing a period, then P or p, then an exponent expressed as a sequence of decimal digits optionally preceded by + or -.  These designate the number given by the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent.  For example, the constant 0xF.8p-1 is equivalent to 7.75. 
 
 
 Multi-Character Character Constants

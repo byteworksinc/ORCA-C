@@ -2,6 +2,306 @@
          datachk off
 ****************************************************************
 *
+*  ConvertHexFloat - Parse a hexadecimal floating-point constant
+*
+*  Inputs:
+*        str - pointer to the string (p-string)
+*
+*  Outputs:
+*        Returns the extended value (or a NAN on error).
+*
+****************************************************************
+*
+ConvertHexFloat start scanner
+
+         subroutine (4:str),26
+end_idx  equ   0                        index one past end of string
+got_period equ end_idx+2                flag: have we encountered a period?
+full     equ   got_period+2             flag: is mantissa full?
+mantissa equ   full+2                   mantissa
+extrabits equ  mantissa+8               extra bits that do not fit in mantissa
+exp_adjust equ extrabits+2              exponent adjustment
+negate_exp equ exp_adjust+2             flag: is exponent negative?
+exp      equ   negate_exp+2             exponent
+nonzero  equ   exp+2                    flag: is mantissa non-zero?
+got_digit equ  nonzero+2                flag: got any digit yet?
+
+         stz   got_period               no period yet
+         stz   full                     not full yet
+         stz   negate_exp               assume positive exponent
+         stz   got_digit                no digit yet
+         stz   exp                      exponent value = 0
+         stz   mantissa                 mantissa = 0.0
+         stz   mantissa+2
+         stz   mantissa+4
+         stz   mantissa+6
+         stz   extrabits                extrabits = 0
+         lda   #63                      exponent adjustment = 63
+         sta   exp_adjust
+         
+         lda   [str]                    end_idx = string length + 1 
+         and   #$00FF
+         inc   a
+         sta   end_idx
+         ldy   #1                       string index = 1
+         
+         jsr   nextch                   check for 0x or 0X prefix
+         cmp   #'0'
+         beq   check_x
+         brl   error
+check_x  jsr   nextch
+         and   #$df
+         cmp   #'X'
+         beq   digitlp
+         brl   error
+         
+digitlp  jsr   nextch                   get a character
+         ldx   got_period               if there was no period yet
+         bne   check_p
+         cmp   #'.'                       if character is '.'
+         bne   check_p
+         dec   got_period                   flag that we got a period
+         bra   digitlp                      loop for another digit
+check_p  cmp   #'p'                     if character is 'p' or 'P'
+         beq   normal                     mantissa is done: normalize it
+         cmp   #'P'
+         beq   normal
+         sta   got_digit                flag that we (presumably) got a digit
+         jsr   hexdigit                 must be a hex digit: get value
+         ldx   full                     if mantissa is full
+         beq   donibble
+         ora   extrabits                  record extra bits for rounding
+         sta   extrabits
+         lda   got_period                 if we are not past the period
+         bne   digitlp
+         lda   #4                           exp_adjust += 4
+         clc
+         adc   exp_adjust
+;        bvs   error                        no overflow with p-string input
+         sta   exp_adjust
+         bra   digitlp                    loop for another digit
+
+donibble xba                            get nibble value in high bits
+         asl   a
+         asl   a
+         asl   a
+         asl   a
+         ldx   #4                       for each bit in nibble:
+bitloop  bit   mantissa+6                 if mantissa is now full
+         bpl   notfull
+         inc   full                         full = true
+         sta   extrabits                    record next bit(s) for rounding
+         lda   got_period                   if we are not past the period
+         bne   digitlp
+         txa                                  exp_adjust += number of extra bits
+         clc
+         adc   exp_adjust
+         sta   exp_adjust
+         bra   digitlp                      loop for another digit
+notfull  asl   a                          shift bit into mantissa
+         rol   mantissa
+         rol   mantissa+2
+         rol   mantissa+4
+         rol   mantissa+6
+         bit   got_period                 if we are past the period
+         bpl   nextbit
+         dec   exp_adjust                   exp_adjust-- (no overflow w/ p-str)
+nextbit  dex
+         bne   bitloop
+         bra   digitlp
+         
+normal   lda   got_digit                check that there was a mantissa digit
+         bne   chkzero
+         brl   error
+chkzero  lda   mantissa                 check if mantissa is nonzero
+         ora   mantissa+2
+         ora   mantissa+4
+         ora   mantissa+6
+         sta   nonzero                  set nonzero flag as appropriate
+         beq   do_exp                   if mantissa is nonzero, normalize:
+         lda   mantissa+6                 if high bit of mantissa is not 1:
+         bmi   do_exp                       do    
+normallp dec   exp_adjust                     exp_adjust--
+         asl   mantissa                       shift mantissa left one bit
+         rol   mantissa+2
+         rol   mantissa+4
+         rol   mantissa+6
+         bpl   normallp                     while high bit of mantissa is not 1
+         
+do_exp   jsr   nextch                   get next character
+         cmp   #'+'                     if it is '+'
+         bne   chkminus
+         jsr   nextch                     ignore it and get next char
+         bra   exploop
+chkminus cmp   #'-'                     else if it is '-'
+         bne   exploop
+         jsr   nextch                     get next character
+         inc   negate_exp                 flag that exponent is negative
+exploop  jsr   decdigit                 for each exponent digit
+         asl   exp                        exp = exp*10 + digit
+         pei   exp
+         bcs   bigexp
+         bmi   bigexp
+         asl   exp
+         asl   exp
+         bcs   bigexp
+         bmi   bigexp
+         adc   1,s
+         bvs   bigexp
+         clc
+         adc   exp
+         bvs   bigexp
+         sta   exp
+         pla
+         jsr   nextch
+         bpl   exploop
+         bra   neg_exp
+bigexp   pla
+         lda   #$7fff                   if exponent value overflows
+         sta   exp                        exp = INT_MAX
+bigexplp jsr   nextch
+         bpl   bigexplp
+neg_exp  lda   negate_exp               if exponent is negative
+         beq   finalexp
+         lda   exp                        negate exp
+         eor   #$ffff
+         inc   a
+         sta   exp
+finalexp lda   exp                      add in exponent adjustment
+         clc
+         adc   exp_adjust
+         bvc   expdone                  if addition overflows
+         lda   #$7fff                     positive exponent -> INT_MAX
+         ldx   negate_exp
+         beq   expdone
+         inc   a                          negative exponent -> INT_MIN
+expdone  ldx   nonzero                  if value is zero
+         bne   bias
+         txa                              exponent field = 0
+         bra   storeexp
+
+bias     clc                            else
+         adc   #16383                     compute biased exp. [-16385..49150]
+storeexp sta   exp
+         cmp   #32767                   if it is [0..32766], it is valid
+         blt   round
+         cmp   #32767+16383+1           if it is larger, generate an infinity
+         blt   inf                      otherwise, denormalize:
+denormlp lsr   mantissa+6               while biased exponent is negative:
+         ror   mantissa+4                 shift mantissa left one bit
+         ror   mantissa+2
+         ror   mantissa
+         ror   extrabits                  adjust extrabits
+         bcc   dn_next
+         lda   extrabits
+         ora   #1
+         sta   extrabits
+dn_next  inc   exp                        exp++
+         bmi   denormlp
+         
+round    lda   extrabits                implement SANE/IEEE round-to-nearest:
+         cmp   #$8000                   if less than halfway to next number
+         blt   done                       return value as-is
+         bne   roundup                  if more than halfway to next: round up
+         lda   mantissa                 if exactly halfway to next number
+         lsr   a                          if least significant bit is 0
+         bcc   done                         return value as-is
+roundup  inc   mantissa                 otherwise, round up to next number:
+         bne   done                       increment mantissa
+         inc   mantissa+2
+         bne   done
+         inc   mantissa+4
+         bne   done
+         inc   mantissa+6
+         bne   done
+         lda   #$8000                     if mantissa overflowed:
+         sta   mantissa+6                   mantissa = 1.0
+         inc   exp                          exp++ (could generate an infinity)
+
+done     jsr   nextch                   if we have not consumed the full input
+         bpl   error                      flag an error
+         lda   mantissa                 done: store return value
+         sta   >retval
+         lda   mantissa+2
+         sta   >retval+2
+         lda   mantissa+4
+         sta   >retval+4
+         lda   mantissa+6
+         sta   >retval+6
+         lda   exp
+         sta   >retval+8
+         bra   ret
+
+inf      lda   #32767                   infinity: exponent field = 32767
+         sta   >retval+8                mantissa = 1.0
+         inc   a
+         sta   >retval+6
+         asl   a
+         sta   >retval+4
+         sta   >retval+2
+         sta   >retval+0
+         bra   ret
+         
+error    lda   #32767                   bad input: return NANASCBIN
+         sta   >retval+8
+         lda   #$C011
+         sta   >retval+6
+         lda   #0
+         sta   >retval+4
+         sta   >retval+2
+         sta   >retval
+         
+ret      lda   #retval
+         sta   str
+         lda   #^retval
+         sta   str+2
+
+         return 4:str
+
+;get next character of string, or -1 if none (nz flags also set based on value)
+nextch   cpy   end_idx
+         bge   no_ch
+         lda   [str],y
+         iny
+         and   #$00FF
+         rts
+no_ch    lda   #-1
+         rts
+
+;get value of A, taken as a hex digit
+;branches to error if it is not a valid digit
+hexdigit cmp   #'0'
+         blt   baddigit
+         cmp   #'9'+1
+         bge   letter
+         and   #$000F
+         rts
+letter   and   #$df
+         cmp   #'A'
+         blt   baddigit
+         cmp   #'F'+1
+         bge   baddigit
+         and   #$000F
+         adc   #9
+         rts
+
+;get value of A, taken as a decimal digit
+;branches to error if it is not a valid digit
+decdigit cmp   #'0'
+         blt   baddigit
+         cmp   #'9'+1
+         bge   baddigit
+         and   #$000F
+         rts
+baddigit pla
+         brl   error
+
+retval   ds    10
+         end
+
+
+****************************************************************
+*
 *  Convertsl - Convert a string to a long integer
 *
 *  Inputs:

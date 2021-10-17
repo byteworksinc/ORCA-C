@@ -449,6 +449,10 @@ procedure Convertsll(var qval: longlong; var str: pString); extern;
 { Save the integer equivalent of the string to qval.  Assumes a }
 { valid 8-byte integer string; supports unsigned values.        }
 
+function ConvertHexFloat(var str: pString): extended; extern;
+
+{ Return the extended equivalent of the hexadecimal floating-   }
+{ point string.                                                 }
 
 procedure SetDateTime; extern;
 
@@ -735,6 +739,7 @@ if list or (numErr <> 0) then begin
         165: msg := @'''\p'' may not be used in a prefixed string';
         166: msg := @'string literals with these prefixes may not be merged';
         167: msg := @'''L''-prefixed character or string constants are not supported by ORCA/C';
+        168: msg := @'malformed hexadecimal floating constant';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -3544,7 +3549,8 @@ else begin
             if c2 = 'B' then isBin := true;
             NextChar;
             GetDigits;
-            goto 1;
+            if not isHex or not (c2 in ['.','p','P']) then
+               goto 1;
             end; {if}
    end;
 if c2 = '.' then begin                  {handle a decimal}
@@ -3552,16 +3558,18 @@ if c2 = '.' then begin                  {handle a decimal}
    numString[stringIndex] := '.';
    NextChar;
    isReal := true;
-   if charKinds[ord(c2)] = digit then
+   if (charKinds[ord(c2)] = digit) or
+      (isHex and (c2 in ['a'..'f','A'..'F'])) then
       GetDigits
    else if stringIndex = 2 then begin
       numString[3] := '0';
       stringIndex := 3;
       end; {else}
    end; {if}
-if c2 in ['e','E'] then begin           {handle an exponent}
+if (not isHex and (c2 in ['e','E']))    {handle an exponent}
+   or (isHex and (c2 in ['p','P'])) then begin           
    stringIndex := stringIndex+1;
-   numString[stringIndex] := 'e';
+   numString[stringIndex] := c2;
    NextChar;
    isReal := true;
    if c2 in ['+','-'] then begin
@@ -3622,7 +3630,12 @@ if isReal then begin                    {convert a real constant}
    else
       token.kind := doubleConst;
    token.class := realConstant;
-   if stringIndex > 80 then begin
+   if isHex then begin
+      token.rval := ConvertHexFloat(numString);
+      if token.rval <> token.rval then  {NAN => invalid format}
+         FlagError(168);
+      end {if}
+   else if stringIndex > 80 then begin
       FlagError(131);
       token.rval := 0.0;
       end {if}
