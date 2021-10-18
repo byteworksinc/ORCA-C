@@ -1612,6 +1612,8 @@ with defaultStruct^ do begin            {(for structures with errors)}
    qualifiers := [];
    kind := structType;
    sName := nil;
+   constMember := false;
+   flexibleArrayMember := false;
    new(fieldList);
    with fieldlist^ do begin
       next := nil;

@@ -2847,8 +2847,10 @@ var
                   maxDisp := disp;
                if variable^.itype^.size = 0 then
                   if (variable^.itype^.kind = arrayType) 
-                     and (disp > 0) then {handle flexible array member}
-                     didFlexibleArray := true
+                     and (disp > 0) then begin {handle flexible array member}
+                     didFlexibleArray := true;
+                     tp^.flexibleArrayMember := true;
+                     end {if}
                   else
                      Error(117);
                end {if}
@@ -2868,10 +2870,16 @@ var
                   tPtr := tPtr^.aType;
                end; {while}
             if tqConst in tPtr^.qualifiers then
-               tp^.constMember := true
-            else if tPtr^.kind in [structType,unionType] then
+               tp^.constMember := true;
+            if tPtr^.kind in [structType,unionType] then begin
                if tPtr^.constMember then
                   tp^.constMember := true;
+               if tPtr^.flexibleArrayMember then
+                  if kind = structType then
+                     Error(169)
+                  else {if kind = unionType then}
+                     tp^.flexibleArrayMember := true;
+               end; {if}
 
             if token.kind = commach then {allow repeated declarations}
                begin
@@ -3220,6 +3228,7 @@ while token.kind in allowedTokens do begin
                  {structTypePtr^.fieldList := nil;}
                  {structTypePtr^.sName := nil;}
                  {structTypePtr^.constMember := false;}
+                 {structTypePtr^.flexibleArrayMember := false;}
                   structPtr := NewSymbol(ttoken.name, structTypePtr, ident,
                      tagSpace, defined);
                   structTypePtr^.sName := structPtr^.name;
@@ -3253,6 +3262,7 @@ while token.kind in allowedTokens do begin
               {structTypePtr^.fieldList := nil;}
               {structTypePtr^.sName := nil;}
               {structTypePtr^.constMember := false;}
+              {structTypePtr^.flexibleArrayMember := false;}
                end; {if}
             if structPtr <> nil then
                structPtr^.itype := structTypePtr;
@@ -3389,6 +3399,9 @@ var
                Error(123);
                goto 1;
                end; {if}
+            if tp^.aType^.kind in [structType,unionType] then
+               if tp^.aType^.flexibleArrayMember then
+                  Error(169);
             end; {if}
          firstVariable := false;        {unspecified sizes are only allowed in }
                                         { the first subscript                  }

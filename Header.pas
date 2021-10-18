@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 17;                 {version number of .sym file format}
+   symFileVersion = 18;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1063,6 +1063,7 @@ procedure EndInclude {chPtr: ptr};
                 	end; {while}
         	     WriteByte(0);
         	     WriteByte(ord(tp^.constMember));
+        	     WriteByte(ord(tp^.flexibleArrayMember));
         	     end;
 
 		  otherwise: ;
@@ -1700,6 +1701,7 @@ var
         		ep := ip;
         		end; {while}
         	     tp^.constMember := boolean(ReadByte);
+        	     tp^.flexibleArrayMember := boolean(ReadByte);
         	     end;
 
         	  enumType: ;

@@ -740,6 +740,7 @@ if list or (numErr <> 0) then begin
         166: msg := @'string literals with these prefixes may not be merged';
         167: msg := @'''L''-prefixed character or string constants are not supported by ORCA/C';
         168: msg := @'malformed hexadecimal floating constant';
+        169: msg := @'struct or array may not contain a struct with a flexible array member';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
