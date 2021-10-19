@@ -206,6 +206,10 @@ p. 277
 
 The type "long double" now specifies a number in the SANE extended format.
 
+p. 286
+
+Unions may now contain bit fields.
+
 p. 289
 
 Unions can be initialized by a brace-enclosed expression giving the initializer value for the first element of the union, or by an expression of the appropriate union type.  The non-standard construct of initializing the first element of a union with a non-brace-enclosed initializer is no longer supported.  The supported alternative is simply to enclose the initializer in braces, e.g.
@@ -1369,6 +1373,8 @@ int foo(int[42]);
 166. The fields of structures and unions should be accessible from any expression of structure or union type, including assignments and function calls.  For example, if x and y have type "struct S {int i;}", then (x=y).i is a legal expression that performs an assignment and then gets the value of the i field.  Similarly, f().i is a legal expression if the function call f() has a return type of struct S.  These expressions were not being accepted, but now they are.
 
 167. If an array with automatic storage duration was initialized from a string literal containing an embedded null byte (e.g. char s[] = "a\0b"), characters after the null byte would not be properly initialized.
+
+168. Unions may now contain bit-fields, as specified in the C standards.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

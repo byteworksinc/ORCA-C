@@ -2795,10 +2795,12 @@ var
                   fl := variable;
                   end; {if}
                end; {if}
+            if kind = unionType then begin
+               disp := 0;
+               bitdisp := 0;
+               end; {if}
             if token.kind = colonch then {handle a bit field}
                begin
-               if kind = unionType then
-                  Error(56);
                NextToken;
                Expression(arrayExpression,[commach,semicolonch]);
                if (expressionValue >= maxBitField) or (expressionValue < 0) then
@@ -2823,6 +2825,9 @@ var
                else
                   tPtr := typeSpec;
                bitdisp := bitdisp+long(expressionValue).lsw;
+               if kind = unionType then
+                  if ((bitDisp+7) div 8) > maxDisp then
+                     maxDisp := ((bitDisp+7) div 8);
                if (tPtr^.kind <> scalarType)
                   or not (tPtr^.baseType in
                      [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
@@ -2836,9 +2841,7 @@ var
                if bitdisp <> 0 then begin
                   disp := disp+((bitDisp+7) div 8);
                   bitdisp := 0;
-                  end {if}
-               else if kind = unionType then
-                  disp := 0;
+                  end; {if}
                variable^.disp := disp;
                variable^.bitdisp := bitdisp;
                variable^.bitsize := 0;
