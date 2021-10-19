@@ -1376,6 +1376,8 @@ int foo(int[42]);
 
 168. Unions may now contain bit-fields, as specified in the C standards.
 
+169. If an assembly-language function (declared with the asm keyword) had a structure or union return type, ORCA/C would generate some spurious code at the beginning of the function, which might trash data used by its caller.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

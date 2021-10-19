@@ -3859,24 +3859,24 @@ if isFunction then begin
          lp := lp^.pnext;
          end; {while}
       gotoList := nil;                  {initialize the label list}
-                                        {set up struct/union area}
-      if variable^.itype^.ftype^.kind in [structType,unionType] then begin
-         lp := NewSymbol(@'@struct', variable^.itype^.ftype, staticsy,
-            variablespace, declared);
-         tk.kind := ident;
-         tk.class := identifier;
-         tk.name := @'@struct';
-         tk.symbolPtr := nil;
-         lp := FindSymbol(tk, variableSpace, false, true);
-         Gen1Name(pc_lao, 0, lp^.name);
-         Gen2t(pc_str, 0, 0, cgULong);
-         end; {if}
       fenvAccessInFunction := fenvAccess;
       if isAsm then begin
          AsmFunction(variable);         {handle assembly language functions}
          PopTable;
          end {if}
       else begin
+                                        {set up struct/union area}
+         if variable^.itype^.ftype^.kind in [structType,unionType] then begin
+            lp := NewSymbol(@'@struct', variable^.itype^.ftype, staticsy,
+               variablespace, declared);
+            tk.kind := ident;
+            tk.class := identifier;
+            tk.name := @'@struct';
+            tk.symbolPtr := nil;
+            lp := FindSymbol(tk, variableSpace, false, true);
+            Gen1Name(pc_lao, 0, lp^.name);
+            Gen2t(pc_str, 0, 0, cgULong);
+            end; {if}
 					{generate parameter labels}
          if fnType^.overrideKR then
             GenParameters(nil)
