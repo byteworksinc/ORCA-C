@@ -4405,7 +4405,7 @@ var
                Gen1t(pc_ldc, ord(elements), cgWord);
                Gen0t(pc_stk, cgWord);
                Gen0t(pc_bno, cgULong);
-               Gen1tName(pc_cup, 0, cgVoid, @'~ZERO');
+               Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
                end; {if}
             iPtr := iPtr^.next;
             goto 1;
@@ -4422,7 +4422,7 @@ var
             Gen1t(pc_ldc, size, cgWord);
             Gen0t(pc_stk, cgWord);
             Gen0t(pc_bno, cgULong);
-            Gen1tName(pc_cup, 0, cgVoid, @'~ZERO');
+            Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
             disp := disp + size;
             count := count - long(elements).lsw;
             if count = 0 then begin
