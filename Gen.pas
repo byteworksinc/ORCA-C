@@ -5467,7 +5467,7 @@ procedure GenTree {op: icptr};
          end; {if}
 
    {save the stack register}
-   if saveStack or checkStack or (op^.q <> 0) then begin
+   if ((saveStack or checkStack) and (op^.q >= 0)) or (op^.q > 0) then begin
       if stackSaveDepth <> 0 then begin
          GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
          GenImplied(m_phx);
@@ -5525,7 +5525,7 @@ procedure GenTree {op: icptr};
    GenImplied(m_rtl);
    GenLab(lab1);
 
-   if checkStack then begin
+   if checkStack and (op^.q >= 0) then begin
       {check the stack for errors}
       stackSaveDepth := stackSaveDepth - 1;
       GenNative(m_ldy_dir, direct, stackLoc, nil, 0);
@@ -5535,7 +5535,7 @@ procedure GenTree {op: icptr};
          GenNative(m_sty_dir, direct, stackLoc, nil, 0);
          end; {if}
       end {if}
-   else if saveStack or (op^.q <> 0) then begin
+   else if (saveStack and (op^.q >= 0)) or (op^.q > 0) then begin
       stackSaveDepth := stackSaveDepth - 1;
       if not (op^.optype in [cgVoid,cgByte,cgUByte,cgWord,cgUWord,cgQuad,cgUQuad])
          then
@@ -5587,7 +5587,7 @@ procedure GenTree {op: icptr};
          end; {if}
 
    {save the stack register}
-   if saveStack or checkStack or (op^.q <> 0) then begin
+   if ((saveStack or checkStack) and (op^.q >= 0)) or (op^.q > 0) then begin
       if stackSaveDepth <> 0 then begin
          GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
          GenImplied(m_phx);
@@ -5633,7 +5633,7 @@ procedure GenTree {op: icptr};
    GenNative(m_jsl, longAbs, 0, op^.lab, 0);
 
    {check the stack for errors}
-   if checkStack then begin
+   if checkStack and (op^.q >= 0) then begin
       stackSaveDepth := stackSaveDepth - 1;
       GenNative(m_ldy_dir, direct, stackLoc, nil, 0);
       GenCall(76);
@@ -5643,7 +5643,7 @@ procedure GenTree {op: icptr};
          end; {if}
       GenImplied(m_tay);
       end {if}
-   else if saveStack or (op^.q <> 0) then begin
+   else if (saveStack and (op^.q >= 0)) or (op^.q > 0) then begin
       stackSaveDepth := stackSaveDepth - 1;
       if not (op^.optype in [cgVoid,cgByte,cgUByte,cgWord,cgUWord,cgQuad,cgUQuad])
          then

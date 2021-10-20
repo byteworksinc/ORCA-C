@@ -787,7 +787,9 @@
 {                                                               }
 {  Calls a user procedure or function through the address on    }
 {  the top of the evaluation stack.  FTYPE is the return type.	}
-{  Repair is 1 if stack repair should be forced, and 0 if not.	}
+{  Repair is 1 if stack repair should be forced, -1 if stack    }
+{  repair and checking should be disabled, or 0 if the regular  }
+{  settings should be used.                                     }
 {                                                               }
 {                                                               }
 {  pc_cup - call user procedure                                 }
@@ -795,8 +797,9 @@
 {  Gen1tName(pc_cup, repair, name, ftype)			}
 {                                                               }
 {  Calls a user procedure or function.  Ftype is the type.	}
-{  Repair is 1 if stack repair should be forced, and 0 if not.	}
-{  NAME is the name of the procedure.				}
+{  Repair is 1 if stack repair should be forced, -1 if stack    }
+{  repair and checking should be disabled, or 0 if the regular  }
+{  settings should be used.  NAME is the name of the procedure. }
 {                                                               }
 {                                                               }
 {  dc_loc - define local label                                  }
