@@ -794,7 +794,7 @@
 {                                                               }
 {  pc_cup - call user procedure                                 }
 {                                                               }
-{  Gen1tName(pc_cup, repair, name, ftype)			}
+{  Gen1tName(pc_cup, repair, ftype, name)                       }
 {                                                               }
 {  Calls a user procedure or function.  Ftype is the type.	}
 {  Repair is 1 if stack repair should be forced, -1 if stack    }
