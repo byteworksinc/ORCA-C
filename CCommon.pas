@@ -78,7 +78,7 @@ const
    maxLine       = 255;                 {max length of a line}
    maxPath	 = 255;			{max length of a path name}
 					{NOTE: maxPath is used in Scanner.asm}
-   longstringlen = 4000;                {max length of a string constant}
+   longstringlen = 32760;               {max length of a string constant}
  
    minChar      = 0;                    {min ordinal value of source character}
    maxChar      = 255;                  {max ordinal value of source character}

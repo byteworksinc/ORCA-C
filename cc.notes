@@ -120,7 +120,7 @@ Character and string constants may now have prefixes indicating they should use 
 
 p. 238
 
-The limit on the total length of string constants in a single function has been raised to 12500 characters.
+The limit on the length of a single string constant is now 32760 bytes.  The limit on the total length of string constants in a single function is now 12500 bytes (larger string constants can be used to initialize static arrays).
 
 p. 239
 

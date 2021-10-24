@@ -4388,17 +4388,17 @@ procedure NextToken;
 label 1,2,3,4,5,6;
 
 type
-   three = (s100,s1000,s4000);          {these declarations are used for a}
+   three = (s100,s1000,sMAX);           {these declarations are used for a}
    gstringPtr = ^gstringRecord;         { variable length string record   }
    gstringRecord = record
       case three of
-          s100: (len1: integer;
+         s100:  (len1: integer;
                  str1: packed array[1..100] of char;
                  );
          s1000: (len2: integer;
                  str2: packed array[1..1000] of char;
                  );
-         s4000: (len3: integer;
+         sMAX:  (len3: integer;
                  str3: packed array[1..longstringlen] of char;
                  );
       end;
@@ -5000,7 +5000,7 @@ case charKinds[ord(ch)] of
                end {if}
             else if i = 1001 then begin
                sPtr^.len2 := 1000;
-               new(tsPtr,s4000);
+               new(tsPtr,sMAX);
                CopyLongString(pointer(tsPtr), pointer(sPtr));
                dispose(sPtr);
                sPtr := tsPtr;
@@ -5021,7 +5021,7 @@ case charKinds[ord(ch)] of
                Error(167);
             end; {if}
          i := 1;
-         new(sPtr,s4000);
+         new(sPtr,sMAX);
          while not (charKinds[ord(ch)] in [ch_string,ch_eol,ch_eof]) do begin
             if i > longstringlen-8 then begin   {leave space for char and null}
                i := 1;
