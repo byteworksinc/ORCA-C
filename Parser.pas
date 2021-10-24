@@ -186,6 +186,7 @@ var
    doingForLoopClause1: boolean;        {doing the first clause of a for loop?}
    compoundLiteralNumber: integer;      {number of compound literal}
    compoundLiteralToAllocate: identPtr; {compound literal that needs space allocated}
+   vaInfoLLN: integer;                  {label number of internal va info (0 for none)}
 
                                         {parameter processing variables}
                                         {------------------------------}
@@ -362,6 +363,11 @@ if not doingFunction then begin         {if so, finish it off}
          end; {else if}
       end; {if}
    Gen1(dc_lab, returnLabel);
+   if vaInfoLLN <> 0 then begin         {clean up variable args, if any}
+      Gen2(pc_lda, vaInfoLLN, 0);
+      Gen0t(pc_stk, cgULong);
+      Gen1tName(pc_cup, -1, cgVoid, @'__va_end');
+      end; {if}
    with fType^ do                       {generate the pc_ret instruction}
       case kind of
          scalarType  : Gen0t(pc_ret, baseType);
@@ -3884,6 +3890,18 @@ if isFunction then begin
             GenParameters(fnType^.parameterList); 
          savedVolatile := volatile;
          functionTable := table;
+         if fnType^.varargs then begin  {make internal va info for varargs funcs}
+            lp := NewSymbol(@'__orcac_va_info', vaInfoPtr, autosy,
+               variableSpace, declared);
+            lp^.lln := GetLocalLabel;
+            Gen2(dc_loc, lp^.lln, ord(vaInfoPtr^.size));
+            Gen2(pc_lda, lastParameterLLN, lastParameterSize);
+            Gen2t(pc_cop, lp^.lln, 0, cgULong);
+            Gen2t(pc_str, lp^.lln, cgPointerSize, cgULong);
+            vaInfoLLN := lp^.lln;
+            end {if}
+         else
+            vaInfoLLN := 0;
          CompoundStatement(false);      {process the statements}
          end; {else}
       end; {else}

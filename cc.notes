@@ -216,6 +216,10 @@ Unions can be initialized by a brace-enclosed expression giving the initializer 
 
    union nums {float f; int i;} x = {0.0};
 
+p. 297
+
+Variable argument lists will now work even if stack repair code is enabled.
+
 p. 311
 
 If integer overflow occurs during signed integer multiplication, the resulting value is not predictable.  Contrary to what the description in the manual implies, it will not necessarily be the low-order bits from the true product of the operands.
@@ -303,6 +307,10 @@ The discussions of toascii(), toint(), and _tolower should note that they are ex
 p. 405
 
 The discussion of _toupper should note that _toupper is an extension to ANSI C.
+
+p. 406
+
+va_end is now a macro, not a function.  Also, the va_arg, va_end, and va_start macros will now work even if stack repair code is enabled.
 
 p. 444,445
 
@@ -1377,6 +1385,8 @@ int foo(int[42]);
 168. Unions may now contain bit-fields, as specified in the C standards.
 
 169. If an assembly-language function (declared with the asm keyword) had a structure or union return type, ORCA/C would generate some spurious code at the beginning of the function, which might trash data used by its caller.
+
+170. Variable argument processing could not be restarted by calling va_start() after va_end().  Also, the addresses of local variables would change when va_end() was called, invalidating any pointers to them.  The implementation of variable arguments has been changed to fix these problems.  The only remaining non-standard restriction is that if #pragma optimize bit 6 or #pragma debug bit 4 is set, calls to functions taking variable arguments are not allowed to pass extra arguments beyond the number that the function will use.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

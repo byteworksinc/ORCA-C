@@ -45,6 +45,8 @@
 {  boolPtr - pointer to the base type for _Bool                 }
 {  voidPtr - pointer to the base type for void                  }
 {  voidPtrPtr - typeless pointer, for some type casting         }
+{  charPtrPtr - pointer to type record for char *               }
+{  vaInfoPtr - pointer to type record for internal va info type }
 {  stringTypePtr - pointer to the base type for string literals }
 {  utf16StringTypePtr - pointer to the base type for UTF-16     }
 {       string literals                                         }
@@ -82,11 +84,16 @@ var
    globalTable: symbolTablePtr;         {global symbol table}
    functionTable: symbolTablePtr;       {table for top level of current function}
 
+                                        {output from GenParameters}
+   lastParameterLLN: integer;           {label number of last parameter (0 if none)}
+   lastParameterSize: integer;          {size of last parameter}
+
                                         {base types}
    charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
       uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
       floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,utf16StringTypePtr,
-      utf32StringTypePtr,voidPtr,voidPtrPtr,constCharPtr,defaultStruct: typePtr;
+      utf32StringTypePtr,voidPtr,voidPtrPtr,charPtrPtr,vaInfoPtr,constCharPtr,
+      defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
 
@@ -134,6 +141,10 @@ procedure GenParameters (pp: parameterPtr);
 {								}
 { parameters:							}
 {    pp - pointer to first parameter				}
+{                                                               }
+{ variables:                                                    }
+{     lastParameterLLN - label number of last parameter         }
+{     lastParameterSize - size of last parameter                }
           
 
 procedure GenSymbols (sym: symbolTablePtr; doGlobals: boolean);
@@ -945,6 +956,10 @@ procedure GenParameters {pp: parameterPtr};
 {								}
 { parameters:							}
 {    pp - pointer to first parameter				}
+{                                                               }
+{ variables:                                                    }
+{     lastParameterLLN - label number of last parameter         }
+{     lastParameterSize - size of last parameter                }
 
 var
    i: 0..hashSize;                      {loop variable}
@@ -954,6 +969,8 @@ var
    tk: tokenType;			{symbol name token}
 
 begin {GenParameters}
+pln := 0;
+size := 0;
 if pp <> nil then begin			{prototyped parameters}
    tk.kind := ident;
    tk.numString := nil;
@@ -965,8 +982,10 @@ if pp <> nil then begin			{prototyped parameters}
       sp := FindSymbol(tk, variableSpace, true, false);
       if sp = nil then
          sp := pp^.parameter;
-      if sp^.itype^.kind = arrayType then
-	 Gen3(dc_prm, pln, cgPointerSize, sp^.pdisp)
+      if sp^.itype^.kind = arrayType then begin
+         size := cgPointerSize;
+         Gen3(dc_prm, pln, cgPointerSize, sp^.pdisp);
+         end {if}
       else begin
 	 size := long(sp^.itype^.size).lsw;
 	 if (size = 1) and (sp^.itype^.kind = scalarType) then
@@ -982,9 +1001,12 @@ else begin				{K&R parameters}
       sp := table^.buckets[i];
       while sp <> nil do begin
 	 if sp^.storage = parameter then begin
-            sp^.pln := GetLocalLabel;
-            if sp^.itype^.kind = arrayType then
-               Gen3(dc_prm, sp^.lln, cgPointerSize, sp^.pdisp)
+            pln := GetLocalLabel;
+            sp^.pln := pln;
+            if sp^.itype^.kind = arrayType then begin
+               size := cgPointerSize;
+               Gen3(dc_prm, sp^.lln, cgPointerSize, sp^.pdisp);
+               end {if}
             else begin
                size := long(sp^.itype^.size).lsw;
                if (size = 1) and (sp^.itype^.kind = scalarType) then
@@ -996,6 +1018,8 @@ else begin				{K&R parameters}
 	 end; {while}
       end; {for}
    end; {else}
+lastParameterLLN := pln;
+lastParameterSize := size;
 end; {GenParameters}
 
 
@@ -1604,6 +1628,23 @@ with voidPtrPtr^ do begin
    qualifiers := [];
    kind := pointerType;
    pType := voidPtr;
+   end; {with}
+new(charPtrPtr);                        {char *}
+with charPtrPtr^ do begin
+   size := cgPointerSize;
+   saveDisp := 0;
+   qualifiers := [];
+   kind := pointerType;
+   pType := charPtr;
+   end; {with}
+new(vaInfoPtr);                         {internal varargs info type (char*[2])}
+with vaInfoPtr^ do begin
+   size := cgPointerSize*2;
+   saveDisp := 0;
+   qualifiers := [];
+   kind := arrayType;
+   aType := charPtrPtr;
+   elements := 2;
    end; {with}
 new(defaultStruct);                     {default structure}
 with defaultStruct^ do begin            {(for structures with errors)}

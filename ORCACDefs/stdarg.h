@@ -14,6 +14,11 @@
 *
 *  Thanks to Doug Gwyn for the new va_start & va_arg declarations.
 *
+*****************************************************************
+*
+*  Modified October 2021 for better standards conformance.
+*  This version will only work with ORCA/C 2.2.0 B6 or later.
+*
 ****************************************************************/
 
 #ifndef __stdarg__
@@ -25,12 +30,12 @@ typedef char *__va_list[2];
 #endif
 
 typedef __va_list va_list;
-#define va_end(a) __va_end(a)
-#define	va_start(ap,LastFixedParm) ((void) ((ap)[0] = (ap)[1] = (char *) (&LastFixedParm + 1)))
-#define	va_arg(ap,type)	_Generic(*(type *)0, \
+#define va_end(ap) __record_va_info(ap)
+#define va_start(ap,LastFixedParm) ((void) ((ap)[0] = (char *) (&LastFixedParm + 1), (ap)[1] = (char *)&__orcac_va_info))
+#define va_arg(ap,type) _Generic(*(type *)0, \
         double: (type)((long double *)((ap)[0] += sizeof(long double)))[-1], \
         default: ((type *)((ap)[0] += sizeof(type)))[-1])
 
-void __va_end(va_list);
+void __record_va_info(va_list);
 
 #endif
