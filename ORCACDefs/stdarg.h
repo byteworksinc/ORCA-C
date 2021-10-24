@@ -35,6 +35,7 @@ typedef __va_list va_list;
 #define va_arg(ap,type) _Generic(*(type *)0, \
         double: (type)((long double *)((ap)[0] += sizeof(long double)))[-1], \
         default: ((type *)((ap)[0] += sizeof(type)))[-1])
+#define va_copy(dest,src) ((void)((dest)[0]=(src)[0],(dest)[1]=(src)[1]))
 
 void __record_va_info(va_list);
 

@@ -838,6 +838,13 @@ These functions convert from a UTF-16-encoded or UTF-32-encoded Unicode characte
 
 In ORCA/C, multibyte characters are always one byte and are considered to be encoded in the character set used by the IIGS desktop environment (known as Mac OS Roman), so these functions convert between that character set and Unicode.
 
+17. (C99) The function-like macro va_copy has been added:
+
+#include <stdarg.h>
+void va_copy(va_list dest, va_list src);
+
+The va_copy macro makes a copy of the va_list src, which must have been initialized by a call to va_start in a function taking variable arguments (plus possibly some number of calls to va_arg).  After a call to va_copy, dest can be used to access the variable arguments in the same way as src.  A corresponding call to va_end(dest) must be made in the function that called va_copy.
+
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
 The Default .h File
