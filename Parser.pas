@@ -1304,6 +1304,7 @@ var
       ttPtr: typeDefPtr;                {work pointer}
       parencount: integer;              {for skipping in parm list}
       lvarParmList: boolean;            {did we prototype a variable?}
+      gotStatic: boolean;               {got 'static' in array declarator?}
  
                                         {variables used to preserve states}
                                         { across recursive calls          }
@@ -1574,11 +1575,36 @@ var
          {tPtr2^.qualifiers := [];}
          tPtr2^.kind := arrayType;
          {tPtr2^.elements := 0;}
+         NextToken;
+         gotStatic := false;
+         if doingParameters and (typeStack = nil) then begin
+            tPtr2^.kind := pointerType; {adjust to pointer type}
+            tPtr2^.size := cgPointerSize;
+            if token.kind = staticsy then begin
+               gotStatic := true;
+               NextToken;
+               end; {if}
+            while token.kind in [constsy,volatilesy,restrictsy] do begin
+               if token.kind = constsy then
+                  tPtr2^.qualifiers := tPtr2^.qualifiers + [tqConst]
+               else if token.kind = volatilesy then begin
+                  tPtr2^.qualifiers := tPtr2^.qualifiers + [tqVolatile];
+                  volatile := true;
+                  end {else}
+               else {if token.kind = restrictsy then}
+                  tPtr2^.qualifiers := tPtr2^.qualifiers + [tqRestrict];
+               NextToken;
+               end; {while}
+            if not gotStatic then
+               if token.kind = staticsy then begin
+                  gotStatic := true;
+                  NextToken;
+                  end; {if}
+            end; {if}
          new(ttPtr);
          ttPtr^.next := typeStack;
          typeStack := ttPtr;
          ttPtr^.typeDef := tPtr2;
-         NextToken;
          if token.kind <> rbrackch then begin
             Expression(arrayExpression, [rbrackch,semicolonch]);
             if expressionValue <= 0 then begin
@@ -1586,7 +1612,9 @@ var
                expressionValue := 1;
                end; {if}
             tPtr2^.elements := expressionValue;
-            end; {if}
+            end {if}
+         else if gotStatic then
+            Error(35);
          Match(rbrackch,24);
          end; {else if}
       end; {while}
