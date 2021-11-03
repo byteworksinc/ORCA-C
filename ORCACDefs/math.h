@@ -34,6 +34,7 @@ int __fpclassifyf(float);
 int __fpclassifyd(double);
 int __fpclassifyl(long double);
 int __signbit(long double);
+int __fpcompare(long double, long double, short);
 
 #define fpclassify(x) _Generic((x), \
    float: __fpclassifyf, \
@@ -45,6 +46,13 @@ int __signbit(long double);
 #define isnan(x)    (fpclassify((long double)(x)) == FP_NAN)
 #define isnormal(x) (fpclassify(x) == FP_NORMAL)
 #define signbit(x)  __signbit(x)
+
+#define isgreater(x,y)      __fpcompare((x),(y),0x40)
+#define isgreaterequal(x,y) __fpcompare((x),(y),0x42)
+#define isless(x,y)         __fpcompare((x),(y),0x80)
+#define islessequal(x,y)    __fpcompare((x),(y),0x82)
+#define islessgreater(x,y)  __fpcompare((x),(y),0xC0)
+#define isunordered(x,y)    __fpcompare((x),(y),0x01)
 
 #ifndef __KeepNamespacePure__
    #define arctan(x) atan(x)        

@@ -845,6 +845,18 @@ void va_copy(va_list dest, va_list src);
 
 The va_copy macro makes a copy of the va_list src, which must have been initialized by a call to va_start in a function taking variable arguments (plus possibly some number of calls to va_arg).  After a call to va_copy, dest can be used to access the variable arguments in the same way as src.  A corresponding call to va_end(dest) must be made in the function that called va_copy.
 
+18. (C99) Several new function-like macros for comparison of floating-point numbers have been added:
+
+#include <math.h>
+int isgreater(real-floating x, real-floating y);
+int isgreaterequal(real-floating x, real-floating y);
+int isless(real-floating x, real-floating y);
+int islessequal(real-floating x, real-floating y);
+int islessgreater(real-floating x, real-floating y);
+int isunordered(real-floating x, real-floating y);
+
+These macros accept arguments of any real floating types, i.e. float, double, or long double.  They return 1 if x and y have the indicated relationship, or 0 if they do not.  These macros differ from the ordinary relational operators in that the macros will not raise the "invalid" floating-point exception if x and y are unordered because one or both is a quiet NaN.  (In ORCA/C, they will raise the "invalid" exception for signaling NaNs.)
+
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
 The Default .h File
