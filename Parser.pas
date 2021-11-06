@@ -1271,7 +1271,6 @@ var
    tPtr2: typePtr;                      {work pointer}
    tsPtr: typeDefPtr;                   {work pointer}
    typeStack: typeDefPtr;               {stack of type definitions}
-   varParmList: boolean;                {did we prototype a variable?}
    firstIteration: boolean;             {first iteration of type-unstacking loop?}
 
                                         {for checking function compatibility}
@@ -1286,12 +1285,9 @@ var
    unnamedParm: boolean;                {is this an unnamed prototype?}
 
 
-   procedure StackDeclarations (var varParmList: boolean);
+   procedure StackDeclarations;
  
    { stack the declaration operators                            }
-   {                                                            }
-   { Parameters:                                                }
-   {    varParmList - did we create one?                        }
  
    var
       cp,cpList: pointerListPtr;        {pointer list}
@@ -1303,7 +1299,6 @@ var
       tPtr2: typePtr;                   {work pointer}
       ttPtr: typeDefPtr;                {work pointer}
       parencount: integer;              {for skipping in parm list}
-      lvarParmList: boolean;            {did we prototype a variable?}
       gotStatic: boolean;               {got 'static' in array declarator?}
  
                                         {variables used to preserve states}
@@ -1318,7 +1313,6 @@ var
       lPrintMacroExpansions: boolean;   {local copy of printMacroExpansions}
 
    begin {StackDeclarations}
-   varParmList := false;                {no var parm list, yet}
    lastWasIdentifier := false;          {used to see if the declaration is a fn}
    cpList := nil;
    if token.kind = typedef then
@@ -1379,13 +1373,13 @@ var
                NextToken;
                end; {while}
             end; {while}
-         StackDeclarations(lvarParmList);
+         StackDeclarations;
          end;
 
       lparench: begin                   {handle '(' 'declarator' ')'}
          NextToken;
          isPtr := token.kind = asteriskch;
-         StackDeclarations(lvarParmList);
+         StackDeclarations;
          Match(rparench,12);
          if isPtr then
             lastWasIdentifier := false;
@@ -1422,7 +1416,6 @@ var
 	 PushTable;			{create a symbol table}
                                         {determine if it's a function}
          isFunction := lastWasIdentifier or isFunction;
-         varParmList := not isFunction;
          tPtr2 := pointer(GCalloc(sizeof(typeRecord))); {create the function type}
          {tPtr2^.size := 0;}
          {tPtr2^.saveDisp := 0;}
@@ -1646,7 +1639,7 @@ else
 typeStack := nil;                       {no types so far}
 parameterStorage := false;              {symbol is not in a parameter list}
 checkParms := false;                    {assume we won't need to check for parameter type errors}
-StackDeclarations(varParmList);         {stack the type records}
+StackDeclarations;                      {stack the type records}
 firstIteration := true;
 while typeStack <> nil do begin         {reverse the type stack}
    tsPtr := typeStack;
