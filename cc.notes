@@ -946,11 +946,7 @@ Beginning with ORCA/C 2.1, this statement will work.  Note that in keeping with 
 
 There are two undesirable side effects, though.  First, all function calls to a variable argument function are surrounded by extra stack repair code, even if you set optimization bit 3.  (This bit turns off stack repair code.)  This increases code size and slows a program down.  Sometimes these changes are noticeable, or even dramatic.  Second, native code peephole optimization is always disabled when stack repair code is in use, so you loose another optimization if you do not use this one.
 
-Turning this optimization on means ORCA/C is no longer strictly in compliance with the ANSI standard.  For strict compliance, you should leave stack repair code on for variable argument functions.  You also need to disable stack repair code in any user-defined function that uses the va_arg() function, since this function is not compatible with stack repair code.  For strict compliance, then, use at least
-
-   #pragma optimize 0x0008
-
-You can also add all of the other optimizations except removal of stack repair code around variable argument function calls and remain ANSI compliant, so this pragma will also work with all ANSI C programs:
+Turning this optimization on means ORCA/C is no longer strictly in compliance with the ANSI standard.  For strict compliance, you should leave stack repair code on for variable argument functions.  You can add any or all of the other optimizations and remain ANSI compliant, so this pragma will work with all ANSI C programs:
 
    #pragma optimize 0x003F
 
