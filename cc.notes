@@ -452,6 +452,12 @@ Generic selection expressions are primarily useful within macros, which can give
 
 24. (C99) Floating-point constants may now be expressed in a hexadecimal format.  These consist of a leading 0X or 0x, followed by a sequence of hexadecimal digits optionally containing a period, then P or p, then an exponent expressed as a sequence of decimal digits optionally preceded by + or -.  These designate the number given by the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent.  For example, the constant 0xF.8p-1 is equivalent to 7.75. 
 
+25. (C99) When a function parameter is declared with an array type, type qualifiers and/or the keyword "static" may be included within the angle brackets that designate the array type.  For example, a function may be defined as:
+
+   void f(long x[const static 20]) { ... }
+
+The type of an 'array' parameter is adjusted to a pointer type, and the type qualifiers are applied to that pointer type (so the x parameter in the example has the type "long * const").  The "static" keyword indicates that when the function is called, the corresponding argument must give access to an array of at least the specified length; if it does not, the behavior is undefined.
+
 
 Multi-Character Character Constants
 -----------------------------------
