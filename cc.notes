@@ -458,6 +458,16 @@ Generic selection expressions are primarily useful within macros, which can give
 
 The type of an 'array' parameter is adjusted to a pointer type, and the type qualifiers are applied to that pointer type (so the x parameter in the example has the type "long * const").  The "static" keyword indicates that when the function is called, the corresponding argument must give access to an array of at least the specified length; if it does not, the behavior is undefined.
 
+26. (C99) ORCA/C now has partial support for compound literals.  These are expressions of the following form:
+
+   ( type-name ) { initializer-list }
+
+Such an expression behaves similarly to a declaration in that it creates an object of the specified type, initialized with the brace-enclosed initializer list.  That object is unnamed, but the compound literal expression acts as a reference to it.  Note that a compound literal is not a cast, even though the syntax is similar.  As an example, the following declaration creates an unnamed array and initializes p to point to the first element of that array:
+
+   int *p = (int[]){1,2,3};
+
+ORCA/C supports the use of compound literals outside of functions, where they can be used in initializers for global variables (as in the example above).  Compound literals outside of functions have static storage duration.  Standard C also allows compound literals to be used within functions (with automatic storage duration), but ORCA/C does not currently support that.
+
 
 Multi-Character Character Constants
 -----------------------------------
