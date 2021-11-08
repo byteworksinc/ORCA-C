@@ -1403,6 +1403,8 @@ int foo(int[42]);
 
 170. Variable argument processing could not be restarted by calling va_start() after va_end().  Also, the addresses of local variables would change when va_end() was called, invalidating any pointers to them.  The implementation of variable arguments has been changed to fix these problems.  The only remaining non-standard restriction is that if #pragma optimize bit 6 or #pragma debug bit 4 is set, calls to functions taking variable arguments are not allowed to pass extra arguments beyond the number that the function will use.
 
+171. Function parameters declared with array types are adjusted to actually have pointer types, but this adjustment was not applied in some situations.  Now such parameters are consistently treated as actually having pointer types.  This affects their size as given by sizeof and their type as shown in debuggers.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

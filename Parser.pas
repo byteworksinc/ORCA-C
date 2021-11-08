@@ -1676,6 +1676,17 @@ while typeStack <> nil do begin         {reverse the type stack}
    firstIteration := false;
    end; {while}
 
+if doingParameters then                 {adjust array parameters to pointers}
+   if tPtr^.kind = arrayType then begin
+      tPtr2 := pointer(Calloc(sizeof(typeRecord)));
+      tPtr2^.size := cgPointerSize;
+     {tPtr2^.qualifiers := [];}
+     {tPtr2^.saveDisp := 0;}
+      tPtr2^.kind := pointerType;
+      tPtr2^.pType := tPtr^.aType;
+      tPtr := tPtr2;
+      end; {if}
+
 if checkParms then begin                {check for parameter type conflicts}
    with variable^ do begin
       if doingParameters then begin
