@@ -2491,64 +2491,58 @@ var
       kind := ktp^.kind;
 
       {handle string constants}
-      if token.kind = stringConst then begin
+      if token.kind = stringConst then
          stringElementType := StringType(token.prefix)^.aType;
-         if (kind = scalarType) and 
-            (((ktp^.baseType in [cgByte,cgUByte])
-               and (stringElementType = charPtr))
-            or CompTypes(ktp,stringElementType)) then begin
-            stringLength := token.sval^.length div ord(stringElementType^.size);
-            if tp^.elements = 0 then begin
-               tp^.elements := stringLength;
-               RecomputeSizes(variable^.itype);
-               end {if}
-            else if tp^.elements < stringLength-1 then begin
-               Error(44);
-               errorFound := true;
-               end; {else if}
-            with ktp^ do begin
-               iPtr := pointer(Malloc(sizeof(initializerRecord)));
-               iPtr^.next := variable^.iPtr;
-               variable^.iPtr := iPtr;
-               iPtr^.count := 1;
-               iPtr^.bitdisp := 0;
-               iPtr^.bitsize := 0;
-               iPtr^.isStructOrUnion := false;
-               if (variable^.storage in [external,global,private]) then begin
-                  iPtr^.isConstant := true;
-                  iPtr^.itype := cgString;
-                  iPtr^.sval := token.sval;
-                  count := tp^.elements - stringLength;
-                  if count > 0 then
-                     Fill(count, stringElementType)
-                  else if count = -1 then begin
-                     iPtr^.sval := pointer(GMalloc(token.sval^.length+2));
-                     CopyLongString(iPtr^.sval, token.sval);
-                     iPtr^.sval^.length :=
-                        iPtr^.sval^.length - ord(stringElementType^.size);
-                     end; {else if}
-                  end {if}
-               else begin
-                  iPtr^.isConstant := false;
-                  new(ep);
-                  iPtr^.iTree := ep;
-                  ep^.next := nil;
-                  ep^.left := nil;
-                  ep^.middle := nil;
-                  ep^.right := nil;
-                  ep^.token := token;
-                  end; {else}
-               end; {with}
-            NextToken;
+      if (token.kind = stringConst) and (kind = scalarType) and 
+         (((ktp^.baseType in [cgByte,cgUByte])
+            and (stringElementType = charPtr))
+         or CompTypes(ktp,stringElementType)) then begin
+         stringLength := token.sval^.length div ord(stringElementType^.size);
+         if tp^.elements = 0 then begin
+            tp^.elements := stringLength;
+            RecomputeSizes(variable^.itype);
             end {if}
-         else begin
-            Error(47);
+         else if tp^.elements < stringLength-1 then begin
+            Error(44);
             errorFound := true;
-            NextToken;
-            end; {else}
+            end; {else if}
+         with ktp^ do begin
+            iPtr := pointer(Malloc(sizeof(initializerRecord)));
+            iPtr^.next := variable^.iPtr;
+            variable^.iPtr := iPtr;
+            iPtr^.count := 1;
+            iPtr^.bitdisp := 0;
+            iPtr^.bitsize := 0;
+            iPtr^.isStructOrUnion := false;
+            if (variable^.storage in [external,global,private]) then begin
+               iPtr^.isConstant := true;
+               iPtr^.itype := cgString;
+               iPtr^.sval := token.sval;
+               count := tp^.elements - stringLength;
+               if count > 0 then
+                  Fill(count, stringElementType)
+               else if count = -1 then begin
+                  iPtr^.sval := pointer(GMalloc(token.sval^.length+2));
+                  CopyLongString(iPtr^.sval, token.sval);
+                  iPtr^.sval^.length :=
+                     iPtr^.sval^.length - ord(stringElementType^.size);
+                  end; {else if}
+               end {if}
+            else begin
+               iPtr^.isConstant := false;
+               new(ep);
+               iPtr^.iTree := ep;
+               ep^.next := nil;
+               ep^.left := nil;
+               ep^.middle := nil;
+               ep^.right := nil;
+               ep^.token := token;
+               end; {else}
+            end; {with}
+         NextToken;
          end {if}
 
-      {handle arrays of non-strings}
+      {handle arrays not initialized with a string constant}
       else if kind in
          [scalarType,pointerType,enumType,arrayType,structType,unionType] then
          begin
