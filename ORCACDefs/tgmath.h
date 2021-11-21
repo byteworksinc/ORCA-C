@@ -12,13 +12,6 @@
 
 #include <math.h>
 
-/*
- * Note: This header currently contains only some of the macros specified
- * in the C99 and later standards.  Others are not present because the
- * corresponding functions either are not available at all or have only
- * an unsuffixed version available.
- */
-
 #define __tg_real_x(fn,x) _Generic((x), \
    float: fn##f, \
    long double: fn##l, \
@@ -39,19 +32,43 @@
    long double: fn##l, \
    default: _Generic((y), long double: fn##l, default: fn))((x),(y),(other))
 
+#define __tg_x(fn,x) __tg_real_x(fn,(x))
+#define __tg_x_y(fn,x,y) __tg_real_x_y(fn,(x),(y))
+
+#define acos(x)         __tg_x(acos,(x))
+#define asin(x)         __tg_x(asin,(x))
+#define atan(x)         __tg_x(atan,(x))
+#define atan2(y,x)      __tg_real_x_y(atan2,(y),(x))
 #define cbrt(x)         __tg_real_x(cbrt,(x))
+#define ceil(x)         __tg_real_x(ceil,(x))
+#define cos(x)          __tg_x(cos,(x))
+#define cosh(x)         __tg_x(cosh,(x))
 #define copysign(x,y)   __tg_real_x_y(copysign,(x),(y))
+#define exp(x)          __tg_x(exp,(x))
 #define exp2(x)         __tg_real_x(exp2,(x))
 #define expm1(x)        __tg_real_x(expm1,(x))
+#define fabs(x)         __tg_real_x(fabs,(x))
+#define floor(x)        __tg_real_x(floor,(x))
+#define fmod(x,y)       __tg_real_x_y(fmod,(x),(y))
+#define frexp(x,nptr)   __tg_real_x_other(frexp,(x),(nptr))
 #define ilogb(x)        __tg_real_x(ilogb,(x))
+#define ldexp(x,n)      __tg_real_x_other(ldexp,(x),(n))
+#define log(x)          __tg_x(log,(x))
+#define log10(x)        __tg_real_x(log10,(x))
 #define log1p(x)        __tg_real_x(log1p,(x))
 #define log2(x)         __tg_real_x(log2,(x))
 #define logb(x)         __tg_real_x(logb,(x))
 #define lrint(x)        __tg_real_x(lrint,(x))
+#define pow(x,y)        __tg_x_y(pow,(x),(y))
 #define remainder(x,y)  __tg_real_x_y(remainder,(x),(y))
 #define remquo(x,y,quo) __tg_real_x_y_other(remquo,(x),(y),(quo))
 #define rint(x)         __tg_real_x(rint,(x))
 #define scalbn(x,n)     __tg_real_x_other(scalbn,(x),(n))
+#define sin(x)          __tg_x(sin,(x))
+#define sinh(x)         __tg_x(sinh,(x))
+#define sqrt(x)         __tg_x(sqrt,(x))
+#define tan(x)          __tg_x(tan,(x))
+#define tanh(x)         __tg_x(tanh,(x))
 #define trunc(x)        __tg_real_x(trunc,(x))
 
 #endif

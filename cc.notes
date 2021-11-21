@@ -973,6 +973,60 @@ long double truncl(long double x);
 
 These functions truncate x to an integer (discarding the fractional part).
 
+There are also added functions that correspond to existing <math.h> functions, but using float or long double for their argument and return types.  In ORCA/C, most of these actually behave identically to the existing un-suffixed versions.  An exception is the modf family of functions, which differ in the type of the location in which the integer part of the value is stored.
+
+#include <math.h>
+float       acosf(float x);
+long double acosl(long double x);
+float       asinf(float x);
+long double asinl(long double x);
+float       atanf(float x);
+long double atanl(long double x);
+float       atan2f(float y, float x);
+long double atan2l(long double y, long double x);
+float       ceilf(float x);
+long double ceill(long double x);
+float       cosf(float x);
+long double cosl(long double x);
+float       coshf(float x);
+long double coshl(long double x);
+float       expf(float x);
+long double expl(long double x);
+float       fabsf(float x);
+long double fabsl(long double x);
+float       floorf(float x);
+long double floorl(long double x);
+float       fmodf(float x, float y);
+long double fmodl(long double x, long double y);
+float       frexpf(float x, int *nptr);
+long double frexpl(long double x, int *nptr);
+float       ldexpf(float x, int n);
+long double ldexpl(long double x, int n);
+float       logf(float x);
+long double logl(long double x);
+float       log10f(float x);
+long double log10l(long double x);
+float       modff(float x, float *nptr);
+long double modfl(long double x, long double *nptr);
+float       powf(float x, float y);
+long double powl(long double x, long double y);
+float       sinf(float x);
+long double sinl(long double x);
+float       sinhf(float x);
+long double sinhl(long double x);
+float       sqrtf(float x);
+long double sqrtl(long double x);
+float       tanf(float x);
+long double tanl(long double x);
+float       tanhf(float x);
+long double tanhl(long double x);
+
+Similarly, there are float and long double analogs of the string conversion function strtod.  As currently implemented in ORCA/C, all of these functions behave identically, giving values with the precision and range of long double.
+
+#include <stdlib.h>
+float       strtof(const char * restrict str, char ** restrict ptr);
+long double strtold(const char * restrict str, char ** restrict ptr);
+
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
 The Default .h File

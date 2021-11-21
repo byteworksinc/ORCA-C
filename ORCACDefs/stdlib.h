@@ -73,6 +73,8 @@ int             rand(void);
 void           *realloc(void *, size_t);
 void            srand(unsigned);
 double          strtod(const char *, char **);
+float           strtof(const char *, char **);
+long double     strtold(const char *, char **);
 long            strtol(const char *, char **, int);
 unsigned long   strtoul(const char *, char **, int);
 #if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
