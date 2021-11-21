@@ -27,6 +27,10 @@ typedef long double double_t;
 #define ILOGB0   (-32767-1)
 #define ILOGBNAN (-32767-1)
 
+#define MATH_ERRNO       1
+#define MATH_ERREXCEPT   2
+#define math_errhandling 2
+
 #define FP_INFINITE  0xFE
 #define FP_NAN       0xFD
 #define FP_NORMAL    0x00
