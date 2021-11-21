@@ -964,7 +964,7 @@ double      scalbn(double x, int n);
 float       scalbnf(float x, int n);
 long double scalbnl(long double x, int n);
 
-These functions return x * 2^n, computed efficiently.
+These functions return x * FLT_RADIX^n, computed efficiently.  In ORCA/C, FLT_RADIX is 2.
 
 #include <math.h>
 double      trunc(double x);
