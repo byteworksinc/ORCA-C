@@ -873,6 +873,104 @@ int isunordered(real-floating x, real-floating y);
 
 These macros accept arguments of any real floating types, i.e. float, double, or long double.  They return 1 if x and y have the indicated relationship, or 0 if they do not.  These macros differ from the ordinary relational operators in that the macros will not raise the "invalid" floating-point exception if x and y are unordered because one or both is a quiet NaN.  (In ORCA/C, they will raise the "invalid" exception for signaling NaNs.)
 
+19. (C99) Several new functions operating on floating-point values have been added.  Each of these has a version using each of the three real floating types (float, double, and long double) for its arguments and/or return values, as shown below.  Under ORCA/C, however, these types are all passed and returned using the SANE extended format (the format of long double), and for most of these functions the three versions will actually behave identically.
+
+Also, note that under ORCA/C these functions generally will not set errno for error conditions (e.g. domain and range errors).  However, they do set floating-point exceptions as appropriate.  The <fenv.h> functions documented above can be used to retrieve these exceptions, allowing errors to be detected.
+
+#include <math.h>
+double      cbrt(double x);
+float       cbrtf(float x);
+long double cbrtl(long double x);
+
+These functions return the cube root of x.
+
+#include <math.h>
+double      copysign(double x, double y);
+float       copysignf(float x, float y);
+long double copysignl(long double x, long double y);
+
+These functions return a value with the magnitude of x and the sign of y.  If x is a NaN, they return a NaN with the same NaN code but with the sign bit of y.
+
+#include <math.h>
+double      exp2(double x);
+float       exp2f(float x);
+long double exp2l(long double x);
+
+These functions return 2^x.
+
+#include <math.h>
+double      expm1(double x);
+float       expm1f(float x);
+long double expm1l(long double x);
+
+These functions return e^x - 1.
+
+#include <math.h>
+int         ilogb(double x);
+int         ilogbf(float x);
+int         ilogbl(long double x);
+
+These functions extract the binary exponent of x as an integer value, treating denormalized numbers as if they were normalized.  If x is 0, infinite, or NaN, they return the macro values FP_ILOGB0, INT_MAX, or FP_ILOGBNAN, respectively.
+
+#include <math.h>
+double      log1p(double x);
+float       log1pf(float x);
+long double log1pl(long double x);
+
+These functions return the natural logarithm of 1+x.
+
+#include <math.h>
+double      log2(double x);
+float       log2f(float x);
+long double log2l(long double x);
+
+These functions return the base-2 logarithm of x.
+
+#include <math.h>
+double      logb(double x);
+float       logbf(float x);
+long double logbl(long double x);
+
+These functions extract the binary exponent of x as an integer value in floating-point format, treating denormalized numbers as if they were normalized.
+
+#include <math.h>
+long        lrint(double x);
+long        lrintf(float x);
+long        lrintl(long double x);
+
+These functions round x to an integer using the current rounding direction and return it as a long.  If the value is outside the range of the return type, the number returned is unspecified.
+
+#include <math.h>
+double      remainder(double x, double y);
+float       remainderf(float x, float y);
+long double remainderl(long double x, long double y);
+double      remquo(double x, double y, int *quo);
+float       remquof(float x, float y, int *quo);
+long double remquol(long double x, long double y, int *quo);
+
+These functions return x REM y as specified by IEEE 754: r = x - ny, where n is the integer nearest to the exact value of x/y.  When x/y is halfway between two integers, n is chosen to be even.  If r = 0, its sign is that of x.  The remquo functions also set *quo to a value whose sign is the same as x/y and whose magnitude gives the low-order 7 bits of the absolute value of n.
+
+#include <math.h>
+double      rint(double x);
+float       rintf(float x);
+long double rintl(long double x);
+
+These functions round x to an integer using the current rounding direction.
+
+#include <math.h>
+double      scalbn(double x, int n);
+float       scalbnf(float x, int n);
+long double scalbnl(long double x, int n);
+
+These functions return x * 2^n, computed efficiently.
+
+#include <math.h>
+double      trunc(double x);
+float       truncf(float x);
+long double truncl(long double x); 
+
+These functions truncate x to an integer (discarding the fractional part).
+
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
 The Default .h File
