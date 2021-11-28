@@ -40,6 +40,9 @@ rec_ext  equ   10                       disp to extended (SANE) value
 *  Inputs:
 *        rec - pointer to a record
 *
+*  Note: This avoids calling FX2C on negative numbers,
+*  because it is buggy for certain values.
+*
 ****************************************************************
 *
 CnvSC    start cg
@@ -51,6 +54,11 @@ rec_cmp  equ   20                       disp to comp (SANE) value
          tsc                            set up DP
          phd
          tcd
+         ldy   #rec_real+8
+         lda   [rec],y
+         pha                            save sign of real number
+         and   #$7fff
+         sta   [rec],y                  set sign of real number to positive
          ph4   rec                      push addr of real number
          clc                            push addr of SANE comp number
          lda   rec
@@ -61,7 +69,32 @@ rec_cmp  equ   20                       disp to comp (SANE) value
          pha
          phx
          fx2c                           convert TOS to SANE comp number
-         move4 0,4                      return
+         pla
+         bpl   ret                      if real number was negative
+         ldy   #rec_real+8                restore original sign of real number
+         sta   [rec],y
+         sec                              negate the comp value
+         ldy   #rec_cmp
+         ldx   #0
+         txa
+         sbc   [rec],y
+         sta   [rec],y
+         iny
+         iny
+         txa
+         sbc   [rec],y
+         sta   [rec],y
+         iny
+         iny
+         txa
+         sbc   [rec],y
+         sta   [rec],y
+         iny
+         iny
+         txa
+         sbc   [rec],y
+         sta   [rec],y
+ret      move4 0,4                      return
          pld
          pla
          pla
