@@ -43,16 +43,17 @@ int __fpclassifyl(long double);
 int __signbit(long double);
 int __fpcompare(long double, long double, short);
 
-#define fpclassify(x) _Generic((x), \
+#define __fpclassify(x) _Generic((x), \
    float: __fpclassifyf, \
    double: __fpclassifyd, \
    long double: __fpclassifyl)(x)
 
-#define isfinite(x) (((fpclassify(x) + 1) & 0xF0) == 0)
-#define isinf(x)    (fpclassify(x) == FP_INFINITE)
-#define isnan(x)    (fpclassify((long double)(x)) == FP_NAN)
-#define isnormal(x) (fpclassify(x) == FP_NORMAL)
-#define signbit(x)  __signbit(x)
+#define fpclassify(x) __fpclassify(x)
+#define isfinite(x)  (((__fpclassify(x) + 1) & 0xF0) == 0)
+#define isinf(x)     (__fpclassify(x) == FP_INFINITE)
+#define isnan(x)     (__fpclassify((long double)(x)) == FP_NAN)
+#define isnormal(x)  (__fpclassify(x) == FP_NORMAL)
+#define signbit(x)   __signbit(x)
 
 #define isgreater(x,y)      __fpcompare((x),(y),0x40)
 #define isgreaterequal(x,y) __fpcompare((x),(y),0x42)
