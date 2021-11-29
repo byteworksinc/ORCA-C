@@ -31,8 +31,8 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2021
 
             10.	Stack repair code is now more efficient.
             
-            11.	Some new library functions and features from C99 and C11 have
-               	been added.  See "Library Updates."
+            11.	Several new library functions and features from C99 and C11
+               	have been added.  See "Library Updates."
 
             12.	Floating-point constant expressions now use extended precision.
                	See "Evaluation of Floating-Point Expressions and Constants."
@@ -875,7 +875,7 @@ int isunordered(real-floating x, real-floating y);
 
 These macros accept arguments of any real floating types, i.e. float, double, or long double.  They return 1 if x and y have the indicated relationship, or 0 if they do not.  These macros differ from the ordinary relational operators in that the macros will not raise the "invalid" floating-point exception if x and y are unordered because one or both is a quiet NaN.  (In ORCA/C, they will raise the "invalid" exception for signaling NaNs.)
 
-19. (C99) Several new functions operating on floating-point values have been added.  Each of these has a version using each of the three real floating types (float, double, and long double) for its arguments and/or return values, as shown below.  Under ORCA/C, however, these types are all passed and returned using the SANE extended format (the format of long double), and for most of these functions the three versions will actually behave identically.
+19. (C99) Several new functions operating on floating-point values have been added.  Each of these has a version using each of the three real floating types (float, double, and long double) for its arguments and/or return values.  The double versions have no suffix, while the float and long double versions have an 'f' or 'l' suffix.  Under ORCA/C, however, these types are all passed and returned using the SANE extended format (the format of long double), and for most of these functions the three versions will actually behave identically.
 
 Also, note that under ORCA/C these functions generally will not set errno for error conditions (e.g. domain and range errors).  However, they do set floating-point exceptions as appropriate.  The <fenv.h> functions documented above can be used to retrieve these exceptions, allowing errors to be detected.
 
@@ -906,6 +906,25 @@ float       expm1f(float x);
 long double expm1l(long double x);
 
 These functions return e^x - 1.
+
+#include <math.h>
+double      fdim(double x, double y);
+float       fdimf(float x, float y);
+long double fdiml(long double x, long double y);
+
+These functions return x - y if x > y, or +0.0 if x <= y.
+
+double      fmax(double x, double y);
+float       fmaxf(float x, float y);
+long double fmaxl(long double x, long double y);
+
+These functions return the maximum numeric value of their arguments.  If one argument is a NaN, the other argument is returned.
+
+double      fmin(double x, double y);
+float       fminf(float x, float y);
+long double fminl(long double x, long double y);
+
+These functions return the minimum numeric value of their arguments.  If one argument is a NaN, the other argument is returned.
 
 #include <math.h>
 int         ilogb(double x);
@@ -939,8 +958,37 @@ These functions extract the binary exponent of x as an integer value in floating
 long        lrint(double x);
 long        lrintf(float x);
 long        lrintl(long double x);
+long long   llrint(double x);
+long long   llrintf(float x);
+long long   llrintl(long double x);
 
-These functions round x to an integer using the current rounding direction and return it as a long.  If the value is outside the range of the return type, the number returned is unspecified.
+These functions round x to an integer using the current rounding direction and return it as a long or long long.  If the rounded value is outside the range of the return type, the number returned is unspecified.
+
+#include <math.h>
+long        lround(double x);
+long        lroundf(float x);
+long        lroundl(long double x);
+long long   llround(double x);
+long long   llroundf(float x);
+long long   llroundl(long double x);
+
+These functions round x to the nearest integer, rounding halfway cases away from zero, regardless of the current rounding direction.  They then return the rounded value as a long or long long.  If the rounded value is outside the range of the return type, the number returned is unspecified.
+
+double      nan(const char *tagp);
+float       nanf(const char *tagp);
+long double nanl(const char *tagp);
+
+These functions return a quiet NaN, with the NaN code determined by the string argument.  Specifically, nan("char-sequence") returns the same value as strtod("NAN(char-sequence)", NULL).  See the Apple Numerics Manual for a description of NaN codes.
+
+#include <math.h>
+double      nextafter(double x, double y);
+float       nextafterf(float x, float y);
+long double nextafterl(long double x, long double y);
+double      nexttoward(double x, long double y);
+float       nexttowardf(float x, long double y);
+long double nexttowardl(long double x, long double y);
+
+These functions first convert x and y to their declared types (removing any extra range and precision), then they return the next representable value (in the return type of the function) after x in the direction of y.  If x equals y, they return y.  The only difference between the nextafter and nexttoward functions is the type of y; nextafterl and nexttowardl are identical.
 
 #include <math.h>
 double      remainder(double x, double y);
@@ -956,13 +1004,26 @@ These functions return x REM y as specified by IEEE 754: r = x - ny, where n is 
 double      rint(double x);
 float       rintf(float x);
 long double rintl(long double x);
+double      nearbyint(double x);
+float       nearbyintf(float x);
+long double nearbyintl(long double x);
 
-These functions round x to an integer using the current rounding direction.
+These functions round x to an integer using the current rounding direction.  The rint functions raise the "inexact" floating-point exception if they change the value, while the nearbyint functions do not.
+
+#include <math.h>
+double      round(double x);
+float       roundf(float x);
+long double roundl(long double x);
+
+These functions round x to the nearest integer, rounding halfway cases away from zero, regardless of the current rounding direction.
 
 #include <math.h>
 double      scalbn(double x, int n);
 float       scalbnf(float x, int n);
 long double scalbnl(long double x, int n);
+double      scalbln(double x, long n);
+float       scalblnf(float x, long n);
+long double scalblnl(long double x, long n);
 
 These functions return x * FLT_RADIX^n, computed efficiently.  In ORCA/C, FLT_RADIX is 2.
 
@@ -973,7 +1034,7 @@ long double truncl(long double x);
 
 These functions truncate x to an integer (discarding the fractional part).
 
-There are also added functions that correspond to existing <math.h> functions, but using float or long double for their argument and return types.  In ORCA/C, most of these actually behave identically to the existing un-suffixed versions.  An exception is the modf family of functions, which differ in the type of the location in which the integer part of the value is stored.
+There are also added functions that correspond to existing <math.h> functions, but using float or long double for their argument and return types:
 
 #include <math.h>
 float       acosf(float x);
@@ -1021,11 +1082,15 @@ long double tanl(long double x);
 float       tanhf(float x);
 long double tanhl(long double x);
 
-Similarly, there are float and long double analogs of the string conversion function strtod.  As currently implemented in ORCA/C, all of these functions behave identically, giving values with the precision and range of long double.
+These functions are equivalent to the existing un-suffixed versions, apart from their argument and return types.  In ORCA/C, most of them actually behave identically to the un-suffixed versions.  An exception is the modf family of functions, which differ in the type of the location in which the integer part of the value is stored.
+
+Similarly, there are float and long double analogs of the string conversion function strtod:
 
 #include <stdlib.h>
 float       strtof(const char * restrict str, char ** restrict ptr);
 long double strtold(const char * restrict str, char ** restrict ptr);
+
+As currently implemented in ORCA/C, strtof and strtold behave identically to strtod, all giving values with the precision and range of long double.
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 

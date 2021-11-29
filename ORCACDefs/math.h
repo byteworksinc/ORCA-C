@@ -63,7 +63,7 @@ int __fpcompare(long double, long double, short);
 #define isunordered(x,y)    __fpcompare((x),(y),0x01)
 
 #ifndef __KeepNamespacePure__
-   #define arctan(x) atan(x)        
+   #define arctan(x) atan(x)
 #endif
 
 double          acos(double);
@@ -105,9 +105,18 @@ long double     expm1l(long double);
 double          fabs(double);
 float           fabsf(float);
 long double     fabsl(long double);
+double          fdim(double, double);
+float           fdimf(float, float);
+long double     fdiml(long double, long double);
 double          floor(double);
 float           floorf(float);
 long double     floorl(long double);
+double          fmax(double, double);
+float           fmaxf(float, float);
+long double     fmaxl(long double, long double);
+double          fmin(double, double);
+float           fminf(float, float);
+long double     fminl(long double, long double);
 double          fmod(double, double);
 float           fmodf(float, float);
 long double     fmodl(long double, long double);
@@ -120,6 +129,14 @@ int             ilogbl(long double);
 double          ldexp(double, int);
 float           ldexpf(float, int);
 long double     ldexpl(long double, int);
+#if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
+long long       llrint(double);
+long long       llrintf(float);
+long long       llrintl(long double);
+long long       llround(double);
+long long       llroundf(float);
+long long       llroundl(long double);
+#endif
 double          log(double);
 float           logf(float);
 long double     logl(long double);
@@ -138,9 +155,24 @@ long double     logbl(long double);
 long            lrint(double);
 long            lrintf(float);
 long            lrintl(long double);
+long            lround(double);
+long            lroundf(float);
+long            lroundl(long double);
 double          modf(double, double *);
 float           modff(float, float *);
 long double     modfl(long double, long double *);
+double          nearbyint(double);
+float           nearbyintf(float);
+long double     nearbyintl(long double);
+double          nan(const char *);
+float           nanf(const char *);
+long double     nanl(const char *);
+double          nextafter(double, double);
+float           nextafterf(float, float);
+long double     nextafterl(long double, long double);
+double          nexttoward(double, long double);
+float           nexttowardf(float, long double);
+long double     nexttowardl(long double, long double);
 double          pow(double, double);
 float           powf(float, float);
 long double     powl(long double, long double);
@@ -153,6 +185,12 @@ long double     remquol(long double, long double, int *);
 double          rint(double);
 float           rintf(float);
 long double     rintl(long double);
+double          round(double);
+float           roundf(float);
+long double     roundl(long double);
+double          scalbln(double, long);
+float           scalblnf(float, long);
+long double     scalblnl(long double, long);
 double          scalbn(double, int);
 float           scalbnf(float, int);
 long double     scalbnl(long double, int);
@@ -173,6 +211,6 @@ float           tanhf(float);
 long double     tanhl(long double);
 double          trunc(double);
 float           truncf(float);
-long double     truncl(long double); 
+long double     truncl(long double);
 
 #endif
