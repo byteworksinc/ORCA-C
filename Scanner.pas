@@ -3139,6 +3139,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {    16 - common subexpression elimination    }
                      {    32 - loop invariant removal		   }
                      {    64 - remove stack checks for vararg calls}
+                     {   128 - fp math opts that break IEEE rules  }
 		     FlagPragmas(p_optimize);
                      NumericDirective;
                      if expressionType^.kind = scalarType then
@@ -3152,6 +3153,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      commonSubexpression := odd(val >> 4);
                      loopOptimizations := odd(val >> 5);
                      strictVararg := not odd(val >> 6);
+                     fastMath := odd(val >> 7);
                      if saveStack then
                         npeepHole := false;
                      if token.kind <> eolsy then

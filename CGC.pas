@@ -107,6 +107,12 @@ procedure InitLabels; extern;
 {								}
 { Note: also defined in CGI.pas					}
 
+
+function SignBit (val: extended): integer; extern;
+
+{ returns the sign bit of a floating-point number               }
+{ (0 for positive, 1 for negative)                              }
+
 {-- These routines are defined in the compiler, but used from cg --}
 
 function Calloc (bytes: integer): ptr; extern;

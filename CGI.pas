@@ -327,6 +327,7 @@ var
    debugFlag: boolean;                  {generate debugger calls?}
    debugStrFlag: boolean;               {gsbug/niftylist debug names?}
    dataBank: boolean;                   {save, restore data bank?}
+   fastMath: boolean;                   {do FP math opts that break IEEE rules?}
    floatCard: integer;                  {0 -> SANE; 1 -> FPE}
    floatSlot: integer;                  {FPE slot}
    loopOptimizations: boolean;          {do loop optimizations?}
@@ -817,6 +818,7 @@ volatile := false;			{no volatile qualifiers found}
 registers := cLineOptimize;             {don't do register optimizations}
 peepHole := cLineOptimize;              {not doing peephole optimization (yet)}
 npeepHole := cLineOptimize;
+fastMath := cLineOptimize;
 commonSubexpression := cLineOptimize;	{not doing common subexpression elimination}
 loopOptimizations := cLineOptimize;	{not doing loop optimizations, yet}
 

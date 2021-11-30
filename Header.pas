@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 18;                 {version number of .sym file format}
+   symFileVersion = 19;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -845,7 +845,8 @@ procedure EndInclude {chPtr: ptr};
                         | (ord(saveStack) << 3)
                         | (ord(commonSubexpression) << 4)
                         | (ord(loopOptimizations) << 5)
-                        | (ord(strictVararg) << 6));
+                        | (ord(strictVararg) << 6)
+                        | (ord(fastMath) << 7));
 
                   p_stacksize: WriteWord(stackSize);
 
@@ -1508,6 +1509,7 @@ var
             commonSubexpression := odd(val >> 4);
             loopOptimizations := odd(val >> 5);
             strictVararg := odd(val >> 6);
+            fastMath := odd(val >> 7);
             end;
 
          p_stacksize: stackSize := ReadWord;

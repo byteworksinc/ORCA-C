@@ -198,7 +198,9 @@ else if (op1 <> nil) and (op2 <> nil) then
                                     CodesMatch := true;
                            cgReal, cgDouble, cgComp, cgExtended:
                               if op1^.rval = op2^.rval then
-                                 CodesMatch := true;
+                                 if (SignBit(op1^.rval) = SignBit(op2^.rval))
+                                    or fastMath then
+                                    CodesMatch := true;
                            cgString:
                               CodesMatch := LongStrCmp(op1^.str, op2^.str);
                            cgVoid, ccPointer:
@@ -899,8 +901,9 @@ case op^.opcode of			{check for optimizations of this node}
          if op^.left^.opcode = pc_ldc then
             ReverseChildren(op);
          if op^.right^.opcode = pc_ldc then begin
-            if op^.right^.rval = 0.0 then
-               opv := op^.left;
+            if fastMath then
+               if op^.right^.rval = 0.0 then
+                  opv := op^.left;
             end; {if}
          end; {else}   
       end; {case pc_adr}
@@ -2069,8 +2072,9 @@ case op^.opcode of			{check for optimizations of this node}
             if rval = 1.0 then
                opv := op^.left
             else if rval = 0.0 then
-               if not SideEffects(op^.left) then
-                  opv := op^.right;
+               if fastMath then
+                  if not SideEffects(op^.left) then
+                     opv := op^.right;
             end; {if}
          end; {else}
       end; {case pc_mpr}
@@ -2346,15 +2350,17 @@ case op^.opcode of			{check for optimizations of this node}
             op^.left^.rval := op^.left^.rval - op^.right^.rval;
             opv := op^.left;
             end {if}
-         else if op^.left^.rval = 0.0 then begin
-            op^.opcode := pc_ngr;
-            op^.left := op^.right;
-            op^.right := nil;
-            end; {else if}
+         else if op^.left^.rval = 0.0 then
+            if fastMath then begin
+               op^.opcode := pc_ngr;
+               op^.left := op^.right;
+               op^.right := nil;
+               end; {if}
          end {if}
       else if op^.right^.opcode = pc_ldc then begin
-         if op^.right^.rval = 0.0 then
-            opv := op^.left;
+         if fastMath then
+            if op^.right^.rval = 0.0 then
+               opv := op^.left;
          end; {if}
       end; {case pc_sbr}
 

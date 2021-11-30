@@ -492,6 +492,14 @@ Using the extended format provides greater precision and range than the float or
 If you want to get a value strictly in a certain type with no extra range or precision, you can store it in a variable of that type or explicitly cast it to that type.  (In older versions of ORCA/C, floating-point casts did not remove extra range or precision, but now they do, as required by the C standards.)
 
 
+Floating-Point Optimizations
+----------------------------
+
+ORCA/C can perform certain optimizations on floating-point computations based on properties that are true for real numbers but are not always true in the IEEE floating-point arithmetic system.  In particular, these optimizations can occasionally cause behavior that differs from the IEEE standard in regard to infinities, NaNs, or the sign of zero.  Historically, these optimizations were performed mainly as part of intermediate code peephole optimization and in some cases also as part of common subexpression elimination.  
+
+A new #pragma optimize bit has now been introduced to control this behavior.  Setting bit 7 (a value of 128) allows floating-point math optimizations that may violate the IEEE standard.  It currently only has an effect if #pragma optimize bit 0 or bit 4 is also set.  If bit 7 is not set, these floating-point optimizations will not be performed.  This allows most aspects of intermediate code peephole optimization and common subexpression elimination to be used while preserving IEEE floating-point behavior.
+
+
 Additions to #pragma ignore
 ---------------------------
 Several additional #pragma ignore bits are now supported.

@@ -252,3 +252,24 @@ maxLabel equ   3200
          stz   intLabel                 intLabel := 0;
          rtl
          end
+         datachk on
+
+****************************************************************
+*
+*  function SignBit (val: extended): integer;
+*
+*  returns the sign bit of a floating-point number
+*  (0 for positive, 1 for negative)
+*
+****************************************************************
+*
+SignBit  start cg
+
+         subroutine (10:val),0
+         
+         asl   val+8
+         stz   val
+         rol   val
+         
+         return 2:val
+         end
