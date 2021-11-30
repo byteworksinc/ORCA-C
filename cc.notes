@@ -34,8 +34,15 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2021
             11.	Several new library functions and features from C99 and C11
                	have been added.  See "Library Updates."
 
-            12.	Floating-point constant expressions now use extended precision.
+            12.	Support has been added for some library functions from the
+               	original ANSI C standard that had been missing from ORCA/C.
+               	See "Library Updates" and "Locales."
+
+            13.	Floating-point constant expressions now use extended precision.
                	See "Evaluation of Floating-Point Expressions and Constants."
+
+            14.	New bit added to control floating-point optimizations that may
+               	violate the IEEE standard.  See "Floating-Point Optimizations."
 
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
@@ -483,6 +490,7 @@ Note that MPW IIGS ORCA/C also supports multi-character constants and #pragma ig
 
 Evaluation of Floating-Point Expressions and Constants
 ------------------------------------------------------
+
 There have been some changes to the way ORCA/C evaluates floating-point expressions and constants.  ORCA/C has always used the SANE extended format (which is the format of long double) to evaluate floating-point expressions at run time, even if their semantic type in the standard C language was float or double.  However, it previously used the double format to evaluate constant expressions that could be computed at compile time.  Now, it uses the extended format for those computations too, producing consistent results for a computation regardless of whether it is done at compile time or run time.
 
 ORCA/C also historically used the double format internally to hold the values of all floating-point constants, even those with an 'L' suffix indicating they were of type long double.  It now uses the extended format for all floating-point constants.  This allows long double constants to be represented with the full range and precision that they should have.  It also provides extra range and precision for constants of type float or double, beyond what would be provided if they were simply represented using their semantic type.
@@ -502,6 +510,7 @@ A new #pragma optimize bit has now been introduced to control this behavior.  Se
 
 Additions to #pragma ignore
 ---------------------------
+
 Several additional #pragma ignore bits are now supported.
 
 Bit 1 (a value of 2) affects the interpretation of multi-character character constants.  It is described under "Multi-Character Character Constants," above.
@@ -585,7 +594,7 @@ If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects some situations wh
 Locales
 -------
 
-Standard C defines the concept of locales, which can be used to localize certain aspects of the system's behavior to suit the conventions of different languages and cultures.  The <locale.h> header and its functions provide the main implementation of locales, but various other functions in the standard library may behave in a way that varies by locale.  The C standards define the C locale, which specifies a minimal environment for the execution of a C program and is the locale used if no other locale is explicitly selected.  Which (if any) other locales are supported is implementation-defined.
+Standard C defines the concept of locales, which can be used to localize certain aspects of the system's behavior to suit the conventions of different languages and cultures.  The <locale.h> header and its functions provide the main implementation of locales, but various other functions in the standard library may behave in a way that varies by locale.  The C standards define the C locale, which specifies a minimal environment for the execution of a C program and is the locale used if no other locale has been explicitly selected.  Which (if any) other locales are supported is implementation-defined.
 
 Historically, ORCA/C did not support <locale.h> or certain other locale-related functions.  A minimalistic implementation of these functions has now been added.  However, ORCA/C currently only supports the C locale.  As such, any attempt to change to a different locale will fail, and the behavior of the library does not actually vary based on locale, since only one locale is supported.  This minimalistic locale implementation is not particularly useful, but it is intended to be conformant with the C standards, and it allows portable code that uses locale-related functions to compile and run under ORCA/C.  Future versions of ORCA/C might possibly have more extensive locale support.
 
@@ -765,10 +774,10 @@ Portions of strftime()'s output could differ depending on the locale, but ORCA/C
 
 The conversion specifiers are:
 
-%a - abbreviated weekday name (e.g. "Mon", in the C locale)
-%A - full weekday name (e.g. "Monday", in the C locale)
-%b - abbreviated month name (e.g. "Jan", in the C locale)
-%B - full month name (e.g. "January", in the C locale)
+%a - abbreviated weekday name ("Mon", "Tue", etc. in the C locale)
+%A - full weekday name ("Monday", "Tuesday", etc. in the C locale)
+%b - abbreviated month name ("Jan", "Feb", etc. in the C locale)
+%B - full month name ("January", "February", etc. in the C locale)
 %c - date and time (equivalent to "%a %b %e %T %Y" in the C locale)
 %C - year divided by 100 and truncated to an integer (e.g. "19")
 %d - day of the month (01-31)
@@ -883,7 +892,7 @@ int isunordered(real-floating x, real-floating y);
 
 These macros accept arguments of any real floating types, i.e. float, double, or long double.  They return 1 if x and y have the indicated relationship, or 0 if they do not.  These macros differ from the ordinary relational operators in that the macros will not raise the "invalid" floating-point exception if x and y are unordered because one or both is a quiet NaN.  (In ORCA/C, they will raise the "invalid" exception for signaling NaNs.)
 
-19. (C99) Several new functions operating on floating-point values have been added.  Each of these has a version using each of the three real floating types (float, double, and long double) for its arguments and/or return values.  The double versions have no suffix, while the float and long double versions have an 'f' or 'l' suffix.  Under ORCA/C, however, these types are all passed and returned using the SANE extended format (the format of long double), and for most of these functions the three versions will actually behave identically.
+19. (C99) Several new functions operating on floating-point values have been added.  Each of these has a version using each of the three real floating types (float, double, and long double) for its arguments and/or return value.  The double versions have no suffix, while the float and long double versions have an 'f' or 'l' suffix.  Under ORCA/C, however, these types are all passed and returned using the SANE extended format (the format of long double), and for most of these functions the three versions will actually behave identically.
 
 Also, note that under ORCA/C these functions generally will not set errno for error conditions (e.g. domain and range errors).  However, they do set floating-point exceptions as appropriate.  The <fenv.h> functions documented above can be used to retrieve these exceptions, allowing errors to be detected.
 
