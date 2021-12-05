@@ -36,6 +36,7 @@
 #define __tg_x_y(fn,x,y) __tg_real_x_y(fn,(x),(y))
 
 #define acos(x)         __tg_x(acos,(x))
+#define acosh(x)        __tg_x(acosh,(x))
 #define asin(x)         __tg_x(asin,(x))
 #define atan(x)         __tg_x(atan,(x))
 #define atan2(y,x)      __tg_real_x_y(atan2,(y),(x))
