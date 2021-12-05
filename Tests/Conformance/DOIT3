@@ -12,8 +12,12 @@
 {1} c99stdint.c
 {1} c99stdio.c
 {1} c99llong.c
+{1} c99hexflt.c
+{1} c99arraytp.c
+{1} c99complit.c
 {1} c11generic.c
 {1} c11align.c
 {1} c11noret.c
 {1} c11quickex.c
 {1} c11sassert.c
+{1} c11unicode.c

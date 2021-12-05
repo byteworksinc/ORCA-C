@@ -88,10 +88,6 @@ Fail:
         printf ("Failed Conformance Test c99stdio\n");
 }
 
-#ifdef __ORCAC__
-#pragma optimize 8
-#endif
-
 int mysscanf(const char *restrict str, const char *restrict fmt, ...) {
         va_list va;
         int ret;
