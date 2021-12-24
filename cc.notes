@@ -457,7 +457,7 @@ Generic selection expressions are primarily useful within macros, which can give
 
 23. (C11) Character constants and string literals may now have prefixes indicating they should use Unicode encodings.  The prefixes u8, u, and U indicate UTF-8, UTF-16, and UTF-32 encodings, respectively.  The u8 prefix may only be used on string literals.  The U and u prefixes may be used on string literals or character constants.  U- and u-prefixed character constants have the types char32_t and char16_t (as defined in <uchar.h>); U- and u-prefixed string literals are treated as arrays of those types.  For example, the string literal U"abc" designates an array with four members of type char32_t: the three letters encoded in UTF-32, plus a null terminator.
 
-24. (C99) Floating-point constants may now be expressed in a hexadecimal format.  These consist of a leading 0X or 0x, followed by a sequence of hexadecimal digits optionally containing a period, then P or p, then an exponent expressed as a sequence of decimal digits optionally preceded by + or -.  These designate the number given by the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent.  For example, the constant 0xF.8p-1 is equivalent to 7.75. 
+24. (C99) Floating-point constants may now be expressed in a hexadecimal format.  These consist of a leading 0X or 0x, followed by a sequence of hexadecimal digits optionally containing a period, then P or p, then an exponent expressed as a sequence of decimal digits optionally preceded by + or -.  These designate the number given by the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent.  For example, the constant 0xF.8p-1 is equivalent to 7.75.  Note that ORCA/C currently only supports this hexadecimal floating-point format in C source code, not as an input or output format for any library functions.
 
 25. (C99) When a function parameter is declared with an array type, type qualifiers and/or the keyword "static" may be included within the angle brackets that designate the array type.  For example, a function may be defined as:
 
@@ -897,11 +897,25 @@ These macros accept arguments of any real floating types, i.e. float, double, or
 Also, note that under ORCA/C these functions generally will not set errno for error conditions (e.g. domain and range errors).  However, they do set floating-point exceptions as appropriate.  The <fenv.h> functions documented above can be used to retrieve these exceptions, allowing errors to be detected.
 
 #include <math.h>
-dou         acosh(double x);
+double      acosh(double x);
 float       acoshf(float x);
 long double acoshl(long double x);
 
 These functions return the (non-negative) inverse hyperbolic cosine of x.
+
+#include <math.h>
+double      asinh(double x);
+float       asinhf(float x);
+long double asinhl(long double x);
+
+These functions return the inverse hyperbolic sine of x.
+
+#include <math.h>
+double      atanh(double x);
+float       atanhf(float x);
+long double atanhl(long double x);
+
+These functions return the inverse hyperbolic tangent of x.
 
 #include <math.h>
 double      cbrt(double x);
@@ -949,6 +963,13 @@ float       fminf(float x, float y);
 long double fminl(long double x, long double y);
 
 These functions return the minimum numeric value of their arguments.  If one argument is a NaN, the other argument is returned.
+
+#include <math.h>
+double      hypot(double x, double y);
+float       hypotf(float x, float y);
+long double hypotl(long double x, long double y);
+
+These functions return the square root of x^2 + y^2, without undue overflow or underflow.
 
 #include <math.h>
 int         ilogb(double x);
