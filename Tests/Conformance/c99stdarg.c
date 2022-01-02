@@ -22,12 +22,12 @@ int va_list_fn(va_list ap) {
         return 1;
 }
 
-int va_fn(int x, ...) {
+int va_fn(int x, int y, int z, ...) {
         va_list ap, ap2;
         int i, *ip = &i;
 
         /* Test basic varargs functionality */
-        va_start(ap, x);
+        va_start(ap, z);
 
         if (va_arg(ap, int) != 12345)
                 return 0;
@@ -46,7 +46,7 @@ int va_fn(int x, ...) {
         va_end(ap2);
         
         /* Test that varargs processing can be restarted */
-        va_start(ap, x);
+        va_start(ap, z);
         if (va_arg(ap, int) != 12345)
                 return 0;
         va_end(ap);
@@ -60,7 +60,7 @@ int va_fn(int x, ...) {
 
 int main(void) {
 
-        if (!va_fn(1, 12345, 67890.0, 1234567890L))
+        if (!va_fn(1, 2, 3, 12345, 67890.0, 1234567890L))
                 goto Fail;
 
         printf ("Passed Conformance Test c99stdarg\n");

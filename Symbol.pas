@@ -967,10 +967,10 @@ var
    size: integer;                       {size of the parameter}
    sp: identPtr;			{symbol pointer}
    tk: tokenType;			{symbol name token}
+   first: boolean;                      {first iteration of loop over params?}
 
 begin {GenParameters}
-pln := 0;
-size := 0;
+first := true;
 if pp <> nil then begin			{prototyped parameters}
    tk.kind := ident;
    tk.numString := nil;
@@ -993,6 +993,11 @@ if pp <> nil then begin			{prototyped parameters}
 	 Gen3(dc_prm, pln, size, sp^.pdisp);
 	 end; {else}
       sp^.pln := pln;
+      if first then begin
+         first := false;
+         lastParameterLLN := pln;
+         lastParameterSize := size;
+         end; {if}
       pp := pp^.next;
       end; {while}
    end {if}
@@ -1013,13 +1018,20 @@ else begin				{K&R parameters}
         	  size := 2;
                Gen3(dc_prm, sp^.lln, size, sp^.pdisp);
                end; {else}
+            if first then begin
+               first := false;
+               lastParameterLLN := pln;
+               lastParameterSize := size;
+               end; {if}
             end; {if}
 	 sp := sp^.next;
 	 end; {while}
       end; {for}
+   if first then begin
+      lastParameterLLN := 0;
+      lastParameterSize := 0;
+      end; {if}
    end; {else}
-lastParameterLLN := pln;
-lastParameterSize := size;
 end; {GenParameters}
 
 
