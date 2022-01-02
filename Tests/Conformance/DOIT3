@@ -15,9 +15,14 @@
 {1} c99hexflt.c
 {1} c99arraytp.c
 {1} c99complit.c
+{1} c99strftim.c
+{1} c99locale.c
+{1} c99stdarg.c
 {1} c11generic.c
 {1} c11align.c
 {1} c11noret.c
 {1} c11quickex.c
 {1} c11sassert.c
 {1} c11unicode.c
+{1} c11uchar.c
+
