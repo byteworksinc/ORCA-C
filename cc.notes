@@ -1,6 +1,6 @@
 ORCA/C 2.2.0 B6
 Copyright 1997, Byte Works Inc.
-Updated by Stephen Heumann and Kelvin Sherlock, 2017-2021
+Updated by Stephen Heumann and Kelvin Sherlock, 2017-2022
 
 -- Change List --------------------------------------------------------------
 
@@ -151,7 +151,7 @@ p. 247
 
 The predefined macros __STDC__ and __ORCAC__ expand to the integer constant 1, not -1.
 
-ORCA/C now supports several new predefined macros.  See "New Language Features," below. 
+ORCA/C now supports several new predefined macros.  See "New Language Features," below.
 
 p. 250
 
@@ -162,6 +162,8 @@ It's worth keeping in mind that #append in included in ORCA/C solely for the pur
 p. 254
 
 The #error directive may be followed by any sequence of preprocessing tokens, not just a string constant.
+
+ORCA/C now supports several standard pragmas of the form "#pragma STDC ...".  See "New Language Features," below.
 
 p. 256
 
@@ -199,7 +201,7 @@ p. 263
 
 1. The discussion of NDAs is on page 40, not page 58.
 
-2. There is a new optimization bit for #pragma optimize.  See #pragma optimize, below.
+2. There are new optimization bits for #pragma optimize.  See "#pragma optimize" and "Floating-Point Optimizations," below.
 
 p. 269
 
@@ -226,6 +228,10 @@ Unions can be initialized by a brace-enclosed expression giving the initializer 
 p. 297
 
 Variable argument lists will now work even if stack repair code is enabled.
+
+p. 303
+
+ORCA/C now supports additional forms of expressions known as generic selection expressions and compound literals.  See "New Language Features," below.
 
 p. 311
 
