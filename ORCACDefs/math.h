@@ -24,8 +24,8 @@ typedef long double double_t;
 
 #define NAN (0.0F/0.0F)
 
-#define ILOGB0   (-32767-1)
-#define ILOGBNAN (-32767-1)
+#define FP_ILOGB0   (-32767-1)
+#define FP_ILOGBNAN (-32767-1)
 
 #define MATH_ERRNO       1
 #define MATH_ERREXCEPT   2
