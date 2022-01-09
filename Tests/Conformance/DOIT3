@@ -19,6 +19,8 @@
 {1} c99locale.c
 {1} c99stdarg.c
 {1} c99math.c
+{1} c99fpcmp.c
+{1} c99tgmath.c
 {1} c11generic.c
 {1} c11align.c
 {1} c11noret.c
@@ -26,4 +28,3 @@
 {1} c11sassert.c
 {1} c11unicode.c
 {1} c11uchar.c
-
