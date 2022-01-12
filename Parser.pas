@@ -1735,21 +1735,21 @@ else if doingParameters then
 
 if tPtr^.kind = functionType then begin {declare the identifier}
    if variable <> nil then begin
+      if isPascal then begin
+         {reverse the parameter list}
+         p2 := tptr^.parameterList;
+         p1 := nil;
+         while p2 <> nil do begin
+            p3 := p2;
+            p2 := p2^.next;
+            p3^.next := p1;
+            p1 := p3;
+            end; {while}
+         tPtr^.parameterList := p1;
+         end; {if}
       t1 := variable^.itype;
       if CompTypes(t1, tPtr) then begin
          if t1^.prototyped and tPtr^.prototyped then begin
-            p2 := tptr^.parameterList;
-            if isPascal then begin
-               {reverse the parameter list}
-               p1 := nil;
-               while p2 <> nil do begin
-                  p3 := p2;
-                  p2 := p2^.next;
-                  p3^.next := p1;
-                  p1 := p3;
-                  end; {while}
-               tPtr^.parameterList := p1;
-               end; {if}
             p2 := tPtr^.parameterList;
             p1 := t1^.parameterList;
             while (p1 <> nil) and (p2 <> nil) do begin
@@ -1781,23 +1781,23 @@ if tPtr^.kind = functionType then begin {declare the identifier}
                end; {while}
             if p1 <> p2 then
                Error(47);
-            p2 := tptr^.parameterList;
-            if isPascal then begin
-               {reverse the parameter list}
-               p1 := nil;
-               while p2 <> nil do begin
-                  p3 := p2;
-                  p2 := p2^.next;
-                  p3^.next := p1;
-                  p1 := p3;
-                  end; {while}
-               tPtr^.parameterList := p1;
-               end; {if}
             end; {if}
          end {if}
       else
          Error(42);
 1:
+      if isPascal then begin
+         {reverse the parameter list}
+         p2 := tptr^.parameterList;
+         p1 := nil;
+         while p2 <> nil do begin
+            p3 := p2;
+            p2 := p2^.next;
+            p3^.next := p1;
+            p1 := p3;
+            end; {while}
+         tPtr^.parameterList := p1;
+         end; {if}
       end; {if}
    end; {if}
 if tPtr^.kind = functionType then
