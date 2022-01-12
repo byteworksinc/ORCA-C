@@ -1748,7 +1748,7 @@ if tPtr^.kind = functionType then begin {declare the identifier}
          tPtr^.parameterList := p1;
          end; {if}
       t1 := variable^.itype;
-      if CompTypes(t1, tPtr) then begin
+      if (t1^.kind = functionType) and CompTypes(t1, tPtr) then begin
          if t1^.prototyped and tPtr^.prototyped then begin
             p2 := tPtr^.parameterList;
             p1 := t1^.parameterList;
