@@ -1784,7 +1784,10 @@ if tPtr^.kind = functionType then begin {declare the identifier}
             end; {if}
          end {if}
       else
-         Error(42);
+         if (t1^.kind = functionType) and CompTypes(t1^.fType,tPtr^.fType) then
+            Error(47)
+         else
+            Error(42);
 1:
       if isPascal then begin
          {reverse the parameter list}
