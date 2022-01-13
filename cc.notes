@@ -229,6 +229,10 @@ p. 297
 
 Variable argument lists will now work even if stack repair code is enabled.
 
+p. 299
+
+Structures and unions are passed by value, not by reference.  (Arrays are passed by reference, as described.)
+
 p. 303
 
 ORCA/C now supports additional forms of expressions known as generic selection expressions and compound literals.  See "New Language Features," below.
