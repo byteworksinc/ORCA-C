@@ -4069,6 +4069,7 @@ var
       var
          pcount: integer;               {paren counter}
          tp: typePtr;                   {work pointer}
+         ltypeSpec: typePtr;            {copy of type specifier}
 
       begin {NonEmptyAbstractDeclarator}
       if token.kind = lparench then begin
@@ -4138,7 +4139,9 @@ var
          if token.kind = rbrackch then
             expressionValue := 0
          else begin
+            ltypeSpec := typeSpec;
             Expression(arrayExpression, [rbrackch]);
+            typeSpec := ltypeSpec;
             if expressionValue <= 0 then begin
                Error(45);
                expressionValue := 1;

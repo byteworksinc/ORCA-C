@@ -1697,6 +1697,8 @@ int foo(int[42]);
 
 172. When certain negative integers that are multiples of 65536 were converted from floating-point types to long, long long, or comp, an incorrect value might be produced due to a bug in SANE.  ORCA/C now includes workarounds to avoid this bug in several situations, although it might still occur in certain other ones.
 
+173. sizeof could give the wrong value if the type contained a nested use of a type name within an array length expression, e.g. sizeof(short[(long)50]).
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
