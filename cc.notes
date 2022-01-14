@@ -1703,6 +1703,10 @@ int foo(int[42]);
 
 (Chris Vavruska)
 
+175. The pascal qualifier was not accepted in certain places where types are used.  Among other things, this prevented pascal-qualified function pointers from being declared as members of a structure or union.
+
+(Michael Hackett)
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

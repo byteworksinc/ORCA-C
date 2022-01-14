@@ -4032,6 +4032,7 @@ procedure TypeName;
 
 var
    tl,tp: typePtr;                      {for creating/reversing the type list}
+   isPascal: boolean;                   {is the type "pascal" qualified?}
 
 
    procedure AbstractDeclarator;
@@ -4181,6 +4182,7 @@ var
 begin {TypeName}
 {read and process the type specifier}
 DeclarationSpecifiers(specifierQualifierListElement, rparench);
+isPascal := pascalsy in declarationModifiers;
 
 {_Alignas is not allowed in most uses of type names.            }
 {TODO: _Alignas should be allowed in compound literals.         }
@@ -4198,6 +4200,8 @@ while tl <> nil do begin                {reverse the list & compute array sizes}
    typeSpec := tl;
    tl := tp;
    end; {while}
+if isPascal then
+   typeSpec := MakePascalType(typeSpec);
 end; {TypeName}
 
 
@@ -4713,7 +4717,7 @@ declarationSpecifiersElement := typeSpecifierStart + storageClassSpecifiers
    + typeQualifiers + functionSpecifiers + alignmentSpecifiers;
 
 specifierQualifierListElement := 
-   typeSpecifierStart + typeQualifiers + alignmentSpecifiers;
+   typeSpecifierStart + typeQualifiers + alignmentSpecifiers + [pascalsy];
 
 structDeclarationStart := specifierQualifierListElement + [_Static_assertsy];
 
