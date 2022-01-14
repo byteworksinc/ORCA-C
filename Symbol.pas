@@ -172,6 +172,16 @@ function LabelToDisp (lab: integer): integer; extern;
 {       lab - label number                                      }
 
 
+function MakePascalType (origType: typePtr): typePtr;
+
+{ make a version of a type with the pascal qualifier applied    }
+{                                                               }
+{ parameters:                                                   }
+{       origType - the original type                            }
+{                                                               }
+{ returns: pointer to the pascal-qualified type                 }
+
+
 function MakeQualifiedType (origType: typePtr; qualifiers: typeQualifierSet):
    typePtr;
 
@@ -1682,6 +1692,62 @@ new(constCharPtr);                      {const char}
 constCharPtr^ := charPtr^;
 constCharPtr^.qualifiers := [tqConst];
 end; {InitSymbol}
+
+
+function MakePascalType {origType: typePtr): typePtr};
+
+{ make a version of a type with the pascal qualifier applied    }
+{                                                               }
+{ parameters:                                                   }
+{       origType - the original type                            }
+{                                                               }
+{ returns: pointer to the pascal-qualified type                 }
+
+var
+   pascalType: typePtr;                 {the modified type}
+   tp,tp2: typePtr;                     {work pointers}
+   p1,p2,p3: parameterPtr;              {for reversing prototyped parameters}
+
+begin {MakePascalType}
+pascalType := pointer(Malloc(sizeof(typeRecord)));
+pascalType^ := origType^;
+MakePascalType := pascalType;
+tp := pascalType;
+while tp <> nil do
+   case tp^.kind of
+      arrayType,
+      pointerType:  begin
+                    tp2 := pointer(Malloc(sizeof(typeRecord)));
+                    tp2^ := tp^.pType^;
+                    tp^.pType := tp2;
+                    tp := tp2;
+                    end;
+      functionType: begin
+                    if not tp^.isPascal then begin
+                       {reverse the parameter list}
+                       p1 := tp^.parameterList;
+                       if p1 <> nil then begin
+                          p2 := nil;
+                          while p1 <> nil do begin
+                             p3 := pointer(Malloc(sizeof(parameterRecord)));
+                             p3^ := p1^;
+                             p1 := p1^.next;
+                             p3^.next := p2;
+                             p2 := p3;
+                             end; {while}
+                          tp^.parameterList := p2;
+                          end; {if}
+                       tp^.isPascal := true;
+                       end; {if}
+                    tp := nil;
+                    end;
+      otherwise:    begin
+                    Error(94);
+                    MakePascalType := origType;
+                    tp := nil;
+                    end;
+      end; {case}
+end; {MakePascalType}
 
 
 function MakeQualifiedType {origType: typePtr; qualifiers: typeQualifierSet):

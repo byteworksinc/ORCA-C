@@ -3945,21 +3945,8 @@ else {if not isFunction then} begin
          Error(142);
    if not SkipDeclarator then
       repeat
-         if isPascal then begin
-            tp := variable^.itype;
-            while tp <> nil do
-               case tp^.kind of
-                  scalarType,
-                  enumType,
-                  enumConst,
-                  definedType,
-                  structType,
-                  unionType:    begin tp := nil; Error(94); end;
-                  arrayType:    tp := tp^.atype;
-                  pointerType:  tp := tp^.pType;
-                  functionType: begin tp^.isPascal := true; tp := nil; end;
-                  end; {case}
-            end; {if}
+         if isPascal then
+            variable^.itype := MakePascalType(variable^.itype);
          if isInline then
             Error(119);
          if isNoreturn then

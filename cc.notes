@@ -1699,6 +1699,10 @@ int foo(int[42]);
 
 173. sizeof could give the wrong value if the type contained a nested use of a type name within an array length expression, e.g. sizeof(short[(long)50]).
 
+174. Certain calls using a pascal-qualified function pointer would not work properly.  They could cause either incorrect code generation or spurious compiler errors, depending on the parameter types.
+
+(Chris Vavruska)
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
