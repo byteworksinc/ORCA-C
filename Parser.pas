@@ -3885,7 +3885,8 @@ if isFunction then begin
             if lp^.itype^.kind = scalarType then
                if lp^.itype^.baseType in [cgReal,cgDouble,cgComp] then
                   {all floating-points are passed as extended}
-                  lp^.itype := extendedPtr;
+                  lp^.itype :=
+                     MakeQualifiedType(extendedPtr, lp^.itype^.qualifiers);
             nextPdisp := nextPdisp + long(lp^.itype^.size).lsw;
             if (long(lp^.itype^.size).lsw = 1)
                and (lp^.itype^.kind = scalarType) then
