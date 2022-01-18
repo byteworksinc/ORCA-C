@@ -1154,7 +1154,7 @@ The Default .h File
 
 The default .h file is a new way for you to set up compiler options that you want to use on every C source file you compile.  Here's how it works:
 
-When ORCA/C starts, it begins by processing any command line parameters.  Next, it looks for a file called defaults.h in the library folder.  Finally, it compiles your source file.
+When ORCA/C starts, it begins by processing any command line parameters.  Next, it looks for a file called defaults.h in the ORCACDefs folder.  Finally, it compiles your source file.
 
 When ORCA/C looks for the defaults.h file, it behaves almost as if your program had started with the line
 
