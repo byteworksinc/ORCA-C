@@ -394,7 +394,7 @@ procedure StoreWordOfQuad(offset: integer);
 {    offset - offset of the word to store (0, 2, 4, or 6)       }
 {                                                               }
 { Note: If gQuad.preference is onStack, this just generates a   }
-{    PHA.  That is suitable if loading a value starting from    }
+{    PHA.  That is suitable if storing a value starting from    }
 {    the most significant word, but not in other cases.  For    }
 {    other gQuad.preference values, any order is okay.          }
 
