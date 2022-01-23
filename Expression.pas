@@ -1906,11 +1906,11 @@ var
    codeGeneration := lCodeGeneration and (numErrors = 0);
                                         {get controlling type after conversions}
    if expressionType^.kind = functionType then begin
-         controllingType.size := cgLongSize;
-         controllingType.saveDisp := 0;
-         controllingType.qualifiers := [];
-         controllingType.kind := pointerType;
-         controllingType.pType := expressionType;
+      controllingType.size := cgLongSize;
+      controllingType.saveDisp := 0;
+      controllingType.qualifiers := [];
+      controllingType.kind := pointerType;
+      controllingType.pType := expressionType;
       end {if}
    else if expressionType^.kind in [structType,unionType] then begin
       controllingType.size := expressionType^.size;
