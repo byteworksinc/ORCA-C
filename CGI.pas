@@ -1413,10 +1413,15 @@ case tp of
              d := rval;
              rval := d;
              end;
-   cgComp:   begin
-             c := rval;
-             rval := c;
-             end;
+   cgComp:   if rval < 0.0 then begin
+                {work around SANE comp conversion bug}
+                c := -rval;
+                rval := -c;
+                end {if}
+             else begin
+                c := rval;
+                rval := c;
+                end; {else}
    cgExtended: ;
    end; {case}
 end; {LimitPrecision}
