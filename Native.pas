@@ -674,12 +674,11 @@ case mode of
                                      GenImmediate2;
                                      sptr := icptr(name)^.pStr;
                                      j := sptr^.length;
-                                     if maxString-stringSize >= j+1 then begin
+                                     if maxString-stringSize >= j then begin
                                         for k := 1 to j do
                                            stringSpace[k+stringSize] :=
                                               sptr^.str[k];
-                                        stringSpace[stringSize+j+1] := chr(0);
-                                        stringSize := stringSize+j+1;
+                                        stringSize := stringSize+j;
                                         end {if}
                                      else
                                         Error(cge3);
