@@ -1966,14 +1966,19 @@ var
                errorFound := true;
                end; {else}
             tp := Subscript(tree^.left);
-            if tp^.kind <> arrayType then
-               Error(47)
-            else begin
-               tp := tp^.atype;
-               offset := offset + size*tp^.size;
-               Subscript := tp;
-               end; {else}
             end {if}
+         else begin
+            size := 0;
+            tp := Subscript(tree);
+            end; {else}
+         if tp^.kind = arrayType then begin
+            tp := tp^.atype;
+            offset := offset + size*tp^.size;
+            Subscript := tp;
+            end {if}
+         else if tp^.kind = functionType then begin
+            Subscript := tp;
+            end {else if}
          else begin
             Error(47);
             errorFound := true;
@@ -2009,6 +2014,11 @@ var
             Subscript := ip^.itype;
             iPtr^.pName := ip^.name;
             end; {else}
+         end {else if}
+      else if tree^.token.kind = stringConst then begin
+         Subscript := StringType(tree^.token.prefix);
+         iPtr^.isName := false;
+         iPtr^.pStr := tree^.token.sval;
          end {else if}
       else begin
          Error(47);

@@ -1707,6 +1707,10 @@ int foo(int[42]);
 
 (Michael Hackett)
 
+176. Certain address expressions (e.g. &"string"[1]) would cause spurious errors if they were used in the initializers of global or static variables.
+
+(Devin Reade)
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
