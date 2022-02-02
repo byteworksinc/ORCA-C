@@ -614,7 +614,7 @@ if list or (numErr <> 0) then begin
          40: msg := @'illegal type cast';
          41: msg := @'illegal operand in a constant expression';
          42: msg := @'duplicate symbol';
-         43: msg := @'the function''s type must match the previous declaration';
+        {43: msg := @'the function''s type must match the previous declaration';}
          44: msg := @'too many initializers';
          45: msg := @'the number of array elements must be greater than 0';
          46: msg := @'you must initialize the individual elements of a struct, union, or non-char array';
@@ -670,7 +670,7 @@ if list or (numErr <> 0) then begin
          96: msg := @'incorrect operand size';
          97: msg := @'operand syntax error';
          98: msg := @'invalid operand';
-         99: msg := @'comp data type is not supported by the 68881';
+        {99: msg := @'comp data type is not supported by the 68881';}
         100: msg := @'integer constants cannot use the f designator';
         101: msg := @'digits expected in the exponent';
        {102: msg := @'extern variables cannot be initialized';}
@@ -682,7 +682,7 @@ if list or (numErr <> 0) then begin
         108: msg := @'unknown cc= option';
         109: msg := @'illegal math operation in a constant expression';
         110: msg := @'lint: unknown pragma';
-        111: msg := @'the & operator cannot be applied to arrays';
+       {111: msg := @'the & operator cannot be applied to arrays';}
         112: msg := @'segment buffer overflow';
         113: msg := @'all parameters must have a name';
         114: msg := @'a function call was made to a non-function';

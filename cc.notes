@@ -329,6 +329,26 @@ p. 406
 
 va_end is now a macro, not a function.  Also, the va_arg, va_end, and va_start macros will now work even if stack repair code is enabled.
 
+p. 409
+
+Several new error messages may now be produced.  Some of these relate to malformed or otherwise illegal uses of new language features described below.  There are also several new lint checks that may optionally be enabled, as described below.  In addition, some violations of C language rules that were previously ignored will now be reported as errors.
+
+p. 410
+
+"A character constant must contain exactly one character" is no longer reported as an error.  As discussed below under "Multi-Character Character Constants," character constants may contain multiple characters.  Character constants with zero characters give the error "invalid character constant."
+
+p. 414
+
+"Extern variables cannot be initialized" is no longer reported as an error.  Such declarations are actually legal, and are allowed as of ORCA/C 2.1.0.
+
+p. 419
+
+"The & operator cannot be applied to arrays" is not reported as an error.  Such operations are actually legal, giving a pointer to the array.
+
+p. 422
+
+"Unions cannot have bit fields" is no longer reported as an error.  Bit fields in unions are now allowed, consistent with the C standards.
+
 p. 444,445
 
 The control codes to turn the cursor on and off are no longer used in the .CONSOLE driver, which is what the current version of ORCA/C uses for all text output.  In the .CONSOLE driver, the cursor is always off unless it is waiting for a character.
