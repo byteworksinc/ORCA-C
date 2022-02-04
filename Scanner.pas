@@ -2164,6 +2164,7 @@ if gotName then begin			{read the file name from the line}
    oldincludeFileGS := includeFileGS;	{set the file name}
    includeFileGS.theString.theString := workString;
    includeFileGS.theString.size := length(workString);
+   sourceFileGS := includeFileGS;
    ReadFile;				{read the file}
    chPtr := bofPtr;			{set the start, end pointers}
    eofPtr := pointer(ord4(bofPtr)+ffDCBGS.fileLength);
