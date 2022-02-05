@@ -56,6 +56,7 @@ sourceFileGS := includeFileGS;
 doingPartial := partialFileGS.theString.size <> 0;
 with liDCBGS do begin
    enterEditor := pFlags & flag_e <> 0;    {enter editor on terminal errors?}
+   filenamesInErrors := pFlags & flag_f <> 0; {filenames in error messages?}
    ignoreSymbols := mFlags & flag_i <> 0;  {ignore symbol file?}
    list := pFlags & flag_l <> 0;           {list the source file?}
    memoryCompile := pflags & flag_m <> 0;  {memory based compile?}

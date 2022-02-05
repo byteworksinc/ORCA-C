@@ -44,6 +44,9 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2022
             14.	New bit added to control floating-point optimizations that may
                	violate the IEEE standard.  See "Floating-Point Optimizations."
 
+            15.	New option to print file names in error messages.  See
+               	"File Names in Error Messages."
+
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
 2.1.0       1.	Bugs squashed.  See bug notes, below.
@@ -110,6 +113,10 @@ The sample SYSTABS line at the top of the page should start
 p. 107
 
 The table shows the language number for C as 7.  It should be 8.
+
+p. 128
+
+The ASML, ASMLG, ASSEMBLE, CMPL, CMPLG, COMPILE, and RUN commands now accept a new flag, +F.  The +F flag causes the compiler to include the file name in any error messages that it prints.  It is currently only effective for ORCA/C.
 
 p. 233
 
@@ -619,6 +626,12 @@ ORCA/C can now detect several elements of C syntax that were allowed in C89 but 
 * Checking for functions not returning a value or returning inappropriately:
 
 If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects some situations where a function with a non-void return type may return an unpredictable value, either by executing a return statement with no value or by executing to the end of the function with no return statement.  (The former case is also detected by #pragma lint bit 6.)  It also detects some situations where a _Noreturn function could return.  Note that these checks only detect some cases of these problems, not all of them.  Also, they may report a potential problem in some situations where the code at the end of a function is not actually reachable.
+
+
+File Names in Error Messages
+----------------------------
+
+When ORCA/C prints out error messages, it can now optionally include the name of the file containing the error.  This can help you to understand whether an error is in the main source file or an include file.  To enable this option, use the new +F flag to the ASML, ASMLG, ASSEMBLE, CMPL, CMPLG, COMPILE, or RUN commands.
 
 
 Locales

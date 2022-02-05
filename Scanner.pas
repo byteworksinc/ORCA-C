@@ -542,6 +542,9 @@ var
 begin {WriteLine}
 if list or (numErr <> 0) then begin
    if not wroteLine and not doingCommandLine then begin
+      if numErr <> 0 then
+         if filenamesInErrors then
+            writeln('In ',sourceFileGS.theString.theString,':');
       write(lineNumber:4, ' ');         {write the line #}
       cp := firstPtr;                   {write the characters in the line}
       while (cp <> eofPtr) and (charKinds[ord(cp^)] <> ch_eol) do begin
@@ -1135,6 +1138,8 @@ if len > 255 then
 pstr^[0] := chr(len);
 for i := 1 to len do
    pstr^[i] := lstr^.str[i];
+if len < 255 then
+   pstr^[len+1] := chr(0);
 end; {LongToPString}
 
 

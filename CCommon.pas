@@ -98,6 +98,7 @@ const
                                         {----------------------------}
    flag_d       = $10000000;            {generate debug code?}
    flag_e       = $08000000;            {abort to editor on terminal error?}
+   flag_f       = $04000000;            {print filenames in error messages?}
    flag_i       = $00800000;            {ignore symbol files?}
    flag_l       = $00100000;            {list source lines?}
    flag_m       = $00080000;            {memory based compile?}
@@ -521,6 +522,7 @@ var
    doingFunction: boolean;              {are we processing a function?}
    doingPartial: boolean;               {are we doing a partial compile?}
    enterEditor: boolean;                {enter editor on terminal errors?}
+   filenamesInErrors: boolean;          {print filenames in error messages?}
    foundFunction: boolean;              {has a function been found?}
    lint: integer;                       {lint flags}
    list: boolean;                       {generate source listing?}
