@@ -4303,7 +4303,14 @@ repeat
                         intConstant   : token.ival := -token.ival;
                         longConstant  : token.lval := -token.lval;
                         realConstant  : token.rval := -token.rval;
-                        longlongConstant,otherwise: Error(108);
+                        longlongConstant: begin
+                           token.qval.lo := ~token.qval.lo;
+                           token.qval.hi := ~token.qval.hi;
+                           token.qval.lo := token.qval.lo + 1;
+                           if token.qval.lo = 0 then
+                              token.qval.hi := token.qval.hi + 1;
+                           end;
+                        otherwise: Error(108);
                         end; {case}
                   end {if}
                else
