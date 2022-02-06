@@ -1744,7 +1744,7 @@ int foo(int[42]);
 
 (Devin Reade)
 
-177. The name of the current source file was not updated when processing an #include or #append.  As a result, uses of the __FILE__ macro within an include file would not give the name of that file, and functions within an include file would not have the proper file name recorded in their debugging information.
+177. The name of the current source file was not updated when processing an #include or #append.  As a result, uses of the __FILE__ macro within an include file would not give the name of that file, and functions (or portions of functions) within an include file would not have the proper file name recorded in their debugging information.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

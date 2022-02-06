@@ -577,6 +577,9 @@ lb4      lda   [p1],Y
          dey
          bpl   lb4
          long  M
+!       changedSourceFile := true;
+         lda   #1
+         sta   changedSourceFile
 !       lineNumber := fp^.lineNumber;
          ldy   #4+maxPath+4+maxPath+4
          lda   [fp],Y

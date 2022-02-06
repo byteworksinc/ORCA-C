@@ -406,6 +406,28 @@ NextToken;                              {remove the rbracech token}
 end; {EndCompoundStatement}
 
 
+procedure RecordLineNumber (lineNumber: integer);
+
+{ generate debug code to record the line number as specified    }
+
+var
+   newSourceFileGS: gsosOutStringPtr;
+
+begin {RecordLineNumber}
+if (lastLine <> lineNumber) or changedSourceFile then begin
+   lastLine := lineNumber;
+   if changedSourceFile then begin
+      newSourceFileGS := pointer(Malloc(sizeof(gsosOutString)));
+      newSourceFileGS^ := sourceFileGS;
+      Gen2Name(pc_lnm, lineNumber, ord(debugType), pointer(newSourceFileGS));
+      changedSourceFile := false;
+      end {if}
+   else
+      Gen2Name(pc_lnm, lineNumber, ord(debugType), nil);
+   end; {if}
+end; {RecordLineNumber}
+
+
 procedure Statement;
 
 { handle a statement                                            }
@@ -941,10 +963,7 @@ begin {Statement}
 {if trace names are enabled and a line # is due, generate it}
 if traceBack or debugFlag then
    if nameFound or debugFlag then
-      if lastLine <> lineNumber then begin
-         lastLine := lineNumber;
-         Gen2(pc_lnm, lineNumber, ord(debugType));
-         end; {if}
+      RecordLineNumber(lineNumber);
 
 {handle the statement}
 case token.kind of
@@ -3874,8 +3893,10 @@ if isFunction then begin
          if traceBack or profileFlag then begin
             if traceBack then
                nameFound := true;
+            debugSourceFileGS := sourceFileGS;
             GenPS(pc_nam, variable^.name);
             end; {if}
+      changedSourceFile := false;
       nextPdisp := 0;                   {assign displacements to the parameters}
       if not fnType^.isPascal then begin
          tlp := lp;
@@ -4582,10 +4603,7 @@ if variable^.class <> staticsy then begin
    if traceBack or debugFlag then
       if nameFound or debugFlag then
          if (statementList <> nil) and not statementList^.doingDeclaration then
-            if lastLine <> line then begin
-               lastLine := line;
-               Gen2(pc_lnm, line, ord(debugType));
-               end; {if}
+            RecordLineNumber(line);
    Initialize(variable, 0, variable^.itype);
    end; {if}
 end; {AutoInit}

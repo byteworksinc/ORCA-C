@@ -475,6 +475,8 @@ var
                                         {----}
    bofPtr: ptr;                         {pointer to the start of sourceFile}
    chPtr: ptr;                          {pointer to the next character in the file}
+   changedSourceFile: boolean;          {source file changed in function?}
+   debugSourceFileGS: gsosOutString;    {debug source file name}
                                         {debugType is also in SCANNER.ASM}
    debugType: (stop,break,autogo);      {line number debug types}
    doingParameters: boolean;            {are we processing parm definitions?}
@@ -496,7 +498,7 @@ var
    oldincludeFileGS: gsosOutString;	{previous includeFile value}
    outFileGS: gsosOutString;		{keep file name}
    partialFileGS: gsosOutString;        {partial compile list}
-   sourceFileGS: gsosOutString;		{debug source file name}
+   sourceFileGS: gsosOutString;         {presumed source file name}
    tempList: tempPtr;                   {list of temp work variables}
    longlong0: longlong;                 {the value 0 as a longlong}
    longlong1: longlong;                 {the value 1 as a longlong}

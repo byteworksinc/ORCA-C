@@ -2170,6 +2170,7 @@ if gotName then begin			{read the file name from the line}
    includeFileGS.theString.theString := workString;
    includeFileGS.theString.size := length(workString);
    sourceFileGS := includeFileGS;
+   changedSourceFile := true;
    ReadFile;				{read the file}
    chPtr := bofPtr;			{set the start, end pointers}
    eofPtr := pointer(ord4(bofPtr)+ffDCBGS.fileLength);
@@ -3069,6 +3070,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      sourceFileGS.theString.size := token.sval^.length-1;
                      if sourceFileGS.theString.size > 255 then
                         sourceFileGS.theString.size := 255;
+                     changedSourceFile := true;
                      NextToken;
                      end; {if}
                   if token.kind <> eolsy then

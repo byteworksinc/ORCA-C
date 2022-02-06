@@ -34,7 +34,8 @@
 {                                                               }
 {  pc_lnm - line number                                         }
 {                                                               }
-{  Gen2(pc_lnm, lc, flag)                                       }
+{  Gen2Name(pc_lnm, lc, flag, nil)                              }
+{  Gen2Name(pc_lnm, lc, flag, pointer(filename))                }
 {                                                               }
 {  Sets the current line number for the traceback facility and  }
 {  debugger.  This p-code should only be generated after the    }
@@ -45,6 +46,10 @@
 {       0 - step/trace                                          }
 {       1 - break point                                         }
 {       2 - auto-go                                             }
+{                                                               }
+{  If filename is not nil, it is a pointer to a GS/OS output    }
+{  string giving the source file name.  This is used to change  }
+{  the file name within a function that spans multiple files.   }
 {                                                               }
 {                                                               }
 {  pc_mov - move memory                                         }
@@ -71,7 +76,7 @@
 {       debugFlag - are we generating debug code?               }
 {       profileFlag - are we profiling?                         }
 {       traceBack - are we doing tracebacks?                    }
-{       sourceFile - current source file name                   }
+{       debugSourceFileGS - current source file name            }
 {                                                               }
 {                                                               }
 {  pc_nat - native code generation                              }

@@ -5105,6 +5105,33 @@ end; {GenUnaryQuad}
 
 {$segment 'gen2'}
 
+procedure GenDebugSourceFile (debugFile: gsosOutStringPtr);
+
+{ generate debug code indicating the specified source file name }
+
+var
+   i: integer;                          {loop/index variable}
+   len: integer;                        {length of the file name}
+
+begin {GenDebugSourceFile}
+GenNative(m_cop, immediate, 6, nil, 0);
+GenNative(d_add, genaddress, stringSize, nil, stringReference);
+GenNative(d_add, genaddress, stringSize, nil, stringReference+shift16);
+len := debugFile^.theString.size;
+if len > 255 then
+   len := 255;
+if maxString-stringSize >= len+1 then begin
+   stringSpace[stringSize+1] := chr(len);
+   for i := 1 to len do
+      stringSpace[i+stringSize+1] :=
+         debugFile^.theString.theString[i];
+   stringSize := stringSize + len + 1;
+   end {if}
+else
+   Error(cge3);
+end; {GenDebugSourceFile}
+
+
 procedure GenTree {op: icptr};
 
 { generate code for op and its children				}
@@ -6121,6 +6148,8 @@ procedure GenTree {op: icptr};
       GenCall(6);
       end; {if}
    if debugFlag then begin
+      if op^.lab <> nil then
+         GenDebugSourceFile(op^.lab);
       GenNative(m_cop, immediate, op^.q, nil, 0);
       GenNative(d_wrd, special, op^.r, nil, 0);
       end; {if}
@@ -6425,8 +6454,6 @@ procedure GenTree {op: icptr};
 
    var
       i: integer;			{loop/index variable}
-      len: integer;			{length of the file name}
-
 
    begin {GenNam}
    {generate a call to install the name in the traceback facility}
@@ -6455,22 +6482,8 @@ procedure GenTree {op: icptr};
       Error(cge3);
 
    {send the file name to the debugger}
-   if debugFlag then begin
-      GenNative(m_cop, immediate, 6, nil, 0);
-      GenNative(d_add, genaddress, stringSize, nil, stringReference);
-      GenNative(d_add, genaddress, stringSize, nil, stringReference+shift16);
-      len := sourceFileGS.theString.size;
-      if len > 255 then
-         len := 255;
-      if maxString-stringSize >= len+1 then begin
-         stringSpace[stringSize+1] := chr(len);
-         for i := 1 to len do
-            stringSpace[i+stringSize+1] := sourceFileGS.theString.theString[i];
-         stringSize := stringSize + len + 1;
-         end {if}
-      else
-         Error(cge3);
-      end; {if}
+   if debugFlag then
+      GenDebugSourceFile(@debugSourceFileGS);
    end; {GenNam}
 
 
