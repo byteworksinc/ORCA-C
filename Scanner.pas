@@ -682,7 +682,7 @@ if list or (numErr <> 0) then begin
         105: msg := @'lint: parameter list not prototyped';
         106: msg := @'cannot take the address of a bit field';
         107: msg := @'illegal use of forward declaration';
-        108: msg := @'unknown cc= option';
+        108: msg := @'unknown or invalid cc= option';
         109: msg := @'illegal math operation in a constant expression';
         110: msg := @'lint: unknown pragma';
        {111: msg := @'the & operator cannot be applied to arrays';}
@@ -4049,6 +4049,18 @@ var
    end; {GetString}
 
 
+   procedure FlagErrorAndSkip;
+
+   { Flag an error about an invalid cc= option and skip         }
+   { characters from the command line until whitespace or end.  }
+   
+   begin {FlagErrorAndSkip}   
+   Error(108);
+   while not (lch in [chr(0),' ',chr(9)]) do
+      NextCh;
+   end; {FlagErrorAndSkip}
+
+
 begin {InitScanner}
 printMacroExpansions := false;          {don't print the token list}
 skipIllegalTokens := false;		{flag illegal tokens in skipped code}
@@ -4257,6 +4269,8 @@ repeat
       NextCh;
       if lch in ['d','D'] then begin
          NextCh;                        {yes -> get the name}
+         if charKinds[ord(lch)] <> letter then
+            Error(9);
          new(mp);                       {form the macro table entry}
          mp^.name := GetWord;
          mp^.parameters := -1;
@@ -4272,7 +4286,7 @@ repeat
          if lch = '=' then begin
             NextCh;                     {record the value}
             token.numString := nil;
-            if lch in ['a'..'z', 'A'..'Z', '_'] then begin
+            if charKinds[ord(lch)] = letter then begin
                token.kind := ident;
                token.class := identifier;
                token.name := GetWord;
@@ -4293,7 +4307,7 @@ repeat
                         end; {case}
                   end {if}
                else
-                  Error(108);
+                  FlagErrorAndSkip;
                end {else if}
             else if lch in ['.','0'..'9'] then begin
                token.name := GetWord;
@@ -4302,7 +4316,7 @@ repeat
             else if lch = '"' then 
                GetString
             else
-               Error(108);
+               FlagErrorAndSkip;
             end; {if}
          new(mp^.tokens);               {add the value to the definition}
          with mp^.tokens^ do begin
@@ -4322,13 +4336,10 @@ repeat
             AddPath(workString);
             end {if}
          else
-            Error(103);
+            FlagErrorAndSkip;
          end {if}
-      else begin                        {not -d, -i: flag the error}
-         Error(108);
-         while not (lch in [chr(0),' ',chr(9)]) do
-            NextCh;
-         end; {else}
+      else                              {not -d, -i: flag the error}
+         FlagErrorAndSkip;
       end {if}
    else if lch <> chr(0) then begin
       Error(108);                       {unknown option: flag the error}
