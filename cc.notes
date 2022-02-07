@@ -1197,7 +1197,7 @@ The only differences are that the file doesn't have to exist (and if it doesn't 
 
 You can put absolutely anything you like in this file.  The intent is to use it for pragmas or other preprocessor directives that you would like to become defaults for all of your programs, but there is no restriction that prevents you from putting other things in the file.
 
-WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym files are created by the compiler to make recompiling programs faster.  They need to be recreated with the new information from the defaults.h file, but the compiler will not notice the presence of the defaults.h file if it is compiling a .sym file created with a previous version of the compiler.
+WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym files are created by the compiler to make recompiling programs faster.  They need to be recreated with the new information from the defaults.h file, but the compiler will not notice the presence of the defaults.h file if it is using a .sym file created when the defaults.h file did not exist.
 
 
 // Comments
