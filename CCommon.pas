@@ -498,6 +498,7 @@ var
    oldincludeFileGS: gsosOutString;	{previous includeFile value}
    outFileGS: gsosOutString;		{keep file name}
    partialFileGS: gsosOutString;        {partial compile list}
+   pragmaKeepFile: gsosOutStringPtr;    {filename specified in #pragma keep}
    sourceFileGS: gsosOutString;         {presumed source file name}
    tempList: tempPtr;                   {list of temp work variables}
    longlong0: longlong;                 {the value 0 as a longlong}

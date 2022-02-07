@@ -798,7 +798,7 @@ procedure EndInclude {chPtr: ptr};
                      WriteWord(floatSlot);
                      end;
 
-                  p_keep: WriteLongString(@outFileGS.theString);
+                  p_keep: WriteLongString(@pragmaKeepFile^.theString);
 
                   p_line: begin
                      WriteWord(lineNumber);
@@ -1444,11 +1444,13 @@ var
             end;
 
          p_keep: begin
-            liDCBGS.kFlag := 1;
             lsPtr := ReadLongString;
-            outFileGS.theString.size := lsPtr^.length;
-            for i := 1 to outFileGS.theString.size do
-               outFileGS.theString.theString[i] := lsPtr^.str[i];
+            if liDCBGS.kFlag = 0 then begin
+               liDCBGS.kFlag := 1;
+               outFileGS.theString.size := lsPtr^.length;
+               for i := 1 to outFileGS.theString.size do
+                  outFileGS.theString.theString[i] := lsPtr^.str[i];
+               end; {if}
             end;
 
          p_line: begin

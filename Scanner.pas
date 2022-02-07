@@ -2776,8 +2776,15 @@ var
    { #pragma keep FILENAME                                      }
 
    begin {DoKeep}
-   FlagPragmas(p_keep);
    if GetFileName(false) then begin	{read the file name}
+      FlagPragmas(p_keep);
+      if not ignoreSymbols then
+         if pragmaKeepFile = nil then begin
+            new(pragmaKeepFile);
+            pragmaKeepFile^.maxSize := maxPath + 4;
+            pragmaKeepFile^.theString.theString := workString;
+            pragmaKeepFile^.theString.size := length(workString);
+            end; {if}
       if foundFunction then
          Error(17);
       if liDCBGS.kFlag = 0 then begin	{use the old name if there is one...}
@@ -4105,6 +4112,7 @@ lintIsError := true;                    {lint messages are considered errors}
 fenvAccess := false;                    {not accessing fp environment}
 charStrPrefix := prefix_none;           {no char/str prefix seen}
 mergingStrings := false;                {not currently merging strings}
+pragmaKeepFile := nil;                  {no #pragma keep file so far}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
