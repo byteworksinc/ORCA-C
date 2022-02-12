@@ -233,6 +233,8 @@ procedure MMQuit;
 begin {MMQuit}
 DisposeAll(globalID);
 DisposeAll(localID);
+globalID := 0;                          {do not use old IDs after restart}
+localID := 0;
 end; {MMQuit}
 
 end.

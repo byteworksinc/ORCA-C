@@ -999,6 +999,7 @@ case errnum of                          {print the error}
    10: msg := 'ORCA/C requires version 2.0 or later of the shell';
    11: msg := 'The program is too large to compile to memory -- use Compile to Disk';
    12: msg := 'Invalid sym file detected. Re-run ORCA/C to proceed.';
+   13: msg := 'file name or command-line parameter is too long';
    otherwise: begin
       msg := '';
       Error(57);

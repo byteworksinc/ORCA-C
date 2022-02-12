@@ -36,7 +36,7 @@ begin {cc}
 {make sure we quit with restart set}
 SystemQuitFlags($4000);
 
-{get the command line info}
+{initialize file names and parameter strings}
 includeFileGS.maxSize := maxPath+4;
 includeFileGS.theString.size := 0;
 for i := 1 to maxPath do
@@ -44,6 +44,14 @@ for i := 1 to maxPath do
 outFileGS := includeFileGS;
 partialFileGS := includeFileGS;
 infoStringGS := includeFileGS;
+
+{check the version number}
+vDCBGS.pCount := 1;
+VersionGS(vDCBGS);
+if (ToolError <> 0) or (vDCBGS.version[1] < '2') then
+   TermError(10);
+
+{get the command line info}
 with liDCBGS do begin
    pCount := 11;
    sFile := @includeFileGS;
@@ -52,6 +60,14 @@ with liDCBGS do begin
    iString := @infoStringGS;
    end; {with}
 GetLInfoGS(liDCBGS);
+if ToolError <> 0 then begin               {check for buffTooSmall errors}
+   includeFileGS.theString.size := 0;
+   outFileGS.theString.size := 0;
+   partialFileGS.theString.size := 0;
+   infoStringGS.theString.size := 0;
+   enterEditor := false;
+   TermError(13);
+   end; {if}
 sourceFileGS := includeFileGS;
 doingPartial := partialFileGS.theString.size <> 0;
 with liDCBGS do begin
@@ -69,12 +85,6 @@ with liDCBGS do begin
    end; {liDCB}
 if list then                               {we don't need both...}
    progress := false;
-
-{check the version number}
-vDCBGS.pCount := 1;
-VersionGS(vDCBGS);
-if vDCBGS.version[1] < '2' then
-   TermError(10);
 
 {write the header}
 if list or progress then begin
