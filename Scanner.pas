@@ -2943,6 +2943,8 @@ var
                   bPtr^ := mPtr^.next
                else
                   lastPtr^.next := mPtr^.next;
+               if mPtr^.saved then
+                  TermHeader;
                end; {else}
             goto 1;
             end; {if}

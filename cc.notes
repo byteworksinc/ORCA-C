@@ -1775,6 +1775,8 @@ int foo(int[42]);
 
 179. Macro definitions or header search paths specified via the cc= portion of the command line could be saved in the .sym file and applied to subsequent compilations, even if they were no longer specified on the command line.
 
+180. Certain #undef directives might be ignored when using a .sym file.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
