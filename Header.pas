@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 19;                 {version number of .sym file format}
+   symFileVersion = 21;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1253,6 +1253,7 @@ var
          symRefnum := opRec.refnum;
          OpenSymbols := true;
          WriteWord(symFileVersion);
+         WriteLongString(pointer(@infoStringGS.theString));
          tokenMark := GetMark;
          includeMark := false;
          end; {if}
@@ -1876,15 +1877,31 @@ var
    end; {OpenSymbolFile}
 
 
-   function SymbolVersion: integer;
+   function SymbolFileIsUsable: boolean;
 
-   { Read the symbol file version number			}
+   { Read the symbol file header to check if it is usable	}
    {								}
-   { Returns: version number					}
+   { Returns: True if the symbol file is usable, false if not	}
 
-   begin {SymbolVersion}
-   SymbolVersion := ReadWord;
-   end; {SymbolVersion}
+   label 1;
+
+   var
+      ccPtr: longStringPtr;             {cc= string recorded in symbol file}
+      i: integer;                       {loop counter}
+
+   begin {SymbolFileIsUsable}
+   SymbolFileIsUsable := false;
+   if ReadWord = symFileVersion then begin
+      ccPtr := ReadLongString;
+      if ccPtr^.length = infoStringGS.theString.size then begin
+         for i := 1 to infoStringGS.theString.size do
+            if ccPtr^.str[i] <> infoStringGS.theString.theString[i] then
+               goto 1;
+         SymbolFileIsUsable := true;
+         end; {if}
+      end; {if}
+1:
+   end; {SymbolFileIsUsable}
 
 
    function SourceMatches: boolean;
@@ -1938,7 +1955,7 @@ if not ignoreSymbols then begin
    includeLevel := 0;			{no nested includes}
    symChPtr := chPtr;			{record initial source location}
    if OpenSymbolFile(fName) then begin	{check for symbol file}
-      if SymbolVersion = symFileVersion then begin
+      if SymbolFileIsUsable then begin
 	 done := EndOfSymbols;		{valid file found - process it}
 	 if done then
             PurgeSymbols;

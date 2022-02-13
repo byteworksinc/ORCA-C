@@ -1748,6 +1748,8 @@ int foo(int[42]);
 
 178. Keep names specified via the KEEP= portion of the command line or the {KeepName} shell variable could sometimes be saved in the .sym file and applied to subsequent compilations, even if they were no longer specified for the later compilation.  Also, if a .sym file was used, the keep name specified via #pragma keep might override the one specified on the command line or via {KeepName}.
 
+179. Macro definitions or header search paths specified via the cc= portion of the command line could be saved in the .sym file and applied to subsequent compilations, even if they were no longer specified on the command line.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
