@@ -47,6 +47,9 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2022
             15.	New option to print file names in error messages.  See
                	"File Names in Error Messages."
 
+            16.	New option to include a custom file before processing the
+               	source file.  See "Custom Pre-Include File."
+
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
 2.1.0       1.	Bugs squashed.  See bug notes, below.
@@ -117,6 +120,8 @@ The table shows the language number for C as 7.  It should be 8.
 p. 128
 
 The ASML, ASMLG, ASSEMBLE, CMPL, CMPLG, COMPILE, and RUN commands now accept a new flag, +F.  The +F flag causes the compiler to include the file name in any error messages that it prints.  It is currently only effective for ORCA/C.
+
+There is also a new option, -p, which can be used within the cc= portion of the command line to specify a custom pre-include file.  See "Custom Pre-Include File," below.
 
 p. 233
 
@@ -632,6 +637,24 @@ File Names in Error Messages
 ----------------------------
 
 When ORCA/C prints out error messages, it can now optionally include the name of the file containing the error.  This can help you to understand whether an error is in the main source file or an include file.  To enable this option, use the new +F flag to the ASML, ASMLG, ASSEMBLE, CMPL, CMPLG, COMPILE, or RUN commands.
+
+
+Custom Pre-Include File
+-----------------------
+
+ORCA/C supports a new command-line option to specify a custom file that will be included before the main source file is processed.  This is specified by using a new option, -p, within the cc= portion of the command line.  The -p option is immediately followed by the name of the file to include, given as a quoted string.  For example, using the command line option
+
+   cc=(-p"myconfig.h")
+
+is similar to starting the source file with
+
+   #include "myconfig.h"
+
+However, the file name specified on the command line is used as-is rather than being subject to the usual header search rules.
+
+Only one pre-include file may be specified.  If the -p option is used, then the default .h file (described below) will not be included.  If you still wish to include the default .h file, you can explicitly write #include <defaults.h> within your custom pre-include file or your source file.
+
+Like the default .h file, the custom pre-include file is primarily intended to contain pragmas or other preprocessor directives, but it may contain any C source code.  The difference is that the custom pre-include file can be customized for a specific source file or project.
 
 
 Locales
@@ -1196,6 +1219,8 @@ When ORCA/C looks for the defaults.h file, it behaves almost as if your program 
 The only differences are that the file doesn't have to exist (and if it doesn't no error is generated), the line is never shown in your source file, and the line number counter is not incremented.
 
 You can put absolutely anything you like in this file.  The intent is to use it for pragmas or other preprocessor directives that you would like to become defaults for all of your programs, but there is no restriction that prevents you from putting other things in the file.
+
+As of ORCA/C 2.2.0 B6, a custom pre-include file may also be used, as described above.  If one is specified, it will be included instead of the default .h file.
 
 WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym files are created by the compiler to make recompiling programs faster.  They need to be recreated with the new information from the defaults.h file, but the compiler will not notice the presence of the defaults.h file if it is using a .sym file created when the defaults.h file did not exist.
 

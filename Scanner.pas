@@ -240,6 +240,7 @@ type
 
 var
    charStrPrefix: charStrPrefixEnum;    {prefix of character/string literal}
+   customDefaultName: stringPtr;        {name of custom pre-included default file}
    dateStr: longStringPtr;              {macro date string}
    doingCommandLine: boolean;           {are we processing the cc= command line?}
    doingPPExpression: boolean;          {are we processing a preprocessor expression?}
@@ -2143,7 +2144,10 @@ var
 
 begin {OpenFile}
 if default then begin			{get the file name}
-   workString := defaultName;
+   if customDefaultName <> nil then
+      workString := customDefaultName^
+   else
+      workString := defaultName;
    gotName := true;
    end {if}
 else
@@ -3354,7 +3358,7 @@ var
 
 begin {DoDefaultsDotH}
 name := defaultName;
-if GetFileType(name) <> -1 then
+if (customDefaultName <> nil) or (GetFileType(name) <> -1) then
    DoInclude(true);
 end; {DoDefaultsDotH}
 
@@ -4112,6 +4116,7 @@ lintIsError := true;                    {lint messages are considered errors}
 fenvAccess := false;                    {not accessing fp environment}
 charStrPrefix := prefix_none;           {no char/str prefix seen}
 mergingStrings := false;                {not currently merging strings}
+customDefaultName := nil;               {no custom default name}
 pragmaKeepFile := nil;                  {no #pragma keep file so far}
 
                                         {error codes for lint messages}
@@ -4353,7 +4358,20 @@ repeat
          else
             FlagErrorAndSkip;
          end {if}
-      else                              {not -d, -i: flag the error}
+      else if lch in ['p','P'] then begin
+         NextCh;                        {get the filename}
+         if lch = '"' then begin
+            GetString;
+            if customDefaultName = nil then
+               new(customDefaultName)
+            else
+               Error(108);
+            LongToPString(customDefaultName, token.sval);
+            end {if}
+         else
+            FlagErrorAndSkip;
+         end {if}
+      else                              {not -d, -i, -p: flag the error}
          FlagErrorAndSkip;
       end {if}
    else if lch <> chr(0) then begin
