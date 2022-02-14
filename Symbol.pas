@@ -266,8 +266,7 @@ function StringType(prefix: charStrPrefixEnum): typePtr;
 implementation
 
 var
-   staticNum,                             {static variable number}
-   firstStaticNum: packed array[1..6] of char; {staticNum at start of function}
+   staticNum: packed array[1..6] of char; {static variable number}
 
 {- Imported from expression.pas --------------------------------}
 
@@ -2027,8 +2026,6 @@ repeat
       done := i = 1;
       end; {if}
 until done;
-if table = globalTable then             {update fistStaticNum}
-   firstStaticNum := staticNum;
 new(tPtr);                              {create a new symbol table}
 ClearTable(tPtr^);
 tPtr^.next := table;
