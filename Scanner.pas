@@ -2552,6 +2552,8 @@ var
       mPtr^.algorithm := 0;
       if IsDefined(mPtr^.name) then begin
          mf := macroFound;
+         if mf^.readOnly then
+            goto 3;
          if mf^.parameters = mPtr^.parameters then begin
             tk1 := mf^.tokens;
             tk2 := mPtr^.tokens;
