@@ -184,7 +184,7 @@ const
                                         {----}
    defaultName  = '13:ORCACDefs:Defaults.h'; {default include file name}
    maxErr       = 10;                   {max errors on one line}
-   maxLint      = 155;                  {maximum lint error code}
+   maxLint      = 170;                  {maximum lint error code}
 
 type
    errorType = record                   {record of a single error}
@@ -745,6 +745,7 @@ if list or (numErr <> 0) then begin
         167: msg := @'''L''-prefixed character or string constants are not supported by ORCA/C';
         168: msg := @'malformed hexadecimal floating constant';
         169: msg := @'struct or array may not contain a struct with a flexible array member';
+        170: msg := @'lint: no whitespace after macro name';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -2502,6 +2503,9 @@ var
             Error(12);
          end {if}
       else begin
+         if (lint & lintC99Syntax) <> 0 then
+            if not (charKinds[ord(ch)] in [ch_white,ch_eol,ch_eof]) then
+               Error(170);
          parameters := -1;              {no parameter list exists}
          NextToken;                     {done with the name token...}
          end; {else}
@@ -4125,7 +4129,7 @@ pragmaKeepFile := nil;                  {no #pragma keep file so far}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
-lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155];
+lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155,170];
 
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';

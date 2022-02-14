@@ -627,6 +627,7 @@ ORCA/C can now detect several elements of C syntax that were allowed in C89 but 
   (also detected by #pragma lint bit 7, described below)
 - Declarations or type names with no type specifiers (using 'implicit int')
   (This includes but is broader than what is checked by #pragma lint bit 1.)
+- Object-like macro definitions with no whitespace after the macro name
 
 * Checking for functions not returning a value or returning inappropriately:
 
