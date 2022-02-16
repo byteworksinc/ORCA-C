@@ -466,6 +466,7 @@ cch      equ   13
          enum  (ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,ch_colon)
          enum  (ch_backslash,letter,digit)
 
+! begin {NextCh}
          tsc                            create stack frame
          sec
          sbc   #stackFrameSize
@@ -502,11 +503,11 @@ lab1     anop
 la1      brl   lb5
 la2      anop
 !    if not lastWasReturn then begin
-!      lastWasReturn := true;
-!      needWriteLine := true;
-!      ch := chr(eolChar);
-!      goto le2;
-!      end; {if}
+!       lastWasReturn := true;
+!       needWriteLine := true;
+!       ch := chr(eolChar);
+!       goto le2;
+!       end; {if}
          lda   lastWasReturn
          bne   la3
          lda   #1
@@ -873,7 +874,7 @@ le1      sta   ch
 !          goto 2;
          brl   lab2
 !          end; {if}
-!       end; {if}
+!       end; {else if}
 !    end; {else}
 le2      anop
          pld
@@ -911,22 +912,24 @@ db1      sta   p1
          and   #$00FF
          cmp   #$07
          bne   db2
-!   debugType := break
+!    debugType := break;
          lda   #break
          sta   debugType
+!    chPtr := pointer(ord4(chPtr) + 1);
+!    end {else if}
          bra   db3
-! else if ord(chPtr^) = $06 then
+! else if ord(chPtr^) = $06 then begin
 db2      cmp   #$06
          bne   db4
-!   debugType := autoGo;
+!    debugType := autoGo;
          lda   #autoGo
          sta   debugType
 !    chPtr := pointer(ord4(chPtr) + 1);
 db3      inc4  chPtr
-!    end {if}
+!    end {else if}
          bra   db5
 ! else
-!   debugType := stop;
+!    debugType := stop;
 db4      stz   debugType
 ! end; {DebugCheck}
 db5      rts
