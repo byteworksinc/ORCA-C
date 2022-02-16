@@ -3251,6 +3251,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                         Error(11);
                      end {else if}
                   else if token.name^ = 'path' then begin
+                     FlagPragmas(p_path);
                      NextToken;
 		     if token.kind = stringConst then begin
                 	LongToPString(workString, token.sval);
