@@ -77,6 +77,7 @@ var
    macros: ^macroTable;                 {preprocessor macro list}
    pathList: pathRecordPtr;		{additional search paths}
    printMacroExpansions: boolean;       {print the token list?}
+   suppressMacroExpansions: boolean;    {suppress printing even if requested?}
    reportEOL: boolean;                  {report eolsy as a token?}
    token: tokenType;                    {next token to process}
 
@@ -1098,7 +1099,7 @@ while mPtr <> nil do begin
 	 FindMacro := mPtr
       else if tokenList = nil then begin
 	 while charKinds[ord(ch)] in [ch_white, ch_eol] do begin
-	    if printMacroExpansions then
+	    if printMacroExpansions and not suppressMacroExpansions then
 	       if charKinds[ord(ch)] = ch_eol then
         	  writeln
 	       else
@@ -1559,7 +1560,7 @@ var
    i: integer;                          {loop counter}
    inhibit: boolean;                    {inhibit parameter expansion?}
    lexpandMacros: boolean;              {local copy of expandMacros}
-   lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
+   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
    mPtr: macroRecordPtr;                {for checking list of macros}
    newParm: parameterPtr;               {for building a new parameter entry}
    tlPtr, tPtr, tcPtr, lastPtr: tokenListRecordPtr; {work pointers}
@@ -1573,8 +1574,8 @@ var
    endParmTokens: tokenSet;             {tokens that end a parameter}
 
 begin {Expand}
-lPrintMacroExpansions := printMacroExpansions; {inhibit token printing}
-printMacroExpansions := false;
+lSuppressMacroExpansions := suppressMacroExpansions; {inhibit token printing}
+suppressMacroExpansions := true;
 lexpandMacros := expandMacros;          {prevent expansion of parameters}
 expandMacros := false;
 saveNumber := true;                     {save numeric strings}
@@ -1859,7 +1860,7 @@ while parms <> nil do begin             {dispose of the parameter list}
    parms := parmEnd;
    end; {while}
 expandMacros := lexpandMacros;          {restore the flags}
-printMacroExpansions := lPrintMacroExpansions;
+suppressMacroExpansions := lSuppressMacroExpansions;
 saveNumber := false;                    {stop saving numeric strings}
 end; {Expand}
 
@@ -2202,7 +2203,7 @@ procedure PreProcess;
 label 2;
 
 var
-   lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
+   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
    lReportEOL: boolean;                 {local copy of reportEOL}
    tSkipping: boolean;                  {temp copy of the skipping variable}
    val: integer;                        {expression value}
@@ -2990,8 +2991,8 @@ var
 
 
 begin {PreProcess}
-lPrintMacroExpansions := printMacroExpansions; {inhibit token printing}
-printMacroExpansions := false;
+lSuppressMacroExpansions := suppressMacroExpansions; {inhibit token printing}
+suppressMacroExpansions := true;
 lReportEOL := reportEOL;                {we need to see eol's}
 reportEOL := true;
 tSkipping := skipping;                  {don't skip the directive name!}
@@ -3153,7 +3154,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                   else if token.name^ = 'expand' then begin
 		     FlagPragmas(p_expand);
                      NumericDirective;         
-                     lPrintMacroExpansions := expressionValue <> 0;
+                     printMacroExpansions := expressionValue <> 0;
                      if token.kind <> eolsy then
                         Error(11);
                      end {else if}
@@ -3349,7 +3350,7 @@ flagOverflows := true;
 expandMacros := true;
 charKinds[ord('#')] := illegal;         {don't allow # as a token}
 reportEOL := lReportEOL;                {restore flags}
-printMacroExpansions := lPrintMacroExpansions;
+suppressMacroExpansions := lSuppressMacroExpansions;
 skipping := tskipping;
 if nextLineNumber >= 0 then
    lineNumber := nextLineNumber;
@@ -4082,6 +4083,7 @@ var
 
 begin {InitScanner}
 printMacroExpansions := false;          {don't print the token list}
+suppressMacroExpansions := false;       {...but do not suppress token printing}
 skipIllegalTokens := false;		{flag illegal tokens in skipped code}
 allowLongIntChar := false;		{allow long int char constants}
 allowTokensAfterEndif := false;         {allow tokens after #endif}
@@ -4420,7 +4422,7 @@ var
    mPtr: macroRecordPtr;                {for checking list of macros}
    rword: tokenEnum;                    {loop variable}
    sp: stringPtr;                       {for saving identifier names}
-   lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
+   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
 
 begin {CheckIdentifier}
 if expandMacros then                    {handle macro expansions}
@@ -4428,10 +4430,10 @@ if expandMacros then                    {handle macro expansions}
       mPtr := FindMacro(@workstring);
       if mPtr <> nil then begin
          Expand(mPtr);
-         lPrintMacroExpansions := printMacroExpansions;
-         printMacroExpansions := false;
+         lSuppressMacroExpansions := suppressMacroExpansions;
+         suppressMacroExpansions := true;
          NextToken;
-         printMacroExpansions := lPrintMacroExpansions;
+         suppressMacroExpansions := lSuppressMacroExpansions;
          goto 1;
          end;
       end; {if}
@@ -4487,7 +4489,7 @@ var
    i,j: 0..maxint;                      {loop/index counter}
    inhibit: boolean;                    {inhibit macro expansion?}
    lExpandMacros: boolean;              {local copy of expandMacros}
-   lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
+   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
    mPtr: macroRecordPtr;                {for checking list of macros}
    setLength: boolean;                  {is the current string a p-string?}
    tPtr: tokenListRecordPtr;            {for removing tokens from putback buffer}
@@ -4805,7 +4807,7 @@ while charKinds[ord(ch)] in [illegal,ch_white,ch_eol] do begin
       goto 2;
       end {if}
    else begin                           {skip white space}
-      if printMacroExpansions then
+      if printMacroExpansions and not suppressMacroExpansions then
          if charKinds[ord(ch)] = ch_eol then begin
             StopSpin;
             writeln;
@@ -5254,12 +5256,12 @@ if (token.kind = stringconst) and not mergingStrings  {handle adjacent strings}
             goto 1;
          end; {if}
       tToken := token;
-      lPrintMacroExpansions := printMacroExpansions;
-      printMacroExpansions := false;
+      lSuppressMacroExpansions := suppressMacroExpansions;
+      suppressMacroExpansions := true;
       mergingStrings := true;
       NextToken;
       mergingStrings := false;
-      printMacroExpansions := lPrintMacroExpansions;
+      suppressMacroExpansions := lSuppressMacroExpansions;
       if token.kind = stringconst then begin
          Merge(tToken, token);
          done := false;
@@ -5280,8 +5282,8 @@ if doingPPExpression then begin
    if token.kind = typedef then
       token.kind := ident;
    end; {if}
-if printMacroExpansions then		{print the token stream}
-   PrintToken(token);
+if printMacroExpansions and not suppressMacroExpansions then
+   PrintToken(token);                   {print the token stream}
 end; {NextToken}
 
 

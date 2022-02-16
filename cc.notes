@@ -185,6 +185,8 @@ p. 257
 
 The #pragma expand directive has been changed to use three-digit octal escape sequences (rather than hexadecimal ones) in strings it outputs.  (This ensures that subsequent characters in the string cannot be interpreted as part of the escape sequence.)
 
+If precompiled headers are being used, #pragma expand will not print the tokens for the portion of the code that has been precompiled and represented in the .sym file.  It will still print the tokens for the remainder of the code (including all functions).  If you want to see the tokens for all of the code, you can use the -I flag to make ORCA/C ignore the .sym file.
+
 p. 258
 
 The #pragma ignore directive supports several new bits.
@@ -1777,6 +1779,8 @@ int foo(int[42]);
 179. Macro definitions or header search paths specified via the cc= portion of the command line could be saved in the .sym file and applied to subsequent compilations, even if they were no longer specified on the command line.
 
 180. Certain #undef directives might be ignored when using a .sym file.
+
+181. #pragma expand might not work correctly when used in certain places.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

@@ -436,7 +436,7 @@ label 1;
 
 var
    lToken,tToken: tokenType;            {for look-ahead}
-   lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
+   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
 
 
    function GetSwitchRecord: statementPtr;
@@ -981,14 +981,14 @@ case token.kind of
    gotosy:              GotoStatement;
    typedef,
    ident:               begin
-                        lPrintMacroExpansions := printMacroExpansions;
-                        printMacroExpansions := false;
+                        lSuppressMacroExpansions := suppressMacroExpansions;
+                        suppressMacroExpansions := true;
                         lToken := token;
                         NextToken;
                         tToken := token;
                         PutBackToken(token, true);
                         token := lToken;
-                        printMacroExpansions := lPrintMacroExpansions;
+                        suppressMacroExpansions := lSuppressMacroExpansions;
                         if tToken.kind = colonch then begin
                            LabelStatement;
                            goto 1;
@@ -1099,7 +1099,7 @@ var
    ltoken: tokenType;                   {for putting ; on stack}
    stPtr: statementPtr;                 {work pointer}
    tl,tk: tokenStackPtr;                {for forming expression list}
-   lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
+   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
 
 begin {EndForStatement}
 if c99Scope then PopTable;
@@ -1118,13 +1118,13 @@ if tl <> nil then begin
       tl := tl^.next;
       dispose(tk);
       end; {while}
-   lPrintMacroExpansions := printMacroExpansions; {inhibit token echo}
-   printMacroExpansions := false;
+   lSuppressMacroExpansions := suppressMacroExpansions; {inhibit token echo}
+   suppressMacroExpansions := true;
    NextToken;                           {evaluate the expression}
    Expression(normalExpression, [semicolonch]);
    Gen0t(pc_pop, UsualUnaryConversions);
    NextToken;                           {skip the semicolon}
-   printMacroExpansions := lPrintMacroExpansions;
+   suppressMacroExpansions := lSuppressMacroExpansions;
    end; {if}
 
 Gen1(pc_ujp, stPtr^.forLoop);           {loop to the test}
@@ -1329,7 +1329,7 @@ var
       lstorageClass: tokenEnum;         {storage class of the declaration}
       ltypeSpec: typePtr;               {type specifier}
       luseGlobalPool: boolean;          {local copy of useGlobalPool}
-      lPrintMacroExpansions: boolean;   {local copy of printMacroExpansions}
+      lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
 
    begin {StackDeclarations}
    lastWasIdentifier := false;          {used to see if the declaration is a fn}
@@ -1458,10 +1458,10 @@ var
                if token.symbolPtr^.itype^.baseType = cgVoid then
                   isVoid := true;
          if isVoid then begin              {check for a void prototype}
-            lPrintMacroExpansions := printMacroExpansions;
-            printMacroExpansions := false;
+            lSuppressMacroExpansions := suppressMacroExpansions;
+            suppressMacroExpansions := true;
             NextToken;
-            printMacroExpansions := lPrintMacroExpansions;
+            suppressMacroExpansions := lSuppressMacroExpansions;
             if token.kind = rparench then begin
                PutBackToken(token, false);
                NextToken;
@@ -2392,7 +2392,7 @@ var
       ip: identPtr;                     {for tracing field lists}
       kind: typeKind;                   {base type of an initializer}
       ktp: typePtr;			{array type with definedTypes removed}
-      lPrintMacroExpansions: boolean;   {local copy of printMacroExpansions}
+      lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
       stringElementType: typePtr;       {element type of string literal}
       stringLength: integer;            {elements in a string literal}
 
@@ -2618,12 +2618,12 @@ var
          count := tp^.size;
          ip := tp^.fieldList;
          bitCount := 0;
-         lPrintMacroExpansions := printMacroExpansions;
+         lSuppressMacroExpansions := suppressMacroExpansions;
          while (ip <> nil) and (ip^.itype^.size > 0) do begin
             if ip^.isForwardDeclared then
                ResolveForwardReference(ip);
             if token.kind = rbracech then begin {initialize this field to 0}
-               printMacroExpansions := false;   {inhibit token echo}
+               suppressMacroExpansions := true; {inhibit token echo}
                PutBackToken(token, false);
                PutBackToken(token, false);
                token.kind := intconst;
@@ -2672,7 +2672,7 @@ var
          if count > 0 then
             if variable^.storage in [external,global,private] then
                Fill(count, sCharPtr);
-         printMacroExpansions := lPrintMacroExpansions;
+         suppressMacroExpansions := lSuppressMacroExpansions;
          end {if}
       else                              {struct/union assignment initializer}
          GetInitializerValue(tp, bitsize, bitdisp);
@@ -4245,7 +4245,7 @@ var
    lToken: tokenType;                   {temporary copy of old token}
    nToken: tokenType;                   {new token}
    hasStatementNext: boolean;           {is a stmt next within a compound stmt?}
-   lPrintMacroExpansions: boolean;      {local copy of printMacroExpansions}
+   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
 
 begin {DoStatement}
 case statementList^.kind of
@@ -4264,10 +4264,10 @@ case statementList^.kind of
             DoDeclaration(false)
          else begin
             lToken := token;
-            lPrintMacroExpansions := printMacroExpansions; {inhibit token echo}
-            printMacroExpansions := false;
+            lSuppressMacroExpansions := suppressMacroExpansions;
+            suppressMacroExpansions := true; {inhibit token echo}
             NextToken;
-            printMacroExpansions := lPrintMacroExpansions;
+            suppressMacroExpansions := lSuppressMacroExpansions;
             nToken := token;
             PutBackToken(nToken, false);
             token := lToken;
