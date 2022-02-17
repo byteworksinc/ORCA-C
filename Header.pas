@@ -1195,6 +1195,8 @@ type
 var
    done: boolean;			{for loop termination test}
    typeDispList: typeDispPtr;		{type displacement/pointer table}
+   includeFileName: gsosInStringPtr;	{name of include file}
+   i: 1..maxint;			{loop/index variable}
 
 
    procedure DisposeTypeDispList;
@@ -1294,6 +1296,7 @@ var
    while len > 0 do begin
       giRec.pCount := 7;
       giRec.pathname := pointer(ReadLongString);
+      includeFileName := giRec.pathname; {save name to print later}
       len := len - (giRec.pathname^.size + 18);
       GetFileInfoGS(giRec);
       if ToolError = 0 then begin
@@ -1306,12 +1309,6 @@ var
          match := false;
          len := 0;
          end; {else}
-      if match and progress then begin
-	 write('Including ');
-	 for i := 1 to giRec.pathname^.size do
-            write(giRec.pathname^.theString[i]);
-	 writeln;
-	 end; {if}
       end; {while}
    DatesMatch := match;
    end; {DatesMatch}
@@ -1963,6 +1960,12 @@ if not ignoreSymbols then begin
 	 while not done do begin
             if DatesMatch then begin
                if SourceMatches then begin
+                  if progress then begin
+                     write('Including ');
+                     for i := 1 to includeFileName^.size do
+                        write(includeFileName^.theString[i]);
+                     writeln;
+                     end; {if}
         	  ReadMacroTable;
         	  ReadSymbolTable;
         	  ReadPragmas;
