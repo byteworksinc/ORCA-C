@@ -2316,6 +2316,7 @@ var
       tbool: boolean;                   {temp boolean}
 
    begin {DoAppend}
+   TermHeader;
    tbool := OpenFile(false, false);	{open a new file and proceed from there}
    lineNumber := 1;
    end; {DoAppend}
