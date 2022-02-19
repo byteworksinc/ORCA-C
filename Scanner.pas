@@ -2727,7 +2727,9 @@ var
    begin {DoError}
    lFirstPtr := firstPtr;
    if isError then
-      numErrors := numErrors+1;
+      numErrors := numErrors+1
+   else
+      TermHeader;
    new(msg);
    if isError then
       msg^ := '#error:'
