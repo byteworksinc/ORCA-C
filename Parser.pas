@@ -3995,6 +3995,7 @@ else {if not isFunction then} begin
                variable^.itype^ := tp^;
                variable^.itype^.saveDisp := 0;
                end;
+            TermHeader;                 {make sure the header file is closed}
             NextToken;                  {handle an initializer}
             ltypeSpec := typeSpec;
             Initializer(variable);
