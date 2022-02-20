@@ -4316,17 +4316,26 @@ repeat
          new(mp);                       {form the macro table entry}
          mp^.name := GetWord;
          mp^.parameters := -1;
-         mp^.tokens := nil;
          mp^.readOnly := false;
          mp^.saved := true;
          bp := pointer(ord4(macros) + hash(mp^.name));
          mp^.next := bp^;
          bp^ := mp;
+         new(mp^.tokens);
+         with mp^.tokens^ do begin
+            next := nil;
+            tokenString := @'';
+            expandEnabled := true;
+            end; {with}
          token.kind := intconst;        {create the default value}
-         token.numString := nil;
+         token.numString := @oneStr;
          token.class := intConstant;
          token.ival := 1;
+         oneStr := '1';
+         mp^.tokens^.tokenStart := @oneStr[1];
+         mp^.tokens^.tokenEnd := pointer(ord4(@oneStr[1])+1);
          if lch = '=' then begin
+            mp^.tokens^.tokenStart := cp;
             NextCh;                     {record the value}
             token.numString := nil;
             if charKinds[ord(lch)] = letter then begin
@@ -4341,6 +4350,7 @@ repeat
                if lch in ['.','0'..'9'] then begin
                   token.name := GetWord;
                   DoNumber(true);
+                  token.numString := @'?';
                   if negative then
                      case token.class of
                         intConstant   : token.ival := -token.ival;
@@ -4361,22 +4371,17 @@ repeat
                end {else if}
             else if lch in ['.','0'..'9'] then begin
                token.name := GetWord;
+               saveNumber := true;
                DoNumber(true);
+               saveNumber := false;
                end {else if}
             else if lch = '"' then 
                GetString
             else
                FlagErrorAndSkip;
+            mp^.tokens^.tokenEnd := ptr(ord4(cp)-1);
             end; {if}
-         new(mp^.tokens);               {add the value to the definition}
-         with mp^.tokens^ do begin
-            next := nil;
-            tokenString := @'';
-            expandEnabled := true;
-            tokenStart := nil;
-            tokenEnd := nil;
-            end; {with}
-         mp^.tokens^.token := token;
+         mp^.tokens^.token := token;    {add the value to the definition}
          end {if}
       else if lch in ['i','I'] then begin
          NextCh;                        {get the pathname}
