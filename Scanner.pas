@@ -4710,6 +4710,9 @@ var
       token.lval := result;
       end; {else if}
 
+   if saveNumber then                   {TODO: support token merging}
+      token.numString := @'?';
+
    charStrPrefix := prefix_none;        {no prefix for next char/str (so far)}
    end; {CharConstant}
 
