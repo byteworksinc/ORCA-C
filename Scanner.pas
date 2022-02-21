@@ -1017,9 +1017,13 @@ case token.kind of
 
    uasterisk:        write('*');
 
+   poundpoundop:     if not token.isDigraph then
+                        write('##')
+                     else
+                        write('%:%:');
+
    macroParm:        write('$', token.pnum:1);
 
-   poundpoundop,
    parameteroper,
    castoper,
    eolsy,
