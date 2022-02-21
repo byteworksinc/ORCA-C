@@ -1146,9 +1146,57 @@ if len < 255 then
 end; {LongToPString}
 
 
+procedure ConvertString (var str: tokenType; prefix: charStrPrefixEnum);
+
+{ Convert unprefixed string literal str to a prefixed one       }
+
+var
+   sPtr: longStringPtr;                 {new string}
+   i,j,k: integer;                      {loop counters}
+   codePoint: ucsCodePoint;             {Unicode code point}
+   c16ptr: ^integer;                    {pointer to char16_t value}
+   c32ptr: ^longint;                    {pointer to char32_t value}
+   utf8: utf8Rec;                       {UTF-8 encoding of character}
+   utf16: utf16Rec;                     {UTF-16 encoding of character}
+
+begin {ConvertString}
+sPtr := pointer(Malloc(str.sval^.length*4));
+k := 0;
+for i := 1 to str.sval^.length do begin
+   codePoint := ConvertMacRomanToUCS(str.sval^.str[i]);
+   if prefix = prefix_u8 then begin
+      UTF8Encode(codePoint, utf8);
+      for j := 1 to utf8.length do begin
+         sPtr^.str[k+1] := chr(utf8.bytes[j]);
+         k := k+1;
+         end; {for}
+      end {if}
+   else if prefix = prefix_u16 then begin
+      UTF16Encode(codePoint, utf16);
+      c16Ptr := pointer(@sPtr^.str[k+1]);
+      c16Ptr^ := utf16.codeUnits[1];
+      k := k+2;
+      if utf16.length = 2 then begin
+         c16ptr := pointer(@sPtr^.str[k+1]);
+         c16Ptr^ := utf16.codeUnits[2];
+         k := k+2;
+         end; {if}
+      end {else if}
+   else if prefix = prefix_U32 then begin
+      c32Ptr := pointer(@sPtr^.str[k+1]);
+      c32Ptr^ := codePoint;
+      k := k+4;
+      end; {else if}
+   end; {for}
+sPtr^.length := k;
+str.sval := sPtr;
+str.prefix := prefix;
+end; {ConvertString}
+
+
 procedure Merge (var tk1: tokenType; tk2: tokenType);
 
-{ Merge two tokens                                              }
+{ Merge two tokens (implementing ##)                            }
 {                                                               }
 { Parameters:                                                   }
 {       tk1 - first token; result is stored here                }
@@ -1158,62 +1206,10 @@ label 1;
 
 var
    class1,class2: tokenClass;           {token classes}
-   cp: longstringPtr;                   {pointer to work string}
    i: integer;                          {loop variable}
    kind1,kind2: tokenEnum;              {token kinds}
-   len,len1: integer;                   {length of strings}
    lt: tokenType;                       {local copy of token}
    str1,str2: stringPtr;                {identifier strings}
-   elementType: typePtr;                {string element type}
-
-
-   procedure ConvertString (var str: tokenType; prefix: charStrPrefixEnum);
-   
-   { Convert unprefixed string literal str to a prefixed one    }
-   
-   var
-      sPtr: longStringPtr;              {new string}
-      i,j,k: integer;                   {loop counters}
-      codePoint: ucsCodePoint;          {Unicode code point}
-      c16ptr: ^integer;                 {pointer to char16_t value}
-      c32ptr: ^longint;                 {pointer to char32_t value}
-      utf8: utf8Rec;                    {UTF-8 encoding of character}
-      utf16: utf16Rec;                  {UTF-16 encoding of character}
-   
-   begin {ConvertString}
-   sPtr := pointer(Malloc(str.sval^.length*4));
-   k := 0;
-   for i := 1 to str.sval^.length do begin
-      codePoint := ConvertMacRomanToUCS(str.sval^.str[i]);
-      if prefix = prefix_u8 then begin
-         UTF8Encode(codePoint, utf8);
-         for j := 1 to utf8.length do begin
-            sPtr^.str[k+1] := chr(utf8.bytes[j]);
-            k := k+1;
-            end; {for}
-         end {if}
-      else if prefix = prefix_u16 then begin
-         UTF16Encode(codePoint, utf16);
-         c16Ptr := pointer(@sPtr^.str[k+1]);
-         c16Ptr^ := utf16.codeUnits[1];
-         k := k+2;
-         if utf16.length = 2 then begin
-            c16ptr := pointer(@sPtr^.str[k+1]);
-            c16Ptr^ := utf16.codeUnits[2];
-            k := k+2;
-            end; {if}
-         end {else if}
-      else if prefix = prefix_U32 then begin
-         c32Ptr := pointer(@sPtr^.str[k+1]);
-         c32Ptr^ := codePoint;
-         k := k+4;
-         end; {else if}
-      end; {for}
-   sPtr^.length := k;
-   str.sval := sPtr;
-   str.prefix := prefix;
-   end; {ConvertString}
-
 
 begin {Merge}
 kind1 := tk1.kind;
@@ -1285,32 +1281,6 @@ else if class1 in numericConstants then begin
    token := lt;
    goto 1;
    end {else if class1 in numericConstants}
-
-else if class1 = stringConstant then begin
-   if class2 = stringConstant then begin
-      if tk1.prefix = tk2.prefix then
-         {OK - nothing to do}
-      else if tk1.prefix = prefix_none then
-         ConvertString(tk1, tk2.prefix)
-      else if tk2.prefix = prefix_none then
-         ConvertString(tk2, tk1.prefix)
-      else
-         Error(166);
-      elementType := StringType(tk1.prefix)^.aType;
-      len1 := tk1.sval^.length - ord(elementType^.size);
-      len := len1+tk2.sval^.length;
-      cp := pointer(Malloc(len+2));
-      for i := 1 to len1 do
-         cp^.str[i] := tk1.sval^.str[i];
-      for i := 1 to len-len1 do
-         cp^.str[i+len1] := tk2.sval^.str[i];
-      cp^.length := len;
-      if tk1.ispstring then
-         cp^.str[1] := chr(len-2);
-      tk1.sval := cp;
-      goto 1;
-      end; {if}
-   end {else if}
 
 else if kind1 = dotch then begin
    if class2 in numericConstants then begin
@@ -1495,6 +1465,45 @@ else if kind1 = colonch then begin
 Error(63);
 1:
 end; {Merge}
+
+
+procedure MergeStrings (var tk1: tokenType; tk2: tokenType);
+
+{ Merge two string constant tokens                              }
+{                                                               }
+{ Parameters:                                                   }
+{       tk1 - first token; result is stored here                }
+{       tk2 - second token                                      }
+
+var
+   cp: longstringPtr;                   {pointer to work string}
+   i: integer;                          {loop variable}
+   len,len1: integer;                   {length of strings}
+   lt: tokenType;                       {local copy of token}
+   elementType: typePtr;                {string element type}
+
+begin {MergeStrings}
+if tk1.prefix = tk2.prefix then
+   {OK - nothing to do}
+else if tk1.prefix = prefix_none then
+   ConvertString(tk1, tk2.prefix)
+else if tk2.prefix = prefix_none then
+   ConvertString(tk2, tk1.prefix)
+else
+   Error(166);
+elementType := StringType(tk1.prefix)^.aType;
+len1 := tk1.sval^.length - ord(elementType^.size);
+len := len1+tk2.sval^.length;
+cp := pointer(Malloc(len+2));
+for i := 1 to len1 do
+   cp^.str[i] := tk1.sval^.str[i];
+for i := 1 to len-len1 do
+   cp^.str[i+len1] := tk2.sval^.str[i];
+cp^.length := len;
+if tk1.ispstring then
+   cp^.str[1] := chr(len-2);
+tk1.sval := cp;
+end; {MergeStrings}
 
 
 procedure BuildStringToken (cp: ptr; len: integer);
@@ -4782,7 +4791,7 @@ if tokenList <> nil then begin          {get a token put back by a macro}
    while (token.kind = stringconst)
       and (tokenList <> nil)
       and (tokenList^.token.kind = stringconst) do begin
-      Merge(token, tokenList^.token);
+      MergeStrings(token, tokenList^.token);
       tPtr := tokenList;
       tokenList := tPtr^.next;
       dispose(tPtr);
@@ -5303,7 +5312,7 @@ if (token.kind = stringconst) and not mergingStrings  {handle adjacent strings}
       mergingStrings := false;
       suppressMacroExpansions := lSuppressMacroExpansions;
       if token.kind = stringconst then begin
-         Merge(tToken, token);
+         MergeStrings(tToken, token);
          done := false;
          end {if}
       else begin
