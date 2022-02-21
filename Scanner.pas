@@ -1324,7 +1324,7 @@ else if kind1 = dotch then begin
    end {else if class1 in numericConstants}
 
 else if kind1 = poundch then begin
-   if kind2 = poundch then begin
+   if (kind2 = poundch) and (tk1.isDigraph = tk2.isDigraph) then begin
       tk1.kind := poundpoundop;
       goto 1;
       end; {if}
@@ -1367,6 +1367,16 @@ else if kind1 = ltch then begin
       end {else if}
    else if kind2 = eqch then begin
       tk1.kind := lteqop;
+      goto 1;
+      end {else if}
+   else if kind2 = colonch then begin
+      tk1.kind := lbrackch;
+      tk1.isDigraph := true;
+      goto 1;
+      end {else if}
+   else if kind2 = percentch then begin
+      tk1.kind := lbracech;
+      tk1.isDigraph := true;
       goto 1;
       end; {else if}
    end {else if}
@@ -1440,7 +1450,17 @@ else if kind1 = percentch then begin
    if kind2 = eqch then begin
       tk1.kind := percenteqop;
       goto 1;
-      end; {if}
+      end {if}
+   else if kind2 = gtch then begin
+      tk1.kind := rbracech;
+      tk1.isDigraph := true;
+      goto 1;
+      end {else if}
+   else if kind2 = colonch then begin
+      tk1.kind := poundch;
+      tk1.isDigraph := true;
+      goto 1;
+      end; {else if}
    end {else if}
 
 else if kind1 = carotch then begin
@@ -1460,6 +1480,14 @@ else if kind1 = asteriskch then begin
 else if kind1 = slashch then begin
    if kind2 = eqch then begin
       tk1.kind := slasheqop;
+      goto 1;
+      end; {if}
+   end {else if}
+
+else if kind1 = colonch then begin
+   if kind2 = gtch then begin
+      tk1.kind := rbrackch;
+      tk1.isDigraph := true;
       goto 1;
       end; {if}
    end; {else if}
