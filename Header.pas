@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 23;                 {version number of .sym file format}
+   symFileVersion = 24;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -744,7 +744,6 @@ procedure EndInclude {chPtr: ptr};
                tp := mp^.tokens;	{loop over token list}
                while tp <> nil do begin
 		  WriteByte(1);		{write tokenListRecord}
-        	  WriteLongString(tp^.tokenString);
         	  WriteToken(tp^.token);
         	  WriteByte(ord(tp^.expandEnabled));
         	  WriteChars(tp^.tokenStart, tp^.tokenEnd);
@@ -1387,7 +1386,6 @@ var
       while ReadByte <> 0 do begin
          tp := pointer(GMalloc(sizeof(tokenListRecord)));
          tp^.next := nil;
-         tp^.tokenString := ReadLongString;
          ReadToken(tp^.token);
          tp^.expandEnabled := boolean(ReadByte);
          ReadChars(tp^.tokenStart, tp^.tokenEnd);

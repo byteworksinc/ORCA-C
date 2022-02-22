@@ -46,7 +46,6 @@ type
    tokenListRecordPtr = ^tokenListRecord;
    tokenListRecord = record             {element of a list of tokens}
       next: tokenListRecordPtr;         {next element in list}
-      tokenString: longStringPtr;       {string making up the token}
       token: tokenType;                 {token}
       expandEnabled: boolean;           {can this token be macro expanded?}
       tokenStart,tokenEnd: ptr;         {token start/end markers}
@@ -2459,11 +2458,6 @@ var
       pnum: integer;                    {for counting parameters}
       tPtr,tk1,tk2: tokenListRecordPtr; {pointer to a token}
 
-                                        {for building token strings}
-      sptr: longStringPtr;              {token string work pointer}
-      tcp: ptr;                         {temp character pointer}
-      slen: integer;                    {token string length}
-
    begin {DoDefine}
    expandMacros := false;               {block expansions}
    saveNumber := true;                  {save characters in numeric tokens}
@@ -2584,15 +2578,6 @@ var
          tPtr^.tokenStart := tokenStart;
          tPtr^.tokenEnd := tokenEnd;
          tPtr^.expandEnabled := true;
-         slen := ord(ord4(chPtr) - ord4(tokenStart));
-         sptr := pointer(GMalloc(slen+2));
-         sptr^.length := slen;
-         tcp := tokenStart;
-         for i := 1 to slen do begin
-            sptr^.str[i] := chr(tcp^);
-            tcp := pointer(ord4(tcp)+1);
-            end; {for}
-         tPtr^.tokenString := sptr;
          NextToken;
          end; {while}
       mPtr^.readOnly := false;
@@ -4365,7 +4350,6 @@ repeat
          new(mp^.tokens);
          with mp^.tokens^ do begin
             next := nil;
-            tokenString := @'';
             expandEnabled := true;
             end; {with}
          token.kind := intconst;        {create the default value}
