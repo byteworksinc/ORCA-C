@@ -4742,6 +4742,42 @@ var
    end; {CharConstant}
 
 
+   procedure ConcatenateTokenString(tPtr: tokenListRecordPtr);
+   
+   { Concatenate the strings for the current token and the one  }
+   { represented by tPtr, and update tokenStart/tokenEnd to     }
+   { point to the new string.                                   }
+   
+   var
+      len: longint;                     {length of new token string}
+      srcPtr, destPtr: ptr;             {pointers for data copying}
+   
+   begin {ConcatenateTokenString}
+   len := ord4(tokenEnd)-ord4(tokenStart)
+      +ord4(tPtr^.tokenEnd)-ord4(tPtr^.tokenStart)+1;
+   if len <= maxint then begin
+      destPtr := GMalloc(ord(len));
+      srcPtr := tokenStart;
+      tokenStart := destPtr;
+      while srcPtr <> tokenEnd do begin
+         destPtr^ := srcPtr^;
+         destPtr := ptr(ord4(destPtr)+1);
+         srcPtr := ptr(ord4(srcPtr)+1);
+         end; {while}
+      srcPtr := tPtr^.tokenStart;
+      while srcPtr <> tPtr^.tokenEnd do begin
+         destPtr^ := srcPtr^;
+         destPtr := ptr(ord4(destPtr)+1);
+         srcPtr := ptr(ord4(srcPtr)+1);
+         end; {while}
+      destPtr^ := tPtr^.tokenEnd^;
+      tokenEnd := destPtr;
+      end {if}
+   else
+      Error(90);
+   end; {ConcatenateTokenString}
+
+
 begin {NextToken}
 if ifList = nil then			{do pending EndInclude calls}
    while includeCount <> 0 do begin
@@ -4807,6 +4843,7 @@ if tokenList <> nil then begin          {get a token put back by a macro}
             tPtr := tokenList;
             tToken := token;
             Merge(tToken, tPtr^.token);
+            ConcatenateTokenString(tPtr);
             tokenList := tPtr^.next;
             token := tToken;
             tokenExpandEnabled := true;

@@ -1784,6 +1784,8 @@ int foo(int[42]);
 
 182. #pragma path directives were not saved in .sym files.  This could cause ORCA/C not to search the proper paths for include files that were not represented in the .sym file (e.g. because they were included after a function).
 
+183. The # preprocessor operator would not work correctly on tokens that had been produced by the ## preprocessor operator.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
