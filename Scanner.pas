@@ -1509,7 +1509,7 @@ tk1.sval := cp;
 end; {MergeStrings}
 
 
-procedure BuildStringToken (cp: ptr; len: integer);
+procedure BuildStringToken (cp: ptr; len: integer; rawSourceCode: boolean);
 
 { Create a string token from a string                           }
 {                                                               }
@@ -1518,9 +1518,13 @@ procedure BuildStringToken (cp: ptr; len: integer);
 { Parameters:                                                   }
 {       cp - pointer to the first character                     }
 {       len - number of characters in the string                }
+{       rawSourceCode - process trigraphs & line continuations? }
+
+label 1;
 
 var
    i: integer;                          {loop variable}
+   ch: char;                            {work character}
 
 begin {BuildStringToken}
 token.kind := stringconst;
@@ -1528,10 +1532,51 @@ token.class := stringConstant;
 token.ispstring := false;
 token.sval := pointer(GMalloc(len+3));
 token.prefix := prefix_none;
-for i := 1 to len do begin
-   token.sval^.str[i] := chr(cp^);
-   cp := pointer(ord4(cp)+1);
-   end; {for}
+if rawSourceCode then begin
+   i := 1;
+1: while i <= len do begin
+      ch := chr(cp^);
+      if ch = '?' then                  {handle trigraphs}
+         if i < len-1 then
+            if chr(ptr(ord4(cp)+1)^) = '?' then
+               if chr(ptr(ord4(cp)+2)^) in
+                  ['=','(','/',')','''','<','!','>','-'] then begin
+                  case chr(ptr(ord4(cp)+2)^) of
+                     '(': ch := '[';
+                     '<': ch := '{';
+                     '/': ch := '\';
+                    '''': ch := '^';
+                     '=': ch := '#';
+                     ')': ch := ']';
+                     '>': ch := '}';
+                     '!': ch := '|';
+                     '-': ch := '~';
+                     end; {case}
+                  len := len-2;
+                  cp := pointer(ord4(cp)+2);
+                  end; {if}
+      if ch = '\' then                  {handle line continuations}
+         if i < len then
+            if charKinds[ptr(ord4(cp)+1)^] = ch_eol then begin
+               if i < len-1 then
+                  if ptr(ord4(cp)+2)^ in [$06,$07] then begin
+                     len := len-1;      {skip debugger characters}
+                     cp := pointer(ord4(cp)+1);
+                     end; {if}
+               len := len-2;
+               cp := pointer(ord4(cp)+2);
+               goto 1;
+               end;
+      token.sval^.str[i] := ch;
+      cp := pointer(ord4(cp)+1);
+      i := i+1;
+      end; {while}
+   end {if}
+else
+   for i := 1 to len do begin
+      token.sval^.str[i] := chr(cp^);
+      cp := pointer(ord4(cp)+1);
+      end; {for}
 token.sval^.str[len+1] := chr(0);
 token.sval^.length := len+1;
 PutBackToken(token, true);
@@ -1800,26 +1845,27 @@ else begin
             if stringization then begin
                tcPtr := pptr^.tokens;
                if tcPtr = nil then
-                  BuildStringToken(nil, 0);
+                  BuildStringToken(nil, 0, false);
                while tcPtr <> nil do begin
                   if tcPtr^.token.kind = stringconst then begin
-                     BuildStringToken(@quoteStr[1], 1);
+                     BuildStringToken(@quoteStr[1], 1, false);
                      BuildStringToken(@tcPtr^.token.sval^.str,
-                        tcPtr^.token.sval^.length-1);
-                     BuildStringToken(@quoteStr[1], 1);
+                        tcPtr^.token.sval^.length-1, false);
+                     BuildStringToken(@quoteStr[1], 1, false);
                      end {if}
                   else begin
                      if tcPtr <> pptr^.tokens then
                         if charKinds[tcPtr^.tokenEnd^] = ch_white then
-                           BuildStringToken(@spaceStr[1], 1);
+                           BuildStringToken(@spaceStr[1], 1, false);
                      BuildStringToken(tcPtr^.tokenStart,
-                        ord(ord4(tcPtr^.tokenEnd)-ord4(tcPtr^.tokenStart)));
+                        ord(ord4(tcPtr^.tokenEnd)-ord4(tcPtr^.tokenStart)),
+                        true);
 
                      {hack because stringconst may not have proper tokenEnd}
                      if tcPtr^.next <> nil then
                         if tcPtr^.next^.token.kind = stringconst then
                            if charKinds[ptr(ord4(tcPtr^.tokenStart)-1)^] = ch_white then
-                              BuildStringToken(@spaceStr[1], 1);
+                              BuildStringToken(@spaceStr[1], 1, false);
                      end;
                   tcPtr := tcPtr^.next;
                   end; {while}
