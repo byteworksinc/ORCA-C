@@ -183,7 +183,7 @@ The #pragma debug directive supports a new bit. If bit 15 is set, ORCA/C generat
 
 p. 257
 
-The #pragma expand directive has been changed to use three-digit octal escape sequences (rather than hexadecimal ones) in strings it outputs.  (This ensures that subsequent characters in the string cannot be interpreted as part of the escape sequence.)
+The #pragma expand directive has been changed to use three-digit octal escape sequences (rather than hexadecimal ones) in strings it outputs.  (This ensures that subsequent characters in the string cannot be interpreted as part of the escape sequence.)  Also, #pragma expand will now print an appropriate suffix on numeric constants with types other than int or double.
 
 If precompiled headers are being used, #pragma expand will not print the tokens for the portion of the code that has been precompiled and represented in the .sym file.  It will still print the tokens for the remainder of the code (including all functions).  If you want to see the tokens for all of the code, you can use the -I flag to make ORCA/C ignore the .sym file.
 

@@ -829,29 +829,33 @@ case token.kind of
    charconst,
    scharconst,
    ucharconst,
-   intconst,
-   uintconst,
-   ushortconst:      write(token.ival:1);
+   intconst:         write(token.ival:1);
 
-   longConst,
-   ulongConst:       write(token.lval:1);
+   ushortconst,
+   uintconst:        write(token.ival:1,'U');
+
+   longConst:        write(token.lval:1,'L');
+
+   ulongConst:       write(token.lval:1,'UL');
    
    longlongConst:    begin
                      str := cnvds(CnvLLX(token.qval),1,1);
                      str[0] := chr(ord(str[0]) - 2);
-                     write(str);
+                     write(str,'LL');
                      end;
 
    ulonglongConst:   begin
                      str := cnvds(CnvULLX(token.qval),1,1);
                      str[0] := chr(ord(str[0]) - 2);
-                     write(str);
+                     write(str,'ULL');
                      end;
 
    compConst,
-   floatConst,
-   doubleConst,
-   extendedConst:    write(token.rval:1);
+   doubleConst:      write(token.rval:1);
+
+   floatConst:       write(token.rval:1,'F');
+
+   extendedConst:    write(token.rval:1,'L');
 
    stringConst:      begin
                      if token.prefix = prefix_u16 then begin
