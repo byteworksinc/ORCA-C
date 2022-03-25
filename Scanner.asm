@@ -446,6 +446,7 @@ rkModifiers ds 2
 *
 *  Outputs:
 *        ch - character read
+*        currentChPtr - pointer to ch in source file
 *
 ****************************************************************
 *
@@ -493,12 +494,15 @@ pf1      dey
 pf2      sty   lastWasReturn
 ! 1:
 lab1     anop
+! currentChPtr := chPtr;
 ! if chPtr = eofPtr then begin          {flag end of file if we're there}
          lda   chPtr
+         sta   currentChPtr
+         ldx   chPtr+2
+         stx   currentChPtr+2
          cmp   eofPtr
          bne   la1
-         lda   chPtr+2
-         cmp   eofPtr+2
+         cpx   eofPtr+2
          beq   la2
 la1      brl   lb5
 la2      anop
@@ -621,7 +625,8 @@ lb4      lda   [p1],Y
 ! else begin
 lb5      anop
 !    ch := chr(chPtr^);                 {fetch the character}
-         move4 chPtr,p1
+         sta   p1
+         stx   p1+2
          lda   [p1]
          and   #$00FF
          sta   ch

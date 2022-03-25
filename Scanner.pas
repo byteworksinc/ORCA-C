@@ -144,6 +144,7 @@ procedure NextCh; extern;
 {                                                               }
 { Globals:                                                      }
 {       ch - character read                                     }
+{       currentChPtr - pointer to ch in source file             }
 
 
 procedure NextToken;
@@ -240,6 +241,7 @@ type
 
 var
    charStrPrefix: charStrPrefixEnum;    {prefix of character/string literal}
+   currentChPtr: ptr;                   {pointer to current character in source file}
    customDefaultName: stringPtr;        {name of custom pre-included default file}
    dateStr: longStringPtr;              {macro date string}
    doingCommandLine: boolean;           {are we processing the cc= command line?}
@@ -2269,6 +2271,7 @@ if gotName then begin			{read the file name from the line}
    changedSourceFile := true;
    ReadFile;				{read the file}
    chPtr := bofPtr;			{set the start, end pointers}
+   currentChPtr := bofPtr;
    eofPtr := pointer(ord4(bofPtr)+ffDCBGS.fileLength);
    firstPtr := chPtr;			{first char in line}
    ch := chr(RETURN);			{set the initial character}
@@ -4188,6 +4191,7 @@ expandMacros := true;                   {enable macro expansion}
 reportEOL := false;                     {report eolsy as a token?}
 lineNumber := 1;                        {start the line counter}
 chPtr := start;                         {set the start, end pointers}
+currentChPtr := start;
 eofPtr := endPtr;
 firstPtr := start;                      {first char in line}
 numErr := 0;                            {no errors so far}
@@ -4942,8 +4946,8 @@ while charKinds[ord(ch)] in [illegal,ch_white,ch_eol] do begin
       end;
    end; {while}
 tokenLine := lineNumber;                {record the position of the token}
-tokenColumn := ord(ord4(chPtr)-ord4(firstPtr));
-tokenStart := pointer(ord4(chPtr)-1);
+tokenColumn := ord(ord4(currentChPtr)-ord4(firstPtr)+1);
+tokenStart := currentChPtr;
 6:
 token.class := reservedSymbol;          {default to the most common class}
 case charKinds[ord(ch)] of
@@ -5366,7 +5370,7 @@ case charKinds[ord(ch)] of
 
    otherwise: Error(57);
    end; {case}
-tokenEnd := pointer(ord4(chPtr)-1);     {record the end of the token}
+tokenEnd := currentChPtr;               {record the end of the token}
 2:
 if skipping then                        {conditional compilation branch}
    if not (token.kind in [eofsy,eolsy]) then
