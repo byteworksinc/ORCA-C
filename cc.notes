@@ -50,6 +50,9 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2022
             16.	New option to include a custom file before processing the
                	source file.  See "Custom Pre-Include File."
 
+            17.	New pragma for controlling ORCA/C extensions.  See "#pragma
+               	extensions."
+
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
 2.1.0       1.	Bugs squashed.  See bug notes, below.
@@ -129,6 +132,8 @@ Identifiers may now contain universal character names, a type of escape sequence
 
 Several new reserved words (keywords) added in the C99 or C11 standards are now supported.  For information on what these are and how they are used, see "New Language Features," below.
 
+The recognition of ORCA/C-specific reserved words can now be disabled, allowing them to be used as identifiers.  See "#pragma extensions," below.
+
 Certain alternate reserved symbols known as digraphs are now supported.  See "New Language Features," below.
 
 p. 237
@@ -175,7 +180,7 @@ p. 254
 
 The #error directive may be followed by any sequence of preprocessing tokens, not just a string constant.
 
-ORCA/C now supports several standard pragmas of the form "#pragma STDC ...".  See "New Language Features," below.
+ORCA/C now supports several standard pragmas of the form "#pragma STDC ...", as well as a new ORCA/C-specific pragma, #pragma extensions.  See "New Language Features" and "#pragma extensions," below.
 
 p. 256
 
@@ -634,6 +639,18 @@ ORCA/C can now detect several elements of C syntax that were allowed in C89 but 
 * Checking for functions not returning a value or returning inappropriately:
 
 If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects some situations where a function with a non-void return type may return an unpredictable value, either by executing a return statement with no value or by executing to the end of the function with no return statement.  (The former case is also detected by #pragma lint bit 6.)  It also detects some situations where a _Noreturn function could return.  Note that these checks only detect some cases of these problems, not all of them.  Also, they may report a potential problem in some situations where the code at the end of a function is not actually reachable.
+
+
+#pragma extensions
+------------------
+
+ORCA/C supports certain extensions that are not part of the standard C language.  A new pragma has been introduced to control whether some of these extensions are enabled.  The format is:
+
+   #pragma extensions parm
+
+The parameter must be an integer constant, which is treated as a set of flags.  Currently, one flag bit is defined:
+
+If bit 0 (a value of 1) is set, then asm, comp, extended, pascal, and segment are treated as reserved words (keywords), with the meanings specified in the ORCA/C manual.  If bit 0 is clear, then those tokens are instead treated as identifiers, as required by the C standards.  Bit 0 is set by default.  Note that toolbox headers use these keywords, so bit 0 must be set when they are included.
 
 
 File Names in Error Messages

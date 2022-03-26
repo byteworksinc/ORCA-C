@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 24;                 {version number of .sym file format}
+   symFileVersion = 25;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -891,6 +891,8 @@ procedure EndInclude {chPtr: ptr};
                   p_unix: WriteByte(ord(unix_1));
                   
                   p_fenv_access: WriteByte(ord(fenvAccess));
+                  
+                  p_extensions: WriteByte(ord(extendedKeywords));
 
                   end; {case}
                end; {if}
@@ -1559,6 +1561,8 @@ var
          p_unix: unix_1 := boolean(ReadByte);
          
          p_fenv_access: fenvAccess := boolean(ReadByte);
+         
+         p_extensions: extendedKeywords := boolean(ReadByte);
 
          otherwise: begin
             PurgeSymbols;

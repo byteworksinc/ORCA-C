@@ -39,7 +39,8 @@ type
        p_nda,p_debug,p_lint,p_memorymodel,p_expand,
        p_optimize,p_stacksize,p_toolparms,p_databank,p_rtl,
        p_noroot,p_path,p_ignore,p_segment,p_nba,
-       p_xcmd,p_unix,p_line,p_fenv_access,p_endofenum);
+       p_xcmd,p_unix,p_line,p_fenv_access,p_extensions,
+       p_endofenum);
 
                                         {preprocessor types}
                                         {------------------}
@@ -90,6 +91,8 @@ var
    allowMixedDeclarations: boolean;     {allow mixed declarations & stmts (C99)?}
    c99Scope: boolean;                   {follow C99 rules for block scopes?}
    looseTypeChecks: boolean;            {loosen some standard type checks?}
+
+   extendedKeywords: boolean;           {recognize ORCA/C-specific keywords?}
 
 {---------------------------------------------------------------}
 
@@ -3269,6 +3272,16 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      if token.kind <> eolsy then
                         Error(11);
                      end {else if}
+                  else if token.name^ = 'extensions' then begin
+                     { extensions bits:                            }
+                     {     1 - extended ORCA/C keywords            }
+                     FlagPragmas(p_extensions);
+                     NumericDirective;
+                     val := long(expressionValue).lsw;
+                     extendedKeywords := odd(val);
+                     if token.kind <> eolsy then
+                        Error(11);
+                     end {else if}
                   else if token.name^ = 'unix' then begin
                      { unix bits:                                  }
                      {     1 - int is 32 bits			   }
@@ -4174,6 +4187,7 @@ allowSlashSlashComments := true;        {allow // comments (C99)}
 allowMixedDeclarations := true;         {allow mixed declarations & stmts (C99)}
 c99Scope := true;                       {follow C99 rules for block scopes}
 looseTypeChecks := true;                {loosen some standard type checks}
+extendedKeywords := true;               {allow extended ORCA/C keywords}
 foundFunction := false;                 {no functions found so far}
 fileList := nil;                        {no included files}
 gettingFileName := false;               {not in GetFileName}
@@ -4529,11 +4543,13 @@ if expandMacros then                    {handle macro expansions}
 if workString[1] in ['_','a'..'g','i','l','p','r'..'w'] then
    for rword := wordHash[ord(workString[1])-ord('_')] to
       pred(wordHash[ord(succ(workString[1]))-ord('_')]) do
-      if reservedWords[rword] = workString then begin
-         token.kind := rword;
-         token.class := reservedWord;
-         goto 1;
-         end; {if}
+      if reservedWords[rword] = workString then
+         if extendedKeywords or not (rword in 
+         [asmsy,compsy,extendedsy,pascalsy,segmentsy]) then begin
+            token.kind := rword;
+            token.class := reservedWord;
+            goto 1;
+            end; {if}
 token.symbolPtr := nil;                 {see if it's a typedef name}
 if FindSymbol(token,allSpaces,false,false) <> nil then begin
    if token.symbolPtr^.class = typedefsy then
