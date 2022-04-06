@@ -2650,7 +2650,12 @@ var
                   goto 3;
                if tk1^.token.class = tk2^.token.class then
                   case tk1^.token.class of
-                     reservedWord, reservedSymbol: ;
+                     reservedWord: ;
+                     reservedSymbol:
+                        if tk1^.token.isDigraph <> tk2^.token.isDigraph then
+                           if tk1^.token.kind in [lbrackch,rbrackch,lbracech,
+                              rbracech,poundch,poundpoundop] then
+                              goto 3;
                      identifier:
                         if tk1^.token.name^ <> tk2^.token.name^ then
                            goto 3;
