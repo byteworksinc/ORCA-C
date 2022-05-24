@@ -2923,6 +2923,7 @@ var
    lQuad: quadType;			{requested quad address type}
    optype: baseTypeEnum;		{op^.optype}
    q: integer;				{op^.q}
+   volatileByte: boolean;		{is this a volatile byte access?}
 
 begin {GenInd}
 optype := op^.optype;
@@ -3068,22 +3069,36 @@ case optype of
    cgByte,cgUByte,cgWord,cgUWord: begin
       GetPointer(op^.left);
       if gLong.where = inPointer then begin
-         if q = 0 then
+         volatileByte := (op^.r <> 0) and (optype in [cgByte,cgUByte]);
+         if q = 0 then begin
+            if volatileByte then
+               GenNative(m_sep, immediate, 32, nil, 0);
             if gLong.fixedDisp then
                GenNative(m_lda_indl, direct, gLong.disp, nil, 0)
             else
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0)
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+            if volatileByte then
+               GenNative(m_rep, immediate, 32, nil, 0);
+            end {if}
          else
             if gLong.fixedDisp then begin
+               if volatileByte then
+                  GenNative(m_sep, immediate, 32, nil, 0);
                GenNative(m_ldy_imm, immediate, q, nil, 0);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0)
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               if volatileByte then
+                  GenNative(m_rep, immediate, 32, nil, 0);
                end {if}
             else begin
                GenImplied(m_tya);
                GenImplied(m_clc);
                GenNative(m_adc_imm, immediate, q, nil, 0);
                GenImplied(m_tay);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0)
+               if volatileByte then
+                  GenNative(m_sep, immediate, 32, nil, 0);
+               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+               if volatileByte then
+                  GenNative(m_rep, immediate, 32, nil, 0);
                end; {else}
          end {if}
       else if gLong.where = localAddress then begin

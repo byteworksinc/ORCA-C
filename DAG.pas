@@ -1414,7 +1414,8 @@ case op^.opcode of			{check for optimizations of this node}
             PeepHoleOptimization(opv);
             end; {if}
          end {else if}
-      else if op^.left^.opcode in [pc_lod,pc_ldo,pc_ind] then begin
+      else if (op^.left^.opcode in [pc_lod,pc_ldo]) or
+         ((op^.left^.opcode = pc_ind) and (op^.left^.r = 0)) then begin
          if fromtype.optype in [cgWord,cgUWord] then
             if totype.optype in [cgByte,cgUByte,cgWord,cgUWord] then begin
                op^.left^.optype := totype.optype;
@@ -1452,7 +1453,8 @@ case op^.opcode of			{check for optimizations of this node}
          with op^.left^ do    
             if opcode in [pc_slr,pc_vsr] then
                if right^.opcode = pc_ldc then
-                  if left^.opcode in [pc_lod,pc_ldo,pc_ind] then begin
+                  if (left^.opcode in [pc_lod,pc_ldo]) or
+                     ((left^.opcode = pc_ind) and (left^.r = 0)) then begin
                      lq := right^.lval;
                      if long(lq).msw = 0 then
                         if long(lq).lsw in [8,16,24] then begin

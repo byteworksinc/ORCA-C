@@ -2756,6 +2756,7 @@ var
    et: baseTypeEnum;                    {temp storage for a base type}
    i: integer;                          {loop variable}
    isString: boolean;                   {was the ? : a string?}
+   isVolatile: boolean;                 {is this a volatile op?}
    lType: typePtr;                      {type of operands}
    kind: typeKind;                      {temp type kind}
    size: longint;                       {size of an array element}
@@ -3146,7 +3147,7 @@ var
                Gen2t(pc_lbf, bitDisp, bitSize, tp);
             end {if}
          else
-            Gen1t(pc_ind, 0, tp);
+            Gen2t(pc_ind, ord(tqVolatile in expressionType^.qualifiers), 0, tp);
          if pc_l in [pc_lli,pc_lld] then
             if expressionType^.cType in [ctBool,ctFloat,ctDouble,ctLongDouble,
                ctComp] then begin
@@ -3724,6 +3725,7 @@ case tree^.token.kind of
          Gen2t(pc_lod, t1, 0, cgULong);
          Gen2t(pc_lod, t1, 0, cgULong);
          lType := expressionType^.pType;
+         isVolatile := tqVolatile in lType^.qualifiers;
          if isBitField then begin
             if unsigned then
                Gen2t(pc_lbu, bitDisp, bitSize, lType^.baseType)
@@ -3731,9 +3733,9 @@ case tree^.token.kind of
                Gen2t(pc_lbf, bitDisp, bitSize, lType^.baseType);
             end {if}
          else if lType^.kind = pointerType then
-            Gen1t(pc_ind, 0, cgULong)
+            Gen2t(pc_ind, ord(isVolatile), 0, cgULong)
          else
-            Gen1t(pc_ind, 0, lType^.baseType);
+            Gen2t(pc_ind, ord(isVolatile), 0, lType^.baseType);
          end; {else}
       if tqConst in lType^.qualifiers then
          Error(93);
@@ -4481,13 +4483,14 @@ case tree^.token.kind of
          else if lType^.kind = pointerType then
             lType := lType^.pType;
          expressionType := lType;
+         isVolatile := tqVolatile in lType^.qualifiers;
          if lType^.kind = scalarType then
             if lType^.baseType = cgVoid then
-               Gen1t(pc_ind, 0, cgULong)
+               Gen2t(pc_ind, ord(isVolatile), 0, cgULong)
             else
-               Gen1t(pc_ind, 0, lType^.baseType)
+               Gen2t(pc_ind, ord(isVolatile), 0, lType^.baseType)
          else if lType^.kind = pointerType then
-            Gen1t(pc_ind, 0, cgULong)
+            Gen2t(pc_ind, ord(isVolatile), 0, cgULong)
          else if not
             ((lType^.kind in [functionType,arrayType,structType,unionType])
             or ((lType^.kind = definedType) and  {handle const struct/union}
@@ -4513,6 +4516,7 @@ case tree^.token.kind of
             size := 0;
             end; {else}
          kind := expressionType^.kind;
+         isVolatile := tqVolatile in expressionType^.qualifiers;
          if kind = scalarType then begin
             et := expressionType^.baseType;
             if isBitField then begin
@@ -4524,12 +4528,12 @@ case tree^.token.kind of
                   Gen2t(pc_lbf, bitDisp, bitSize, et);
                end {if}
             else
-               Gen1t(pc_ind, long(size).lsw, et);
+               Gen2t(pc_ind, ord(isVolatile), long(size).lsw, et);
             end {if}
          else if kind = pointerType then
-            Gen1t(pc_ind, long(size).lsw, cgULong)
+            Gen2t(pc_ind, ord(isVolatile), long(size).lsw, cgULong)
          else if kind = enumType then
-            Gen1t(pc_ind, long(size).lsw, cgWord)
+            Gen2t(pc_ind, ord(isVolatile), long(size).lsw, cgWord)
          else if size <> 0 then
             Gen1t(pc_inc, long(size).lsw, cgULong);
          end {if}

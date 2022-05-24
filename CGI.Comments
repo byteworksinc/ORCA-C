@@ -349,11 +349,12 @@
 {                                                               }
 {  pc_ind - load indirect                                       }
 {                                                               }
-{  Gen1t (pc_ind, disp, type)                                   }
+{  Gen2t (pc_ind, volatile, disp, type)                         }
 {                                                               }
 {  A value of type TYPE is loaded from DISP bytes past the      }
 {  address that is on the evaluation stack.  The address is     }
 {  removed from the stack and replaced with the value.          }
+{  VOLATILE is non-zero for a volatile load, or 0 otherwise.    }
 {                                                               }
 {                                                               }
 {  pc_ior - logical or                                          }
