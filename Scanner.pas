@@ -4873,13 +4873,6 @@ if tokenList <> nil then begin          {get a token put back by a macro}
    dispose(tPtr);
    if token.kind = typedef then         {allow for typedefs in a macro}
       token.kind := ident;
-   if token.kind = ident then begin
-      CopyString(@workString, token.name);
-      lExpandMacros := expandMacros;
-      expandMacros := false;
-      CheckIdentifier;
-      expandMacros := lExpandMacros;
-      end; {if}
 { dead code
    if token.kind = ident then
       if FindSymbol(token,allSpaces,false,false) <> nil then
@@ -4926,6 +4919,13 @@ if tokenList <> nil then begin          {get a token put back by a macro}
             goto 4;
             end; {if}
          end; {if}
+   if token.kind = ident then begin
+      CopyString(@workString, token.name);
+      lExpandMacros := expandMacros;
+      expandMacros := false;
+      CheckIdentifier;
+      expandMacros := lExpandMacros;
+      end; {if}
    goto 2;
    end; {if}
 5:                                      {skip white space}

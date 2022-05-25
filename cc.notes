@@ -1803,6 +1803,8 @@ int foo(int[42]);
 
 183. The # preprocessor operator would not work correctly on tokens that had been produced by the ## preprocessor operator, tokens that were split over two or more lines using line continuations, or tokens represented using trigraphs.
 
+184. If a macro was declared with the same name as a keyword or a typedef, and that name was also used within another macro, the first macro would not be correctly expanded within invocations of the second macro.  (This is a bug that was previously fixed in ORCA/C 2.1.1 B3, but was subsequently reintroduced.)
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
