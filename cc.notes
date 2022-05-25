@@ -1805,6 +1805,8 @@ int foo(int[42]);
 
 184. If a macro was declared with the same name as a keyword or a typedef, and that name was also used within another macro, the first macro would not be correctly expanded within invocations of the second macro.  (This is a bug that was previously fixed in ORCA/C 2.1.1 B3, but was subsequently reintroduced.)
 
+185. In the invocation of a macro with multiple ## operators, each successive token formed by a ## operator could be subject to macro replacement (if there was a macro of that name).  Macro replacement should instead only be done after all ## operators have been evaluated.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

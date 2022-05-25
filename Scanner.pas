@@ -1265,9 +1265,9 @@ if class1 in [identifier,reservedWord] then begin
    token.kind := ident;
    token.class := identifier;
    token.numString := nil;
-   token.name := @workString;
    token.symbolPtr := nil;
-   CheckIdentifier;
+   token.name := pointer(Malloc(length(workString)+1));
+   CopyString(pointer(token.name), @workString);
    tk1 := token;
    token := lt;
    goto 1;
