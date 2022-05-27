@@ -50,7 +50,8 @@ rtl      dec   nNextSpot                nnextspot := nnextspot-1;
 *
 ****************************************************************
 *
-Short    start
+Short    start CodeGen
+         using ShortData
 elSize   equ   12                       size of npeep array element
 peep_opcode equ 0                       disp in nativeType of opcode
 peep_mode equ  2                        disp in nativeType of mode
@@ -138,7 +139,9 @@ lb5      anop                                 end;
 lb6      stz   fn                         Short := false;
 lab1     anop                           1:end; {Short}
          return 2:fn
-
+         end
+         
+ShortData privdata
 fn       ds    2                        function return value
 
 size     dc    i1'2,2,2,2,2,2,2,2,1,3,1,1,3,3,3,4'
