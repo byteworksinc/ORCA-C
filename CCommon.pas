@@ -199,7 +199,7 @@ type
                eolsy,eofsy,             {control characters}
                typedef,                 {user types}
                uminus,uand,uasterisk,   {converted operations}
-               parameteroper,castoper,opplusplus,opminusminus,
+               parameteroper,castoper,opplusplus,opminusminus,compoundliteral,
                macroParm);              {macro language}
 
                                         {Note: this enumeration also    }

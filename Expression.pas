@@ -276,6 +276,17 @@ function MakeCompoundLiteral(tp: typePtr): identPtr; extern;
 { parameters:                                                   }
 {       tp - the type of the compound literal                   }
 
+
+procedure AutoInit (variable: identPtr; line: integer;
+   isCompoundLiteral: boolean); extern;
+
+{ generate code to initialize an auto variable                  }
+{                                                               }
+{ parameters:                                                   }
+{       variable - the variable to initialize                   }
+{       line - line number (used for debugging)                 }
+{       isCompoundLiteral - initializing a compound literal?    }
+
 {-- External unsigned math routines ----------------------------}
 
 function lshr (x,y: longint): longint; extern;
@@ -2038,7 +2049,10 @@ var
    
    {create an operand on the stack}
    new(sp);
-   sp^.token.kind := ident;
+   if id^.class = staticsy then
+      sp^.token.kind := ident
+   else
+      sp^.token.kind := compoundliteral;
    sp^.token.class := identifier;
    sp^.token.symbolPtr := id;
    sp^.token.name := id^.name;
@@ -2646,7 +2660,7 @@ kind := tree^.token.kind;
 
 {A variable identifier is an l-value unless it is a function or }
 {non-parameter array                                            }
-if kind = ident then begin
+if kind in [ident,compoundliteral] then begin
    if tree^.id^.itype^.kind = arrayType then begin
       if tree^.id^.storage <> parameter then
          if doDispose then              {prevent spurious errors}
@@ -2768,6 +2782,7 @@ var
 
    lbitDisp,lbitSize: integer;          {for temp storage}
    lisBitField: boolean;
+   ldoDispose: boolean;                 {local copy of doDispose}
 
 
    function ExpressionKind (tree: tokenPtr): typeKind;
@@ -2860,6 +2875,15 @@ var
          eType^.pType := iType;
          expressionType := eType;
          end; {with}
+      end {if}
+   else if tree^.token.kind = compoundliteral then begin
+
+      {evaluate a compound literal and load its address}
+      AutoInit(tree^.id, 0, true);
+      tree^.token.kind := ident;
+      LoadAddress(tree);
+      tree^.token.kind := compoundliteral;
+      Gen0t(pc_bno, cgULong);
       end {if}
    else if tree^.token.kind = uasterisk then begin
 
@@ -3562,6 +3586,20 @@ case tree^.token.kind of
             end;
 
          end; {case}
+      end;
+
+   compoundLiteral: begin
+      AutoInit(tree^.id, 0, true);
+      tree^.token.kind := ident;
+      ldoDispose := doDispose;
+      doDispose := false;
+      GenerateCode(tree);
+      doDispose := ldoDispose;
+      tree^.token.kind := compoundliteral;
+      if expressionType^.kind = scalarType then
+         Gen0t(pc_bno, expressionType^.baseType)
+      else
+         Gen0t(pc_bno, cgULong);
       end;
 
    intConst,uintConst,ushortConst,charConst,scharConst,ucharConst: begin
@@ -4469,7 +4507,7 @@ case tree^.token.kind of
       DoIncDec(tree^.left, pc_lld, pc_gld, pc_ild);
 
    uand: begin                          {unary & (address operator)}
-      if not (tree^.left^.token.kind in [ident,uasterisk]) then
+      if not (tree^.left^.token.kind in [ident,compoundliteral,uasterisk]) then
          L_Value(tree^.left);
       LoadAddress(tree^.left);
       end; {case uand}

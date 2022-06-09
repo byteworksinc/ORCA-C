@@ -48,13 +48,15 @@ procedure TypeName;
 {       typeSpec - pointer to the type                          }
 
 
-procedure AutoInit (variable: identPtr; line: integer);
+procedure AutoInit (variable: identPtr; line: integer;
+   isCompoundLiteral: boolean);
 
 { generate code to initialize an auto variable                  }
 {                                                               }
 { parameters:                                                   }
 {       variable - the variable to initialize                   }
 {       line - line number (used for debugging)                 }
+{       isCompoundLiteral - initializing a compound literal?    }
 
 
 function MakeFuncIdentifier: identPtr;
@@ -4010,7 +4012,7 @@ else {if not isFunction then} begin
             variable^.lln := GetLocalLabel;
             Gen2(dc_loc, variable^.lln, long(variable^.itype^.size).lsw);
             if variable^.state = initialized then
-               AutoInit(variable, startLine);   {initialize auto variable}
+               AutoInit(variable, startLine, false); {initialize auto variable}
             end; {if}
          if (token.kind = commach) and (not doingPrototypes) then begin
             done := false;              {allow multiple variables on one line}
@@ -4314,17 +4316,22 @@ case statementList^.kind of
 end; {DoStatement}
 
 
-procedure AutoInit {variable: identPtr, line: integer};
+procedure AutoInit {variable: identPtr; line: integer;
+   isCompoundLiteral: boolean};
 
 { generate code to initialize an auto variable                  }
 {                                                               }
 { parameters:                                                   }
 {       variable - the variable to initialize                   }
 {       line - line number (used for debugging)                 }
+{       isCompoundLiteral - initializing a compound literal?    }
 
 var
    count: integer;                      {initializer counter}
    iPtr: initializerPtr;                {pointer to the next initializer}
+   codeCount: longint;                  {number of initializer expressions}
+   treeCount: integer;                  {current number of distinct trees}
+   ldoDispose: boolean;                 {local copy of doDispose}
 
 
    procedure Initialize (id: identPtr; disp: longint; itype: typePtr);
@@ -4398,6 +4405,27 @@ var
       end; {ZeroFill}
 
 
+      procedure AddOperation;
+
+      { Deal with a new initializer expression in a compound    }
+      { literal, adding expression tree nodes as appropriate.   }
+      { This aims to produce a balanced binary tree.            }
+      
+      var
+         val: longint;
+      
+      begin {AddOperation}
+      treeCount := treeCount + 1;
+      codeCount := codeCount + 1;
+      val := codeCount;
+      while (val & 1) = 0 do begin
+         Gen0t(pc_bno, cgVoid);
+         treeCount := treeCount - 1;
+         val := val >> 1;
+         end; {end}
+      end; {AddOperation}
+      
+
    begin {Initialize}
    while itype^.kind = definedType do
       itype := itype^.dType;
@@ -4407,7 +4435,8 @@ var
          tree := iptr^.itree;           
          if tree = nil then goto 2;     {don't generate code in error case}
          LoadAddress;                   {load the destination address}
-         doDispose := count = 1;        {generate the expression value}
+                                        {generate the expression value}
+         doDispose := ldoDispose and (count = 1);
                                         {see if this is a constant}
                                         {do assignment conversions}
          while tree^.token.kind = castoper do
@@ -4448,6 +4477,8 @@ var
             pointerType,functionType:
                Gen0t(pc_sto, cgULong);
             end; {case}
+         if isCompoundLiteral then
+            AddOperation;
 2:       end;
 
       arrayType: begin
@@ -4471,6 +4502,8 @@ var
                   Gen0t(pc_stk, cgULong);
                   Gen0t(pc_bno, cgULong);
                   Gen1tName(pc_cup, 0, cgVoid, @'memcpy');
+                  if isCompoundLiteral then
+                     AddOperation;
                   end; {if}
                if size < elements then begin
                   elements := elements - size;     
@@ -4481,6 +4514,8 @@ var
                   Gen0t(pc_stk, cgWord);
                   Gen0t(pc_bno, cgULong);
                   Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
+                  if isCompoundLiteral then
+                     AddOperation;
                   end; {if}
                iPtr := iPtr^.next;
                goto 1;
@@ -4498,6 +4533,8 @@ var
             Gen0t(pc_stk, cgWord);
             Gen0t(pc_bno, cgULong);
             Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
+            if isCompoundLiteral then
+               AddOperation;
             disp := disp + size;
             count := count - long(elements).lsw;
             if count = 0 then begin
@@ -4535,6 +4572,8 @@ var
             with expressionType^ do
                Gen2(pc_mov, long(size).msw, long(size).lsw);
             Gen0t(pc_pop, UsualUnaryConversions);
+            if isCompoundLiteral then
+               AddOperation;
             end {if}
          else begin
             union := itype^.kind = unionType;
@@ -4600,12 +4639,27 @@ var
 begin {AutoInit}
 iPtr := variable^.iPtr;
 count := iPtr^.count;
+if isCompoundLiteral then begin
+   treeCount := 0;
+   codeCount := 0;
+   ldoDispose := doDispose;
+   end {if}
+else
+   ldoDispose := true;
 if variable^.class <> staticsy then begin
    if traceBack or debugFlag then
       if nameFound or debugFlag then
          if (statementList <> nil) and not statementList^.doingDeclaration then
-            RecordLineNumber(line);
+            if lineNumber <> 0 then
+               RecordLineNumber(line);
    Initialize(variable, 0, variable^.itype);
+   end; {if}
+if isCompoundLiteral then begin
+   while treeCount > 1 do begin
+      Gen0t(pc_bno, cgVoid);
+      treeCount := treeCount - 1;
+      end; {while}
+   doDispose := lDoDispose;
    end; {if}
 end; {AutoInit}
 
@@ -4681,26 +4735,24 @@ var
    class: tokenEnum;                    {storage class}
 
 begin {MakeCompoundLiteral}
-if functionTable <> nil then begin
-   Error(164);
+if functionTable <> nil then
    class := autosy
-   end {if}
 else
    class := staticsy;
 name := pointer(Malloc(25));
 name^ := concat('~CompoundLiteral', cnvis(compoundLiteralNumber));
 id := NewSymbol(name, tp, class, variableSpace, defined);
-Initializer(id);
-MakeCompoundLiteral := id;
 compoundLiteralNumber := compoundLiteralNumber + 1;
 if compoundLiteralNumber = 0 then
    Error(57);
+Initializer(id);
+MakeCompoundLiteral := id;
 if class = autosy then begin
    id^.lln := GetLocalLabel;
    id^.clnext := compoundLiteralToAllocate;
    compoundLiteralToAllocate := id;
    end;
-end; {MakeFuncIdentifier}
+end; {MakeCompoundLiteral}
 
 
 procedure InitParser;

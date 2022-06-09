@@ -744,7 +744,7 @@ if list or (numErr <> 0) then begin
         161: msg := @'illegal operator in a constant expression';
         162: msg := @'invalid escape sequence';
         163: msg := @'pointer assignment discards qualifier(s)';
-        164: msg := @'compound literals within functions are not supported by ORCA/C';
+       {164: msg := @'compound literals within functions are not supported by ORCA/C';}
         165: msg := @'''\p'' may not be used in a prefixed string';
         166: msg := @'string literals with these prefixes may not be merged';
         167: msg := @'''L''-prefixed character or string constants are not supported by ORCA/C';
