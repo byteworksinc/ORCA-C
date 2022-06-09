@@ -676,7 +676,7 @@ case mode of
                                      j := sptr^.length;
                                      if maxString-stringSize >= j then begin
                                         for k := 1 to j do
-                                           stringSpace[k+stringSize] :=
+                                           stringSpace^[k+stringSize] :=
                                               sptr^.str[k];
                                         stringSize := stringSize+j;
                                         end {if}
@@ -1337,7 +1337,7 @@ Purge;                                  {dump constant buffer}
 if stringsize <> 0 then begin           {define string space}
    UpDate(maxLabel, pc);                {define the local label for the string space}
    for i := 1 to stringsize do
-      CnOut(ord(stringspace[i]));
+      CnOut(ord(stringspace^[i]));
    Purge;
    end; {if}
 Out(0);                                 {end the segment}

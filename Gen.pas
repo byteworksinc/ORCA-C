@@ -5136,9 +5136,9 @@ len := debugFile^.theString.size;
 if len > 255 then
    len := 255;
 if maxString-stringSize >= len+1 then begin
-   stringSpace[stringSize+1] := chr(len);
+   stringSpace^[stringSize+1] := chr(len);
    for i := 1 to len do
-      stringSpace[i+stringSize+1] :=
+      stringSpace^[i+stringSize+1] :=
          debugFile^.theString.theString[i];
    stringSize := stringSize + len + 1;
    end {if}
@@ -5937,7 +5937,7 @@ procedure GenTree {op: icptr};
    GenNative(m_pea, immediate, stringSize, nil, stringReference);
    if maxString-stringSize >= op^.q then begin
       for i := 1 to op^.q do
-         stringSpace[i+stringSize] := op^.str^.str[i];
+         stringSpace^[i+stringSize] := op^.str^.str[i];
       stringSize := stringSize+op^.q;
       end
    else
@@ -6375,7 +6375,7 @@ procedure GenTree {op: icptr};
          GenNative(opcode, immediate, stringsize, nil, StringReference);
          if maxstring-stringsize >= op^.q then begin
             for i := 1 to op^.q do
-               stringspace[i+stringsize] := op^.str^.str[i];
+               stringspace^[i+stringsize] := op^.str^.str[i];
             stringsize := stringsize + op^.q;
             end {if}
          else
@@ -6491,9 +6491,9 @@ procedure GenTree {op: icptr};
 
    {place the name in the string buffer}
    if maxString-stringSize >= op^.q+1 then begin
-      stringSpace[stringSize+1] := chr(op^.q);
+      stringSpace^[stringSize+1] := chr(op^.q);
       for i := 1 to op^.q do
-         stringSpace[i+stringSize+1] := op^.str^.str[i];
+         stringSpace^[i+stringSize+1] := op^.str^.str[i];
       stringSize := stringSize + op^.q + 1;
       end {if}
    else

@@ -1176,9 +1176,9 @@ var
       Out(0);
       len := length(ip^.name^);		{place the name in the string buffer}
       if maxstring-stringsize >= len+1 then begin
-         stringspace[stringsize+1] := chr(len);
+         stringspace^[stringsize+1] := chr(len);
          for j := 1 to len do
-            stringspace[j+stringsize+1] := ip^.name^[j];
+            stringspace^[j+stringsize+1] := ip^.name^[j];
          stringsize := stringsize+len+1;
          end {if}
       else

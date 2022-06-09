@@ -209,7 +209,7 @@ const
                                         {Note: maxlabel is also defined in CGC.asm}
    maxLabel     =       3200;           {max # of internal labels}
    maxLocalLabel =      220;            {max # local variables}
-   maxString    =       12500;          {max # chars in string space}
+   maxString    =       32760;          {max # chars in string space}
 
                                         {size of internal types}
                                         {----------------------}
@@ -225,6 +225,7 @@ const
 
 type
   segNameType = packed array[1..10] of char; {segment name}
+  stringSpaceType = packed array[1..maxstring] of char; {string space}
 
                                         {p code}
                                         {------}
@@ -343,7 +344,7 @@ var
    stackSize: integer;                  {amount of stack space to reserve}
    strictVararg: boolean;               {repair stack around vararg calls?}
    stringsize: 0..maxstring;            {amount of string space left}
-   stringspace: packed array[1..maxstring] of char; {string table}
+   stringspace: ^stringSpaceType;       {string table}
    symLength: integer;                  {length of debug symbol table}
    toolParms: boolean;                  {generate tool format parameters?}
    volatile: boolean;			{has a volatile qualifier been used?}
@@ -821,6 +822,9 @@ npeepHole := cLineOptimize;
 fastMath := cLineOptimize;
 commonSubexpression := cLineOptimize;	{not doing common subexpression elimination}
 loopOptimizations := cLineOptimize;	{not doing loop optimizations, yet}
+
+{allocate string space}
+new(stringspace);
 
 {allocate the initial p-code}
 code := pointer(Calloc(sizeof(intermediate_code)));
