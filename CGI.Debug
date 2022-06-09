@@ -121,12 +121,17 @@ opt[pc_bqx] := 'bqx';
 opt[pc_baq] := 'baq';
 opt[pc_bnq] := 'bnq';
 opt[pc_ngq] := 'ngq';
+opt[pc_adq] := 'adq';
+opt[pc_sbq] := 'sbq';
 opt[pc_mpq] := 'mpq';
 opt[pc_umq] := 'umq';
 opt[pc_dvq] := 'dvq';
 opt[pc_udq] := 'udq';
 opt[pc_mdq] := 'mdq';
 opt[pc_uqm] := 'uqm';
+opt[pc_slq] := 'slq';
+opt[pc_sqr] := 'sqr';
+opt[pc_wsr] := 'wsr';
 opt[pc_rbo] := 'rbo';
 end; {InitWriteCode}
 
@@ -273,7 +278,10 @@ with code^ do
       pc_uml,pc_adr,pc_dvr,pc_mpr,pc_adi,pc_sbi,pc_mpi,pc_dvi,
       pc_umi,pc_shl,pc_nop,pc_and,pc_lnd,pc_bnd,pc_lor,pc_ior,pc_bxr,
       pc_bnt,pc_blx,pc_bnl,pc_ngi,pc_ngl,pc_ngr,pc_ixa,pc_mdl,
-      pc_udi,pc_udl,pc_bqr,pc_bqx,pc_baq: ;
+      pc_udi,pc_udl,pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,
+      pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm,pc_slq,pc_sqr,pc_wsr,
+      pc_rbo,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr: ;
+
 
       dc_prm:
          write('  ', q:1, ':', r:1, ':', s:1);
