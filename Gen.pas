@@ -5444,11 +5444,14 @@ procedure GenTree {op: icptr};
 
    var
       lLong: longType;			{requested address type}
+      lQuad: quadType;
 
    begin {GenBno}
    lLong := gLong;
+   lQuad := gQuad;
    GenTree(op^.left);
    gLong := lLong;
+   gQuad := lQuad;
    GenTree(op^.right);
    end; {GenBno}
 
