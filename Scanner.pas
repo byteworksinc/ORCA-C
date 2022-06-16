@@ -3998,7 +3998,7 @@ var
    lch: char;                           {next command line character}
    cp: ptr;                             {character pointer}
    i: 0..hashSize;                      {loop variable}
-   negative: boolean;                   {is a number negative?}
+   tPtr: tokenListRecordPtr;            {for building macros from command line}
 
    mp: macroRecordPtr;                  {for building the predefined macros}
    bp: ^macroRecordPtr;
@@ -4420,66 +4420,71 @@ repeat
          bp := pointer(ord4(macros) + hash(mp^.name));
          mp^.next := bp^;
          bp^ := mp;
-         new(mp^.tokens);
-         with mp^.tokens^ do begin
-            next := nil;
-            expandEnabled := true;
-            end; {with}
-         token.kind := intconst;        {create the default value}
-         token.numString := @oneStr;
-         token.class := intConstant;
-         token.ival := 1;
-         oneStr := '1';
-         mp^.tokens^.tokenStart := @oneStr[1];
-         mp^.tokens^.tokenEnd := pointer(ord4(@oneStr[1])+1);
          if lch = '=' then begin
-            mp^.tokens^.tokenStart := cp;
+            mp^.tokens := nil;
             NextCh;                     {record the value}
-            token.numString := nil;
-            if charKinds[ord(lch)] = letter then begin
-               token.kind := ident;
-               token.class := identifier;
-               token.name := GetWord;
-               token.symbolPtr := nil;
-               end {if}
-            else if lch in ['+','-'] then begin
-               negative := lch = '-';
+            if lch in ['+','-','*','&','~','!'] then begin
+               new(tPtr);
+               tPtr^.next := mp^.tokens;
+               mp^.tokens := tPtr;
+               tPtr^.expandEnabled := true;
+               tPtr^.tokenStart := ptr(ord4(cp)-1);
+               tPtr^.tokenEnd := cp;
+               tPtr^.token.class := reservedSymbol;
+               tPtr^.token.isDigraph := false;
+               tPtr^.token.numString := nil;
+               case lch of
+                  '+': tPtr^.token.kind := plusch;
+                  '-': tPtr^.token.kind := minusch;
+                  '*': tPtr^.token.kind := asteriskch;
+                  '&': tPtr^.token.kind := andch;
+                  '~': tPtr^.token.kind := tildech;
+                  '!': tPtr^.token.kind := excch;
+                  end; {case}
                NextCh;
-               if lch in ['.','0'..'9'] then begin
+               end;
+            if not (charKinds[ord(lch)] in [ch_white,ch_eol,ch_eof]) then begin
+               new(tPtr);
+               tPtr^.next := mp^.tokens;
+               mp^.tokens := tPtr;
+               tPtr^.expandEnabled := true;
+               tPtr^.tokenStart := ptr(ord4(cp)-1);
+               token.numString := nil;
+               if charKinds[ord(lch)] = letter then begin
+                  token.kind := ident;
+                  token.class := identifier;
                   token.name := GetWord;
-                  DoNumber(true);
-                  token.numString := @'?';
-                  if negative then
-                     case token.class of
-                        intConstant   : token.ival := -token.ival;
-                        longConstant  : token.lval := -token.lval;
-                        realConstant  : token.rval := -token.rval;
-                        longlongConstant: begin
-                           token.qval.lo := ~token.qval.lo;
-                           token.qval.hi := ~token.qval.hi;
-                           token.qval.lo := token.qval.lo + 1;
-                           if token.qval.lo = 0 then
-                              token.qval.hi := token.qval.hi + 1;
-                           end;
-                        otherwise: Error(108);
-                        end; {case}
+                  token.symbolPtr := nil;
                   end {if}
-               else
+               else if lch in ['.','0'..'9'] then begin
+                  token.name := GetWord;
+                  saveNumber := true;
+                  DoNumber(true);
+                  saveNumber := false;
+                  end {else if}
+               else if lch = '"' then 
+                  GetString
+               else begin
                   FlagErrorAndSkip;
-               end {else if}
-            else if lch in ['.','0'..'9'] then begin
-               token.name := GetWord;
-               saveNumber := true;
-               DoNumber(true);
-               saveNumber := false;
-               end {else if}
-            else if lch = '"' then 
-               GetString
-            else
-               FlagErrorAndSkip;
-            mp^.tokens^.tokenEnd := ptr(ord4(cp)-1);
-            end; {if}
-         mp^.tokens^.token := token;    {add the value to the definition}
+                  mp^.tokens := tPtr^.next;
+                  end; {else}
+               tPtr^.token := token;
+               tPtr^.tokenEnd := ptr(ord4(cp)-1);
+               end; {if}
+            end {if}
+         else begin
+            new(tPtr);
+            tPtr^.next := nil;
+            mp^.tokens := tPtr;
+            tPtr^.expandEnabled := true;
+            oneStr := '1';
+            tPtr^.tokenStart := @oneStr[1];
+            tPtr^.tokenEnd := pointer(ord4(@oneStr[1])+1);
+            tPtr^.token.kind := intconst;
+            tPtr^.token.numString := @oneStr;
+            tPtr^.token.class := intConstant;
+            tPtr^.token.ival := 1;
+            end; {else}
          end {if}
       else if lch in ['i','I'] then begin
          NextCh;                        {get the pathname}
