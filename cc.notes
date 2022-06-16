@@ -686,9 +686,9 @@ Like the default .h file, the custom pre-include file is primarily intended to c
 Locales
 -------
 
-Standard C defines the concept of locales, which can be used to localize certain aspects of the system's behavior to suit the conventions of different languages and cultures.  The <locale.h> header and its functions provide the main implementation of locales, but various other functions in the standard library may behave in a way that varies by locale.  The C standards define the C locale, which specifies a minimal environment for the execution of a C program and is the locale used if no other locale has been explicitly selected.  Which (if any) other locales are supported is implementation-defined.
+Standard C defines the concept of locales, which can be used to localize certain aspects of the system's behavior to suit the conventions of different languages and cultures.  The <locale.h> header and its functions provide the main implementation of locales, but various other functions in the standard library may behave in a way that varies by locale.  The C standards define the "C" locale, which specifies a minimal environment for the execution of a C program and is the locale used if no other locale has been explicitly selected.  Which (if any) other locales are supported is implementation-defined.
 
-Historically, ORCA/C did not support <locale.h> or certain other locale-related functions.  A minimalistic implementation of these functions has now been added.  However, ORCA/C currently only supports the C locale.  As such, any attempt to change to a different locale will fail, and the behavior of the library does not actually vary based on locale, since only one locale is supported.  This minimalistic locale implementation is not particularly useful, but it is intended to be conformant with the C standards, and it allows portable code that uses locale-related functions to compile and run under ORCA/C.  Future versions of ORCA/C might possibly have more extensive locale support.
+Historically, ORCA/C did not support <locale.h> or certain other locale-related functions.  A minimalistic implementation of these functions has now been added.  However, ORCA/C currently only supports the "C" locale.  As such, any attempt to change to a different locale will fail, and the behavior of the library does not actually vary based on locale, since only one locale is supported.  This minimalistic locale implementation is not particularly useful, but it is intended to be conformant with the C standards, and it allows portable code that uses locale-related functions to compile and run under ORCA/C.  Future versions of ORCA/C might possibly have more extensive locale support.
 
 See "Library Updates" below for information on the new locale-related functions.
 
@@ -862,15 +862,15 @@ The strftime function produces a string representing the date/time specified by 
 
 The format string can contain conversion specifiers starting with %, as well as other characters.  Conversion specifiers cause strftime() to write portions of the date/time in certain formats, as specified below.  Other characters are copied to the output unchanged.  If the field(s) of *timeptr relevant to a conversion specifier are outside of their normal ranges, the characters written are unspecified.  If a conversion specifier other than those specified below is used, the behavior is undefined.
 
-Portions of strftime()'s output could differ depending on the locale, but ORCA/C always follows the behavior for the C locale as specified below.
+Portions of strftime()'s output could differ depending on the locale, but ORCA/C always follows the behavior for the "C" locale as specified below.
 
 The conversion specifiers are:
 
-%a - abbreviated weekday name ("Mon", "Tue", etc. in the C locale)
-%A - full weekday name ("Monday", "Tuesday", etc. in the C locale)
-%b - abbreviated month name ("Jan", "Feb", etc. in the C locale)
-%B - full month name ("January", "February", etc. in the C locale)
-%c - date and time (equivalent to "%a %b %e %T %Y" in the C locale)
+%a - abbreviated weekday name ("Mon", "Tue", etc. in the "C" locale)
+%A - full weekday name ("Monday", "Tuesday", etc. in the "C" locale)
+%b - abbreviated month name ("Jan", "Feb", etc. in the "C" locale)
+%B - full month name ("January", "February", etc. in the "C" locale)
+%c - date and time (equivalent to "%a %b %e %T %Y" in the "C" locale)
 %C - year divided by 100 and truncated to an integer (e.g. "19")
 %d - day of the month (01-31)
 %D - equivalent to "%m/%d/%y"
@@ -885,8 +885,8 @@ The conversion specifiers are:
 %m - month (as a number, 01-12)
 %M - minute (00-59)
 %n - replaced by a new-line character
-%p - AM/PM designation ("AM" or "PM", in the C locale)
-%r - 12-hour clock time (equivalent to "%I:%M:%S %p" in the C locale)
+%p - AM/PM designation ("AM" or "PM", in the "C" locale)
+%r - 12-hour clock time (equivalent to "%I:%M:%S %p" in the "C" locale)
 %R - equivalent to "%H:%M"
 %S - second (00-60)
 %t - replaced by a horizontal-tab character
@@ -896,15 +896,15 @@ The conversion specifiers are:
 %V - ISO 8601 week number (01-53)
 %w - weekday number (0-6), where Sunday is 0
 %W - week number of the year (00-53), where the first Monday starts week 01
-%x - date (equivalent to "%m/%d/%y" in the C locale)
-%X - time (equivalent to "%T" in the C locale)
+%x - date (equivalent to "%m/%d/%y" in the "C" locale)
+%X - time (equivalent to "%T" in the "C" locale)
 %y - last two digits of the year (00-99)
 %Y - year (e.g. 1986)
 %z - time zone offset from UTC, if available (writes nothing in ORCA/C)
 %Z - time zone name or abbreviation, if available (writes nothing in ORCA/C)
 %% - replaced by %
 
-Some conversion specifiers can also include an "E" or "O" modifier (e.g. "%Ec").  These might cause an alternate format to be used in certain locales, but in the C locale these modifiers are ignored.
+Some conversion specifiers can also include an "E" or "O" modifier (e.g. "%Ec").  These might cause an alternate format to be used in certain locales, but in the "C" locale these modifiers are ignored.
 
 The %g, %G, and %V specifiers are based on the ISO 8601 week-based year, in which weeks begin on a Monday and week 01 of a year is the week that includes January 4.  According to this system, the first few days of some years are considered to be in week 52 or 53 of the previous year, and the last few days of some years are considered to be in week 01 of the next year.
 
@@ -919,14 +919,14 @@ This function can be used to set or query the locale.  Category should be one of
 
 If locale is a null pointer, the call queries the current setting for (the specified portion of) the locale and returns a string representing it.  Otherwise, it attempts to set (the specified portion of) the locale to the specified value.  If it succeeds, it returns a string representing the new setting for (that portion of) the locale; if it fails, it returns NULL.
 
-The locale string may be "C" (representing the C locale), "" (representing the native environment, as determined by the C implementation or by user settings), or other implementation-defined values.  In the current version of ORCA/C, "" is treated as equivalent to "C" and no other strings are accepted.  Accordingly, the only locale available is the C locale.
+The locale string may be "C" (representing the "C" locale), "" (representing the native environment, as determined by the C implementation or by user settings), or other implementation-defined values.  In the current version of ORCA/C, "" is treated as equivalent to "C" and no other strings are accepted.  Accordingly, the only locale available is the "C" locale.
 
 13. (C89 and C99) The localeconv function has been added:
 
 #include <locale.h>
 struct lconv *localeconv(void);
 
-This function returns a pointer to a structure containing information on how numeric and monetary quantities should be formatted in the current locale.  See the C standards or other references for information on the meaning of each of its fields.  In ORCA/C, this currently always gives the values appropriate for the C locale, as specified in the C standards.
+This function returns a pointer to a structure containing information on how numeric and monetary quantities should be formatted in the current locale.  See the C standards or other references for information on the meaning of each of its fields.  In ORCA/C, this currently always gives the values appropriate for the "C" locale, as specified in the C standards.
 
 14. (C89 and C99) The strcoll and strxfrm functions have been added:
 
@@ -934,7 +934,7 @@ This function returns a pointer to a structure containing information on how num
 int strcoll(const char *s1, const char *s2);
 size_t strxfrm(char * restrict s1, const char * restrict s2, size_t n);
 
-The strcoll function compares two strings based on a locale-specific collation (sorting) order.  If returns a negative number if s1 is less that s2, 0 if the two strings are equal, or a positive number if s1 is greater than s2.  In the C locale as implemented by ORCA/C, it sorts strings in the same order as strcmp.
+The strcoll function compares two strings based on a locale-specific collation (sorting) order.  It returns a negative number if s1 is less that s2, 0 if the two strings are equal, or a positive number if s1 is greater than s2.  In the "C" locale as implemented by ORCA/C, it orders strings identically to strcmp.
 
 The strxfrm function transforms the string s2 into s1, such that two output strings from strxfrm will compare the same way with strcmp that the input strings would with strcoll.  It writes at most n bytes to s1.  It returns the length needed for the output string, not including the terminating null.  If that length is less that n, it writes the output string to s1 (including a terminating null).  Otherwise, the contents of s1 are unspecified.
 
