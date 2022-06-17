@@ -234,6 +234,10 @@ p. 277
 
 The type "long double" now specifies a number in the SANE extended format.
 
+p. 282
+
+Declarations like "int * float fp;" are not actually legal, and are not supported by ORCA/C.
+
 p. 286
 
 Unions may now contain bit fields.
