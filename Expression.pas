@@ -4507,9 +4507,26 @@ case tree^.token.kind of
       DoIncDec(tree^.left, pc_lld, pc_gld, pc_ild);
 
    uand: begin                          {unary & (address operator)}
-      if not (tree^.left^.token.kind in [ident,compoundliteral,uasterisk]) then
+      if not (tree^.left^.token.kind in 
+         [ident,compoundliteral,stringconst,uasterisk]) then
          L_Value(tree^.left);
       LoadAddress(tree^.left);
+      if tree^.left^.token.kind = stringconst then begin
+         {build pointer-to-array type for address of string constant}
+         tType := pointer(Malloc(sizeof(typeRecord)));
+         with tType^ do begin
+            size := cgLongSize;
+            saveDisp := 0;
+            qualifiers := [];
+            kind := pointerType;
+            pType := pointer(Malloc(sizeof(typeRecord)));
+            pType^ := StringType(tree^.left^.token.prefix)^;
+            pType^.size := tree^.left^.token.sval^.length;
+            pType^.saveDisp := 0;
+            pType^.elements := pType^.size div pType^.aType^.size;
+            end; {with}
+         expressionType := tType;
+         end; {if}
       end; {case uand}
 
    uasterisk: begin                     {unary * (indirection)}

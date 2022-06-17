@@ -1813,6 +1813,8 @@ int foo(int[42]);
 
 185. In the invocation of a macro with multiple ## operators, each successive token formed by a ## operator could be subject to macro replacement (if there was a macro of that name).  Macro replacement should instead only be done after all ## operators have been evaluated.
 
+186. Expressions like &"string" were treated as having an incorrect type.  They should have the type char(*)[N], where N is the length of the string, including terminating null character.  This led to spurious "type conflict" errors.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
