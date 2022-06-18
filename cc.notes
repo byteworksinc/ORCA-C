@@ -1819,6 +1819,12 @@ int foo(int[42]);
 
 186. Expressions like &"string" were treated as having an incorrect type.  They should have the type char(*)[N], where N is the length of the string, including terminating null character.  This led to spurious "type conflict" errors.
 
+187. Expressions like sizeof(&*a), where a is an array, would generally give the wrong size.  They should give the size of a pointer to the first element, not the size of the whole array.
+
+188. Expressions like sizeof(&*"string") would cause a spurious error.
+
+(Devin Reade)
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

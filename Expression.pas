@@ -4526,7 +4526,16 @@ case tree^.token.kind of
             pType^.elements := pType^.size div pType^.aType^.size;
             end; {with}
          expressionType := tType;
-         end; {if}
+         end {if}
+      else if expressionType^.kind = arrayType then begin
+         tType := pointer(Malloc(sizeof(typeRecord)));
+         tType^.size := cgPointerSize;
+         tType^.saveDisp := 0;
+         tType^.qualifiers := [];
+         tType^.kind := pointerType;
+         tType^.pType := expressionType^.aType;
+         expressionType := tType;
+         end; {else if}
       end; {case uand}
 
    uasterisk: begin                     {unary * (indirection)}
