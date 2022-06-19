@@ -4136,7 +4136,7 @@ var
          {create a pointer type}
          NextToken;
          tp := pointer(Malloc(sizeof(typeRecord)));
-         tp^.size := cgLongSize;
+         tp^.size := cgPointerSize;
          tp^.saveDisp := 0;
          tp^.qualifiers := [];
          tp^.kind := pointerType;

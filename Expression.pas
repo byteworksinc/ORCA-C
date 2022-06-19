@@ -1917,7 +1917,7 @@ var
    codeGeneration := lCodeGeneration and (numErrors = 0);
                                         {get controlling type after conversions}
    if expressionType^.kind = functionType then begin
-      controllingType.size := cgLongSize;
+      controllingType.size := cgPointerSize;
       controllingType.saveDisp := 0;
       controllingType.qualifiers := [];
       controllingType.kind := pointerType;
@@ -1932,8 +1932,11 @@ var
       end {else if}
    else
       controllingType := expressionType^;
-   if controllingType.kind = arrayType then
+   if controllingType.kind = arrayType then begin
       controllingType.kind := pointerType;
+      controllingType.size := cgPointerSize;
+      controllingType.saveDisp := 0;
+      end; {if}
    controllingType.qualifiers := [];
 
    typesSeen := nil;
@@ -2868,7 +2871,7 @@ var
             otherwise: ;
             end; {case}
          eType := pointer(Malloc(sizeof(typeRecord)));
-         eType^.size := cgLongSize;
+         eType^.size := cgPointerSize;
          eType^.saveDisp := 0;
          eType^.qualifiers := [];
          eType^.kind := pointerType;
@@ -2912,7 +2915,7 @@ var
                Gen0(pc_adl);
                end; {else}
          eType := pointer(Malloc(sizeof(typeRecord)));
-         eType^.size := cgLongSize;
+         eType^.size := cgPointerSize;
          eType^.saveDisp := 0;
          eType^.qualifiers := [];
          eType^.kind := pointerType;
@@ -2929,7 +2932,7 @@ var
       expressionType := tree^.castType;
       if expressionType^.kind <> arrayType then begin
          eType := pointer(Malloc(sizeof(typeRecord)));
-         eType^.size := cgLongSize;
+         eType^.size := cgPointerSize;
          eType^.saveDisp := 0;
          eType^.qualifiers := [];
          eType^.kind := pointerType;
@@ -4232,7 +4235,7 @@ case tree^.token.kind of
          ChangePointer(pc_adl, lType^.size, et);
          if expressionType^.kind = arrayType then begin
             tType := pointer(Malloc(sizeof(typeRecord)));
-            tType^.size := cgLongSize;
+            tType^.size := cgPointerSize;
             tType^.saveDisp := 0;
             tType^.qualifiers := [];
             tType^.kind := pointerType;
@@ -4288,7 +4291,7 @@ case tree^.token.kind of
          expressionType := lType;
          if expressionType^.kind = arrayType then begin
             tType := pointer(Malloc(sizeof(typeRecord)));
-            tType^.size := cgLongSize;
+            tType^.size := cgPointerSize;
             tType^.saveDisp := 0;
             tType^.qualifiers := [];
             tType^.kind := pointerType;
@@ -4515,7 +4518,7 @@ case tree^.token.kind of
          {build pointer-to-array type for address of string constant}
          tType := pointer(Malloc(sizeof(typeRecord)));
          with tType^ do begin
-            size := cgLongSize;
+            size := cgPointerSize;
             saveDisp := 0;
             qualifiers := [];
             kind := pointerType;

@@ -581,7 +581,7 @@ case kind1 of
                   if tp1.kind = arrayType then
                      tp1.kind := pointerType
                   else if tp1.kind = functionType then begin
-                     tp1.size := cgLongSize;
+                     tp1.size := cgPointerSize;
                      tp1.qualifiers := [];
                      tp1.saveDisp := 0;
                      tp1.kind := pointerType;
@@ -590,7 +590,7 @@ case kind1 of
                   if tp2.kind = arrayType then
                      tp2.kind := pointerType
                   else if tp2.kind = functionType then begin
-                     tp2.size := cgLongSize;
+                     tp2.size := cgPointerSize;
                      tp2.qualifiers := [];
                      tp2.saveDisp := 0;
                      tp2.kind := pointerType;
@@ -1644,7 +1644,7 @@ with voidPtr^ do begin
    end; {with}
 new(voidPtrPtr);                        {typeless pointer}
 with voidPtrPtr^ do begin
-   size := 4;
+   size := cgPointerSize;
    saveDisp := 0;
    qualifiers := [];
    kind := pointerType;
