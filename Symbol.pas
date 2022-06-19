@@ -182,6 +182,16 @@ function MakePascalType (origType: typePtr): typePtr;
 { returns: pointer to the pascal-qualified type                 }
 
 
+function MakePointerTo (pType: typePtr): typePtr;
+
+{ make a pointer type                                           }
+{                                                               }
+{ parameters:                                                   }
+{       pType - the type pointed to                             }
+{                                                               }
+{ returns: the pointer type                                     }
+
+
 function MakeQualifiedType (origType: typePtr; qualifiers: typeQualifierSet):
    typePtr;
 
@@ -1747,6 +1757,30 @@ while tp <> nil do
                     end;
       end; {case}
 end; {MakePascalType}
+
+
+function MakePointerTo {pType: typePtr): typePtr};
+
+{ make a pointer type                                           }
+{                                                               }
+{ parameters:                                                   }
+{       pType - the type pointed to                             }
+{                                                               }
+{ returns: the pointer type                                     }
+
+var
+   tp: typePtr;                         {the pointer type}
+
+
+begin {MakePointerTo}
+tp := pointer(Malloc(sizeof(typeRecord)));
+tp^.size := cgPointerSize;
+tp^.saveDisp := 0;
+tp^.qualifiers := [];
+tp^.kind := pointerType;
+tp^.pType := pType;
+MakePointerTo := tp;
+end; {MakePointerTo}
 
 
 function MakeQualifiedType {origType: typePtr; qualifiers: typeQualifierSet):

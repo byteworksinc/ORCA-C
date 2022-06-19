@@ -2870,13 +2870,7 @@ var
             private:        Gen1Name(pc_lao, 0, tname);
             otherwise: ;
             end; {case}
-         eType := pointer(Malloc(sizeof(typeRecord)));
-         eType^.size := cgPointerSize;
-         eType^.saveDisp := 0;
-         eType^.qualifiers := [];
-         eType^.kind := pointerType;
-         eType^.pType := iType;
-         expressionType := eType;
+         expressionType := MakePointerTo(iType);
          end; {with}
       end {if}
    else if tree^.token.kind = compoundliteral then begin
@@ -2914,13 +2908,7 @@ var
                GenLdcLong(size);
                Gen0(pc_adl);
                end; {else}
-         eType := pointer(Malloc(sizeof(typeRecord)));
-         eType^.size := cgPointerSize;
-         eType^.saveDisp := 0;
-         eType^.qualifiers := [];
-         eType^.kind := pointerType;
-         eType^.pType := expressionType;
-         expressionType := eType;
+         expressionType := MakePointerTo(expressionType);
          end {if}
       else
          Error(79);
@@ -2930,15 +2918,8 @@ var
       {load the address of a field of a record}
       LoadAddress(tree^.left);
       expressionType := tree^.castType;
-      if expressionType^.kind <> arrayType then begin
-         eType := pointer(Malloc(sizeof(typeRecord)));
-         eType^.size := cgPointerSize;
-         eType^.saveDisp := 0;
-         eType^.qualifiers := [];
-         eType^.kind := pointerType;
-         eType^.pType := expressionType;
-         expressionType := eType;
-         end; {if}
+      if expressionType^.kind <> arrayType then
+         expressionType := MakePointerTo(expressionType);
       end {else if}
 
    else if ExpressionKind(tree) in [arrayType,pointerType,structType,unionType]
@@ -4233,15 +4214,8 @@ case tree^.token.kind of
          else
             lType := lType^.pType;
          ChangePointer(pc_adl, lType^.size, et);
-         if expressionType^.kind = arrayType then begin
-            tType := pointer(Malloc(sizeof(typeRecord)));
-            tType^.size := cgPointerSize;
-            tType^.saveDisp := 0;
-            tType^.qualifiers := [];
-            tType^.kind := pointerType;
-            tType^.pType := expressionType^.aType;
-            expressionType := tType;
-            end; {if}
+         if expressionType^.kind = arrayType then
+            expressionType := MakePointerTo(expressionType^.aType);
          end {if}
       else begin
 
@@ -4289,15 +4263,8 @@ case tree^.token.kind of
             {subtract a scalar from a pointer}
             ChangePointer(pc_sbl, size, UsualUnaryConversions);
          expressionType := lType;
-         if expressionType^.kind = arrayType then begin
-            tType := pointer(Malloc(sizeof(typeRecord)));
-            tType^.size := cgPointerSize;
-            tType^.saveDisp := 0;
-            tType^.qualifiers := [];
-            tType^.kind := pointerType;
-            tType^.pType := expressionType^.aType;
-            expressionType := tType;
-            end; {if}
+         if expressionType^.kind = arrayType then
+            expressionType := MakePointerTo(expressionType^.aType);
          end {if}
       else begin
 
@@ -4517,28 +4484,14 @@ case tree^.token.kind of
       if tree^.left^.token.kind = stringconst then begin
          {build pointer-to-array type for address of string constant}
          tType := pointer(Malloc(sizeof(typeRecord)));
-         with tType^ do begin
-            size := cgPointerSize;
-            saveDisp := 0;
-            qualifiers := [];
-            kind := pointerType;
-            pType := pointer(Malloc(sizeof(typeRecord)));
-            pType^ := StringType(tree^.left^.token.prefix)^;
-            pType^.size := tree^.left^.token.sval^.length;
-            pType^.saveDisp := 0;
-            pType^.elements := pType^.size div pType^.aType^.size;
-            end; {with}
-         expressionType := tType;
-         end {if}
-      else if expressionType^.kind = arrayType then begin
-         tType := pointer(Malloc(sizeof(typeRecord)));
-         tType^.size := cgPointerSize;
+         tType^ := StringType(tree^.left^.token.prefix)^;
+         tType^.size := tree^.left^.token.sval^.length;
          tType^.saveDisp := 0;
-         tType^.qualifiers := [];
-         tType^.kind := pointerType;
-         tType^.pType := expressionType^.aType;
-         expressionType := tType;
-         end; {else if}
+         tType^.elements := tType^.size div tType^.aType^.size;
+         expressionType := MakePointerTo(tType);
+         end {if}
+      else if expressionType^.kind = arrayType then
+         expressionType := MakePointerTo(expressionType^.aType);
       end; {case uand}
 
    uasterisk: begin                     {unary * (indirection)}
