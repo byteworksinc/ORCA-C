@@ -1613,7 +1613,7 @@ with stringTypePtr^ do begin
    qualifiers := [];
    kind := arrayType;
    aType := charPtr;
-   elements := 1;
+   elements := 0;
    end; {with}
 new(utf16StringTypePtr);                {UTF-16 string constant type}
 with utf16StringTypePtr^ do begin
@@ -1622,7 +1622,7 @@ with utf16StringTypePtr^ do begin
    qualifiers := [];
    kind := arrayType;
    aType := uShortPtr;
-   elements := 1;
+   elements := 0;
    end; {with}
 new(utf32StringTypePtr);                {UTF-32 string constant type}
 with utf32StringTypePtr^ do begin
@@ -1631,7 +1631,7 @@ with utf32StringTypePtr^ do begin
    qualifiers := [];
    kind := arrayType;
    aType := uLongPtr;
-   elements := 1;
+   elements := 0;
    end; {with}
 new(voidPtr);                           {void}
 with voidPtr^ do begin
