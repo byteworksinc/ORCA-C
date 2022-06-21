@@ -2543,7 +2543,7 @@ else if tp^.kind = pointerType then begin
 
       scalarType:
          if expressionType^.baseType in
-            [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong] then
+            [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
             Gen2(pc_cnv, ord(Unary(expressionType^.baseType)),
                ord(cgULong))
          else if doDispose then
@@ -2564,7 +2564,7 @@ else if expressionType^.kind in [pointerType,arrayType] then begin
 
       scalarType:
          if tp^.baseType in
-            [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong] then
+            [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
             Gen2(pc_cnv, ord(cgULong),
                ord(Unary(tp^.baseType)))
          else if tp^.baseType = cgVoid then
