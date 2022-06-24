@@ -65,6 +65,7 @@ var
                                         {----}
    lastwasconst: boolean;               {did the last GenerateCode result in an integer constant?}
    lastconst: longint;                  {last integer constant from GenerateCode}
+   lastWasNullPtrConst: boolean;        {did last GenerateCode give a null ptr const?}
 {---------------------------------------------------------------}
 
 procedure AssignmentConversion (t1, t2: typePtr; isConstant: boolean;
@@ -568,6 +569,25 @@ if tree <> nil then begin
    dispose(tree);
    end; {if}
 end; {DisposeTree}
+
+
+procedure ValueExpressionConversions;
+
+{ Perform type conversions applicable to an expression used     }
+{ for its value.  These include lvalue conversion (removing     }
+{ qualifiers), array-to-pointer conversion, and                 }
+{ function-to-pointer conversion.  See C17 section 6.3.2.1.     }
+{                                                               }
+{ variables:                                                    }
+{       expressionType - set to type after conversions          }
+
+begin {ValueExpressionConversions}
+expressionType := Unqualify(expressionType);
+if expressionType^.kind = arrayType then
+   expressionType := MakePointerTo(expressionType^.aType)
+else if expressionType^.kind = functionType then
+   expressionType := MakePointerTo(expressionType);
+end; {ValueExpressionConversions}
 
 
 procedure AssignmentConversion {t1, t2: typePtr; isConstant: boolean;
@@ -2772,7 +2792,7 @@ var
    doingScalar: boolean;                {temp; for assignment operators}
    et: baseTypeEnum;                    {temp storage for a base type}
    i: integer;                          {loop variable}
-   isString: boolean;                   {was the ? : a string?}
+   isNullPtrConst: boolean;             {is this a null pointer constant?}
    isVolatile: boolean;                 {is this a volatile op?}
    lType: typePtr;                      {type of operands}
    kind: typeKind;                      {temp type kind}
@@ -2780,6 +2800,7 @@ var
    t1: integer;                         {temporary work space label number}
    tlastwasconst: boolean;              {temp lastwasconst}
    tlastconst: longint;                 {temp lastconst}
+   tlastWasNullPtrConst: boolean;       {temp lastWasNullPtrConst}
    tp: tokenPtr;                        {work pointer}
    tType: typePtr;                      {temp type of operand}
 
@@ -3528,6 +3549,7 @@ var
 
 begin {GenerateCode}
 lastwasconst := false;
+isNullPtrConst := false;
 case tree^.token.kind of
 
    parameterOper:
@@ -3590,6 +3612,7 @@ case tree^.token.kind of
       Gen1t(pc_ldc, tree^.token.ival, cgWord);
       lastwasconst := true;
       lastconst := tree^.token.ival;
+      isNullPtrConst := tree^.token.ival = 0;
       if tree^.token.kind = intConst then
          expressionType := intPtr
       else if tree^.token.kind = uintConst then
@@ -3612,6 +3635,7 @@ case tree^.token.kind of
          expressionType := ulongPtr;
       lastwasconst := true;
       lastconst := tree^.token.lval;
+      isNullPtrConst := tree^.token.lval = 0;
       end; {case longConst}
 
    longlongConst,ulonglongConst: begin
@@ -3624,6 +3648,7 @@ case tree^.token.kind of
          lastwasconst := true;
          lastconst := tree^.token.qval.lo;
          end; {if}
+      isNullPtrConst := (tree^.token.qval.hi = 0) and (tree^.token.qval.lo = 0);
       end; {case longlongConst}
 
    floatConst: begin
@@ -4565,78 +4590,71 @@ case tree^.token.kind of
       GenerateCode(tree^.left);         {evaluate the condition}
       CompareToZero(pc_neq);
       GenerateCode(tree^.middle);       {evaluate true expression}
+      ValueExpressionConversions;
       lType := expressionType;
-      tlastwasconst := lastwasconst;
-      tlastconst := lastconst;
+      tlastWasNullPtrConst := lastWasNullPtrConst;
       GenerateCode(tree^.right);        {evaluate false expression}
-      isString := false;                {handle string operands}
-      if lType^.kind in [arrayType,pointerType] then
-         if lType^.aType^.baseType = cgUByte then begin
-            with expressionType^ do
-               if kind in [arrayType,pointerType] then begin
-                  if aType^.baseType = cgUByte then
-                     isString := true
-                  else if (kind = pointerType)
-                     and (CompTypes(lType,expressionType)) then
-                     {it's all OK}
-                  else
-                     Error(47)
-                  end {if}
-               else if (kind = scalarType)
-                  and lastWasConst
-                  and (lastConst = 0) then
-                  et := UsualBinaryConversions(lType)
-                  {it's all OK}
-               else
+      ValueExpressionConversions;
+                                        {check, compute, and convert types}
+      if (lType^.kind = pointerType) or (expressionType^.kind = pointerType)
+         then begin
+         if tlastWasNullPtrConst then begin
+            if lType^.kind = scalarType then
+               Gen2(pc_cnn, ord(lType^.baseType), ord(cgULong));
+            end {if}
+         else if lastWasNullPtrConst then begin
+            if expressionType^.kind = scalarType then
+               Gen2(pc_cnv, ord(expressionType^.baseType), ord(cgULong));
+            expressionType := lType;
+            end {if}
+         else if lType^.kind <> expressionType^.kind then {not both pointers}
+            Error(47)
+         else if IsVoid(lType^.pType) or IsVoid(expressionType^.pType) then begin
+            if not looseTypeChecks then
+               if (lType^.pType^.kind = functionType) or
+                  (expressionType^.pType^.kind = functionType) then
                   Error(47);
-            lType := voidPtrPtr;
-            expressionType := voidPtrPtr;
-            end; {if}
-      with expressionType^ do
-         if kind in [arrayType,pointerType] then
-            if aType^.baseType in [cgByte,cgUByte] then begin
-               if kind = pointerType then begin
-                  if tlastwasconst and (tlastconst = 0) then
-                     {it's all OK}
-                  else if CompTypes(lType, expressionType) then
-                     {it's all OK}
-                  else
-                     Error(47);
-                  end {if}
-               else
+            expressionType := MakePointerTo(MakeQualifiedType(voidPtr,
+               lType^.pType^.qualifiers+expressionType^.pType^.qualifiers));
+            end {else if}
+         else if CompTypes(Unqualify(lType^.pType),
+            Unqualify(expressionType^.pType)) then begin
+            if not looseTypeChecks then
+               if not StrictCompTypes(Unqualify(lType^.pType),
+                  Unqualify(expressionType^.pType)) then
                   Error(47);
-               et := UsualBinaryConversions(lType);
-               lType := voidPtrPtr;
-               expressionType := voidPtrPtr;
-               end; {if}
-                                        {generate the operation}
-      if lType^.kind in [structType, unionType, arrayType] then begin
+            expressionType := MakePointerTo(MakeQualifiedType(MakeCompositeType(
+               Unqualify(lType^.pType),Unqualify(expressionType^.pType)),
+               lType^.pType^.qualifiers+expressionType^.pType^.qualifiers));
+            end {else if}
+         else
+            Error(47);
+         et := cgULong;
+         end {if}
+      else if lType^.kind in [structType, unionType] then begin
          if not CompTypes(lType, expressionType) then
             Error(47);
-         Gen0(pc_bno);
-         Gen0t(pc_tri, cgULong);
+         et := cgULong;
          end {if}
       else begin
-         if expressionType^.kind = pointerType then
-            tType := expressionType
-         else
-            tType := lType;
-         if (expressionType^.kind = scalarType)
-            and (expressionType^.baseType = cgVoid)
-            and (lType^.kind = scalarType)
-            and (lType^.baseType = cgVoid) then
+         if IsVoid(lType) and IsVoid(expressionType) then
             et := cgVoid
          else
             et := UsualBinaryConversions(lType);
-         Gen0(pc_bno);
-         Gen0t(pc_tri, et);
          end; {else}
-      if isString then                  {set the type for strings}
-         expressionType := stringTypePtr;
+                                        {generate the operation}
+      Gen0(pc_bno);
+      Gen0t(pc_tri, et);
       end; {case colonch}
 
    castoper: begin                      {(cast)}
       GenerateCode(tree^.left);
+      if lastWasNullPtrConst then
+         if expressionType^.kind = scalarType then
+            if tree^.castType^.kind = pointerType then
+               if IsVoid(tree^.castType^.pType) then
+                  if tree^.castType^.pType^.qualifiers = [] then
+                     isNullPtrConst := true;
       Cast(tree^.castType);
       end; {case castoper}
 
@@ -4646,6 +4664,7 @@ case tree^.token.kind of
    end; {case}
 if doDispose then
    dispose(tree);
+lastWasNullPtrConst := isNullPtrConst;
 end; {GenerateCode}
 
 

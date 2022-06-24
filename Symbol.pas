@@ -164,6 +164,16 @@ procedure InitSymbol;
 { Initialize the symbol table module                            }
 
 
+function IsVoid (tp: typePtr): boolean;
+
+{ Check to see if a type is void                                }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if the type is void, else false                 }
+
+
 function LabelToDisp (lab: integer): integer; extern;
 
 { convert a local label number to a stack frame displacement    }
@@ -190,6 +200,17 @@ function MakePointerTo (pType: typePtr): typePtr;
 {       pType - the type pointed to                             }
 {                                                               }
 { returns: the pointer type                                     }
+
+
+function MakeCompositeType (t1, t2: typePtr): typePtr;
+
+{ Make the composite type of two compatible types.              }
+{ See C17 section 6.2.7.                                        }
+{                                                               }
+{ parameters:                                                   }
+{       t1,t2 - the input types (must be compatible)            }
+{                                                               }
+{ returns: pointer to the composite type                        }
 
 
 function MakeQualifiedType (origType: typePtr; qualifiers: typeQualifierSet):
@@ -426,26 +447,6 @@ var
    kind1,kind2: typeKind;               {temp variables (for speed)}
    p1, p2: parameterPtr;                {for tracing parameter lists}
    pt1,pt2: typePtr;                    {pointer types}
-
-
-   function IsVoid (tp: typePtr): boolean;
-
-   { Check to see if a type is void				}
-   {								}
-   { Parameters:						}
-   {    tp - type to check					}
-   {								}
-   { Returns: True if the type is void, else false		}
-
-   begin {IsVoid}
-   IsVoid := false;
-   if tp = voidPtr then
-      IsVoid := true
-   else if tp^.kind = scalarType then
-      if tp^.baseType = cgVoid then
-         IsVoid := true;
-   end; {IsVoid}
-
 
 begin {CompTypes}
 CompTypes := false;                     {assume the types are not compatible}
@@ -1701,6 +1702,122 @@ new(constCharPtr);                      {const char}
 constCharPtr^ := charPtr^;
 constCharPtr^.qualifiers := [tqConst];
 end; {InitSymbol}
+
+
+function IsVoid {tp: typePtr): boolean};
+
+{ Check to see if a type is void                                }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if the type is void, else false                 }
+
+begin {IsVoid}
+IsVoid := false;
+if tp = voidPtr then
+   IsVoid := true
+else if tp^.kind = scalarType then
+   if tp^.baseType = cgVoid then
+      IsVoid := true;
+end; {IsVoid}
+
+
+function CopyType (tp: typePtr): typePtr;
+
+{ Make a new copy of a type, so it can be modified.             }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to copy                                          }
+{                                                               }
+{ Returns: The new copy of the type                             }
+
+var
+   tType: typePtr;                      {the new copy of the type}
+   p1,p2: parameterPtr;                 {parameter ptrs for copying prototypes}
+   pPtr: ^parameterPtr;                 {temp for copying prototypes}
+
+begin {CopyType}
+if tp^.kind in [structType,unionType] then
+   Error(57);
+tType := pointer(Malloc(sizeof(typeRecord)));
+tType^ := tp^;                          {copy type record}
+tType^.saveDisp := 0;
+if tp^.kind = functionType then         {copy prototype parameter list}
+   if tp^.prototyped then begin
+      p1 := tp^.parameterList;
+      pPtr := @tType^.parameterList;
+      while p1 <> nil do begin
+         p2 := pointer(Malloc(sizeof(parameterRecord)));
+         p2^ := p1^;
+         pPtr^ := p2;
+         pPtr := @p2^.next;
+         p1 := p1^.next;
+         end; {while}
+      end; {if}
+CopyType := tType;
+end; {CopyType}
+
+
+function MakeCompositeType {t1, t2: typePtr): typePtr};
+
+{ Make the composite type of two compatible types.              }
+{ See C17 section 6.2.7.                                        }
+{                                                               }
+{ parameters:                                                   }
+{       t1,t2 - the input types (should be compatible)          }
+{                                                               }
+{ returns: pointer to the composite type                        }
+
+var
+   compType: typePtr;                   {the composite type}
+   tType: typePtr;                      {temp type}
+   p1,p2: parameterPtr;                 {parameter ptrs for handling prototypes}
+
+begin {MakeCompositeType}
+compType := t2;                         {default to t2}
+if t1 <> t2 then
+   if t1^.kind = t2^.kind then begin
+      if t2^.kind = functionType then   {switch fn types if only t1 is prototyped}
+         if not t2^.prototyped then
+            if t1^.prototyped then begin
+               compType := t1;
+               t1 := t2;
+               t2 := compType;
+               end; {if}
+                                        {apply recursively for derived types}
+      if t2^.kind in [arrayType,pointerType,functionType] then begin
+            tType := MakeCompositeType(t1^.aType,t2^.aType);
+            if tType <> t2^.aType then begin
+               compType := CopyType(compType);
+               compType^.aType := tType;
+               end; {if}
+         end; {if}
+      if t2^.kind = arrayType then      {get array size from t1 if needed}
+         if t2^.size = 0 then
+            if t1^.size <> 0 then
+               if t1^.aType^.size = t2^.aType^.size then begin
+                  if compType = t2 then
+                     compType := CopyType(t2);
+                  CompType^.size := t1^.size;
+                  CompType^.elements := t1^.elements;
+                  end; {if}
+      if t2^.kind = functionType then   {compose function parameter types}
+         if t1^.prototyped and t2^.prototyped then begin
+            if compType = t2 then
+               compType := CopyType(t2);
+            p1 := t1^.parameterList;
+            p2 := compType^.parameterList;
+            while (p1 <> nil) and (p2 <> nil) do begin
+               p2^.parameterType :=
+                  MakeCompositeType(p1^.parameterType,p2^.parameterType);
+               p1 := p1^.next;
+               p2 := p2^.next;
+               end; {while}
+            end;
+      end; {if}
+MakeCompositeType := compType;
+end; {MakeCompositeType}
 
 
 function MakePascalType {origType: typePtr): typePtr};

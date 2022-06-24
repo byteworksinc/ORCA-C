@@ -584,7 +584,7 @@ First, setting bit 5 causes pointer assignments that discard type qualifiers to 
 
 Second, setting bit 5 causes type compatibility checks involving function pointers to ignore the prototyped parameter types.  If bit 5 is clear, the prototyped parameter types (if available) must be compatible.
 
-Third, setting bit 5 causes certain comparisons involving pointers to be permitted even though they violate constraints specified in the C standards.  If bit 5 is clear, the rules in the standards will be followed strictly.
+Third, setting bit 5 causes certain comparisons involving pointers, as well as certain uses of the ? : operator with pointer operands, to be permitted even though they violate constraints specified in the C standards.  If bit 5 is clear, the rules in the standards will be followed strictly.
 
 Fourth, setting bit 5 causes ORCA/C to treat basic types with the same representation as mutually compatible.  This affects the following pairs of types: short and int, unsigned short and unsigned int, char and unsigned char.  Historically, ORCA/C essentially treated each of these pairs as being the same type, so it never reported type conflicts between them.  If bit 5 is set, it will continue to do so.  If bit 5 is clear, it will treat all of the above types as distinct and mutually incompatible, as specified by the C standards.
 
@@ -1824,6 +1824,10 @@ int foo(int[42]);
 188. Expressions like sizeof(&*"string") would cause a spurious error.
 
 (Devin Reade)
+
+189. Some combinations of operand types were not properly supported for the ? : operator.  This could result in a spurious error, or could cause the ? : expression to have an incorrect type.  One case where a spurious error would be produced is for expressions like i?0:p, where p is a pointer.
+
+(Jay Krell, Devin Reade)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
