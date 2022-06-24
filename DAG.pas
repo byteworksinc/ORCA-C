@@ -2553,7 +2553,17 @@ case op^.opcode of			{check for optimizations of this node}
 			ReverseChildren(op^.right);
                      op^.left := op^.left^.left;
                      end; {if}
-         end; {else if}
+         end {else if}
+      else if opcode = pc_ldc then
+         if op^.left^.optype in [cgWord,cgUWord] then
+            if op^.next = nil then
+               if op^.left^.q <> 0 then begin
+                  if op^.optype = TypeOf(op^.right^.left) then
+                     opv := op^.right^.left;
+                  end {if}
+               else
+                  if op^.optype = TypeOf(op^.right^.right) then
+                     opv := op^.right^.right;
       end; {case pc_tri}
 
    pc_udi: begin			{pc_udi}
