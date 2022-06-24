@@ -1829,6 +1829,8 @@ int foo(int[42]);
 
 (Jay Krell, Devin Reade)
 
+190. Calling rewind() should clear the I/O error indicator for the stream (the value returned by ferror()), but it was not doing so.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

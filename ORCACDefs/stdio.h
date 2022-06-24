@@ -100,16 +100,6 @@ extern FILE *stdout;
 typedef long fpos_t;
 
 /*
- *  Function declared as a macro
- */
-
-void            rewind(FILE *);
-#define rewind(stream)          (__fseek((stream),0L,SEEK_SET))
-
-/* Private function used in the above macro (not to be used otherwise) */
-int             __fseek(FILE *, long, int);
-
-/*
  *  Function declarations
  */
 
@@ -142,6 +132,7 @@ int             putchar(int);
 int             puts(const char *);
 int             remove(const char *);
 int             rename(const char *, const char *);
+void            rewind(FILE *);
 int             scanf(const char *, ...);
 void            setbuf(FILE *, char *);
 int             setvbuf(FILE *, char *, int, size_t);
