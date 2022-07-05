@@ -69,9 +69,9 @@ int main(void) {
                 goto Fail;
 #endif
 
-        printf ("Passed Conformance Test c99uchar\n");
+        printf ("Passed Conformance Test c11uchar\n");
         return 0;
 
 Fail:
-        printf ("Failed Conformance Test c99uchar\n");
+        printf ("Failed Conformance Test c11uchar\n");
 }

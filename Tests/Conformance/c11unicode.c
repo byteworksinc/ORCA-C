@@ -61,9 +61,9 @@ int main(void) {
             s32[3] != 0x010085 || s32[4] != 0x000000)
                 goto Fail;
         
-        printf ("Passed Conformance Test c99unicode\n");
+        printf ("Passed Conformance Test c11unicode\n");
         return 0;
 
 Fail:
-        printf ("Failed Conformance Test c99unicode\n");
+        printf ("Failed Conformance Test c11unicode\n");
 }
