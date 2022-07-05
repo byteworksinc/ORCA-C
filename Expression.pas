@@ -1201,11 +1201,44 @@ var
                if op^.middle^.token.kind in [intconst,uintconst,ushortconst,
                   longconst,ulongconst,longlongconst,ulonglongconst,
                   charconst,scharconst,ucharconst] then begin
+                  
+                  kindLeft := op^.middle^.token.kind;
+                  kindRight := op^.right^.token.kind;
+                  
+                  {do the usual binary conversions}
+                  if (kindRight = ulonglongconst) or (kindLeft = ulonglongconst) then
+                     ekind := ulonglongconst
+                  else if (kindRight = longlongconst) or (kindLeft = longlongconst) then
+                     ekind := longlongconst
+                  else if (kindRight = ulongconst) or (kindLeft = ulongconst) then
+                     ekind := ulongconst
+                  else if (kindRight = longconst) or (kindLeft = longconst) then
+                     ekind := longconst
+                  else if (kindRight = uintconst) or (kindLeft = uintconst) 
+                     or (kindRight = ushortconst) or (kindLeft = ushortconst) then
+                     ekind := uintconst
+                  else
+                     ekind := intconst;
+                  
                   GetLongLongVal(llop1, op^.left^.token);
                   if (llop1.lo <> 0) or (llop1.hi <> 0) then
-                     op^.token := op^.middle^.token
+                     GetLongLongVal(llop2, op^.middle^.token)
                   else
-                     op^.token := op^.right^.token;
+                     GetLongLongVal(llop2, op^.right^.token);
+                  op^.token.kind := ekind;
+                  if ekind in [longlongconst,ulonglongconst] then begin
+                     op^.token.qval := llop2;
+                     op^.token.class := longlongConstant;
+                     end {if}
+                  else if ekind in [longconst,ulongconst] then begin
+                     op^.token.lval := llop2.lo;
+                     op^.token.class := longConstant;
+                     end {if}
+                  else begin
+                     op^.token.ival := long(llop2.lo).lsw;
+                     op^.token.class := intConstant;
+                     end; {else}
+
                   dispose(op^.left);
                   dispose(op^.right);
                   dispose(op^.middle);
