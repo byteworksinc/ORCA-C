@@ -314,6 +314,10 @@ The discussion of abort() should note that it will call raise(SIGABRT) before ex
 
 p. 356
 
+fgetpos() and fsetpos() actually set errno to EIO if there is an error.
+
+p. 359
+
 The fprintf() family of functions has been updated to support several new features specified by C99.  Also, the snprintf() and vsnprintf() functions have been added.  See "Library Updates," below.
 
 p. 367
@@ -347,6 +351,8 @@ The discussions of toascii(), toint(), and _tolower should note that they are ex
 p. 405
 
 The discussion of _toupper should note that _toupper is an extension to ANSI C.
+
+ORCA/C's implementation of ungetc() actually uses a two-character putback buffer for each stream, so ungetc() can be successfully called two times in a row.
 
 p. 406
 
@@ -1830,6 +1836,30 @@ int foo(int[42]);
 (Jay Krell, Devin Reade)
 
 190. Calling rewind() should clear the I/O error indicator for the stream (the value returned by ferror()), but it was not doing so.
+
+191. If a call like fseek(f, N, SEEK_CUR) was used on a file opened in read mode, it would not seek to the correct location, and in some cases it would set the error indicator for the stream, causing further operations on it to fail.
+
+(Norman Dodge, Devin Reade)
+
+192. If a file is opened in append mode (using 'a' in the mode argument to fopen), then all writes should be forced to the end of the file, regardless of any prior calls to positioning functions like fseek.
+
+193. The ungetc() function did not work on character values 0x80 through 0xFF.
+
+(Soenke Behrens)
+
+194. A successful call to ungetc() should clear the end-of-file indicator for the stream.
+
+195. fread() would discard characters put back with ungetc().
+
+(Soenke Behrens)
+
+196. fread() would generally return the wrong value if it was reading from stdin and the specified element size was anything other that 1.
+
+197. If fread() was used on a file after data had been read from it using a different <stdio.h> function, fread() might not read the correct data.
+
+198. Calling ftell() or fgetpos() on a file opened in read mode could cause subsequent reads to return data from the wrong position in the file.
+
+199. If a file is open for reading and writing, it should be possible to read from it until end-of-file is encountered and then immediately write to it, but an error would be reported when the write was attempted.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

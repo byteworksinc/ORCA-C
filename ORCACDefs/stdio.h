@@ -61,7 +61,7 @@ typedef struct __file {
                         *_end;          /* end of the file buffer */
    unsigned long        _size,          /* size of the file buffer */
                         _cnt;           /* # chars that can be read/written to buffer */
-   int                  _pbk;           /* put back buffer */
+   int                  _pbk[2];        /* put back buffer */
    unsigned int         _flag,          /* buffer flags */
                         _file;          /* GS/OS file ID */
    } FILE;
@@ -80,6 +80,7 @@ typedef struct __file {
 #define _IOERR          0x0100          /* has an error occurred? */
 #define _IOTEXT         0x0200          /* is this file a text file? */
 #define _IOTEMPFILE     0x0400          /* was this file created by tmpfile()? */
+#define _IOAPPEND       0x0800          /* is this file open in append mode? */
 
 extern FILE *stderr;                    /* standard I/O files */
 extern FILE *stdin;
