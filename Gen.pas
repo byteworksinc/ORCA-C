@@ -6457,12 +6457,13 @@ procedure GenTree {op: icptr};
       end {if}
    else
       LoadX(op^.right);
-   if op^.opcode = pc_mpi then
-      GenCall(28)
+   if op^.opcode = pc_mpi then begin
+      GenCall(28);      
+      if rangeCheck then
+         GenCall(25);
+      end {if}
    else {pc_umi}
-      GenCall(39);
-   if rangeCheck then
-      GenCall(25);
+      GenCall(94);
    end; {GenMpi}
 
 

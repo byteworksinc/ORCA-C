@@ -262,7 +262,7 @@ ORCA/C now supports additional forms of expressions known as generic selection e
 
 p. 311
 
-If integer overflow occurs during signed integer multiplication, the resulting value is not predictable.  Contrary to what the description in the manual implies, it will not necessarily be the low-order bits from the true product of the operands.
+If integer overflow occurs during signed integer multiplication, the resulting value is not predictable.  Contrary to what the description in the manual implies, it will not necessarily be the low-order bits from the true product of the operands.  (Unsigned integer multiplication does give the low-order bits from the true product.)
 
 p. 321
 
@@ -1860,6 +1860,8 @@ int foo(int[42]);
 198. Calling ftell() or fgetpos() on a file opened in read mode could cause subsequent reads to return data from the wrong position in the file.
 
 199. If a file is open for reading and writing, it should be possible to read from it until end-of-file is encountered and then immediately write to it, but an error would be reported when the write was attempted.
+
+200. Arithmetic operations on unsigned integer types should give the low-order bits of the true mathematical result in the event of overflow, but 16-bit unsigned multiplication did not always do this.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

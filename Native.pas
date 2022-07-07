@@ -2049,6 +2049,7 @@ case callNum of
    91: sp := @'~SINGLEPRECISION';
    92: sp := @'~DOUBLEPRECISION';
    93: sp := @'~COMPPRECISION';
+   94: sp := @'~CUMUL2';
    otherwise:
       Error(cge1);
    end; {case}
