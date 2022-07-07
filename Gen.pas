@@ -6998,7 +6998,7 @@ procedure GenTree {op: icptr};
    { Generate code for a pc_sbi					}
    
    begin {GenSbi}
-   if Complex(op^.left) or Complex(op^.right) then begin
+   if Complex(op^.right) then begin
       GenTree(op^.right);
       if Complex(op^.left) then begin
 	 GenImplied(m_pha);
