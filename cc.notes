@@ -1863,6 +1863,8 @@ int foo(int[42]);
 
 200. Arithmetic operations on unsigned integer types should give the low-order bits of the true mathematical result in the event of overflow, but 16-bit unsigned multiplication did not always do this.
 
+201. When certain expressions were used for the condition in an if statement, loop, or conditional expression, the conditional branch might be evaluated incorrectly, leading to incorrect control flow.  The affected condition expressions included shifts, loads or stores of bit-fields, and ? : expressions.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

@@ -621,7 +621,8 @@ NeedsCondition := opcode in
    [pc_and,pc_ior,pc_cui,pc_cup,pc_lor,pc_lnd,pc_ldl,pc_lil,pc_lld,
     pc_lli,pc_gil,pc_gli,pc_gdl,pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,
     pc_cop,pc_cpo,pc_cpi,pc_dvi,pc_mpi,pc_adi,pc_sbi,pc_mod,pc_bno,
-    pc_udi,pc_uim,pc_umi,pc_cnv,pc_rbo];
+    pc_udi,pc_uim,pc_umi,pc_cnv,pc_rbo,pc_shl,pc_shr,pc_usr,pc_lbf,
+    pc_lbu,pc_cbf,pc_tri];
 end; {NeedsCondition}
 
 
