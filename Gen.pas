@@ -6441,29 +6441,117 @@ procedure GenTree {op: icptr};
    
    var
       nd: icptr;
+      val: integer;
 
    begin {GenMpi}
-   if not Complex(op^.left) then
+   if ((op^.left^.opcode = pc_ldc) or (op^.right^.opcode = pc_ldc))
+      and ((op^.opcode = pc_umi) or (not rangeCheck)) then begin
+      if op^.left^.opcode = pc_ldc then begin
+         val := op^.left^.q;
+         nd := op^.right;
+         end {if}
+      else begin
+         val := op^.right^.q;
+         nd := op^.left;
+         end; {else}
+      if nd^.opcode = pc_ldc then
+         GenNative(m_lda_imm, immediate, long(ord4(val) * nd^.q).lsw, nil, 0)
+      else begin
+         GenTree(nd);
+         case val of
+            0: GenNative(m_lda_imm, immediate, 0, nil, 0);
+
+            1,2,4,8,16,32,64,128:
+               while not odd(val) do begin  
+                  GenImplied(m_asl_a);
+                  val := val >> 1;
+                  end; {while}
+
+            256,512,1024,2048,4096,8192,16384: begin
+               GenNative(m_and_imm, immediate, $00FF, nil, 0);
+               GenImplied(m_xba);
+               val := val >> 8;
+               while not odd(val) do begin  
+                  GenImplied(m_asl_a);
+                  val := val >> 1;
+                  end; {while}
+               end;
+
+            3,5,6,9,10,12,17,18,20,24,33,34,36,40,48,65,66,68,72,80,96: begin
+               if odd(val) then         {prevent lda+pha -> pei optimization}
+                  GenLab(GenLabel);
+               while not odd(val) do begin  
+                  GenImplied(m_asl_a);
+                  val := val >> 1;
+                  end; {while}
+               GenImplied(m_pha);
+               val := val - 1;
+               while not odd(val) do begin  
+                  GenImplied(m_asl_a);
+                  val := val >> 1;
+                  end; {while}
+               GenImplied(m_clc);
+               GenNative(m_adc_s, direct, 1, nil, 0);
+               GenImplied(m_plx);
+               end;
+
+            -1,-2,-4,-8,-16,-32,-64,-128: begin
+               GenNative(m_eor_imm, immediate, -1, nil, 0);
+               GenImplied(m_ina);
+               val := -val;
+               while not odd(val) do begin  
+                  GenImplied(m_asl_a);
+                  val := val >> 1;
+                  end; {while}
+               end;
+
+            -256: begin
+               GenNative(m_eor_imm, immediate, -1, nil, 0);
+               GenImplied(m_ina);
+               GenNative(m_and_imm, immediate, $00FF, nil, 0);
+               GenImplied(m_xba);
+               end;
+
+            otherwise: begin
+               if val = $8000 then begin
+                  GenImplied(m_lsr_a);
+                  GenNative(m_lda_imm, immediate, 0, nil, 0);
+                  GenImplied(m_ror_a);
+                  end {if}
+               else begin
+                  GenNative(m_ldx_imm, immediate, val, nil, 0);
+                  if op^.opcode = pc_mpi then
+                     GenCall(28)
+                  else {pc_umi}
+                     GenCall(94);
+                  end; {else}
+               end;
+            end; {case}
+         end; {else}
+      end {if}
+   else begin
+      if not Complex(op^.left) then
+         if Complex(op^.right) then begin
+            nd := op^.left;
+            op^.left := op^.right;
+            op^.right := nd;
+            end; {if}
+      GenTree(op^.left);
       if Complex(op^.right) then begin
-	 nd := op^.left;
-	 op^.left := op^.right;
-	 op^.right := nd;
-	 end; {if}
-   GenTree(op^.left);
-   if Complex(op^.right) then begin
-      GenImplied(m_pha);
-      GenTree(op^.right);
-      GenImplied(m_plx);
-      end {if}
-   else
-      LoadX(op^.right);
-   if op^.opcode = pc_mpi then begin
-      GenCall(28);      
-      if rangeCheck then
-         GenCall(25);
-      end {if}
-   else {pc_umi}
-      GenCall(94);
+         GenImplied(m_pha);
+         GenTree(op^.right);
+         GenImplied(m_plx);
+         end {if}
+      else
+         LoadX(op^.right);
+      if op^.opcode = pc_mpi then begin
+         GenCall(28);      
+         if rangeCheck then
+            GenCall(25);
+         end {if}
+      else {pc_umi}
+         GenCall(94);
+      end; {else}
    end; {GenMpi}
 
 

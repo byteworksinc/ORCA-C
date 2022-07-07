@@ -147,6 +147,7 @@ const
    m_ply                  =    122;
    m_plp                  =     40;
    m_rep                  =    194;
+   m_ror_a                =    $6A;
    m_rtl                  =    107;
    m_rts                  =     96;
    m_sbc_abs              =    237;
