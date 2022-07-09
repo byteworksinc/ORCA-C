@@ -208,8 +208,8 @@ const
    maxCBuff     =       191;            {length of constant buffer}
                                         {Note: maxlabel is also defined in CCommon.pas}
                                         {Note: maxlabel is also defined in CGC.asm}
-   maxLabel     =       3200;           {max # of internal labels}
-   maxLocalLabel =      220;            {max # local variables}
+   maxLabel     =       3275;           {max # of internal labels}
+   maxLocalLabel =      512;            {max # local variables}
    maxString    =       32760;          {max # chars in string space}
 
                                         {size of internal types}

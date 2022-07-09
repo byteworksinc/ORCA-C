@@ -235,7 +235,7 @@ rval     ds    10
 ****************************************************************
 *
 InitLabels start cg
-maxLabel equ   3200
+maxLabel equ   3275
 
 !                                       with labelTab[0] do begin
          lda   #-1                         val := -1;
