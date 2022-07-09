@@ -6456,7 +6456,7 @@ procedure GenTree {op: icptr};
          nd := op^.left;
          end; {else}
       if nd^.opcode = pc_ldc then
-         GenNative(m_lda_imm, immediate, long(ord4(val) * nd^.q).lsw, nil, 0)
+         GenNative(m_lda_imm, immediate, ord(ord4(val) * ord4(nd^.q)), nil, 0)
       else begin
          GenTree(nd);
          case val of
