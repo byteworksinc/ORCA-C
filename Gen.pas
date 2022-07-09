@@ -5722,10 +5722,152 @@ procedure GenTree {op: icptr};
 
    var
       opcode: pcodes;			{temp storage}
-      lab1: integer;			{label number}
+      lab1,lab2,lab3: integer;		{label numbers}
+      val: integer;
+      power: integer;
 
    begin {GenDviMod}
-   if Complex(op^.right) then begin
+   opcode := op^.opcode;
+   if (op^.right^.opcode = pc_ldc) and not rangeCheck then begin
+      val := op^.right^.q;
+      if opcode = pc_udi then begin
+         case val of
+            1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384: begin
+               GenTree(op^.left);
+               if val >= 256 then begin
+                  GenNative(m_and_imm, immediate, $FF00, nil, 0);
+                  GenImplied(m_xba);
+                  val := val >> 8;
+                  end; {if}
+               while not odd(val) do begin
+                  GenImplied(m_lsr_a);
+                  val := val >> 1;
+                  end; {while}
+               opcode := pc_nop;
+               end;
+
+            otherwise:
+               if (val >= 1000) or (val < 0) then begin {1000..65535}
+                  GenTree(op^.left);
+                  lab1 := GenLabel;
+                  GenNative(m_ldy_imm, immediate, -1, nil, 0);
+                  GenImplied(m_sec);
+                  GenLab(lab1);
+                  GenImplied(m_iny);
+                  GenNative(m_sbc_imm, immediate, val, nil, 0);
+                  GenNative(m_bcs, relative, lab1, nil, 0);
+                  GenImplied(m_tya);
+                  opcode := pc_nop;
+                  end; {if}
+            end; {case}
+         end {if}
+      else if opcode = pc_uim then begin
+         case val of
+            1: begin
+               GenTree(op^.left);
+               GenNative(m_lda_imm, immediate, 0, nil, 0);
+               opcode := pc_nop;
+               end;
+
+            2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384: begin
+               GenTree(op^.left);
+               power := 0;
+               while power < val/2 do
+                  power := (power << 1) + 1;
+               GenNative(m_and_imm, immediate, power, nil, 0);
+               opcode := pc_nop;
+               end;
+
+            otherwise:
+               if (val >= 750) or (val < 0) then begin  {750..65535}
+                  GenTree(op^.left);
+                  lab1 := GenLabel;
+                  GenImplied(m_sec);
+                  GenLab(lab1);
+                  GenNative(m_sbc_imm, immediate, val, nil, 0);
+                  GenNative(m_bcs, relative, lab1, nil, 0);
+                  GenNative(m_adc_imm, immediate, val, nil, 0);
+                  opcode := pc_nop;
+                  end; {if}
+            end; {case}
+         end {else if}
+      else if opcode = pc_dvi then begin
+         case val of
+            -1: begin
+               GenTree(op^.left);
+               GenNative(m_eor_imm, immediate, -1, nil, 0);
+               GenImplied(m_ina);
+               opcode := pc_nop;
+               end;
+
+            1: begin
+               GenTree(op^.left);
+               opcode := pc_nop;
+               end;
+
+            2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384: begin
+               GenTree(op^.left);
+               power := 0;
+               while not odd(val) do begin
+                  power := power + 1;
+                  val := val >> 1;
+                  end; {while}
+               if power <> 1 then   
+                  GenNative(m_ldy_imm, immediate, power, nil, 0);
+               lab1 := GenLabel;
+               lab2 := GenLabel;
+               lab3 := GenLabel;
+               GenLab(lab1);
+               GenImplied(m_clc);
+               GenImplied(m_tax);
+               GenNative(m_bpl, relative, lab2, nil, 0);
+               GenImplied(m_ina);
+               GenNative(m_beq, relative, lab3, nil, 0);
+               GenImplied(m_sec);
+               GenLab(lab2);
+               GenImplied(m_ror_a);
+               if power <> 1 then begin
+                  GenImplied(m_dey);
+                  GenNative(m_bne, relative, lab1, nil, 0);
+                  end; {if}
+               GenLab(lab3);
+               opcode := pc_nop;
+               end;
+
+            otherwise: ;
+            end; {case}
+         end {else if}
+      else {if opcode = pc_mod then} begin
+         case val of
+            -1,1: begin
+               GenTree(op^.left);
+               GenNative(m_lda_imm, immediate, 0, nil, 0);
+               opcode := pc_nop;
+               end;
+
+            2: begin
+               GenTree(op^.left);
+               lab1 := GenLabel;
+               lab2 := GenLabel;
+               GenImplied(m_asl_a);
+               GenNative(m_and_imm, immediate, 2, nil, 0);
+               GenNative(m_beq, relative, lab2, nil, 0);
+               GenNative(m_bcc, relative, lab1, nil, 0);
+               GenImplied(m_dea);
+               GenImplied(m_dea);
+               GenLab(lab1);
+               GenImplied(m_dea);
+               GenLab(lab2);
+               opcode := pc_nop;
+               end;
+
+            otherwise: ;
+            end; {case}
+         end; {else}
+      end; {if}
+   if opcode = pc_nop then
+      {nothing to do - optimized above}
+   else if Complex(op^.right) then begin
       GenTree(op^.right);
       if Complex(op^.left) then begin
 	 GenImplied(m_pha);
@@ -5736,12 +5878,11 @@ procedure GenTree {op: icptr};
 	 GenImplied(m_tax);
 	 GenTree(op^.left);
 	 end; {else}
-      end {if}
+      end {else if}
    else begin
       GenTree(op^.left);
       LoadX(op^.right);
       end; {else}
-   opcode := op^.opcode;
    if opcode = pc_mod then begin
       lab1 := GenLabel;
       GenImplied(m_pha);		{stash away dividend (for sign)}
@@ -5755,7 +5896,7 @@ procedure GenTree {op: icptr};
       end {if}
    else if opcode = pc_dvi then
       GenCall(26)
-   else {if opcode in [pc_udi,pc_uim] then} begin
+   else if opcode in [pc_udi,pc_uim] then begin
       GenCall(40);
       if opcode = pc_uim then
 	 GenImplied(m_txa);
