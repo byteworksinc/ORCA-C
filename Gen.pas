@@ -1146,7 +1146,7 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
                GenNative(m_bmi, relative, lab1, nil, 0);
                if num > 0 then begin
                   for i := 1 to num do
-                  GenImplied(m_dea);
+                     GenImplied(m_dea);
                   GenNative(m_bmi, relative, lab2, nil, 0);
                   end; {if}
                GenNative(m_brl, longrelative, lb, nil, 0);
