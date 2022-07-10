@@ -1071,7 +1071,7 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
    if rOpcode = pc_fjp then begin
       if op^.optype in [cgByte,cgWord] then begin
          if NeedsCondition(op^.left^.opcode) then
-            GenImplied(m_tax);
+            GenImpliedForFlags(m_tax);
          if (num >= 0) and (num < 4) then begin
             if op^.opcode = pc_geq then begin
                if num <> 0 then begin
@@ -1139,7 +1139,7 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
    else if rOpcode = pc_tjp then begin
       if op^.optype in [cgByte,cgWord] then begin
          if NeedsCondition(op^.left^.opcode) then
-            GenImplied(m_tax);
+            GenImpliedForFlags(m_tax);
          if (num >= 0) and (num < 4) then begin
             lab2 := GenLabel;
             if op^.opcode = pc_geq then begin
@@ -1675,7 +1675,7 @@ GenTree(op^.left);
 if op^.q in [wordToLong,wordToUlong] then begin
    lab1 := GenLabel;
    GenNative(m_ldx_imm, immediate, 0, nil, 0);
-   GenImplied(m_tay);
+   GenImpliedForFlags(m_tay);
    GenNative(m_bpl, relative, lab1, nil, 0);
    GenImplied(m_dex);
    GenLab(lab1);
@@ -1861,7 +1861,7 @@ else if op^.q in [byteToQuad,byteToUQuad] then begin
 else if op^.q in [wordToQuad,wordToUQuad] then begin
    lab1 := GenLabel;
    GenNative(m_ldx_imm, immediate, 0, nil, 0);
-   GenImplied(m_tay);
+   GenImpliedForFlags(m_tay);
    GenNative(m_bpl, relative, lab1, nil, 0);
    GenImplied(m_dex);
    GenLab(lab1);
@@ -2140,7 +2140,7 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
       if num <> 0 then
          GenNative(m_cmp_imm, immediate, num, nil, 0)
       else if NeedsCondition(leftOp) then
-         GenImplied(m_tay);
+         GenImpliedForFlags(m_tay);
       if opcode = pc_fjp then
          GenNative(beq, relative, lab1, nil, 0)
       else
@@ -5476,7 +5476,7 @@ procedure GenTree {op: icptr};
 
       pc_not: begin
 	 lab1 := GenLabel;
-	 GenImplied(m_tax);
+	 GenImpliedForFlags(m_tax);
 	 GenNative(m_beq, relative, lab1, nil, 0);
 	 GenNative(m_lda_imm, immediate, 1, nil, 0);
 	 GenLab(lab1);
@@ -5811,14 +5811,15 @@ procedure GenTree {op: icptr};
                   power := power + 1;
                   val := val >> 1;
                   end; {while}
-               if power <> 1 then   
+               if power <> 1 then begin
                   GenNative(m_ldy_imm, immediate, power, nil, 0);
-               lab1 := GenLabel;
+                  lab1 := GenLabel;
+                  GenLab(lab1);
+                  end; {if}
                lab2 := GenLabel;
                lab3 := GenLabel;
-               GenLab(lab1);
+               GenImpliedForFlags(m_tax);
                GenImplied(m_clc);
-               GenImplied(m_tax);
                GenNative(m_bpl, relative, lab2, nil, 0);
                GenImplied(m_ina);
                GenNative(m_beq, relative, lab3, nil, 0);
@@ -5991,10 +5992,10 @@ procedure GenTree {op: icptr};
       GenTree(op^.left);
       opcode := op^.left^.opcode;
       if NeedsCondition(opcode) then
-	 GenImplied(m_tax)
+         GenImpliedForFlags(m_tax)
       else if opcode = pc_ind then
          if op^.left^.optype in [cgByte,cgUByte] then
-	    GenImplied(m_tax);
+            GenImpliedForFlags(m_tax);
       if op^.opcode = pc_fjp then
          GenNative(m_bne, relative, lab1, nil, 0)
       else {if op^.opcode = pc_tjp then}
@@ -7320,7 +7321,7 @@ procedure GenTree {op: icptr};
    lab3 := GenLabel;
    GenTree(op^.left);
    if NeedsCondition(op^.left^.opcode) then
-      GenImplied(m_tax);
+      GenImpliedForFlags(m_tax);
    GenNative(m_beq, relative, lab1, nil, 0);
    GenNative(m_brl, longrelative, lab2, nil, 0);
    GenLab(lab1);

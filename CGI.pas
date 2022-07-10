@@ -44,6 +44,7 @@ const
    isPrivate              =     32;     {is the label private?}
    constantOpnd           =     64;     {the absolute operand is a constant}
    localLab               =    128;     {the operand is a local lab}
+   forFlags               =    256;     {instruction used for effect on flags only}
 
    m_adc_abs              =    $6D;     {op code #s for 65816 instructions}
    m_adc_dir              =    $65;

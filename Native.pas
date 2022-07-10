@@ -86,6 +86,14 @@ procedure GenImplied (p_opcode: integer);
 {       p_code - operation code                                 }
 
 
+procedure GenImpliedForFlags (p_opcode: integer);
+
+{ Generate implied addressing instruction used for flags only.  }
+{                                                               }
+{ parameters:                                                   }
+{       p_code - operation code (m_tax or m_tay)                }
+
+
 procedure GenCall (callNum: integer);
 
 { short form of jsl to library subroutine - reduces code size   }
@@ -180,11 +188,15 @@ type
       end;
 
 var
-                                        {native peephole optimization}
-                                        {----------------------------}
+                                        {register optimization}
+                                        {---------------------}
    aRegister,                           {current register contents}
       xRegister,
       yRegister: registerType;
+   lastRegOpcode: integer;              {opcode of last reg/flag-setting instr.}
+   
+                                        {native peephole optimization}
+                                        {----------------------------}
    nleadOpcodes: set of 0..max_opcode;  {instructions that can start an opt.}
    nstopOpcodes: set of 0..max_opcode;  {instructions not involved in opt.}
    nnextspot: npeepRange;               {next empty spot in npeep}
@@ -765,7 +777,25 @@ procedure CheckRegisters(p_opcode: integer; p_mode: addressingMode;
 {       p_name - named operand                                  }
 {       p_flags - operand modifier flags                        }
 
-label 1,2;
+label 1,2,3;
+
+   function NZMatchA: boolean;
+   
+   { Are the N and Z flags known to match the value in A?       }
+   {                                                            }
+   { Note: Assumes long registers                               }
+   
+   begin {NZMatchA}
+   NZMatchA := lastRegOpcode in
+      [m_adc_abs,m_adc_dir,m_adc_imm,m_adc_s,m_adc_indl,m_adc_indly,
+      m_and_abs,m_and_dir,m_and_imm,m_and_s,m_and_indl,m_and_indly,m_asl_a,
+      m_dea,m_eor_abs,m_eor_dir,m_eor_imm,m_eor_s,m_eor_indl,m_eor_indly,
+      m_ina,m_lda_abs,m_lda_absx,m_lda_dir,m_lda_dirx,m_lda_imm,m_lda_indl,
+      m_lda_indly,m_lda_long,m_lda_longx,m_lda_s,m_lsr_a,m_ora_abs,m_ora_dir,
+      m_ora_dirX,m_ora_imm,m_ora_long,m_ora_longX,m_ora_s,m_ora_indl,
+      m_ora_indly,m_pla,m_ror_a,m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,
+      m_sbc_indl,m_sbc_indly,m_tax,m_tay,m_tcd,m_tdc,m_txa,m_tya];
+   end; {NZMatchA}
 
 begin {CheckRegisters}
 case p_opcode of
@@ -784,10 +814,13 @@ case p_opcode of
    m_plx:
       xRegister.condition := regUnknown;
 
-   m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvs,m_clc,m_cmp_abs,
-   m_cmp_dir,m_cmp_imm,m_cmp_s,m_cmp_indl,m_cmp_indly,m_cpx_imm,m_jml,
-   m_pha,m_phb,m_phd,m_phx,m_phy,m_plb,m_rtl,m_rts,m_sec,m_tcs,d_add,d_pin,
-   m_pei_dir,m_cpx_abs,m_cpx_dir,m_cmp_dirx,m_php,m_plp,m_cop,d_wrd:   ;
+   m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvs,
+   m_pha,m_phb,m_phd,m_php,m_phx,m_phy,m_pei_dir,m_tcs:
+      goto 3;
+   
+   m_bra,m_brl,m_clc,m_cmp_abs,m_cmp_dir,m_cmp_imm,m_cmp_s,m_cmp_indl,
+   m_cmp_indly,m_cpx_imm,m_jml,m_plb,m_rtl,m_rts,m_sec,d_add,d_pin,
+   m_cpx_abs,m_cpx_dir,m_cmp_dirx,m_plp,m_cop,d_wrd:    ;
 
    m_pea: begin
       if aRegister.condition = regImmediate then
@@ -817,9 +850,20 @@ case p_opcode of
         	     goto 2;
         	     end; {if}
          end; {if}
+      goto 3;
       end;
 
-   m_sta_s,m_pld,m_tcd: begin
+   m_sta_s: begin
+      if aRegister.condition = regLocal then
+         aRegister.condition := regUnknown;
+      if xRegister.condition = regLocal then
+         xRegister.condition := regUnknown;
+      if yRegister.condition = regLocal then
+         yRegister.condition := regUnknown;
+      goto 3;
+      end;
+   
+   m_pld,m_tcd: begin
       if aRegister.condition = regLocal then
          aRegister.condition := regUnknown;
       if xRegister.condition = regLocal then
@@ -835,6 +879,7 @@ case p_opcode of
          xRegister.condition := regUnknown;
       if yRegister.condition <> regImmediate then
          yRegister.condition := regUnknown;
+      goto 3;
       end;
 
    m_sta_absX,m_stz_absX,m_sta_longX: begin
@@ -847,10 +892,25 @@ case p_opcode of
       if yRegister.condition = regAbsolute then
          if yRegister.lab = p_name then
             yRegister.condition := regUnknown;
+      goto 3;
       end;
 
-   m_dec_abs,m_inc_abs,m_sta_abs,m_stx_abs,m_sty_abs,m_sta_long,m_stz_abs,
-   m_tsb_abs: begin
+   m_dec_abs,m_inc_abs,m_tsb_abs: begin
+      if aRegister.condition = regAbsolute then
+         if aRegister.lab = p_name then
+            if aRegister.value = p_operand then
+               aRegister.condition := regUnknown;
+      if xRegister.condition = regAbsolute then
+         if xRegister.lab = p_name then
+            if xRegister.value = p_operand then
+               xRegister.condition := regUnknown;
+      if yRegister.condition = regAbsolute then
+         if yRegister.lab = p_name then
+            if yRegister.value = p_operand then
+               yRegister.condition := regUnknown;
+      end;
+   
+   m_sta_abs,m_stx_abs,m_sty_abs,m_sta_long,m_stz_abs: begin
       if aRegister.condition = regAbsolute then
          if aRegister.lab = p_name then
             if aRegister.value = p_operand then
@@ -866,9 +926,22 @@ case p_opcode of
             if yRegister.value = p_operand then
                if p_opcode <> m_sty_abs then
                   yRegister.condition := regUnknown;
+      goto 3;
       end;
 
-   m_dec_dir,m_inc_dir,m_tsb_dir,m_sta_dir,m_stx_dir,m_sty_dir,m_stz_dir: begin
+   m_dec_dir,m_inc_dir,m_tsb_dir: begin
+      if aRegister.condition = regLocal then
+         if aRegister.value = p_operand then
+            aRegister.condition := regUnknown;
+      if xRegister.condition = regLocal then
+         if xRegister.value = p_operand then
+            xRegister.condition := regUnknown;
+      if yRegister.condition = regLocal then
+         if yRegister.value = p_operand then
+            yRegister.condition := regUnknown;
+      end;
+   
+   m_sta_dir,m_stx_dir,m_sty_dir,m_stz_dir: begin
       if aRegister.condition = regLocal then
          if aRegister.value = p_operand then
             if p_opcode <> m_sta_dir then
@@ -881,9 +954,10 @@ case p_opcode of
          if yRegister.value = p_operand then
             if p_opcode <> m_sty_dir then
                yRegister.condition := regUnknown;
+      goto 3;
       end;
 
-   m_dec_dirX,m_inc_dirX,m_sta_dirX,m_sty_dirX,m_stz_dirX: begin
+   m_dec_dirX,m_inc_dirX: begin
       if aRegister.condition = regLocal then
          if aRegister.value >= p_operand-1 then
             aRegister.condition := regUnknown;
@@ -893,6 +967,19 @@ case p_opcode of
       if yRegister.condition = regLocal then
          if yRegister.value >= p_operand-1 then
             yRegister.condition := regUnknown;
+      end;
+   
+   m_sta_dirX,m_sty_dirX,m_stz_dirX: begin
+      if aRegister.condition = regLocal then
+         if aRegister.value >= p_operand-1 then
+            aRegister.condition := regUnknown;
+      if xRegister.condition = regLocal then
+         if xRegister.value >= p_operand-1 then
+            xRegister.condition := regUnknown;
+      if yRegister.condition = regLocal then
+         if yRegister.value >= p_operand-1 then
+            yRegister.condition := regUnknown;
+      goto 3;
       end;
 
    m_dex:
@@ -1230,7 +1317,13 @@ case p_opcode of
       end;
 
    m_tax: begin
-      if aRegister.condition <> regUnknown then
+      if (p_flags & forFlags) <> 0 then begin
+         if longA then
+            if longI then
+               if NZMatchA then
+                  goto 1;
+         end {if}
+      else if aRegister.condition <> regUnknown then
          if aRegister.condition = xRegister.condition then
             if aRegister.value = xRegister.value then
                if aRegister.flags = xRegister.flags then
@@ -1242,7 +1335,13 @@ case p_opcode of
       end;
 
    m_tay: begin
-      if aRegister.condition <> regUnknown then
+      if (p_flags & forFlags) <> 0 then begin
+         if longA then
+            if longI then
+               if NZMatchA then
+                  goto 1;
+         end {if}
+      else if aRegister.condition <> regUnknown then
          if aRegister.condition = yRegister.condition then
             if aRegister.value = yRegister.value then
                if aRegister.flags = yRegister.flags then
@@ -1301,9 +1400,12 @@ case p_opcode of
       xRegister := yRegister;
       end;
    end; {case}
-2:
+2:                                      {emit the instruction normally}
+lastRegOpcode := p_opcode;
+3:                                      {branch here for instructions that}
+                                        {do not modify A/X/Y or flags     }
 WriteNative(p_opcode, p_mode, p_operand, p_name, p_flags);
-1:
+1:                                      {branch here to skip the instruction}
 end; {CheckRegisters}
 
 
@@ -1944,6 +2046,18 @@ GenNative(p_opcode, implied, 0, nil, 0);
 end; {GenImplied}
 
 
+procedure GenImpliedForFlags {p_opcode: integer};
+
+{ Generate implied addressing instruction used for flags only.  }
+{                                                               }
+{ parameters:                                                   }
+{       p_code - operation code (m_tax or m_tay)                }
+
+begin {GenImplied}
+GenNative(p_opcode, implied, 0, nil, forFlags);
+end; {GenImplied}
+
+
 procedure GenCall {callNum: integer};
 
 { short form of jsl to library subroutine - reduces code size   }
@@ -2354,6 +2468,7 @@ begin {InitNative}
 aRegister.condition := regUnknown;	{set up the peephole optimizer}
 xRegister.condition := regUnknown;
 yRegister.condition := regUnknown;
+lastRegOpcode := 0; {BRK}
 nnextspot := 1;
 nleadOpcodes := [m_asl_a,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_brl,m_bvs,m_bcc,
    m_dec_abs,m_lda_abs,m_lda_dir,m_lda_imm,m_ldx_imm,m_sta_abs,m_sta_dir,
