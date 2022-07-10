@@ -1939,15 +1939,14 @@ else if op^.q = realToUQuad then begin
 else if op^.q in [quadToWord,uquadToWord,quadToUWord,uquadToUWord] then begin
    GenImplied(m_pla);
    GenImplied(m_plx);
-   GenImplied(m_ply);
-   GenImplied(m_ply);
-   GenImplied(m_tay);
+   GenImplied(m_plx);
+   GenImplied(m_plx);
    end {else if}
 else if op^.q in [quadToUByte,uquadToUByte] then begin
    GenImplied(m_pla);
    GenImplied(m_plx);
-   GenImplied(m_ply);
-   GenImplied(m_ply);
+   GenImplied(m_plx);
+   GenImplied(m_plx);
    GenNative(m_and_imm, immediate, $00FF, nil, 0);
    end {else if}
 else if op^.q in [quadToByte,uquadToByte] then begin
