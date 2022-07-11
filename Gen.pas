@@ -5422,8 +5422,12 @@ procedure GenTree {op: icptr};
 
    var
       lab1: integer;
+      operandIsBoolean: boolean;
 
    begin {GenntNgiNot}
+   if op^.opcode = pc_not then
+      operandIsBoolean := op^.left^.opcode in 
+         [pc_and,pc_ior,pc_neq,pc_equ,pc_geq,pc_leq,pc_les,pc_grt,pc_not];
    GenTree(op^.left);
    case op^.opcode of
       pc_bnt:
@@ -5435,11 +5439,13 @@ procedure GenTree {op: icptr};
 	 end; {case pc_ngi}
 
       pc_not: begin
-	 lab1 := GenLabel;
-	 GenImpliedForFlags(m_tax);
-	 GenNative(m_beq, relative, lab1, nil, 0);
-	 GenNative(m_lda_imm, immediate, 1, nil, 0);
-	 GenLab(lab1);
+         if not operandIsBoolean then begin
+            lab1 := GenLabel;
+            GenImpliedForFlags(m_tax);
+            GenNative(m_beq, relative, lab1, nil, 0);
+            GenNative(m_lda_imm, immediate, 1, nil, 0);
+            GenLab(lab1);
+            end; {if}
 	 GenNative(m_eor_imm, immediate, 1, nil, 0);
 	 end; {if}
       end; {case}
