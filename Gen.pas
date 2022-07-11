@@ -5474,8 +5474,7 @@ procedure GenTree {op: icptr};
    {save the stack register}
    if ((saveStack or checkStack) and (op^.q >= 0)) or (op^.q > 0) then begin
       if stackSaveDepth <> 0 then begin
-         GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
-         GenImplied(m_phx);
+         GenNative(m_pei_dir, direct, stackLoc, nil, 0);
          extraStackSize := 2;
          end; {if}
       GenImplied(m_tsx);
@@ -5594,8 +5593,7 @@ procedure GenTree {op: icptr};
    {save the stack register}
    if ((saveStack or checkStack) and (op^.q >= 0)) or (op^.q > 0) then begin
       if stackSaveDepth <> 0 then begin
-         GenNative(m_ldx_dir, direct, stackLoc, nil, 0);
-         GenImplied(m_phx);
+         GenNative(m_pei_dir, direct, stackLoc, nil, 0);
          extraStackSize := 2;
          end; {if}
       GenImplied(m_tsx);
@@ -7017,8 +7015,7 @@ procedure GenTree {op: icptr};
 
    {restore data bank reg}
    if dataBank then begin
-      GenNative(m_lda_dir, direct, bankLoc, nil, 0);
-      GenImplied(m_pha);
+      GenNative(m_pei_dir, direct, bankLoc, nil, 0);
       GenImplied(m_plb);
       GenImplied(m_plb);
       end; {if}
