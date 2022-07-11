@@ -1017,6 +1017,7 @@ var
    lab1,lab2,lab3,lab4: integer;	{label numbers}
    num: integer;			{constant to compare to}
    simple: boolean;                     {is this a simple case?}
+   alwaysFalse: boolean;                {is the comparison always false?}
 
 
    procedure Switch;
@@ -1067,36 +1068,38 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
    (op^.right^.opcode = pc_ldc) then begin
    GenTree(op^.left);
    num := op^.right^.q;
+   {Convert x > N comparisons to x >= N+1, unless N is max value  }
+   {(in which case x > N is always false).                        }
+   alwaysFalse := false;
+   if op^.opcode = pc_grt then begin
+      if ((op^.optype in [cgByte,cgWord]) and (num = 32767))
+         or ((op^.optype in [cgUByte,cgUWord]) and (num = -1)) then
+         alwaysFalse := true
+      else begin
+         op^.opcode := pc_geq;
+         num := num+1;
+         end; {else}
+      end; {if}
    lab1 := GenLabel;
    if rOpcode = pc_fjp then begin
-      if op^.optype in [cgByte,cgWord] then begin
+      if alwaysFalse then
+         GenNative(m_brl, longrelative, lb, nil, 0)
+      else if op^.optype in [cgByte,cgWord] then begin
          if NeedsCondition(op^.left^.opcode) then
             GenImpliedForFlags(m_tax);
-         if (num >= 0) and (num < 4) then begin
-            if op^.opcode = pc_geq then begin
-               if num <> 0 then begin
-                  lab2 := GenLabel;
-                  GenNative(m_bmi, relative, lab2, nil, 0);
-                  for i := 1 to num do
-                     GenImplied(m_dea);
-                  end; {if}
-               GenNative(m_bpl, relative, lab1, nil, 0);
-               if num <> 0 then
-                  GenLab(lab2);
-               GenNative(m_brl, longrelative, lb, nil, 0);
-               GenLab(lab1);
-               end {if}
-            else {if opcode = pc_grt then} begin
+         if (num >= 0) and (num < 3) then begin
+            if num <> 0 then begin
                lab2 := GenLabel;
                GenNative(m_bmi, relative, lab2, nil, 0);
-               for i := 0 to num do
+               for i := 1 to num do
                   GenImplied(m_dea);
-               GenNative(m_bpl, relative, lab1, nil, 0);
+               end; {if}
+            GenNative(m_bpl, relative, lab1, nil, 0);
+            if num <> 0 then
                GenLab(lab2);
-               GenNative(m_brl, longrelative, lb, nil, 0);
-               GenLab(lab1);
-               end; {else if}
-            end {if (num >= 0) and (num < 4)}
+            GenNative(m_brl, longrelative, lb, nil, 0);
+            GenLab(lab1);
+            end {if (num >= 0) and (num < 3)}
          else begin
             lab2 := GenLabel;
             if num > 0 then
@@ -1104,14 +1107,7 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
             else
                GenNative(m_bpl, relative, lab1, nil, 0);
             GenNative(m_cmp_imm, immediate, num, nil, 0);
-            if op^.opcode = pc_grt then begin
-               lab3 := GenLabel;
-               GenNative(m_beq, relative, lab3, nil, 0);
-               GenNative(m_bcs, relative, lab2, nil, 0);
-               GenLab(lab3);
-               end
-            else
-               GenNative(m_bcs, relative, lab2, nil, 0);
+            GenNative(m_bcs, relative, lab2, nil, 0);
             if num > 0 then begin
                GenLab(lab1);
                GenNative(m_brl, longrelative, lb, nil, 0);
@@ -1124,49 +1120,30 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
             end; {else if}
          end {if}
       else {if optype in [cgUByte,cgUWord] then} begin
-         GenNative(m_cmp_imm, immediate, num, nil, 0);
-         if op^.opcode = pc_grt then begin
-            lab2 := GenLabel;
-            GenNative(m_beq, relative, lab2, nil, 0);
+         if num <> 0 then begin
+            GenNative(m_cmp_imm, immediate, num, nil, 0);
+            GenNative(m_bcs, relative, lab1, nil, 0);
+            GenNative(m_brl, longrelative, lb, nil, 0);
+            GenLab(lab1);
             end; {if}
-         GenNative(m_bcs, relative, lab1, nil, 0);
-         if op^.opcode = pc_grt then
-            GenLab(lab2);
-         GenNative(m_brl, longrelative, lb, nil, 0);
-         GenLab(lab1);
          end; {else}
       end {if rOpcode = pc_fjp}
    else if rOpcode = pc_tjp then begin
-      if op^.optype in [cgByte,cgWord] then begin
+      if alwaysFalse then
+         {nothing to generate}
+      else if op^.optype in [cgByte,cgWord] then begin
          if NeedsCondition(op^.left^.opcode) then
             GenImpliedForFlags(m_tax);
-         if (num >= 0) and (num < 4) then begin
-            lab2 := GenLabel;
-            if op^.opcode = pc_geq then begin
+         if (num >= 0) and (num < 3) then begin
+            GenNative(m_bmi, relative, lab1, nil, 0);
+            if num > 0 then begin
+               for i := 1 to num do
+                  GenImplied(m_dea);
                GenNative(m_bmi, relative, lab1, nil, 0);
-               if num > 0 then begin
-                  for i := 1 to num do
-                     GenImplied(m_dea);
-                  GenNative(m_bmi, relative, lab2, nil, 0);
-                  end; {if}
-               GenNative(m_brl, longrelative, lb, nil, 0);
-               end {if}
-            else {if op^.opcode = pc_grt then} begin
-               if num > 0 then begin
-                  GenNative(m_bmi, relative, lab1, nil, 0);
-                  for i := 0 to num do
-                     GenImplied(m_dea);
-                  GenNative(m_bmi, relative, lab2, nil, 0);
-                  end {if}
-               else begin
-                  GenNative(m_beq, relative, lab1, nil, 0);
-                  GenNative(m_bmi, relative, lab2, nil, 0);
-                  end; {else}
-               GenNative(m_brl, longrelative, lb, nil, 0);
-               end; {else}
-            GenLab(lab2);
+               end; {if}
+            GenNative(m_brl, longrelative, lb, nil, 0);
             GenLab(lab1);
-            end {if (num >= 0) and (num < 4)}
+            end {if (num >= 0) and (num < 3)}
          else begin
             lab2 := GenLabel;
             if num > 0 then
@@ -1174,10 +1151,6 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
             else
                GenNative(m_bpl, relative, lab1, nil, 0);
             GenNative(m_cmp_imm, immediate, num, nil, 0);
-            if op^.opcode = pc_grt then begin
-               lab3 := GenLabel;
-               GenNative(m_beq, relative, lab3, nil, 0);
-               end; {if}
             GenNative(m_bcc, relative, lab2, nil, 0);
             if num > 0 then begin
                GenNative(m_brl, longrelative, lb, nil, 0);
@@ -1189,51 +1162,37 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
                GenNative(m_brl, longrelative, lb, nil, 0);
                GenLab(lab2);
                end; {else}
-            if op^.opcode = pc_grt then
-               GenLab(lab3);
             end; {else}
          end {if}
       else {if optype in [cgUByte,cgUWord] then} begin
-         GenNative(m_cmp_imm, immediate, num, nil, 0);
-         GenNative(m_bcc, relative, lab1, nil, 0);
-         if op^.opcode = pc_grt then begin
-            lab2 := GenLabel;
-            GenNative(m_beq, relative, lab1, nil, 0);
+         if num <> 0 then begin
+            GenNative(m_cmp_imm, immediate, num, nil, 0);
+            GenNative(m_bcc, relative, lab1, nil, 0);
             end; {if}
          GenNative(m_brl, longrelative, lb, nil, 0);
-         if op^.opcode = pc_grt then
-            GenLab(lab2);
-         GenLab(lab1);
+         if num <> 0 then
+            GenLab(lab1);
          end; {else}
       end {if rOpcode = pc_tjp}
+   else if alwaysFalse then
+      GenNative(m_lda_imm, immediate, 0, nil, 0)
    else if op^.optype in [cgByte,cgWord] then begin
       lab2 := GenLabel;
       GenNative(m_ldx_imm, immediate, 1, nil, 0);
       GenImplied(m_sec);
       GenNative(m_sbc_imm, immediate, num, nil, 0);
-      if op^.opcode = pc_grt then begin
-         lab3 := GenLabel;
-         GenNative(m_beq, relative, lab3, nil, 0);
-         end; {if}
       GenNative(m_bvs, relative, lab1, nil, 0);
       GenNative(m_eor_imm, immediate, $8000, nil, 0);
       GenLab(lab1);
       GenNative(m_bmi, relative, lab2, nil, 0);
-      if op^.opcode = pc_grt then
-         GenLab(lab3);
       GenImplied(m_dex);
       GenLab(lab2);
       GenImplied(m_txa);
       end {else if}
    else begin
-      GenNative(m_ldx_imm, immediate, 0, nil, 0);
       GenNative(m_cmp_imm, immediate, num, nil, 0);
-      GenNative(m_bcc, relative, lab1, nil, 0);
-      if op^.opcode = pc_grt then
-         GenNative(m_beq, relative, lab1, nil, 0);
-      GenImplied(m_inx);
-      GenLab(lab1);
-      GenImplied(m_txa);
+      GenNative(m_lda_imm, immediate, 0, nil, 0);
+      GenImplied(m_rol_a);
       end; {else if}
    end {if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
       (op^.right^.opcode = pc_ldc)}

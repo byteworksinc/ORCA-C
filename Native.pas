@@ -793,7 +793,7 @@ label 1,2,3;
       m_ina,m_lda_abs,m_lda_absx,m_lda_dir,m_lda_dirx,m_lda_imm,m_lda_indl,
       m_lda_indly,m_lda_long,m_lda_longx,m_lda_s,m_lsr_a,m_ora_abs,m_ora_dir,
       m_ora_dirX,m_ora_imm,m_ora_long,m_ora_longX,m_ora_s,m_ora_indl,
-      m_ora_indly,m_pla,m_ror_a,m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,
+      m_ora_indly,m_pla,m_rol_a,m_ror_a,m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,
       m_sbc_indl,m_sbc_indly,m_tax,m_tay,m_tcd,m_tdc,m_txa,m_tya];
    end; {NZMatchA}
 
@@ -805,7 +805,7 @@ case p_opcode of
    m_ora_dir,m_ora_dirX,m_ora_imm,m_ora_long,m_ora_longX,m_ora_s,m_pla,
    m_sbc_abs,m_sbc_dir,m_sbc_imm,m_sbc_s,m_tdc,m_tsc,m_adc_indl,m_adc_indly,
    m_and_indl,m_and_indly,m_ora_indl,m_ora_indly,m_sbc_indl,m_sbc_indly,
-   m_eor_indl,m_eor_indly,m_ror_a:
+   m_eor_indl,m_eor_indly,m_rol_a,m_ror_a:
       aRegister.condition := regUnknown;
 
    m_ldy_absX,m_ldy_dirX,m_ply:
