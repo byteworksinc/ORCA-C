@@ -1111,12 +1111,13 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
             if num > 0 then begin
                GenLab(lab1);
                GenNative(m_brl, longrelative, lb, nil, 0);
+               GenLab(lab2);
                end {if}
             else begin
                GenNative(m_brl, longrelative, lb, nil, 0);
+               GenLab(lab2);
                GenLab(lab1);
                end; {else}
-            GenLab(lab2);
             end; {else if}
          end {if}
       else {if optype in [cgUByte,cgUWord] then} begin
@@ -1273,9 +1274,9 @@ else
             else
                GenNative(m_bcc, relative, lab2, nil, 0);
             GenNative(m_brl, longrelative, lb, nil, 0);
+            GenLab(lab2);
             if op^.opcode = pc_grt then
                GenLab(lab3);
-            GenLab(lab2);
             end {else if}
          else begin
             lab2 := GenLabel;
