@@ -2053,9 +2053,9 @@ procedure GenImpliedForFlags {p_opcode: integer};
 { parameters:                                                   }
 {       p_code - operation code (m_tax or m_tay)                }
 
-begin {GenImplied}
+begin {GenImpliedForFlags}
 GenNative(p_opcode, implied, 0, nil, forFlags);
-end; {GenImplied}
+end; {GenImpliedForFlags}
 
 
 procedure GenCall {callNum: integer};
