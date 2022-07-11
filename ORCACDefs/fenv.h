@@ -27,8 +27,8 @@ typedef unsigned short fexcept_t;
 #define FE_TOWARDZERO 0xC0
 #define FE_UPWARD     0x40
 
-extern const fenv_t __FE_DFL_ENV;
-#define FE_DFL_ENV (&__FE_DFL_ENV)
+extern const fenv_t __FE_DFL_ENV[1];
+#define FE_DFL_ENV (&*__FE_DFL_ENV)
 
 int feclearexcept(int);
 int fegetexceptflag(fexcept_t *, int);
