@@ -1850,8 +1850,9 @@ case op^.opcode of			{check for optimizations of this node}
                           end; {if}
                end; {case}
             end {if}
-         else if (op^.opcode = pc_leq) and (op^.optype in [cgWord,cgUWord]) then
-            if op^.right^.q < maxint then begin
+         else if (op^.opcode = pc_leq) then
+            if ((op^.optype = cgWord) and (op^.right^.q <> maxint))
+               or ((op^.optype = cgUWord) and (op^.right^.q <> -1)) then begin
                op^.right^.q := op^.right^.q + 1;
                op^.opcode := pc_les;
                end; {if}

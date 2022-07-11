@@ -1865,6 +1865,8 @@ int foo(int[42]);
 
 201. When certain expressions were used for the condition in an if statement, loop, or conditional expression, the conditional branch might be evaluated incorrectly, leading to incorrect control flow.  The affected condition expressions included shifts, loads or stores of bit-fields, and ? : expressions.
 
+202. Some comparisons against the constant 0xFFFF would give the wrong result when intermediate code peephole optimization was used.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
