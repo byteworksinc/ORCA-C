@@ -3796,7 +3796,7 @@ procedure GenLogic (op: icptr);
 { generate a pc_and, pc_ior, pc_bnd, pc_bor or pc_bxr		}
 
 var
-   lab1,lab2: integer;			{label}
+   lab1,lab2,lab3: integer;		{label}
    nd: icptr;				{temp node pointer}
    opcode: pcodes;			{operation code}
 
@@ -3805,19 +3805,23 @@ opcode := op^.opcode;
 if opcode in [pc_and,pc_ior] then begin
    lab1 := GenLabel;
    GenTree(op^.left);
-   GenNative(m_cmp_imm, immediate, 0, nil, 0);
+   GenImpliedForFlags(m_tax);
    lab2 := GenLabel;
-   if opcode = pc_and then
-      GenNative(m_bne, relative, lab2, nil, 0)
+   if opcode = pc_and then begin
+      GenNative(m_bne, relative, lab2, nil, 0);
+      GenNative(m_brl, longrelative, lab1, nil, 0);
+      end {if}
    else begin
+      lab3 := GenLabel;
       GenNative(m_beq, relative, lab2, nil, 0);
-      GenNative(m_lda_imm, immediate, 1, nil, 0);
+      GenNative(m_brl, longrelative, lab3, nil, 0);
       end; {else}
-   GenNative(m_brl, longrelative, lab1, nil, 0);
    GenLab(lab2);
    GenTree(op^.right);
-   GenNative(m_cmp_imm, immediate, 0, nil, 0);
+   GenImpliedForFlags(m_tax);
    GenNative(m_beq, relative, lab1, nil, 0);
+   if opcode = pc_ior then
+      GenLab(lab3);
    GenNative(m_lda_imm, immediate, 1, nil, 0);
    GenLab(lab1);
    end {if}
@@ -3833,8 +3837,8 @@ else begin
       GenImplied(m_pha);
       GenTree(op^.right);
       case opcode of
-         pc_and,pc_bnd: GenNative(m_and_s, direct, 1, nil, 0);
-         pc_ior,pc_bor: GenNative(m_ora_s, direct, 1, nil, 0);
+         pc_bnd: GenNative(m_and_s, direct, 1, nil, 0);
+         pc_bor: GenNative(m_ora_s, direct, 1, nil, 0);
          pc_bxr: GenNative(m_eor_s, direct, 1, nil, 0);
          otherwise:
             Error(cge1);
@@ -3844,8 +3848,8 @@ else begin
       end {if}
    else
       case opcode of
-         pc_and,pc_bnd: OperA(m_and_imm, op^.right);
-         pc_ior,pc_bor: OperA(m_ora_imm, op^.right);
+         pc_bnd: OperA(m_and_imm, op^.right);
+         pc_bor: OperA(m_ora_imm, op^.right);
          pc_bxr: OperA(m_eor_imm, op^.right);
          otherwise:
             Error(cge1);
