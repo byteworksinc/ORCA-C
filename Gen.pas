@@ -1420,14 +1420,17 @@ else
             GenLab(lab1);
             end {if}
          else begin
-            lab1 := GenLabel;
-            GenNative(m_lda_imm, immediate, 1, nil, 0);
-            if op^.opcode = pc_geq then
-               GenNative(m_bcs, relative, lab1, nil, 0)
-            else
+            if op^.opcode = pc_geq then begin
+               GenNative(m_lda_imm, immediate, 0, nil, 0);
+               GenImplied(m_rol_a);
+               end {if}
+            else {if op^.opcode = pc_grt then} begin
+               lab1 := GenLabel;
+               GenNative(m_lda_imm, immediate, 1, nil, 0);
                GenNative(m_bcc, relative, lab1, nil, 0);
-            GenImplied(m_dea);
-            GenLab(lab1);
+               GenImplied(m_dea);
+               GenLab(lab1);
+               end; {else}
             end; {else}
          end; {case optype of cgQuad}
 
