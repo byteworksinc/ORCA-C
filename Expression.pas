@@ -4564,7 +4564,7 @@ case tree^.token.kind of
          isVolatile := tqVolatile in lType^.qualifiers;
          if lType^.kind = scalarType then
             if lType^.baseType = cgVoid then
-               Gen2t(pc_ind, ord(isVolatile), 0, cgULong)
+               Gen2(pc_cnv, cgULong, cgVoid)
             else
                Gen2t(pc_ind, ord(isVolatile), 0, lType^.baseType)
          else if lType^.kind = pointerType then
