@@ -3131,7 +3131,9 @@ var
                else
                   expressionType := doublePtr;
                goto 1;
-               end; {else if}
+               end {if}
+            else if baseType = cgVoid then
+               Error(65);
             end {if}
          else {if iType^.kind in [pointerType,arrayType] then} begin
             lSize := iType^.pType^.size;
@@ -3183,18 +3185,25 @@ var
          expressionType := expressionType^.aType
       else if expressionType^.kind = pointerType then
          expressionType := expressionType^.pType;
+      if tqConst in expressionType^.qualifiers then
+         Error(93);
       if expressionType^.kind = scalarType then
          if expressionType^.baseType in 
             [cgByte,cgUByte,cgWord,cgUWord,cgReal,cgDouble,cgComp,cgExtended] then
             tp := expressionType^.baseType
          else
             tp := UsualUnaryConversions
-      else
+      else begin
+         if expressionType^.kind in [structType,unionType,definedType] then
+            Error(66);
          tp := UsualUnaryConversions;
+         end; {else}
       if (tp in [cgByte,cgUByte,cgWord,cgUword])
          and (expressionType^.cType <> ctBool)
          and not isBitField then
          Gen0t(pc_i, tp)                {do indirect inc/dec}
+      else if tp = cgVoid then
+         Error(65)
       else begin
          t1 := GetTemp(cgLongSize);
          Gen2t(pc_str, t1, 0, cgULong);
