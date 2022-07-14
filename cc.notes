@@ -53,6 +53,8 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2022
             17.	New pragma for controlling ORCA/C extensions.  See "#pragma
                	extensions."
 
+            18.	The code generated for certain operations has been improved.
+
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
 2.1.0       1.	Bugs squashed.  See bug notes, below.
@@ -302,6 +304,18 @@ p. 348
 
 The discussion of clock() should mention the standard macro CLOCKS_PER_SEC, which gives the number of clock ticks per second.  The CLK_TCK macro also gives the same value, but it is non-standard and should be considered deprecated.  Also, CLOCKS_PER_SEC and CLK_TCK may be either 50 or 60, depending on the system's video frequency setting; they now expand to code that will detect the setting and give the appropriate value.
 
+p. 350
+
+If a creat() call is successful, it actually returns the file ID (a non-negative integer).
+
+p. 352
+
+If a dup() call is successful, it actually returns the new file ID (a non-negative integer).
+
+p. 355
+
+If an fcntl() call using F_DUPFD is successful, it actually returns the new file ID (a non-negative integer).
+
 p. 353
 
 All error numbers used by errno are defined in <errno.h>, not <math.h>.
@@ -335,6 +349,14 @@ The discussions of iscsym() and iscsymf() should note that these functions are e
 p. 377
 
 The discussion of isodigit() should note that isodigit() is an extension to ANSI C.
+
+p. 381
+
+If an lseek() call is successful, it actually returns the new file pointer value (in bytes from the start of the file).
+
+p. 385
+
+If an open() call is successful, it actually returns the file ID (a non-negative integer).
 
 p. 396
 
@@ -688,9 +710,9 @@ is similar to starting the source file with
 
 However, the file name specified on the command line is used as-is rather than being subject to the usual header search rules.
 
-Only one pre-include file may be specified.  If the -p option is used, then the default .h file (described below) will not be included.  If you still wish to include the default .h file, you can explicitly write #include <defaults.h> within your custom pre-include file or your source file.
+Only one pre-include file may be specified.  If the -p option is used, then the default .h file (described below) will not be included.  If you still wish to include the default .h file, you can explicitly write #include <Defaults.h> within your custom pre-include file or your source file.
 
-Like the default .h file, the custom pre-include file is primarily intended to contain pragmas or other preprocessor directives, but it may contain any C source code.  The difference is that the custom pre-include file can be customized for a specific source file or project.
+Like the default .h file, the custom pre-include file is primarily intended to contain pragmas or other preprocessor directives but may contain any C source code.  The difference is that the custom pre-include file can be customized for a specific source file or project.
 
 
 Locales
@@ -1866,6 +1888,10 @@ int foo(int[42]);
 201. When certain expressions were used for the condition in an if statement, loop, or conditional expression, the conditional branch might be evaluated incorrectly, leading to incorrect control flow.  The affected condition expressions included shifts, loads or stores of bit-fields, and ? : expressions.
 
 202. Some comparisons against the constant 0xFFFF would give the wrong result when intermediate code peephole optimization was used.
+
+203. The O_APPEND flag to open() had no effect.  Now it works as documented, setting the file pointer to the end of the file before every write.
+
+204. Calling lseek() with a whence value of 2 and a negative offset should seek to a location before the end of the file, but it would not actually do so.  (The problem was that lseek effectively negated the specified offset if whence was 2.  It has been changed to avoid the negation.  If any code relied on the old behavior by using a whence value of 2 with a positive offset to seek before the end of the file, it should be changed to use a negative offset instead.)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
