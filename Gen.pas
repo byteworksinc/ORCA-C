@@ -5733,18 +5733,9 @@ procedure GenTree {op: icptr};
          end {if}
       else if opcode = pc_uim then begin
          case val of
-            1: begin
+            1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384: begin
                GenTree(op^.left);
-               GenNative(m_lda_imm, immediate, 0, nil, 0);
-               opcode := pc_nop;
-               end;
-
-            2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384: begin
-               GenTree(op^.left);
-               power := 0;
-               while power < val/2 do
-                  power := (power << 1) + 1;
-               GenNative(m_and_imm, immediate, power, nil, 0);
+               GenNative(m_and_imm, immediate, val-1, nil, 0);
                opcode := pc_nop;
                end;
 
