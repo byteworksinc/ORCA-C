@@ -3194,7 +3194,7 @@ while token.kind in allowedTokens do begin
             tPtr^.qualifiers := [];
             tPtr^.kind := enumType;
             variable :=
-               NewSymbol(ttoken.name, tPtr, storageClass, tagSpace, defined);
+               NewSymbol(ttoken.name, tPtr, ident, tagSpace, defined);
             end {if}
          else if token.kind <> lbracech then
             Error(9);
