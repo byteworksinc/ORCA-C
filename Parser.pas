@@ -3180,7 +3180,7 @@ while token.kind in allowedTokens do begin
          else if restrictsy in myDeclarationModifiers then
             Error(143);
          NextToken;                     {skip the 'enum' token}
-         if token.kind = ident then begin {handle a type definition}
+         if token.kind in [ident,typedef] then begin {handle a type definition}
             variable := FindSymbol(token, tagSpace, true, true);
             ttoken := token;
             NextToken;

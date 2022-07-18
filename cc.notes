@@ -1893,6 +1893,8 @@ int foo(int[42]);
 
 204. Calling lseek() with a whence value of 2 and a negative offset should seek to a location before the end of the file, but it would not actually do so.  (The problem was that lseek effectively negated the specified offset if whence was 2.  It has been changed to avoid the negation.  If any code relied on the old behavior by using a whence value of 2 with a positive offset to seek before the end of the file, it should be changed to use a negative offset instead.)
 
+205. Using the same identifier as a typedef name and then as the tag for an enum would cause a spurious error.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
