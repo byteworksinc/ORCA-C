@@ -45,6 +45,7 @@ const
    constantOpnd           =     64;     {the absolute operand is a constant}
    localLab               =    128;     {the operand is a local lab}
    forFlags               =    256;     {instruction used for effect on flags only}
+   subtract1              =    512;     {subtract 1 from address operand}
 
    m_adc_abs              =    $6D;     {op code #s for 65816 instructions}
    m_adc_dir              =    $65;
@@ -103,6 +104,7 @@ const
    m_inx                  =    232;
    m_iny                  =    200;
    m_jml                  =     92;
+   m_jmp_indX             =    $7C;
    m_jsl                  =     34;
    m_lda_abs              =    173;
    m_lda_absx             =    189;

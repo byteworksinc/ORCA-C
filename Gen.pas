@@ -5535,7 +5535,7 @@ procedure GenTree {op: icptr};
    GenNative(m_lda_imm, genAddress, lab1, nil, shift16);
    GenNative(m_sta_s, direct, 6, nil, 0);
    GenNative(m_rep, immediate, 32, nil, 0);
-   GenNative(m_lda_imm, genAddress, lab1, nil, 0);
+   GenNative(m_lda_imm, genAddress, lab1, nil, subtract1);
    GenNative(m_sta_s, direct, 4, nil, 0);
 
    {indirect call}
@@ -7316,9 +7316,7 @@ procedure GenTree {op: icptr};
    GenImplied(m_asl_a);
    GenImplied(m_tax);
    lab1 := GenLabel;
-   GenNative(m_lda_longx, longAbs, lab1, nil, 0);
-   GenImplied(m_pha);
-   GenImplied(m_rts);
+   GenNative(m_jmp_indX, absolute, lab1, nil, 0);
    GenLab(lab1);
    end; {GenXjp}
 

@@ -731,8 +731,10 @@ case mode of
             LabelSearch(operand, 2, 16, 0)
          else
             LabelSearch(operand, 1, 16, 0)
+      else if (flags & subtract1) <> 0 then
+         LabelSearch(operand, 0, 0, 0)
       else
-         LabelSearch(operand, 0, 0, 0);
+         LabelSearch(operand, 2, 0, 0);
       end;
 
    special:
@@ -819,7 +821,7 @@ case p_opcode of
       goto 3;
    
    m_bra,m_brl,m_clc,m_cmp_abs,m_cmp_dir,m_cmp_imm,m_cmp_s,m_cmp_indl,
-   m_cmp_indly,m_cpx_imm,m_jml,m_plb,m_rtl,m_rts,m_sec,d_add,d_pin,
+   m_cmp_indly,m_cpx_imm,m_jml,m_jmp_indX,m_plb,m_rtl,m_rts,m_sec,d_add,d_pin,
    m_cpx_abs,m_cpx_dir,m_cmp_dirx,m_plp,m_cop,d_wrd:    ;
 
    m_pea: begin
@@ -1523,11 +1525,11 @@ var
       for i := ns to nnextSpot-1 do begin
          opcode := npeep[i].opcode;
          if opcode in
-            [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvs,m_jml,m_jsl,
-             m_lda_abs,m_lda_absx,m_lda_dir,m_lda_dirx,m_lda_imm,m_lda_indl,
-             m_lda_indly,m_lda_long,m_lda_longx,m_lda_s,m_mvn,m_pla,m_rtl,
-             m_rts,m_tdc,m_txa,m_tya,m_tsc,d_end,d_bmov,d_add,d_pin,d_wrd,
-             d_sym,d_cns] then begin
+            [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvs,m_jml,
+             m_jmp_indX,m_jsl,m_lda_abs,m_lda_absx,m_lda_dir,m_lda_dirx,
+             m_lda_imm,m_lda_indl,m_lda_indly,m_lda_long,m_lda_longx,m_lda_s,
+             m_mvn,m_pla,m_rtl,m_rts,m_tdc,m_txa,m_tya,m_tsc,d_end,d_bmov,
+             d_add,d_pin,d_wrd,d_sym,d_cns] then begin
             ASafe := true;
             goto 1;
             end {if}
