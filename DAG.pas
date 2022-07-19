@@ -3343,7 +3343,7 @@ var
          str^.opcode := pc_str;
          str^.optype := optype;
          str^.r := llab;
-         str^.q := 0;
+         {str^.q := 0;}
          str^.left := op2;
          if lop = nil then begin	{insert the store in the basic block}
             str^.next := bb^.code;
@@ -4941,7 +4941,7 @@ var
         	  str^.opcode := pc_str;
         	  str^.optype := optype;
         	  str^.r := loc^.r;
-        	  str^.q := 0;
+        	  {str^.q := 0;}
         	  str^.left := op2;
         	  str^.next := loc^.next;	{insert the store in the basic block}
         	  loc^.next := str;

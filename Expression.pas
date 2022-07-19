@@ -1971,15 +1971,11 @@ var
                                         {get controlling type after conversions}
    if expressionType^.kind = functionType then begin
       controllingType.size := cgPointerSize;
-      controllingType.saveDisp := 0;
-      controllingType.qualifiers := [];
       controllingType.kind := pointerType;
       controllingType.pType := expressionType;
       end {if}
    else if expressionType^.kind in [structType,unionType] then begin
       controllingType.size := expressionType^.size;
-      controllingType.saveDisp := 0;
-      controllingType.qualifiers := [];
       controllingType.kind := definedType;
       controllingType.dType := expressionType;
       end {else if}
@@ -1988,9 +1984,9 @@ var
    if controllingType.kind = arrayType then begin
       controllingType.kind := pointerType;
       controllingType.size := cgPointerSize;
-      controllingType.saveDisp := 0;
       end; {if}
    controllingType.qualifiers := [];
+   controllingType.saveDisp := 0;
 
    typesSeen := nil;
    resultExpr := nil;
@@ -2068,7 +2064,7 @@ var
       resultExpr := pointer(Calloc(sizeof(tokenRecord)));
       resultExpr^.token.kind := intconst;
       resultExpr^.token.class := intConstant;
-      resultExpr^.token.ival := 0;
+      {resultExpr^.token.ival := 0;}
       end; {if}
    if resultExpr <> nil then begin
       resultExpr^.next := stack;        {stack the resulting expression}
