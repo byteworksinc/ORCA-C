@@ -1895,6 +1895,8 @@ int foo(int[42]);
 
 205. Using the same identifier as a typedef name and then as the tag for an enum would cause a spurious error.
 
+206. If an enum type defined in an outer scope was used in an inner scope, and then a new struct, union, or enum type was declared with the same tag in the same inner scope, a spurious error was reported.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
