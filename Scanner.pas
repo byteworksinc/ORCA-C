@@ -633,7 +633,7 @@ if list or (numErr <> 0) then begin
          50: msg := @'only parameters or types may be declared here';
          51: msg := @'lint: undefined function';
          52: msg := @'you cannot initialize a type';
-         53: msg := @'the structure or union has already been defined';
+         53: msg := @'the struct, union, or enum has already been defined';
          54: msg := @'bit fields must be less than 32 bits wide';
          55: msg := @'a value cannot be zero bits wide';
         {56: msg := @'bit fields in unions are not supported by ORCA/C';}
@@ -751,6 +751,7 @@ if list or (numErr <> 0) then begin
         168: msg := @'malformed hexadecimal floating constant';
         169: msg := @'struct or array may not contain a struct with a flexible array member';
         170: msg := @'lint: no whitespace after macro name';
+        171: msg := @'use of an incomplete enum type is not allowed';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

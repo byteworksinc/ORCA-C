@@ -3185,10 +3185,16 @@ while token.kind in allowedTokens do begin
             NextToken;
             variable :=
                FindSymbol(ttoken, tagSpace, token.kind = lbracech, true);
-            if variable <> nil then
-               if variable^.itype^.kind = enumType then
-                  if token.kind <> lbracech then
-                     goto 1;
+            if token.kind = lbracech then begin
+               if (variable <> nil) and (variable^.itype^.kind = enumType) then
+                  if not looseTypeChecks then
+                     Error(53);
+               end {if}
+            else
+               if (variable <> nil) and (variable^.itype^.kind = enumType) then
+                  goto 1
+               else if not looseTypeChecks then
+                  Error(171);
             tPtr := pointer(Malloc(sizeof(typeRecord)));
             tPtr^.size := cgWordSize;
             tPtr^.saveDisp := 0;
