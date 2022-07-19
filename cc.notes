@@ -30,7 +30,7 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2022
               	than errors.  See "Enhancements to #pragma lint."
 
             10.	Stack repair code is now more efficient.
-            
+
             11.	Several new library functions and features from C99 and C11
                	have been added.  See "Library Updates."
 
@@ -158,7 +158,7 @@ The discussion of escape sequences states that hexadecimal numeric escape sequen
 
 The value of an octal or hexadecimal escape sequence must be within the range of representable values in the relevant type (0-255 for char).  Also, \ may not be followed by a character other than one of the ones described as forming an escape sequence.  ORCA/C now gives an error in these cases.  Accordingly, the examples of "\410" and '\g' mentioned in the manual are now treated as errors.
 
-Floating-point constants may now be written in a new hexadecimal format.  See "New Language Features," below. 
+Floating-point constants may now be written in a new hexadecimal format.  See "New Language Features," below.
 
 p. 241
 
@@ -432,7 +432,7 @@ Of these, _Atomic, _Complex, _Imaginary, and _Thread_local are recognized as key
 
 In addition, the scope rules are changed so that each while, do, for, if, or switch statement introduces a new block scope corresponding to the statement, separate from the enclosing scope and ending at the end of the statement.  Each substatement of these statements also introduces its own new block scope corresponding to that substatement, separate from the enclosing scope associated with the while, do, for, if, or switch statement itself.  These rules ensure that a variable declared in the first clause of a for loop is local to that loop, but they can also affect other code by restricting the scope where an identifier is visible.  In certain unusual cases, this can change the semantics of a program that was valid under C89, potentially producing a compile error or causing unexpected behavior when it executes.
 
-These new rules for declaration placement and scopes are enabled by default, but they can be controlled by a new flag bit in the #pragma ignore directive.  Setting bit 4 (a value of 16) enables these new C99 features; clearing it disables them and returns to the older C89 rules.  
+These new rules for declaration placement and scopes are enabled by default, but they can be controlled by a new flag bit in the #pragma ignore directive.  Setting bit 4 (a value of 16) enables these new C99 features; clearing it disables them and returns to the older C89 rules.
 
 3.  (C99) ORCA/C now supports flexible array members, in which the last member of a struct may be declared with an incomplete array type, e.g.
 
@@ -448,7 +448,7 @@ The flexible array member does not contribute to the size of the struct as repor
 5.  (C99) Enumeration specifiers may contain a trailing comma, e.g.
 
    enum color {black, purple, green, white,} pencolor;
-   
+
 (Kelvin Sherlock)
 
 6.  (C99) Functions may be declared as "static inline".  These have the same semantics as other static functions.  The "inline" specifier suggests (but does not require) that calls to the function should be inlined or otherwise optimized.  ORCA/C currently does not inline these functions or apply any other special optimizations, but future versions might introduce such features.  Note that non-static inline functions are not currently supported.
@@ -590,7 +590,7 @@ If you want to get a value strictly in a certain type with no extra range or pre
 Floating-Point Optimizations
 ----------------------------
 
-ORCA/C can perform certain optimizations on floating-point computations based on properties that are true for real numbers but are not always true in the IEEE floating-point arithmetic system.  In particular, these optimizations can occasionally cause behavior that differs from the IEEE standard in regard to infinities, NaNs, or the sign of zero.  Historically, these optimizations were performed mainly as part of intermediate code peephole optimization and in some cases also as part of common subexpression elimination.  
+ORCA/C can perform certain optimizations on floating-point computations based on properties that are true for real numbers but are not always true in the IEEE floating-point arithmetic system.  In particular, these optimizations can occasionally cause behavior that differs from the IEEE standard in regard to infinities, NaNs, or the sign of zero.  Historically, these optimizations were performed mainly as part of intermediate code peephole optimization and in some cases also as part of common subexpression elimination.
 
 A new #pragma optimize bit has now been introduced to control this behavior.  Setting bit 7 (a value of 128) allows floating-point math optimizations that may violate the IEEE standard.  It currently only has an effect if #pragma optimize bit 0 or bit 4 is also set.  If bit 7 is not set, these floating-point optimizations will not be performed.  This allows most aspects of intermediate code peephole optimization and common subexpression elimination to be used while preserving IEEE floating-point behavior.
 
@@ -890,7 +890,7 @@ fpclassify() returns one of the macro values FP_INFINITE, FP_NAN, FP_NORMAL, FP_
 size_t strftime(char *restrict s, size_t maxsize, const char *restrict format,
    const struct tm *restrict timeptr);
 
-The strftime function produces a string representing the date/time specified by timeptr in a format specified by the format string format.  It writes the output to s, writing at most maxsize characters (including a terminating null).  
+The strftime function produces a string representing the date/time specified by timeptr in a format specified by the format string format.  It writes the output to s, writing at most maxsize characters (including a terminating null).
 
 The format string can contain conversion specifiers starting with %, as well as other characters.  Conversion specifiers cause strftime() to write portions of the date/time in certain formats, as specified below.  Other characters are copied to the output unchanged.  If the field(s) of *timeptr relevant to a conversion specifier are outside of their normal ranges, the characters written are unspecified.  If a conversion specifier other than those specified below is used, the behavior is undefined.
 
@@ -1199,7 +1199,7 @@ These functions return x * FLT_RADIX^n, computed efficiently.  In ORCA/C, FLT_RA
 #include <math.h>
 double      trunc(double x);
 float       truncf(float x);
-long double truncl(long double x); 
+long double truncl(long double x);
 
 These functions truncate x to an integer (discarding the fractional part).
 
@@ -1544,7 +1544,7 @@ int foo(int[42]);
 
 (Kelvin Sherlock)
 
-64. Tentative definitions of arrays (e.g. "int i[];" at file scope) are now allowed and handled as required by the C standards: such arrays will wind up having one element, initialized to 0, unless a subsequent non-tentative definition gives a size.  
+64. Tentative definitions of arrays (e.g. "int i[];" at file scope) are now allowed and handled as required by the C standards: such arrays will wind up having one element, initialized to 0, unless a subsequent non-tentative definition gives a size.
 
 65. sys_nerr was 6; it should be 12.
 
@@ -1789,7 +1789,7 @@ int foo(int[42]);
 
 162. In certain cases, an assignment from a location with an 8-bit type to a location with a 16-bit type might store the wrong value.
 
-163. When an argument of type double was passed to a function taking variable arguments, va_arg(ap,double) would not retrieve it correctly.  
+163. When an argument of type double was passed to a function taking variable arguments, va_arg(ap,double) would not retrieve it correctly.
 
 (Devin Reade)
 
@@ -1962,7 +1962,7 @@ qualifier was spelled qualtifier.
 	int offset = -32768;
 
 gave an incorrect result for ptr + offset).
-	
+
 (Soenke Behrens, David Empson)
 
 12.  In expressions that could be evaluated at compile time, results that overflowed an integer frequently resulted in the constant being improperly promoted from an integer or unsigned to a long or unsigned long.  Examples of expressions that would cause this kind of error are (65533U + 1U) / 2 and 0x8000|1.
@@ -2470,7 +2470,7 @@ addressing when they should have used long absoule addressing.
 be void.
 
 (J.Mills11)
-           
+
 24. TEInsert() (in TextEdit.h) has one too few parameters prototyped.
 
 (J.Mills11)
