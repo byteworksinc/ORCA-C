@@ -79,10 +79,6 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2022
 
 2.0.1       1.	Bugs squashed.  See bug notes, below.
 
--- Known Issues -------------------------------------------------------------
-
-1.  ORCA/C fails to detect various error conditions for which the C standards require a diagnostic message to be issued.
-
 -- Manual Errata ------------------------------------------------------------
 
 p. 40
@@ -556,11 +552,11 @@ Compound literals can be used in code similarly to the identifier for a named va
 
    PaintRect(&(Rect){10,20,100,200});
 
-Outside of functions, compound literals can be used in initializers, as in the following declaration, which creates an unnamed array and initializes p to point to the first element of that array:
+Compound literals can also be used in initializers, as in the following declaration, which creates an unnamed array and initializes p to point to the first element of it:
 
    int *p = (int[]){1,2,3};
 
-(This declaration could also be used within a function, but in that case the variable p and the unnamed array would have automatic storage duration.)
+(This declaration could be used inside or outside of a function, with the compound literal having automatic or static storage duration, respectively.)
 
 
 Multi-Character Character Constants
