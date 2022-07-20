@@ -11,5 +11,5 @@ resource rVersion(1) {
    verUS,				/* Region code */
    "ORCA/C",				/* Short version number */
    "Copyright 1997, Byte Works, Inc.\n"	/* Long version number */
-   "Updated 2021"
+   "Updated 2022"
    };
