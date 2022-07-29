@@ -752,6 +752,10 @@ if list or (numErr <> 0) then begin
         169: msg := @'struct or array may not contain a struct with a flexible array member';
         170: msg := @'lint: no whitespace after macro name';
         171: msg := @'use of an incomplete enum type is not allowed';
+        172: msg := @'macro replacement list may not start or end with ''##''';
+        173: msg := @'''#'' must be followed by a macro parameter';
+        174: msg := @'''__VA_ARGS__'' may only be used in a variadic macro';
+        175: msg := @'duplicate macro parameter name';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -2560,7 +2564,14 @@ var
                   parameterList := np
                else
                   ple^.next := np;
-               ple := np;
+               ple := parameterList;
+               while ple <> np do begin
+                  if ple^.str = token.name^ then begin
+                     np^.str[1] := '?';
+                     Error(175);
+                     end; {if}
+                  ple := ple^.next;
+                  end; {while}
                NextToken;
                parameters := parameters+1;
                if token.kind = commach then begin
@@ -2604,6 +2615,9 @@ var
          NextToken;                     {done with the name token...}
          end; {else}
       mPtr^.parameters := parameters;   {record the # of parameters}
+      if token.kind = poundpoundop then
+         Error(172);
+      tPtr := nil;
       while token.kind <> eolsy do begin {place tokens in the replace list...}
 
 	 if token.class = reservedWord then begin
@@ -2627,7 +2641,13 @@ var
                pnum := pnum+1;
                np := np^.next;
                end; {while}
+            if token.name^ = '__VA_ARGS__' then
+               Error(174);
             end; {if}
+         if parameters >= 0 then
+            if tPtr <> nil then
+               if tPtr^.token.kind = poundch then
+                  Error(173);
 1:       tPtr := pointer(GMalloc(sizeof(tokenListRecord)));
          tPtr^.next := mPtr^.tokens;
          mPtr^.tokens := tPtr;
@@ -2637,6 +2657,12 @@ var
          tPtr^.expandEnabled := true;
          NextToken;
          end; {while}
+      if tPtr <> nil then
+         if (parameters >= 0) and (tPtr^.token.kind = poundch) then
+            Error(173)
+         else if tPtr^.token.kind = poundpoundop then
+            if tPtr^.next <> nil then
+               Error(172);
       mPtr^.readOnly := false;
       mPtr^.algorithm := 0;
       if IsDefined(mPtr^.name) then begin
