@@ -240,7 +240,7 @@ charKinds start                         character set
          dc    i'ch_special'            V
          dc    i'illegal'               W
          dc    i'letter'                X
-         dc    i'illegal'               Y
+         dc    i'letter'                Y
          dc    i'illegal'               Z
          dc    i'illegal'               [
          dc    i'illegal'               \
@@ -252,23 +252,23 @@ charKinds start                         character set
          dc    i'illegal'               b
          dc    i'illegal'               c
          dc    i'illegal'               d
-         dc    i'illegal'               e
-         dc    i'illegal'               f
-         dc    i'illegal'               g
-         dc    i'illegal'               h
-         dc    i'illegal'               i
-         dc    i'illegal'               j
-         dc    i'illegal'               k
-         dc    i'illegal'               l
-         dc    i'illegal'               m
-         dc    i'illegal'               n
-         dc    i'illegal'               o
+         dc    i'letter'                e
+         dc    i'letter'                f
+         dc    i'letter'                g
+         dc    i'letter'                h
+         dc    i'letter'                i
+         dc    i'letter'                j
+         dc    i'letter'                k
+         dc    i'letter'                l
+         dc    i'letter'                m
+         dc    i'letter'                n
+         dc    i'letter'                o
          dc    i'illegal'               p
-         dc    i'illegal'               q
-         dc    i'illegal'               r
-         dc    i'illegal'               s
-         dc    i'illegal'               t
-         dc    i'illegal'               u
+         dc    i'letter'                q
+         dc    i'letter'                r
+         dc    i'letter'                s
+         dc    i'letter'                t
+         dc    i'letter'                u
          dc    i'illegal'               v
          dc    i'illegal'               w
          dc    i'illegal'               x

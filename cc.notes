@@ -1,10 +1,10 @@
-ORCA/C 2.2.0 B6
+ORCA/C 2.2.0 B7
 Copyright 1997, Byte Works Inc.
 Updated by Stephen Heumann and Kelvin Sherlock, 2017-2022
 
 -- Change List --------------------------------------------------------------
 
-2.2.0 B6    1.	Bugs squashed.  See bug notes, below.
+2.2.0 B7    1.	Bugs squashed.  See bug notes, below.
 
             2.	New language features added (mainly features from C99 and C11).
               	See "New Language Features," below.
@@ -1311,6 +1311,8 @@ Many of the characters in the extended character set are used in languages other
 The simple way is to remember that all characters that look like a graphically modified ASCII alphabetic character or a Greek alphabetic character are allowed in identifiers.  For example, an a with two dots above it is now legal in an identifier.
 
 The more exact, and naturally more complicated way to think about which characters are allowed in an identifier is to list all of them.  Since this is an ASCII file, I'll list the ordinal values--you can cross reference the values in FontTest.  The ordinal values of the extended characters that are allowed in identifiers are [$80..$9F, $A7, $AE, $AF, $B4..$B9, $BB..$BF, $C4, $C6, $CB..$CF, $D8, $DE, $DF].
+
+As of ORCA/C 2.2.0 B7, the characters with the following ordinal values are also allowed in identifiers: [$D9, $E5..$EF, $F1..$F5].  (These characters are additional letters that are present in some IIGS fonts.)
 
 In addition, ORCA/C supports several extended characters as shortcuts for multi-character mathematical operations.  These are:
 
