@@ -92,7 +92,10 @@ var
    c99Scope: boolean;                   {follow C99 rules for block scopes?}
    looseTypeChecks: boolean;            {loosen some standard type checks?}
 
+                                        {#pragma extensions flags}
+                                        {------------------------}
    extendedKeywords: boolean;           {recognize ORCA/C-specific keywords?}
+   extendedParameters: boolean;         {change all floating params to extended?}
 
 {---------------------------------------------------------------}
 
@@ -3307,10 +3310,12 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                   else if token.name^ = 'extensions' then begin
                      { extensions bits:                            }
                      {     1 - extended ORCA/C keywords            }
+                     {     2 - change floating params to extended  }
                      FlagPragmas(p_extensions);
                      NumericDirective;
                      val := long(expressionValue).lsw;
                      extendedKeywords := odd(val);
+                     extendedParameters := odd(val >> 1);
                      if token.kind <> eolsy then
                         Error(11);
                      end {else if}
@@ -4220,6 +4225,7 @@ allowMixedDeclarations := true;         {allow mixed declarations & stmts (C99)}
 c99Scope := true;                       {follow C99 rules for block scopes}
 looseTypeChecks := true;                {loosen some standard type checks}
 extendedKeywords := true;               {allow extended ORCA/C keywords}
+extendedParameters := true;             {treat all floating params as extended}
 foundFunction := false;                 {no functions found so far}
 fileList := nil;                        {no included files}
 gettingFileName := false;               {not in GetFileName}

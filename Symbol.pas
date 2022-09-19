@@ -1010,6 +1010,12 @@ if pp <> nil then begin			{prototyped parameters}
 	 size := long(sp^.itype^.size).lsw;
 	 if (size = 1) and (sp^.itype^.kind = scalarType) then
             size := 2;
+	 if sp^.itype^.kind = scalarType then
+            if sp^.itype^.baseType in [cgReal,cgDouble,cgComp] then begin
+               {convert floating-point parameters to declared type}
+               Gen1t(pc_fix, pln, sp^.itype^.baseType);
+               size := cgExtendedSize;
+               end; {if}
 	 Gen3(dc_prm, pln, size, sp^.pdisp);
 	 end; {else}
       sp^.pln := pln;
@@ -1036,6 +1042,12 @@ else begin				{K&R parameters}
                size := long(sp^.itype^.size).lsw;
                if (size = 1) and (sp^.itype^.kind = scalarType) then
         	  size := 2;
+               if sp^.itype^.kind = scalarType then
+                  if sp^.itype^.baseType in [cgReal,cgDouble,cgComp] then begin
+                     {convert floating-point parameters to declared type}
+                     Gen1t(pc_fix, pln, sp^.itype^.baseType);
+                     size := cgExtendedSize;
+                     end; {if}
                Gen3(dc_prm, sp^.lln, size, sp^.pdisp);
                end; {else}
             if first then begin

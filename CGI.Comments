@@ -306,6 +306,14 @@
 {  the stack.							}
 {                                                               }
 {                                                               }
+{  pc_fix - fix a floating-point variable                       }
+{                                                               }
+{  Gen1t(pc_fix, lab, type)                                     }
+{                                                               }
+{  Change a floating-point value (generally a passed parameter) }
+{  from extended to cgReal, cgDouble,or cgComp.                 }
+{                                                               }
+{                                                               }
 {  pc_gil - increment and load from a global variable           }
 {  pc_gli - load a global variable, then inc the original       }
 {  pc_gdl - decrement and load from a global variable           }

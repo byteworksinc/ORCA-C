@@ -130,7 +130,7 @@ Identifiers may now contain universal character names, a type of escape sequence
 
 Several new reserved words (keywords) added in the C99 or C11 standards are now supported.  For information on what these are and how they are used, see "New Language Features," below.
 
-The recognition of ORCA/C-specific reserved words can now be disabled, allowing them to be used as identifiers.  See "#pragma extensions," below.
+Certain ORCA/C-specific extensions to the standard C language can now be disabled.  See "#pragma extensions," below.
 
 Certain alternate reserved symbols known as digraphs are now supported.  See "New Language Features," below.
 
@@ -684,9 +684,11 @@ ORCA/C supports certain extensions that are not part of the standard C language.
 
    #pragma extensions parm
 
-The parameter must be an integer constant, which is treated as a set of flags.  Currently, one flag bit is defined:
+The parameter must be an integer constant, which is treated as a set of flags.  Currently, two flag bits are defined:
 
 If bit 0 (a value of 1) is set, then asm, comp, extended, pascal, and segment are treated as reserved words (keywords), with the meanings specified in the ORCA/C manual.  If bit 0 is clear, then those tokens are instead treated as identifiers, as required by the C standards.  Bit 0 is set by default.  Note that toolbox headers use these keywords, so bit 0 must be set when they are included.
+
+If bit 1 (a value of 2) is set, then function parameters declared with the types float, double, or comp are treated as actually having the type long double (aka extended) rather than their declared type.  This results in faster code and also allows the parameters to have the greater precision and range of the extended type.  However, this change of types may cause some standard-compliant code not to work properly, particularly if it takes the address of such a parameter and tries to access it through the resulting pointer.  If bit 1 is clear, these parameters are treated as having their declared type, restricting their precision and range and causing pointers to them to behave in the standard way.  Bit 1 is set by default, matching ORCA/C's historical behavior.
 
 
 File Names in Error Messages

@@ -5935,6 +5935,21 @@ procedure GenTree {op: icptr};
    end; {GenEnt}
 
 
+   procedure GenFix (op: icptr);
+
+   { Generate code for a pc_fix					}
+
+   begin {GenFix}
+   GenNative(m_pea, immediate, localLabel[op^.q], nil, 0);
+   if op^.optype = cgReal then
+      GenCall(95)
+   else if op^.optype = cgDouble then
+      GenCall(96)
+   else if op^.optype = cgComp then
+      GenCall(97);
+   end; {GenFix}
+
+
    procedure GenFjpTjp (op: icptr);
 
    { Generate code for a pc_fjp or pc_tjp			}
@@ -7387,6 +7402,7 @@ case op^.opcode of
    pc_dvi,pc_mod,pc_udi,pc_uim: GenDviMod(op);
    pc_ent: GenEnt(op);
    pc_equ,pc_neq: GenEquNeq(op, op^.opcode, 0);
+   pc_fix: GenFix(op);
    pc_fjp,pc_tjp: GenFjpTjp(op);
    pc_geq,pc_grt,pc_leq,pc_les: GenCmp(op, op^.opcode, 0);
    pc_gil,pc_gli,pc_gdl,pc_gld: GenGilGliGdlGld(op);

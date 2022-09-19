@@ -3915,15 +3915,20 @@ if isFunction then begin
          if lp^.itype^.kind = arrayType then
             nextPdisp := nextPdisp + cgPointerSize
          else begin
-            if lp^.itype^.kind = scalarType then
-               if lp^.itype^.baseType in [cgReal,cgDouble,cgComp] then
-                  {all floating-points are passed as extended}
+            if (lp^.itype^.kind = scalarType) and
+               (lp^.itype^.baseType in [cgReal,cgDouble,cgComp]) then begin
+               if extendedParameters then
+                  {all floating-point params are treated as extended}
                   lp^.itype :=
                      MakeQualifiedType(extendedPtr, lp^.itype^.qualifiers);
-            nextPdisp := nextPdisp + long(lp^.itype^.size).lsw;
-            if (long(lp^.itype^.size).lsw = 1)
-               and (lp^.itype^.kind = scalarType) then
-               nextPdisp := nextPdisp+1;
+               nextPdisp := nextPdisp + cgExtendedSize;
+               end {if}
+            else begin
+               nextPdisp := nextPdisp + long(lp^.itype^.size).lsw;
+               if (long(lp^.itype^.size).lsw = 1)
+                  and (lp^.itype^.kind = scalarType) then
+                  nextPdisp := nextPdisp+1;
+               end; {else}
             end; {else}
          lp := lp^.pnext;
          end; {while}

@@ -2166,6 +2166,9 @@ case callNum of
    92: sp := @'~DOUBLEPRECISION';
    93: sp := @'~COMPPRECISION';
    94: sp := @'~CUMUL2';
+   95: sp := @'~REALFIX';
+   96: sp := @'~DOUBLEFIX';
+   97: sp := @'~COMPFIX';
    otherwise:
       Error(cge1);
    end; {case}

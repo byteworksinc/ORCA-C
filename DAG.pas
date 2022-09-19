@@ -520,7 +520,8 @@ var
    else if op^.opcode in
       [pc_mov,pc_cbf,pc_cop,pc_cpi,pc_cpo,pc_gil,pc_gli,pc_gdl,
        pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,pc_lil,pc_lli,pc_ldl,
-       pc_lld,pc_sbf,pc_sro,pc_sto,pc_str,pc_cui,pc_cup,pc_tl1] then
+       pc_lld,pc_sbf,pc_sro,pc_sto,pc_str,pc_cui,pc_cup,pc_tl1,
+       pc_fix] then
       SideEffects := true
    else if op^.opcode = pc_ldc then
       SideEffects := false
@@ -5503,7 +5504,7 @@ case code^.opcode of
    pc_gil, pc_gli, pc_gdl, pc_gld, pc_lil, pc_lli, pc_ldl, pc_lld,
    pc_lad, pc_lao, pc_lca, pc_lda, pc_ldc, pc_ldo, pc_lod, pc_nop,
    dc_cns, dc_glb, dc_dst, pc_lnm, pc_nam, pc_nat, dc_lab, pc_add,
-   pc_ujp, dc_pin, pc_ent, dc_sym:
+   pc_ujp, dc_pin, pc_ent, dc_sym, pc_fix:
       Push(code);
 
    pc_ret:
