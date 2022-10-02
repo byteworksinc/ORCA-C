@@ -250,12 +250,11 @@ procedure Match (kind: tokenEnum; err: integer); extern;
 {       err - error number if the expected token is not found   }
 
 
-procedure TypeName; extern;
+function TypeName: typePtr; extern;
 
 { process a type name (used for casts and sizeof/_Alignof)      }
 {                                                               }
-{ outputs:                                                      }
-{       typeSpec - pointer to the type                          }
+{ returns: a pointer to the type                                }
 
 
 function MakeFuncIdentifier: identPtr; extern;
@@ -756,6 +755,7 @@ var
    opStack: tokenPtr;                   {operation stack}
    parenCount: integer;                 {# of open parenthesis}
    stack: tokenPtr;                     {operand stack}
+   tType: typePtr;                      {type for cast/sizeof/etc.}
 
    op,sp: tokenPtr;                     {work pointers}
 
@@ -2002,8 +2002,7 @@ var
             while not (token.kind in [colonch,commach,rparench,eofsy]) do
                NextToken;
             end; {if}
-         TypeName;                      {get the type name}
-         currentType := typeSpec;
+         currentType := TypeName;       {get the type name}
          if (currentType^.size = 0) or (currentType^.kind = functionType) then
             Error(133);
          tl := typesSeen;               {check if it is a duplicate}
@@ -2214,7 +2213,7 @@ if token.kind in startExpression then begin
                   doingSizeof := true
                else if opStack^.token.kind = _Alignofsy then
                   doingAlignof := true;
-            TypeName;
+            tType := TypeName;
             if doingSizeof or doingAlignof then begin
 
                {handle a sizeof operator}
@@ -2229,10 +2228,10 @@ if token.kind in startExpression then begin
                sp^.token.kind := ulongconst;
                sp^.token.class := longConstant;
                if doingSizeof then
-                  sp^.token.lval := typeSpec^.size
+                  sp^.token.lval := tType^.size
                else {if doingAlignof then}
                   sp^.token.lval := 1;
-               with typeSpec^ do
+               with tType^ do
                   if (size = 0) or ((kind = arrayType) and (elements = 0)) then
                      Error(133);
                sp^.next := stack;
@@ -2246,7 +2245,7 @@ if token.kind in startExpression then begin
                op^.left := nil;
                op^.middle := nil;
                op^.right := nil;
-               op^.castType := typeSpec;
+               op^.castType := tType;
                op^.token.kind := castoper;
                op^.token.class := reservedWord;
                op^.next := opStack;

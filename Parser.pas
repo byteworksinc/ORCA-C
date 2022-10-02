@@ -40,12 +40,11 @@ procedure DoStatement;
 { process a statement from a function                           }
 
 
-procedure TypeName;
+function TypeName: typePtr;
 
 { process a type name (used for casts and sizeof/_Alignof)      }
 {                                                               }
-{ outputs:                                                      }
-{       typeSpec - pointer to the type                          }
+{ returns: a pointer to the type                                }
 
 
 procedure AutoInit (variable: identPtr; line: integer;
@@ -172,6 +171,16 @@ type
             );
       end;
 
+                                        {type info for a declaration}
+                                        {---------------------------}
+   declSpecifiersRecord = record
+      storageClass: tokenEnum;          {storage class of the declaration}
+      typeSpec: typePtr;                {type specifier}
+      declarationModifiers: tokenSet;   {all storage class specifiers, type }
+                                        {qualifiers, function specifiers, & }
+                                        {alignment specifiers in declaration}
+      end;
+
 var
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
@@ -197,14 +206,6 @@ var
    pfunc: identPtr;                     {func. for which parms are being defined}
    protoType: typePtr;                  {type from a parameter list}
    protoVariable: identPtr;             {variable from a parameter list}
-
-                                        {type info for the current declaration}
-                                        {-------------------------------------}
-   storageClass: tokenEnum;             {storage class of the declaration}
-{  typeSpec: typePtr;    (in CCommon)   {type specifier}
-   declarationModifiers: tokenSet;      {all storage class specifiers, type }
-                                        {qualifiers, function specifiers, & }
-                                        {alignment specifiers in declaration}
 
                                         {syntactic classes of tokens}
                                         {---------------------------}
@@ -1256,13 +1257,13 @@ end; {EndWhileStatement}
 
 {-- Type declarations ------------------------------------------}
 
-procedure Declarator(tPtr: typePtr; var variable: identPtr; space: spaceType;
-   doingPrototypes: boolean);
+procedure Declarator(declSpecifiers: declSpecifiersRecord;
+   var variable: identPtr; space: spaceType; doingPrototypes: boolean);
 
 { handle a declarator                                           }
 {                                                               }
 { parameters:                                                   }
-{       tPtr - pointer to the type to use                       }
+{       declSpecifiers - type/specifiers to use                 }
 {       variable - pointer to variable being defined            }
 {       space - variable space to use                           }
 {       doingPrototypes - are we compiling prototype parameter  }
@@ -1289,6 +1290,7 @@ var
    newName: stringPtr;                  {new symbol name}
    parameterStorage: boolean;           {is the new symbol in a parm list?}
    state: stateKind;                    {declaration state of the variable}
+   tPtr: typePtr;                       {type of declaration}
    tPtr2: typePtr;                      {work pointer}
    tsPtr: typeDefPtr;                   {work pointer}
    typeStack: typeDefPtr;               {stack of type definitions}
@@ -1328,8 +1330,6 @@ var
       lisFunction: boolean;             {local copy of isFunction}
       lisPascal: boolean;               {local copy of isPascal}
       lLastParameter: identPtr;         {next parameter to process}
-      lstorageClass: tokenEnum;         {storage class of the declaration}
-      ltypeSpec: typePtr;               {type specifier}
       luseGlobalPool: boolean;          {local copy of useGlobalPool}
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
 
@@ -1347,12 +1347,12 @@ var
             variable := FindSymbol(token, space, true, true);
          newName := token.name;
          if variable = nil then begin
-            if storageClass = typedefsy then begin
+            if declSpecifiers.storageClass = typedefsy then begin
                tPtr2 := pointer(Calloc(sizeof(typeRecord)));
                {tPtr2^.size := 0;}
                {tPtr2^.saveDisp := 0;}
                tPtr2^.kind := definedType;
-               {tPtr^.qualifiers := [];}
+               {tPtr2^.qualifiers := [];}
                tPtr2^.dType := tPtr;
                end {if}
             else
@@ -1483,8 +1483,6 @@ var
             useGlobalPool := true;
             done2 := false;
             lisFunction := isFunction;  {preserve global variables}
-            ltypeSpec := typeSpec;
-            lstorageClass := storageClass;
             with tPtr2^ do begin
                prototyped := true;      {it is prototyped}
                repeat                   {collect the declarations}
@@ -1533,8 +1531,6 @@ var
                until done2;
                end; {with}
             isFunction := lisFunction;  {restore global variables}
-            storageClass := lstorageClass;
-            typeSpec := ltypeSpec;
             useGlobalPool := luseGlobalPool;
             end {if prototype}
          else if token.kind = ident then begin
@@ -1651,9 +1647,10 @@ var
    end; {StackDeclarations}
 
 begin {Declarator}
+tPtr := declSpecifiers.typeSpec;
 newName := nil;                         {no identifier, yet}
 unnamedParm := false;                   {not an unnamed parameter}
-if storageClass = externsy then         {decide on a storage state}
+if declSpecifiers.storageClass = externsy then  {decide on a storage state}
    state := declared
 else
    state := defined;
@@ -1820,7 +1817,7 @@ if tPtr^.kind = functionType then begin {declare the identifier}
 if tPtr^.kind = functionType then
    state := declared;
 if newName <> nil then                  {declare the variable}
-   variable := NewSymbol(newName, tPtr, storageClass, space, state)
+   variable := NewSymbol(newName, tPtr, declSpecifiers.storageClass, space, state)
 else if unnamedParm then
    variable^.itype := tPtr
 else begin
@@ -1842,7 +1839,8 @@ if variable <> nil then begin
             lastWasPointer := false;
          tPtr := tPtr^.pType;
          end; {while}
-      if ((tPtr <> typeSpec) and (not (tPtr^.kind in [structType,unionType])))
+      if ((tPtr <> declSpecifiers.typeSpec)
+         and (not (tPtr^.kind in [structType,unionType])))
          then begin
          Error(107);
          SkipStatement;
@@ -2746,12 +2744,13 @@ Match(semicolonch, 22);
 end; {DoStaticAssert}
 
 
-procedure DeclarationSpecifiers (allowedTokens: tokenSet;
-   expectedNext: tokenEnum);
+procedure DeclarationSpecifiers (var declSpecifiers: declSpecifiersRecord;
+   allowedTokens: tokenSet; expectedNext: tokenEnum);
 
 { handle declaration specifiers or a specifier-qualifier list   }
 {                                                               }
 { parameters:                                                   }
+{       declSpecifiers - record to hold result type & specifiers}
 {       allowedTokens - specifiers/qualifiers that can be used  }
 {       expectedNext - token usually expected after declaration }
 {               specifiers (used for error messages only)       }
@@ -2761,10 +2760,6 @@ procedure DeclarationSpecifiers (allowedTokens: tokenSet;
 {               referencing a forward struct/union?             }
 {       skipDeclarator - for enum,struct,union with no          }
 {               declarator                                      }
-{       typespec - type specifier                               }
-{       declarationModifiers - all storage class specifiers,    }
-{               type qualifiers, function specifiers, and       }
-{               alignment specifiers in this declaration        }
 
 label 1,2,3;
 
@@ -2791,6 +2786,7 @@ var
    mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
    myTypeSpec: typePtr;                 {value of typeSpec to generate}
    myDeclarationModifiers: tokenSet;    {all modifiers in this declaration}
+   myStorageClass: tokenEnum;           {storage class}
    
    isLongLong: boolean;                 {is this a "long long" type?}
  
@@ -2810,18 +2806,15 @@ var
       fl,tfl,ufl: identPtr;             {field list}
       ldoingParameters: boolean;        {local copy of doingParameters}
       lisForwardDeclared: boolean;      {local copy of isForwardDeclared}
-      lstorageClass: tokenEnum;         {storage class of the declaration}
       maxDisp: longint;                 {for determining union sizes}
       variable: identPtr;               {variable being defined}
       didFlexibleArray: boolean;        {have we seen a flexible array member?}
-      alignmentSpecified: boolean;      {was alignment explicitly specified?}
+      fieldDeclSpecifiers: declSpecifiersRecord; {decl specifiers for field}
  
    begin {FieldList}
    ldoingParameters := doingParameters; {allow fields in K&R dec. area}
    doingParameters := false;
    lisForwardDeclared := isForwardDeclared; {stack this value}
-   lStorageClass := storageClass;       {don't allow auto in a struct}
-   storageClass := ident;
    bitDisp := 0;                        {start allocation from byte 0}
    disp := 0;
    maxDisp := 0;
@@ -2833,15 +2826,14 @@ var
          DoStaticAssert;
          goto 1;
          end; {if}
-      DeclarationSpecifiers(specifierQualifierListElement, ident);
-      alignmentSpecified := _Alignassy in declarationModifiers;
+      DeclarationSpecifiers(fieldDeclSpecifiers, specifierQualifierListElement, ident);
       if not skipDeclarator then
          repeat                         {declare the variables...}
             if didFlexibleArray then
                Error(118);
             variable := nil;
             if token.kind <> colonch then begin
-               Declarator(typeSpec, variable, fieldListSpace, false);
+               Declarator(fieldDeclSpecifiers, variable, fieldListSpace, false);
                if variable <> nil then  {enter the var in the field list}
                   begin
                   tfl := fl;            {(check for dups)}
@@ -2882,7 +2874,7 @@ var
                   tPtr := variable^.itype;
                   end {if}
                else
-                  tPtr := typeSpec;
+                  tPtr := fieldDeclSpecifiers.typeSpec;
                bitdisp := bitdisp+long(expressionValue).lsw;
                if kind = unionType then
                   if ((bitDisp+7) div 8) > maxDisp then
@@ -2893,7 +2885,7 @@ var
                   or (expressionValue > tPtr^.size*8)
                   or ((expressionValue > 1) and (tPtr^.cType = ctBool)) then
                   Error(115);
-               if alignmentSpecified then
+               if _Alignassy in fieldDeclSpecifiers.declarationModifiers then
                   Error(142);
                end {if}
             else if variable <> nil then begin
@@ -2922,7 +2914,7 @@ var
             if variable <> nil then     {check for a const member}
                tPtr := variable^.itype
             else
-               tPtr := typeSpec;
+               tPtr := fieldDeclSpecifiers.typeSpec;
             while tPtr^.kind in [definedType,arrayType] do begin
                if tqConst in tPtr^.qualifiers then
                   tp^.constMember := true;
@@ -2974,7 +2966,6 @@ var
       end {if}
    else
       Error(26);                        {error if no named declarations}
-   storageClass := lStorageClass;       {restore default storage class}
    isForwardDeclared := lisForwardDeclared; {restore the forward flag}
    doingParameters := ldoingParameters; {restore the parameters flag}
    end; {FieldList}
@@ -3055,6 +3046,7 @@ myTypeSpec := nil;
 myIsForwardDeclared := false;           {not doing a forward reference (yet)}
 mySkipDeclarator := false;              {declarations are required (so far)}
 myDeclarationModifiers := [];
+myStorageClass := ident;
 typeQualifiers := [];
 typeSpecifiers := [];
 typeDone := false;
@@ -3064,13 +3056,13 @@ while token.kind in allowedTokens do begin
       {storage class specifiers}
       autosy,externsy,registersy,staticsy,typedefsy: begin
          myDeclarationModifiers := myDeclarationModifiers + [token.kind];
-         if storageClass <> ident then begin
+         if myStorageClass <> ident then begin
             if typeDone or (typeSpecifiers <> []) then
                UnexpectedTokenError(expectedNext)
             else
                Error(26);
             end; {if}
-         storageClass := token.kind;
+         myStorageClass := token.kind;
          if not doingFunction then
             if token.kind = autosy then
                Error(62);
@@ -3078,7 +3070,7 @@ while token.kind in allowedTokens do begin
             if token.kind <> registersy then
                Error(87);
             end {if}
-         else if storageClass in [staticsy,typedefsy] then begin
+         else if myStorageClass in [staticsy,typedefsy] then begin
             {Error if we may have allocated type info in local pool.}
             {This should not come up with current use of MM pools.  }
             if not useGlobalPool then
@@ -3087,7 +3079,7 @@ while token.kind in allowedTokens do begin
             useGlobalPool := true;
             end; {else if}
          if doingForLoopClause1 then
-            if not (storageClass in [autosy,registersy]) then
+            if not (myStorageClass in [autosy,registersy]) then
                Error(127);
          NextToken;
          end;
@@ -3137,8 +3129,7 @@ while token.kind in allowedTokens do begin
             if typeDone or (typeSpecifiers <> []) then
                UnexpectedTokenError(expectedNext);
             NextToken;
-            TypeName;
-            myTypeSpec := typeSpec;
+            myTypeSpec := TypeName;
             Match(rparench, 12);
             end; {if}
             typeDone := true;
@@ -3370,8 +3361,8 @@ while token.kind in allowedTokens do begin
          NextToken;
          Match(lparench, 13);
          if token.kind in specifierQualifierListElement then begin
-            TypeName;
-            with typeSpec^ do
+            tPtr := TypeName;
+            with tPtr^ do
                if (size = 0) or ((kind = arrayType) and (elements = 0)) then
                   Error(133);
             end {if}
@@ -3392,13 +3383,15 @@ while token.kind in allowedTokens do begin
 3:
 isForwardDeclared := myIsForwardDeclared;
 skipDeclarator := mySkipDeclarator;
-declarationModifiers := myDeclarationModifiers;
+declSpecifiers.declarationModifiers := myDeclarationModifiers;
 if myTypeSpec = nil then begin
    myTypeSpec := intPtr;                {under C89, default type is int}
    if (lint & lintC99Syntax) <> 0 then
       Error(151);
    end; {if}
-typeSpec := MakeQualifiedType(myTypeSpec, typeQualifiers); {apply type qualifiers}
+declSpecifiers.typeSpec :=              {apply type qualifiers}
+   MakeQualifiedType(myTypeSpec, typeQualifiers);
+declSpecifiers.storageClass := myStorageClass;
 end; {DeclarationSpecifiers}
 
 
@@ -3424,7 +3417,6 @@ var
    lDoingParameters: boolean;           {local copy of doingParameters}
    lisPascal: boolean;                  {local copy of isPascal}
    lp,tlp,tlp2: identPtr;               {for tracing parameter list}
-   ltypeSpec: typePtr;                  {copy of type specifier}
    lUseGlobalPool: boolean;             {local copy of useGlobalPool}
    nextPdisp: integer;                  {for calculating parameter disps}
    noFDefinitions: boolean;             {are function definitions inhibited?}
@@ -3436,6 +3428,7 @@ var
    tk: tokenType;                       {work token}
    typeFound: boolean;                  {has some type specifier been found?}
    startLine: integer;                  {line where this declaration starts}
+   declSpecifiers: declSpecifiersRecord; {type & specifiers for the declaration}
 
 
    procedure CheckArray (v: identPtr; firstVariable: boolean);
@@ -3659,19 +3652,18 @@ if not doingFunction then               {handle any segment statements}
       SegmentStatement;
 inhibitHeader := true;			{block imbedded includes in headers}
 lUseGlobalPool := useGlobalPool;
-storageClass := ident;
                                         {handle a TypeSpecifier/declarator}
 typeFound := token.kind in declarationSpecifiersElement;
-DeclarationSpecifiers(declarationSpecifiersElement, ident);
-isPascal := pascalsy in declarationModifiers;
-isAsm := asmsy in declarationModifiers;
-isInline := inlinesy in declarationModifiers;
-isNoreturn := _Noreturnsy in declarationModifiers;
-alignmentSpecified := _Alignassy in declarationModifiers;
+DeclarationSpecifiers(declSpecifiers, declarationSpecifiersElement, ident);
+isPascal := pascalsy in declSpecifiers.declarationModifiers;
+isAsm := asmsy in declSpecifiers.declarationModifiers;
+isInline := inlinesy in declSpecifiers.declarationModifiers;
+isNoreturn := _Noreturnsy in declSpecifiers.declarationModifiers;
+alignmentSpecified := _Alignassy in declSpecifiers.declarationModifiers;
 lisPascal := isPascal;
 if not skipDeclarator then begin
    variable := nil;
-   Declarator(typeSpec, variable, variableSpace, doingPrototypes);
+   Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
    if variable = nil then begin
       inhibitHeader := false;
       if token.kind = semicolonch then
@@ -3715,7 +3707,7 @@ if isFunction then begin
       goto 1;
       end; {if}
    if isInline then
-      if storageClass <> staticsy then
+      if declSpecifiers.storageClass <> staticsy then
          Error(120);
    if alignmentSpecified then
       Error(142);
@@ -3777,7 +3769,7 @@ if isFunction then begin
          NextToken;                     {allow further declarations}
          variable := nil;
          isFunction := false;
-         Declarator (typeSpec, variable, variableSpace, doingPrototypes);
+         Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
          if variable = nil then begin
             inhibitHeader := false;
             if token.kind = semicolonch then
@@ -3980,7 +3972,7 @@ if isFunction then begin
 else {if not isFunction then} begin
    noFDefinitions := true;
    if alignmentSpecified then
-      if storageClass in [typedefsy,registersy] then
+      if declSpecifiers.storageClass in [typedefsy,registersy] then
          Error(142);
    if not SkipDeclarator then
       repeat
@@ -3991,7 +3983,7 @@ else {if not isFunction then} begin
          if isNoreturn then
             Error(141);
          if token.kind = eqch then begin
-            if storageClass = typedefsy then
+            if declSpecifiers.storageClass = typedefsy then
                Error(52);
             if doingPrototypes then
                Error(88);
@@ -4004,14 +3996,13 @@ else {if not isFunction then} begin
                end;
             TermHeader;                 {make sure the header file is closed}
             NextToken;                  {handle an initializer}
-            ltypeSpec := typeSpec;
             Initializer(variable);
-            typeSpec := ltypeSpec;
             end; {if}
                                         {check to insure array sizes are specified}
-         if storageClass <> typedefsy then
+         if declSpecifiers.storageClass <> typedefsy then
             CheckArray(variable,
-               (storageClass = externsy) or doingParameters or not doingFunction);
+               (declSpecifiers.storageClass = externsy) 
+               or doingParameters or not doingFunction);
                                         {allocate space}
          if variable^.storage = stackFrame then begin
             variable^.lln := GetLocalLabel;
@@ -4023,7 +4014,7 @@ else {if not isFunction then} begin
             done := false;              {allow multiple variables on one line}
             NextToken;
             variable := nil;
-            Declarator(typeSpec, variable, variableSpace, doingPrototypes);
+            Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
             if variable = nil then begin
                if token.kind = semicolonch then
                   NextToken
@@ -4041,7 +4032,7 @@ else {if not isFunction then} begin
    if doingPrototypes then begin
       protoVariable := variable;        {make the var available to Declarator}
       if protoVariable = nil then
-         protoType := typeSpec
+         protoType := declSpecifiers.typeSpec
       else
          protoType := protoVariable^.iType;
       end {if}
@@ -4063,16 +4054,15 @@ inhibitHeader := false;
 end; {DoDeclaration}
 
 
-procedure TypeName;
+function TypeName{: typePtr};
 
 { process a type name (used for casts and sizeof/_Alignof)      }
 {                                                               }
-{ outputs:                                                      }
-{         typeSpec - pointer to the type                        }
+{ returns: a pointer to the type                                }
 
 var
    tl,tp: typePtr;                      {for creating/reversing the type list}
-   isPascal: boolean;                   {is the type "pascal" qualified?}
+   declSpecifiers: declSpecifiersRecord; {type & specifiers for the type name}
 
 
    procedure AbstractDeclarator;
@@ -4097,7 +4087,6 @@ var
       var
          pcount: integer;               {paren counter}
          tp: typePtr;                   {work pointer}
-         ltypeSpec: typePtr;            {copy of type specifier}
 
       begin {NonEmptyAbstractDeclarator}
       if token.kind = lparench then begin
@@ -4167,9 +4156,7 @@ var
          if token.kind = rbrackch then
             expressionValue := 0
          else begin
-            ltypeSpec := typeSpec;
             Expression(arrayExpression, [rbrackch]);
-            typeSpec := ltypeSpec;
             if expressionValue <= 0 then begin
                Error(45);
                expressionValue := 1;
@@ -4221,12 +4208,11 @@ var
 
 begin {TypeName}
 {read and process the type specifier}
-DeclarationSpecifiers(specifierQualifierListElement, rparench);
-isPascal := pascalsy in declarationModifiers;
+DeclarationSpecifiers(declSpecifiers, specifierQualifierListElement, rparench);
 
 {_Alignas is not allowed in most uses of type names.            }
 {TODO: _Alignas should be allowed in compound literals.         }
-if _Alignassy in declarationModifiers then
+if _Alignassy in declSpecifiers.declarationModifiers then
    Error(142);
 
 {handle the abstract-declarator part}
@@ -4234,14 +4220,15 @@ tl := nil;                              {no types so far}
 AbstractDeclarator;                     {create the type list}
 while tl <> nil do begin                {reverse the list & compute array sizes}
    tp := tl^.aType;                     {NOTE: assumes aType, pType and fType overlap in typeRecord}
-   tl^.aType := typeSpec;
+   tl^.aType := declSpecifiers.typeSpec;
    if tl^.kind = arrayType then
-      tl^.size := tl^.elements * typeSpec^.size;
-   typeSpec := tl;
+      tl^.size := tl^.elements * declSpecifiers.typeSpec^.size;
+   declSpecifiers.typeSpec := tl;
    tl := tp;
    end; {while}
-if isPascal then
-   typeSpec := MakePascalType(typeSpec);
+if pascalsy in declSpecifiers.declarationModifiers then
+   declSpecifiers.typeSpec := MakePascalType(declSpecifiers.typeSpec);
+TypeName := declSpecifiers.typeSpec;
 end; {TypeName}
 
 

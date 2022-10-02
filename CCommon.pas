@@ -515,10 +515,6 @@ var
    isConstant: boolean;                 {is the initializer expression constant?}
    expressionIsLongLong: boolean;       {is the last constant expression long long?}
 
-                                        {type specifier results}
-                                        {----------------------}
-   typeSpec: typePtr;                   {type specifier}
-
                                         {flags}
                                         {-----}
    codegenStarted: boolean;             {have we started the code generator?}
