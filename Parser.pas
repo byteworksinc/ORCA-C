@@ -188,8 +188,6 @@ var
    isForwardDeclared: boolean;          {is the field list component           }
                                         { referencing a forward struct/union?  }
    isFunction: boolean;                 {is the declaration a function?}
-   isPascal: boolean;                   {has the pascal modifier been used?}
-                                        { (set by DoDeclaration)}
    returnLabel: integer;                {label for exit point}
    skipDeclarator: boolean;             {for enum,struct,union with no declarator}
    statementList: statementPtr;         {list of open statements}
@@ -1328,7 +1326,6 @@ var
                                         { across recursive calls          }
                                         {---------------------------------}
       lisFunction: boolean;             {local copy of isFunction}
-      lisPascal: boolean;               {local copy of isPascal}
       lLastParameter: identPtr;         {next parameter to process}
       luseGlobalPool: boolean;          {local copy of useGlobalPool}
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
@@ -1433,7 +1430,6 @@ var
 
       {handle function declarations}
       if token.kind = lparench then begin
-         lisPascal := isPascal;         {preserve this flag}
 	 PushTable;			{create a symbol table}
                                         {determine if it's a function}
          isFunction := lastWasIdentifier or isFunction;
@@ -1573,7 +1569,6 @@ var
             if not tPtr2^.prototyped then
                Error(105);
          Match(rparench,12);            {insist on a closing ')' token}
-         isPascal := lisPascal;         {restore this flag}
          end {if}
 
       {handle array declarations}
@@ -1746,7 +1741,7 @@ else if doingParameters then
 
 if tPtr^.kind = functionType then begin {declare the identifier}
    if variable <> nil then begin
-      if isPascal then begin
+      if pascalsy in declSpecifiers.declarationModifiers then begin
          {reverse the parameter list}
          p2 := tptr^.parameterList;
          p1 := nil;
@@ -1800,7 +1795,7 @@ if tPtr^.kind = functionType then begin {declare the identifier}
          else
             Error(42);
 1:
-      if isPascal then begin
+      if pascalsy in declSpecifiers.declarationModifiers then begin
          {reverse the parameter list}
          p2 := tptr^.parameterList;
          p1 := nil;
@@ -3413,9 +3408,9 @@ var
    isAsm: boolean;                      {has the asm modifier been used?}
    isInline: boolean;                   {has the inline specifier been used?}
    isNoreturn: boolean;                 {has the _Noreturn specifier been used?}
+   isPascal: boolean;                   {has the pascal modifier been used?}
    alignmentSpecified: boolean;         {was an alignment explicitly specified?}
    lDoingParameters: boolean;           {local copy of doingParameters}
-   lisPascal: boolean;                  {local copy of isPascal}
    lp,tlp,tlp2: identPtr;               {for tracing parameter list}
    lUseGlobalPool: boolean;             {local copy of useGlobalPool}
    nextPdisp: integer;                  {for calculating parameter disps}
@@ -3660,7 +3655,6 @@ isAsm := asmsy in declSpecifiers.declarationModifiers;
 isInline := inlinesy in declSpecifiers.declarationModifiers;
 isNoreturn := _Noreturnsy in declSpecifiers.declarationModifiers;
 alignmentSpecified := _Alignassy in declSpecifiers.declarationModifiers;
-lisPascal := isPascal;
 if not skipDeclarator then begin
    variable := nil;
    Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
@@ -3675,7 +3669,6 @@ if not skipDeclarator then begin
       goto 1;
       end; {if}
    end; {if}
-isPascal := lisPascal;
 
 {make sure variables have some type info}
 if isFunction then begin
