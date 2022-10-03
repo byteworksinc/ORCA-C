@@ -3397,7 +3397,7 @@ procedure DoDeclaration {doingPrototypes: boolean};
 { process a variable or function declaration                    }
 {                                                               }
 { parameters:                                                   }
-{       doingPrototypes - are we processing a parameter list?   }
+{       doingPrototypes - is this a prototype parameter decl?   }
 
 label 1,2,3,4;
 
