@@ -3265,7 +3265,9 @@ while token.kind in allowedTokens do begin
             NextToken;                  {skip the structure name}
             if structPtr = nil then begin {if the name hasn't been defined then...}
                if token.kind <> lbracech then
-                  structPtr := FindSymbol(ttoken, tagSpace, false, true);
+                  if (token.kind <> semicolonch) or 
+                     (myDeclarationModifiers <> []) then
+                     structPtr := FindSymbol(ttoken, tagSpace, false, true);
                if structPtr <> nil then
                   structTypePtr := structPtr^.itype
                else begin
