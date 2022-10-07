@@ -759,6 +759,7 @@ if list or (numErr <> 0) then begin
         173: msg := @'''#'' must be followed by a macro parameter';
         174: msg := @'''__VA_ARGS__'' may only be used in a variadic macro';
         175: msg := @'duplicate macro parameter name';
+        176: msg := @'declarator expected';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

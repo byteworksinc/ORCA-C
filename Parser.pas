@@ -196,6 +196,7 @@ var
    compoundLiteralNumber: integer;      {number of compound literal}
    compoundLiteralToAllocate: identPtr; {compound literal that needs space allocated}
    vaInfoLLN: integer;                  {label number of internal va info (0 for none)}
+   declaredTagOrEnumConst: boolean;     {was a tag or enum const declared?}
 
                                         {parameter processing variables}
                                         {------------------------------}
@@ -2755,6 +2756,8 @@ procedure DeclarationSpecifiers (var declSpecifiers: declSpecifiersRecord;
 {               referencing a forward struct/union?             }
 {       skipDeclarator - for enum,struct,union with no          }
 {               declarator                                      }
+{       declaredTagOrEnumConst - set if a tag or an enum const  }
+{               is declared (otherwise unchanged)               }
 
 label 1,2,3;
 
@@ -3178,9 +3181,16 @@ while token.kind in allowedTokens do begin
                end {if}
             else
                if (variable <> nil) and (variable^.itype^.kind = enumType) then
-                  goto 1
-               else if not looseTypeChecks then
-                  Error(171);
+                  begin
+                  if looseTypeChecks then
+                     declaredTagOrEnumConst := true;
+                  goto 1;
+                  end {if}
+               else begin
+                  declaredTagOrEnumConst := true;
+                  if not looseTypeChecks then
+                     Error(171);
+                  end; {else}
             tPtr := pointer(Malloc(sizeof(typeRecord)));
             tPtr^.size := cgWordSize;
             tPtr^.saveDisp := 0;
@@ -3193,6 +3203,7 @@ while token.kind in allowedTokens do begin
             Error(9);
          enumVal := 0;                  {set the default value}
          if token.kind = lbracech then begin
+            declaredTagOrEnumConst := true;
             NextToken;                  {skip the '{'}
             repeat                      {declare the enum constants}
                tPtr := pointer(Malloc(sizeof(typeRecord)));
@@ -3263,6 +3274,10 @@ while token.kind in allowedTokens do begin
             structPtr := FindSymbol(token, tagSpace, true, true);
             ttoken := token;            {record the structure name}
             NextToken;                  {skip the structure name}
+            if (token.kind = lbracech) or
+               ((token.kind = semicolonch) and (myDeclarationModifiers = []))
+               then
+               declaredTagOrEnumConst := true;
             if structPtr = nil then begin {if the name hasn't been defined then...}
                if token.kind <> lbracech then
                   if (token.kind <> semicolonch) or 
@@ -3289,19 +3304,23 @@ while token.kind in allowedTokens do begin
                   structPtr := NewSymbol(ttoken.name, structTypePtr, ident,
                      tagSpace, defined);
                   structTypePtr^.sName := structPtr^.name;
+                  declaredTagOrEnumConst := true;
                   end;
                end {if}
                                         {the name has been defined, so...}
             else if structPtr^.itype^.kind <> tKind then begin
                Error(42);               {it's an error if it's not a struct}
+               declaredTagOrEnumConst := true; {avoid extra errors}
                structPtr := nil;
                end {else}
             else begin                  {record the existing structure type}
                structTypePtr := structPtr^.itype;
                end; {else}
             end {if}
-         else if token.kind <> lbracech then
+         else if token.kind <> lbracech then begin
             Error(9);                   {its an error if there's no name or struct}
+            declaredTagOrEnumConst := true; {avoid extra errors}
+            end; {else if}
 2:       if token.kind = lbracech then  {handle a structure definition...}
             begin                       {error if we already have one!}
             if (structTypePtr <> defaultStruct)
@@ -3651,12 +3670,17 @@ inhibitHeader := true;			{block imbedded includes in headers}
 lUseGlobalPool := useGlobalPool;
                                         {handle a TypeSpecifier/declarator}
 typeFound := token.kind in declarationSpecifiersElement;
+declaredTagOrEnumConst := false;
 DeclarationSpecifiers(declSpecifiers, declarationSpecifiersElement, ident);
 isPascal := pascalsy in declSpecifiers.declarationModifiers;
 isAsm := asmsy in declSpecifiers.declarationModifiers;
 isInline := inlinesy in declSpecifiers.declarationModifiers;
 isNoreturn := _Noreturnsy in declSpecifiers.declarationModifiers;
 alignmentSpecified := _Alignassy in declSpecifiers.declarationModifiers;
+if token.kind = semicolonch then
+   if not doingPrototypes then
+      if not declaredTagOrEnumConst then
+         Error(176);
 if not skipDeclarator then begin
    variable := nil;
    Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
