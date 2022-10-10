@@ -1500,13 +1500,18 @@ var
                         end; {if}
                      if token.kind = commach then begin
                         NextToken;
-                        if token.kind = dotch then begin
+                        if token.kind = dotdotdotsy then begin
+                           NextToken;
+                           varargs := true;
+                           done2 := true;
+                           end {if}
+                        else if token.kind = dotch then begin
                            NextToken;
                            Match(dotch,89);
                            Match(dotch,89);
                            varargs := true;
                            done2 := true;
-                           end; {if}
+                           end; {else if}
                         end {if}
                      else
                         done2 := true;

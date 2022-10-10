@@ -195,7 +195,7 @@ type
                lteqop,gteqop,eqeqop,exceqop,andandop,
                barbarop,pluseqop,minuseqop,asteriskeqop,slasheqop,
                percenteqop,ltlteqop,gtgteqop,andeqop,caroteqop,
-               bareqop,poundpoundop,
+               bareqop,poundpoundop,dotdotdotsy,
                eolsy,eofsy,             {control characters}
                typedef,                 {user types}
                uminus,uand,uasterisk,   {converted operations}

@@ -1039,6 +1039,8 @@ case token.kind of
                      else
                         write('%:%:');
 
+   dotdotdotsy:      write('...');
+
    macroParm:        write('$', token.pnum:1);
 
    parameteroper,
@@ -2583,17 +2585,21 @@ var
                   done := false;
                   end; {if}
                end {if}
-            else if token.kind = dotch then begin
-               NextToken;
-               if token.kind = dotch then begin
-                  NextToken;                  
-                  if token.kind = dotch then
-                     NextToken
+            else if token.kind in [dotch,dotdotdotsy] then begin
+               if token.kind = dotdotdotsy then
+                  NextToken
+               else begin
+                  NextToken;
+                  if token.kind = dotch then begin
+                     NextToken;                  
+                     if token.kind = dotch then
+                        NextToken
+                     else
+                        Error(89);
+                     end
                   else
                      Error(89);
-                  end
-               else
-                  Error(89);
+                  end; {else}
                new(np);
                np^.next := nil;
                np^.str := '__VA_ARGS__';
@@ -5229,7 +5235,13 @@ case charKinds[ord(ch)] of
          DoNumber(false)
       else begin
          NextCh;
-         token.kind := dotch;
+         if (ch = '.') and (chPtr <> eofPtr) and (chr(chPtr^) = '.') then begin
+            token.kind := dotdotdotsy;
+            NextCh;
+            NextCh;
+            end {if}
+         else
+            token.kind := dotch;
          end; {else}
       end;
 
