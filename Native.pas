@@ -293,7 +293,7 @@ else begin
       end; {if}
    if shift <> 0 then begin
       Out(129);                         {shift the address}
-      Out2(-shift); Out2(-1);
+      Out2(-shift); if (shift > 0) then Out2(-1) else Out2(0);
       Out(7);
       end; {if}
    if lab <> maxlabel then              {if not a string, end the expression}
@@ -456,6 +456,26 @@ var
    Out(ord('N'));                       {type attribute: other directive}
    Out(private);                        {private or global?}
    end; {DefGlobal}
+
+
+   function ShiftSize (flags: integer): integer;
+
+   { Determine the shift size specified by flags.               }
+   { (Positive means right shift, negative means left shift.)   }
+   {                                                            }
+   { parameters:                                                }
+   {    flags - the flags                                       }
+
+   begin {ShiftSize}
+   if (flags & shift8) <> 0 then
+      ShiftSize := 8
+   else if (flags & shift16) <> 0 then
+      ShiftSize := 16
+   else if (flags & shiftLeft8) <> 0 then
+      ShiftSize := -8
+   else
+      ShiftSize := 0;
+   end; {ShiftSize}
 
 
 begin {WriteNative}
@@ -732,7 +752,7 @@ case mode of
          else
             LabelSearch(operand, 1, 16, 0)
       else if (flags & subtract1) <> 0 then
-         LabelSearch(operand, 0, 0, 0)
+         LabelSearch(operand, 0, ShiftSize(flags), 0)
       else
          LabelSearch(operand, 2, 0, 0);
       end;

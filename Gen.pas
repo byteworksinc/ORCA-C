@@ -5502,41 +5502,42 @@ procedure GenTree {op: icptr};
    GenTree(op^.left);
 
    {get the address to call}
-   gLong.preference := onStack;
+   gLong.preference := A_X;
    GenTree(op^.right);
-   gLong := lLong;
-   gQuad := lQuad;
-   
-   {For functions returning cg(U)Quad, x = address to store result in}
-   if op^.optype in [cgQuad,cgUQuad] then 
-      if gQuad.preference = localAddress then begin
-         GenImplied(m_tdc);
-         GenImplied(m_clc);
-         GenNative(m_adc_imm, immediate, gQuad.disp, nil, 0);
-         GenImplied(m_tax);
-         end {if}
-      else begin
-         GenImplied(m_tsc);
-         GenImplied(m_clc);
-         GenNative(m_adc_imm, immediate, argsSize+extraStackSize+4+1, nil, 0);
-         GenImplied(m_tax);
-         end; {else}
 
    {create a return label}
    lab1 := GenLabel;
 
    {place the call/return addrs on stack}
-   GenNative(m_lda_s, direct, 1, nil, 0);
-   GenImplied(m_dea);
+   if gLong.where = A_X then begin
+      GenImplied(m_tay);
+      GenImplied(m_txa);
+      end {if}
+   else {if gLong.where = onStack then} begin
+      GenImplied(m_ply);
+      GenImplied(m_pla);
+      end; {else}
+   GenNative(m_and_imm, immediate, $00ff, nil, 0);
+   GenNative(m_ora_imm, genAddress, lab1, nil, subtract1+shiftLeft8);
+   GenNative(m_pea, genAddress, lab1, nil, subtract1+shift8);
    GenImplied(m_pha);
-   GenNative(m_sep, immediate, 32, nil, 0);
-   GenNative(m_lda_s, direct, 5, nil, 0);
-   GenNative(m_sta_s, direct, 3, nil, 0);
-   GenNative(m_lda_imm, genAddress, lab1, nil, shift16);
-   GenNative(m_sta_s, direct, 6, nil, 0);
-   GenNative(m_rep, immediate, 32, nil, 0);
-   GenNative(m_lda_imm, genAddress, lab1, nil, subtract1);
-   GenNative(m_sta_s, direct, 4, nil, 0);
+   GenImplied(m_dey);
+   GenImplied(m_phy);
+
+   {For functions returning cg(U)Quad, x = address to store result in}
+   if op^.optype in [cgQuad,cgUQuad] then 
+      if lQuad.preference = localAddress then begin
+         GenImplied(m_tdc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, lQuad.disp, nil, 0);
+         GenImplied(m_tax);
+         end {if}
+      else begin
+         GenImplied(m_tsc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, argsSize+extraStackSize+6+1, nil, 0);
+         GenImplied(m_tax);
+         end; {else}
 
    {indirect call}
    GenImplied(m_rtl);
@@ -5569,6 +5570,8 @@ procedure GenTree {op: icptr};
       end; {else}
 
    {save the returned value}
+   gLong := lLong;
+   gQuad := lQuad;
    gLong.where := A_X;
    if gQuad.preference = localAddress then
       gQuad.where := localAddress

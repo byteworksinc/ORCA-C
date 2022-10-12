@@ -37,8 +37,8 @@ const
                                         {65816 native code generation}
                                         {----------------------------}
                                         {instruction modifier flags}
-   shift8                 =      1;     {shift operand left 8 bits}
-   shift16                =      2;     {shift operand left 16 bits}
+   shift8                 =      1;     {shift operand right 8 bits}
+   shift16                =      2;     {shift operand right 16 bits}
    toolCall               =      4;     {generate a tool call}
    stringReference        =      8;     {generate a string reference}
    isPrivate              =     32;     {is the label private?}
@@ -46,6 +46,7 @@ const
    localLab               =    128;     {the operand is a local lab}
    forFlags               =    256;     {instruction used for effect on flags only}
    subtract1              =    512;     {subtract 1 from address operand}
+   shiftLeft8             =   1024;     {shift operand left 8 bits}
 
    m_adc_abs              =    $6D;     {op code #s for 65816 instructions}
    m_adc_dir              =    $65;
