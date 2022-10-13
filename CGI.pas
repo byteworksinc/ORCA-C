@@ -205,8 +205,11 @@ const
    d_wrd                  =    261;
    d_sym                  =    262;
    d_cns                  =    263;
+   d_dcb                  =    264;
+   d_dcw                  =    265;
+   d_dcl                  =    266;
 
-   max_opcode             =    263;
+   max_opcode             =    266;
    
    asmFlag                =  $8000;     {or'd with opcode to indicate asm code}
 

@@ -568,13 +568,18 @@ while not (token.kind in [rbracech,eofsy]) do begin
    {handle data declarations}
    else if opc <= o_dcl then begin
       Exp([semicolonch], true);
-      code^.s := d_add;
-      if opc = o_dcb then
-         code^.r := ord(direct)
-      else if opc = o_dcw then
-         code^.r := ord(absolute)
-      else
+      if opc = o_dcb then begin
+         code^.s := d_dcb;
+         code^.r := ord(direct);
+         end {if}
+      else if opc = o_dcw then begin
+         code^.s := d_dcw;
+         code^.r := ord(absolute);
+         end {else if}
+      else begin
+         code^.s := d_dcl;
          code^.r := ord(longabsolute);
+         end; {else}
       end {if opc <= o_dcl}
 
    {handle the brk instruction}

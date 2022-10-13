@@ -545,7 +545,7 @@ case mode of
       end;
 
    longabsolute: begin
-      if opcode <> d_add then begin
+      if opcode <> d_dcl then begin
          CnOut(opcode);
          i := 3;
          end {if}
@@ -556,7 +556,7 @@ case mode of
       else if (flags & constantOpnd) <> 0 then begin
          lval := ord4(name);
          CnOut2(long(lval).lsw);
-         if opcode = d_add then
+         if opcode = d_dcl then
             CnOut2(long(lval).msw)
          else
             CnOut(long(lval).msw);
@@ -566,13 +566,13 @@ case mode of
       else begin
          CnOut2(operand);
          CnOut(0);
-         if opcode = d_add then
+         if opcode = d_dcl then
             CnOut(0);
          end; {else}
       end;
 
    absolute: begin
-      if opcode <> d_add then
+      if opcode <> d_dcw then
          CnOut(opcode);
       if (flags & localLab) <> 0 then
          LabelSearch(long(name).lsw, 2, 0, operand)
@@ -585,7 +585,7 @@ case mode of
       end;
 
    direct: begin
-      if opcode <> d_add then
+      if opcode <> d_dcb then
          CnOut(opcode);
       if (flags & localLab) <> 0 then
          LabelSearch(long(name).lsw, 1, 0, operand)
