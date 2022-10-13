@@ -604,7 +604,7 @@ var
                      if lab^ = op^.lab^ then
                         same := true;
             end {if}
-         else {if op^.opcode = pc_str then}
+         else if op^.opcode = pc_str then
             if opcode = pc_lod then
                if q = op^.q then
                   if r = op^.r then
@@ -751,11 +751,13 @@ case op^.opcode of			{check for optimizations of this node}
                op^.opcode := pc_inc;
                op^.q := q;
                op^.right := nil;
+               PeepHoleOptimization(opv);
                end {else if}
             else {if q < 0 then} begin
                op^.opcode := pc_dec;
                op^.q := -q;
                op^.right := nil;
+               PeepHoleOptimization(opv);
                end; {else if}
             end {if}
          else if CodesMatch(op^.left, op^.right, false) then begin
@@ -820,6 +822,7 @@ case op^.opcode of			{check for optimizations of this node}
                op^.q := ord(lval);
                op^.right := nil;
                done := true;
+               PeepHoleOptimization(opv);
                end {else if}
             else if (lval > -maxint) and (lval < 0) then begin
                op^.opcode := pc_dec;
@@ -827,6 +830,7 @@ case op^.opcode of			{check for optimizations of this node}
                op^.q := -ord(lval); 
                op^.right := nil;
                done := true;
+               PeepHoleOptimization(opv);
                end; {else if}
             end {if}
          else if CodesMatch(op^.left, op^.right, false) then
@@ -1751,8 +1755,10 @@ case op^.opcode of			{check for optimizations of this node}
                   opv := op^.right;
                   end; {if}
                end {if}
-            else
+            else begin
                op^.opcode := pc_neq;
+               PeepHoleOptimization(opv);
+               end; {else}
             end {if}
          end {if}
       else if op^.left^.opcode = pc_ldc then
@@ -1837,8 +1843,14 @@ case op^.opcode of			{check for optimizations of this node}
                and (op^.right^.qval.lo = 0) and (op^.right^.qval.hi = 0)) then
             begin
             case op^.opcode of
-               pc_leq: op^.opcode := pc_equ;
-               pc_grt: op^.opcode := pc_neq;
+               pc_leq: begin
+                       op^.opcode := pc_equ;
+                       PeepHoleOptimization(opv);
+                       end;
+               pc_grt: begin
+                       op^.opcode := pc_neq;
+                       PeepHoleOptimization(opv);
+                       end;
                pc_les: if not SideEffects(op^.left) then begin
                           op^.right^.optype := cgWord;
                           op^.right^.q := 0;
@@ -1916,6 +1928,7 @@ case op^.opcode of			{check for optimizations of this node}
             else begin
                op^.opcode := pc_neq;
                op^.optype := cgLong;
+               PeepHoleOptimization(opv);
                end; {else}
             end; {if}
          end {if}
@@ -2283,11 +2296,13 @@ case op^.opcode of			{check for optimizations of this node}
             op^.opcode := pc_dec;
             op^.q := q;
             op^.right := nil;
+            PeepHoleOptimization(opv);
             end {else if}
          else {if q < 0) then} begin
             op^.opcode := pc_inc;
             op^.q := -q;
             op^.right := nil;
+            PeepHoleOptimization(opv);
             end; {else if}
          end {if}
       else if op^.left^.opcode in [pc_inc,pc_dec] then
@@ -2338,12 +2353,14 @@ case op^.opcode of			{check for optimizations of this node}
             op^.q := ord(lval);
             op^.right := nil;
             op^.optype := cgLong;
+            PeepHoleOptimization(opv);
             end {else if}
          else if (lval > -maxint) and (lval < 0) then begin
             op^.opcode := pc_inc;
             op^.q := -ord(lval);
             op^.right := nil;
             op^.optype := cgLong;
+            PeepHoleOptimization(opv);
             end; {else if}       
          end; {if}
       end; {case pc_sbl}
@@ -2462,22 +2479,23 @@ case op^.opcode of			{check for optimizations of this node}
       end; {case pc_sro, pc_str}
 
    pc_sto: begin			{pc_sto}
-      if op^.optype in [cgReal,cgDouble,cgExtended,cgComp] then
-         RealStoreOptimizations(op, op^.right);
+      op2 := op^.right;
       if op^.left^.opcode = pc_lao then begin
          op^.q := op^.left^.q;
          op^.lab := op^.left^.lab;
          op^.opcode := pc_sro;
-         op^.left := op^.right;
+         op^.left := op2;
          op^.right := nil;
          end {if}
       else if op^.left^.opcode = pc_lda then begin
          op^.q := op^.left^.q;
          op^.r := op^.left^.r;
          op^.opcode := pc_str;
-         op^.left := op^.right;
+         op^.left := op2;
          op^.right := nil;
          end; {if}
+      if op^.optype in [cgReal,cgDouble,cgExtended,cgComp] then
+         RealStoreOptimizations(op, op2);
       end; {case pc_sto}
 
    pc_sqr: begin			{pc_sqr}
