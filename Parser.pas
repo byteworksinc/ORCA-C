@@ -3625,33 +3625,19 @@ var
 
    var
       braceCount: integer;              {# of unmatched { chars}
-      doingAsm: boolean;                {compiling an asm statement?}
 
    begin {SkipFunction}
    Match(lbracech,27);                  {skip to the closing rbrackch}
    braceCount := 1;
-   doingAsm := false;
-   if isAsm then
-      charKinds[ord('#')] := ch_pound;
    while (not (token.kind = eofsy)) and (braceCount <> 0) do begin
-      if token.kind = asmsy then begin
-         doingAsm := true;
-         charKinds[ord('#')] := ch_pound;
-         end {if}
-      else if token.kind = lbracech then
+      if token.kind = lbracech then
          braceCount := braceCount+1
-      else if token.kind = rbracech then begin
+      else if token.kind = rbracech then
          braceCount := braceCount-1;
-         if doingAsm then begin
-            doingAsm := false;
-            charKinds[ord('#')] := illegal;
-            end; {if}
-         end; {else if}
       NextToken;
       end; {while}
    nameFound := false;                  {no pc_nam for the next function (yet)}
    doingFunction := false;              {no longer doing a function}
-   charKinds[ord('#')] := illegal;      {# is a preprocessor command}
    end; {SkipFunction}
 
 

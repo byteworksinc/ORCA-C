@@ -166,10 +166,8 @@ var
    { An error was found: skip to the end & quit                 }
 
    begin {Skip}
-   charKinds[ord('#')] := ch_pound;
    while not (token.kind in [rbracech,eofsy]) do
       NextToken;
-   charKinds[ord('#')] := illegal;
    goto 99;
    end; {Skip}
 
@@ -329,7 +327,6 @@ while not (token.kind in [rbracech,eofsy]) do begin
 
    {find the label and op-code}
    CheckForComment;
-   charKinds[ord('#')] := ch_pound;     {allow # as a token}
    if token.kind <> ident then begin    {error if not an identifier}
       Error(9);
       Skip;
@@ -345,7 +342,6 @@ while not (token.kind in [rbracech,eofsy]) do begin
       opname := token;
       NextToken;
       end; {while}
-   charKinds[ord('#')] := illegal;      {don't allow # as a token}
 
    {identify the op-code}
    if length(opname.name^) = 3 then begin

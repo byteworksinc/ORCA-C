@@ -2545,7 +2545,6 @@ var
       mPtr^.saved := false;		{not saved in symbol file}
       mPtr^.tokens := nil;              {no tokens yet}
       mPtr^.isVarargs := false;         {not varargs (yet)}
-      charKinds[ord('#')] := ch_pound;  {allow # as a token}
       if ch = '(' then begin            {scan the parameter list...}
          NextToken;                     {done with the name token...}
          NextToken;                     {skip the opening '('}
@@ -2750,7 +2749,6 @@ var
       parameterList := np^.next;
       dispose(np);
       end; {while}
-   charKinds[ord('#')] := illegal;      {don't allow # as a token}
    saveNumber := false;                 {stop saving numeric strings}
    end; {DoDefine}
 
@@ -3480,7 +3478,6 @@ else if charKinds[ord(ch)] = ch_eol     {allow null commands}
 if not tSkipping then
    Error(8);                            {bad preprocessor command}
 2:
-charKinds[ord('#')] := ch_pound;        {allow # as a token}
 expandMacros := false;                  {skip to the end of the line}
 flagOverflows := false;
 skipping := tSkipping;
@@ -3488,7 +3485,6 @@ while not (token.kind in [eolsy,eofsy]) do
    NextToken;
 flagOverflows := true;
 expandMacros := true;
-charKinds[ord('#')] := illegal;         {don't allow # as a token}
 reportEOL := lReportEOL;                {restore flags}
 suppressMacroExpansions := lSuppressMacroExpansions;
 skipping := tskipping;
@@ -4243,7 +4239,6 @@ new(macros);                            {no preprocessor macros so far}
 for i := 0 to hashSize do
    macros^[i] := nil;
 pathList := nil;			{no additional search paths}
-charKinds[ord('#')] := illegal;         {don't allow # as a token}
 tokenList := nil;                       {nothing in putback buffer}
 saveNumber := false;                    {don't save numbers}
 expandMacros := true;                   {enable macro expansion}
@@ -4619,7 +4614,7 @@ procedure NextToken;
 
 { Read the next token from the file.                            }
 
-label 1,2,3,4,5,6;
+label 1,2,3,4,5,6,7;
 
 type
    three = (s100,s1000,sMAX);           {these declarations are used for a}
@@ -4974,21 +4969,14 @@ if tokenList <> nil then begin          {get a token put back by a macro}
    goto 2;
    end; {if}
 5:                                      {skip white space}
-while charKinds[ord(ch)] in [illegal,ch_white,ch_eol] do begin
-   if charKinds[ord(ch)] = illegal then begin
-      if (ch = '#') and (lastWasReturn or (token.kind = eolsy)) then begin
+while charKinds[ord(ch)] in [illegal,ch_white,ch_eol,ch_pound] do begin
+   if charKinds[ord(ch)] = ch_pound then begin
+      if lastWasReturn or (token.kind = eolsy) then begin
          NextCh;                        {skip the '#' char}
          PreProcess                     {call the preprocessor}
          end {if}
-      else begin
-         tokenLine := lineNumber;       {record a # token}
-         tokenColumn := ord(ord4(chPtr)-ord4(firstPtr));
-         tokenStart := pointer(ord4(chPtr)-1);
-         tokenEnd := chPtr;
-         if (not skipping) or (not (skipIllegalTokens or (ch = '#'))) then
-            Error(1);
-         NextCh;
-         end; {else}
+      else
+         goto 7;
       end {if}
    else if (charKinds[ord(ch)] = ch_eol) and reportEOL then begin
       token.class := reservedSymbol;    {record an eol token}
@@ -5000,6 +4988,16 @@ while charKinds[ord(ch)] in [illegal,ch_white,ch_eol] do begin
       NextCh;
       goto 2;
       end {if}
+   else if charKinds[ord(ch)] = illegal then begin
+      tokenLine := lineNumber;          {record an illegal token}
+      tokenColumn := ord(ord4(chPtr)-ord4(firstPtr));
+      tokenStart := pointer(ord4(chPtr)-1);
+      tokenEnd := chPtr;
+      token.kind := questionch;         {make sure it is not eolsy}
+      if (not skipping) or (not skipIllegalTokens) then
+         Error(1);
+      NextCh;
+      end {else if}
    else begin                           {skip white space}
       if printMacroExpansions and not suppressMacroExpansions then
          if charKinds[ord(ch)] = ch_eol then begin
@@ -5011,6 +5009,7 @@ while charKinds[ord(ch)] in [illegal,ch_white,ch_eol] do begin
       NextCh;
       end;
    end; {while}
+7:
 tokenLine := lineNumber;                {record the position of the token}
 tokenColumn := ord(ord4(currentChPtr)-ord4(firstPtr)+1);
 tokenStart := currentChPtr;
@@ -5183,8 +5182,6 @@ case charKinds[ord(ch)] of
          token.isDigraph := true;
          if (ch = '%') and (chPtr <> eofPtr) and (chr(chPtr^) = ':') then begin
             token.kind := poundpoundop; {%:%: digraph}
-            if charKinds[ord('#')] = illegal then
-               Error(1);
             NextCh;
             NextCh;
             end

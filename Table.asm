@@ -57,7 +57,7 @@ charKinds start                         character set
          dc    i'ch_white'              space
          dc    i'ch_exc'                !
          dc    i'ch_string'             "
-         dc    i'illegal'               #
+         dc    i'ch_pound'              #
          dc    i'illegal'               $
          dc    i'ch_percent'            %
          dc    i'ch_and'                &
