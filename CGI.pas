@@ -207,6 +207,8 @@ const
    d_cns                  =    263;
 
    max_opcode             =    263;
+   
+   asmFlag                =  $8000;     {or'd with opcode to indicate asm code}
 
                                         {Code Generation}
                                         {---------------}

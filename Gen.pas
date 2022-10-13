@@ -6725,30 +6725,34 @@ procedure GenTree {op: icptr};
       mode: addressingmode;		{work var for addressing mode}
       pval: longint;			{temp pointer}
       val: longint;			{constant operand}
+      opcode: integer;			{opcode}
 
    begin {GenNat}
    val := op^.opnd;
    flags := op^.q;
    pval := op^.llab;
    mode := addressingMode(op^.r);
+   opcode := op^.s;
+   if opcode < 256 then
+      opcode := opcode | asmFlag;
    if op^.slab <> 0 then
       val := val+LabelToDisp(op^.slab);
    if mode in [relative,longrelative] then
-      GenNative(op^.s, mode, op^.llab, op^.lab, op^.q)
+      GenNative(opcode, mode, op^.llab, op^.lab, op^.q)
    else if (mode = longabsolute) and (op^.llab <> 0) then
-      GenNative(op^.s, mode, long(val).lsw, pointer(pval),
+      GenNative(opcode, mode, long(val).lsw, pointer(pval),
          flags | localLab)
    else if (mode = longabsolute) and (op^.llab = 0)
       and (op^.lab = nil) then
-      GenNative(op^.s, mode, 0, pointer(val), flags | constantOpnd)
+      GenNative(opcode, mode, 0, pointer(val), flags | constantOpnd)
    else begin
       if (mode = absolute) and (op^.llab = 0) then
          flags := flags | constantOpnd;
       if op^.llab <> 0 then
-         GenNative(op^.s, mode, long(val).lsw, pointer(pval),
+         GenNative(opcode, mode, long(val).lsw, pointer(pval),
             flags | localLab)
       else
-         GenNative(op^.s, mode, long(val).lsw, op^.lab, flags);
+         GenNative(opcode, mode, long(val).lsw, op^.lab, flags);
       end; {else}
    end; {GenNat}
 

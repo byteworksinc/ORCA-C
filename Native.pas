@@ -494,6 +494,7 @@ case mode of
             if not longA then
                if operand = 255 then
                   goto 1;
+         opcode := opcode & ~asmFlag;
          CnOut(opcode);
          if opcode = m_pea then
             GenImmediate2
@@ -525,7 +526,7 @@ case mode of
 
    longabs: begin
       CnOut(opcode);
-      isJSL := opcode = m_jsl;          {allow for dynamic segs}
+      isJSL := (opcode & ~asmFlag) = m_jsl;     {allow for dynamic segs}
       if name = nil then
          if odd(flags div toolcall) then begin
             CnOut2(0);
@@ -721,7 +722,7 @@ case mode of
       end;
 
    genAddress: begin
-      if opcode < 256 then
+      if opcode < 256 then              {includes opcodes with asmFlag}
          CnOut(opcode);
       if (flags & stringReference) <> 0 then begin
          Purge;

@@ -87,7 +87,8 @@ lb1      lda   nPeep+peep_opcode,X        if npeep[i].opcode = d_lab then
          inc   fn
          bra   lab1                           goto 1;
 lb2      anop                                 end;
-         lda   nPeep+peep_opcode,X        len := len+size[npeep[i].mode];
+         lda   nPeep+peep_opcode,X        len := len+size[npeep[i].opcode & ~asmFlag];
+         and   #$7FFF
          tay
          lda   size,Y
          and   #$00FF
@@ -123,7 +124,8 @@ lb4      lda   i                        while i < nnextspot do begin
          inc   fn
          bra   lab1                           goto 1;
 lb5      anop                                 end;
-         lda   nPeep+peep_opcode,X        len := len+size[npeep[i].mode];
+         lda   nPeep+peep_opcode,X        len := len+size[npeep[i].opcode & ~asmFlag];
+         and   #$7FFF
          tay
          lda   size,Y
          and   #$00FF
