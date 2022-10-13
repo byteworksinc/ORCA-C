@@ -1,17 +1,20 @@
 /* Conformance Test 4.4.2.1:  Ensure compile accepts missing declarators   */
 
-struct {int   a;                       /* can't use it, but it's legal     */
-        float x;};
+extern struct S;                       /* forward-declared struct type,    */
+                                       /* storage class ignored            */
 
-int ;                                  /* nothing declared, but it's legal */
+struct S {int   a;
+          float x;};
+
+struct S;
 
 static enum E {a, b, c};               /* storage class ignored            */
+extern enum {x, y, z};
 
 main ()
   {
-   struct {double d;
-           short  s;};
-   extended;
+   struct S;                           /* different from the global one    */
+   volatile const register struct T;
    extern union U {int  i;
                    long l;};
 
