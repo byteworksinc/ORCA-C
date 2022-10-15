@@ -85,6 +85,9 @@ typedef struct __file {
 extern FILE *stderr;                    /* standard I/O files */
 extern FILE *stdin;
 extern FILE *stdout;
+#define stderr          stderr
+#define stdin           stdin
+#define stdout          stdout
 
 #define L_tmpnam        26              /* size of a temp name */
 #define TMP_MAX         10000           /* # of unique temp names */
