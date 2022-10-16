@@ -865,11 +865,11 @@ case token.kind of
                      end;
 
    compConst,
-   doubleConst:      write(token.rval:1);
+   doubleConst:      write(token.rval:24);
 
-   floatConst:       write(token.rval:1,'F');
+   floatConst:       write(token.rval:16,'F');
 
-   extendedConst:    write(token.rval:1,'L');
+   extendedConst:    write(token.rval:29,'L');
 
    stringConst:      begin
                      if token.prefix = prefix_u16 then begin
