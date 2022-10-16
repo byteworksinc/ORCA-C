@@ -1288,7 +1288,8 @@ var
       if ip = nil then ip := defaultStruct^.fieldList;
 
       while ip <> nil do begin
-         GenSymbol(ip, none);
+         if ip^.name^ <> '~anonymous' then
+            GenSymbol(ip, none);
          ip := ip^.next;
          end; {while}
       end; {ExpandStructType}
@@ -2116,7 +2117,9 @@ if needSymbol then begin
    else
       p^.next := nil;
    end; {if}
-if class in [autosy,registersy] then    {check and set the storage class}
+if space = fieldListSpace then          {check and set the storage class}
+   p^.storage := none
+else if class in [autosy,registersy] then
    begin
    if doingFunction or doingParameters then begin
       p^.storage := stackFrame;

@@ -373,7 +373,7 @@ type
                      pnext: identPtr);  {next parameter}
         external: ();
         global,private: ();
-        none: ();
+        none: (anonMemberField: boolean); {field from an anonymous struct/union member?}
      end;
 
                                         {mini-assembler}

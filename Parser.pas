@@ -2422,7 +2422,8 @@ var
             while i <> 0 do begin
                ip := tp^.fieldList;
                while ip <> nil do begin
-                  Fill(1, ip^.iType);
+                  if not ip^.anonMemberField then
+                     Fill(1, ip^.iType);
                   ip := ip^.next;
                   end; {while}
                i := i-1;
@@ -2648,8 +2649,11 @@ var
 {           writeln('Initializer: ', ip^.bitsize:10, ip^.bitdisp:10, bitCount:10); {debug}
             if kind = unionType then
                ip := nil
-            else
+            else begin
                ip := ip^.next;
+               while (ip <> nil) and ip^.anonMemberField do
+                  ip := ip^.next;
+               end; {else}
             if token.kind = commach then begin
                if ip <> nil then
                   NextToken;
@@ -2813,6 +2817,39 @@ var
       variable: identPtr;               {variable being defined}
       didFlexibleArray: boolean;        {have we seen a flexible array member?}
       fieldDeclSpecifiers: declSpecifiersRecord; {decl specifiers for field}
+      tPtr: typePtr;                    {for building types}
+      anonMember: boolean;              {processing an anonymous struct/union?}
+      
+      procedure AddField(variable: identPtr; anonMemberField: boolean);
+ 
+      { add a field to the field list                            }
+      {                                                          }
+      { parameters                                               }
+      {     variable - field to add                              }
+      {     checkDups - check for duplicate-named fields         }
+      {     anonMemberField - is this a field from an anonymous  }
+      {                       struct/union member?               }
+
+      label 1;
+      
+      var
+         tfl: identPtr;                 {for traversing field list}
+      
+      begin {AddField}
+      if variable^.name^ <> '~anonymous' then begin
+         tfl := fl;                     {(check for dups)}
+         while tfl <> nil do begin
+            if tfl^.name^ = variable^.name^ then begin
+               Error(42);
+               goto 1;
+               end; {if}
+            tfl := tfl^.next;
+            end; {while}
+         end; {if}
+1:    variable^.next := fl;
+      variable^.anonMemberField := anonMemberField;
+      fl := variable;
+      end; {AddField}
  
    begin {FieldList}
    ldoingParameters := doingParameters; {allow fields in K&R dec. area}
@@ -2830,124 +2867,138 @@ var
          goto 1;
          end; {if}
       DeclarationSpecifiers(fieldDeclSpecifiers, specifierQualifierListElement, ident);
-      if not skipDeclarator then
-         repeat                         {declare the variables...}
-            if didFlexibleArray then
-               Error(118);
-            variable := nil;
-            if token.kind <> colonch then begin
-               Declarator(fieldDeclSpecifiers, variable, fieldListSpace, false);
-               if variable <> nil then  {enter the var in the field list}
-                  begin
-                  tfl := fl;            {(check for dups)}
-                  while tfl <> nil do begin
-                     if tfl^.name^ = variable^.name^ then
-                        Error(42);
-                     tfl := tfl^.next;
-                     end; {while}
-                  variable^.next := fl;
-                  fl := variable;
+      repeat                            {declare the variables...}
+         if didFlexibleArray then
+            Error(118);
+         variable := nil;
+         anonMember := false;
+         if token.kind <> colonch then begin
+            if (token.kind = semicolonch) then begin
+               tPtr := fieldDeclSpecifiers.typeSpec;
+               while tPtr^.kind = definedType do
+                  tPtr := tPtr^.dType;
+               if (tPtr^.kind in [structType,unionType])
+                  and (tPtr^.sName = nil)
+                  and ((structsy in fieldDeclSpecifiers.declarationModifiers)
+                     or (unionsy in fieldDeclSpecifiers.declarationModifiers))
+                  then begin
+                  variable := NewSymbol(@'~anonymous', tPtr, ident,
+                     fieldListSpace, defined);
+                  anonMember := true;
                   end; {if}
-               end; {if}
-            if kind = unionType then begin
-               disp := 0;
-               bitdisp := 0;
-               end; {if}
-            if token.kind = colonch then {handle a bit field}
-               begin
-               NextToken;
-               Expression(arrayExpression,[commach,semicolonch]);
-               if (expressionValue >= maxBitField) or (expressionValue < 0) then
-                  begin
-                  Error(54);
-                  expressionValue := maxBitField-1;
-                  end; {if}
-               if (bitdisp+long(expressionValue).lsw > maxBitField)
-                  or (long(expressionValue).lsw = 0) then begin
-                  disp := disp+((bitDisp+7) div 8);
-                  bitdisp := 0;
-                  if long(expressionValue).lsw = 0 then
-                     if variable <> nil then
-                        Error(55);
-                  end; {if}
-               if variable <> nil then begin
-                  variable^.disp := disp;
-                  variable^.bitdisp := bitdisp;
-                  variable^.bitsize := long(expressionValue).lsw;
-                  tPtr := variable^.itype;
-                  end {if}
-               else
-                  tPtr := fieldDeclSpecifiers.typeSpec;
-               bitdisp := bitdisp+long(expressionValue).lsw;
-               if kind = unionType then
-                  if ((bitDisp+7) div 8) > maxDisp then
-                     maxDisp := ((bitDisp+7) div 8);
-               if (tPtr^.kind <> scalarType)
-                  or not (tPtr^.baseType in
-                     [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
-                  or (expressionValue > tPtr^.size*8)
-                  or ((expressionValue > 1) and (tPtr^.cType = ctBool)) then
-                  Error(115);
-               if _Alignassy in fieldDeclSpecifiers.declarationModifiers then
-                  Error(142);
                end {if}
-            else if variable <> nil then begin
-               if bitdisp <> 0 then begin
-                  disp := disp+((bitDisp+7) div 8);
-                  bitdisp := 0;
-                  end; {if}
+            else
+               Declarator(fieldDeclSpecifiers, variable, fieldListSpace, false);
+            if variable <> nil then     {enter the var in the field list}
+               AddField(variable, false);
+            end; {if}
+         if kind = unionType then begin
+            disp := 0;
+            bitdisp := 0;
+            end; {if}
+         if token.kind = colonch then   {handle a bit field}
+            begin
+            NextToken;
+            Expression(arrayExpression,[commach,semicolonch]);
+            if (expressionValue >= maxBitField) or (expressionValue < 0) then
+               begin
+               Error(54);
+               expressionValue := maxBitField-1;
+               end; {if}
+            if (bitdisp+long(expressionValue).lsw > maxBitField)
+               or (long(expressionValue).lsw = 0) then begin
+               disp := disp+((bitDisp+7) div 8);
+               bitdisp := 0;
+               if long(expressionValue).lsw = 0 then
+                  if variable <> nil then
+                     Error(55);
+               end; {if}
+            if variable <> nil then begin
                variable^.disp := disp;
                variable^.bitdisp := bitdisp;
-               variable^.bitsize := 0;
-               disp := disp + variable^.itype^.size;
-               if disp > maxDisp then
-                  maxDisp := disp;
-               if variable^.itype^.size = 0 then
-                  if (variable^.itype^.kind = arrayType) 
-                     and (disp > 0) then begin {handle flexible array member}
-                     didFlexibleArray := true;
-                     tp^.flexibleArrayMember := true;
-                     end {if}
-                  else
-                     Error(117);
+               variable^.bitsize := long(expressionValue).lsw;
+               tPtr := variable^.itype;
                end {if}
-            else
-               Error(116);
-
-            if variable <> nil then     {check for a const member}
-               tPtr := variable^.itype
             else
                tPtr := fieldDeclSpecifiers.typeSpec;
-            while tPtr^.kind in [definedType,arrayType] do begin
-               if tqConst in tPtr^.qualifiers then
-                  tp^.constMember := true;
-               if tPtr^.kind = definedType then
-                  tPtr := tPtr^.dType
-               else {if tPtr^.kind = arrayType then}
-                  tPtr := tPtr^.aType;
-               end; {while}
+            bitdisp := bitdisp+long(expressionValue).lsw;
+            if kind = unionType then
+               if ((bitDisp+7) div 8) > maxDisp then
+                  maxDisp := ((bitDisp+7) div 8);
+            if (tPtr^.kind <> scalarType)
+               or not (tPtr^.baseType in
+                  [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
+               or (expressionValue > tPtr^.size*8)
+               or ((expressionValue > 1) and (tPtr^.cType = ctBool)) then
+               Error(115);
+            if _Alignassy in fieldDeclSpecifiers.declarationModifiers then
+               Error(142);
+            end {if}
+         else if variable <> nil then begin
+            if bitdisp <> 0 then begin
+               disp := disp+((bitDisp+7) div 8);
+               bitdisp := 0;
+               end; {if}
+            variable^.disp := disp;
+            variable^.bitdisp := bitdisp;
+            variable^.bitsize := 0;
+            if anonMember then begin    
+               tfl := variable^.itype^.fieldList;
+               while tfl <> nil do begin
+                  ufl := pointer(Malloc(sizeof(identRecord)));
+                  ufl^ := tfl^;
+                  AddField(ufl, true);
+                  ufl^.disp := ufl^.disp + disp;
+                  tfl := tfl^.next;
+                  end; {while}
+               end; {if}
+            disp := disp + variable^.itype^.size;
+            if disp > maxDisp then
+               maxDisp := disp;
+            if variable^.itype^.size = 0 then
+               if (variable^.itype^.kind = arrayType) 
+                  and (disp > 0) then begin {handle flexible array member}
+                  didFlexibleArray := true;
+                  tp^.flexibleArrayMember := true;
+                  end {if}
+               else
+                  Error(117);
+            end {if}
+         else
+            Error(116);
+
+         if variable <> nil then        {check for a const member}
+            tPtr := variable^.itype
+         else
+            tPtr := fieldDeclSpecifiers.typeSpec;
+         while tPtr^.kind in [definedType,arrayType] do begin
             if tqConst in tPtr^.qualifiers then
                tp^.constMember := true;
-            if tPtr^.kind in [structType,unionType] then begin
-               if tPtr^.constMember then
-                  tp^.constMember := true;
-               if tPtr^.flexibleArrayMember then
-                  if kind = structType then
-                     Error(169)
-                  else {if kind = unionType then}
-                     tp^.flexibleArrayMember := true;
-               end; {if}
+            if tPtr^.kind = definedType then
+               tPtr := tPtr^.dType
+            else {if tPtr^.kind = arrayType then}
+               tPtr := tPtr^.aType;
+            end; {while}
+         if tqConst in tPtr^.qualifiers then
+            tp^.constMember := true;
+         if tPtr^.kind in [structType,unionType] then begin
+            if tPtr^.constMember then
+               tp^.constMember := true;
+            if tPtr^.flexibleArrayMember then
+               if kind = structType then
+                  Error(169)
+               else {if kind = unionType then}
+                  tp^.flexibleArrayMember := true;
+            end; {if}
 
-            if token.kind = commach then {allow repeated declarations}
-               begin
-               NextToken;
-               done := false;
-               end {if}
-            else
-               done := true;
-         until done or (token.kind = eofsy)
-      else
-         Error(116);
+         if token.kind = commach then   {allow repeated declarations}
+            begin
+            NextToken;
+            done := false;
+            end {if}
+         else
+            done := true;
+      until done or (token.kind = eofsy);
       Match(semicolonch,22);            {insist on a closing ';'}
       end; {while}
    if fl <> nil then begin
@@ -3359,6 +3410,10 @@ while token.kind in allowedTokens do begin
             useGlobalPool := lUseGlobalPool;
          myTypeSpec := structTypePtr;
          mySkipDeclarator := token.kind = semicolonch;
+         if tKind = structType then
+            myDeclarationModifiers := myDeclarationModifiers + [structsy]
+         else
+            myDeclarationModifiers := myDeclarationModifiers + [unionsy];
          typeDone := true;
          end;
  
@@ -4626,8 +4681,11 @@ var
                   end; {if}
                if union then
                   fp := nil
-               else
+               else begin
                   fp := fp^.next;
+                  while (fp <> nil) and fp^.anonMemberField do
+                     fp := fp^.next;
+                  end; {else}
                end; {while}
             end; {else}
          disp := endDisp;

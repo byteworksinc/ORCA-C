@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 29;                 {version number of .sym file format}
+   symFileVersion = 30;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1104,6 +1104,8 @@ procedure EndInclude {chPtr: ptr};
          WriteByte(ord(ip^.isForwardDeclared));
          WriteByte(ord(ip^.class));
          WriteByte(ord(ip^.storage));
+         if ip^.storage = none then
+            WriteByte(ord(ip^.anonMemberField));
 	 end; {WriteIdent}
          
 
@@ -1803,6 +1805,8 @@ var
       sp^.isForwardDeclared := boolean(ReadByte);
       sp^.class := tokenEnum(ReadByte);
       sp^.storage := storageType(ReadByte);
+      if sp^.storage = none then
+         sp^.anonMemberField := boolean(ReadByte);
       ReadIdent := sp;
       end; {ReadIdent}
 

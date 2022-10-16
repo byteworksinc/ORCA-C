@@ -562,6 +562,23 @@ Compound literals can also be used in initializers, as in the following declarat
 
 (This declaration could be used inside or outside of a function, with the compound literal having automatic or static storage duration, respectively.)
 
+27. (C11) ORCA/C now supports anonymous structures and unions.  These are unnamed members of a structure or union that themselves have structure or union type.  Their structure or union type must be declared directly within the declaration of the containing structure or union type (not using a typedef) and must not have a tag.  Anonymous structures or unions may be nested.
+
+Here is an example of a structure containing an anonymous union that in turn contains an anonymous structure:
+
+   struct S {
+      int a;
+      union {
+         struct {
+            long b;
+            char c;
+         };
+         double d;
+      };
+   } s;
+
+Members of anonymous structures or unions (including nested ones) may be accessed as if they are members of the containing structure or union.  For example, given the declaration above, the expressions s.a, s.b, s.c, and s.d may be used to access the various fields.  All the fields must have distinct names.
+
 
 Multi-Character Character Constants
 -----------------------------------
