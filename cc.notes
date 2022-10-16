@@ -326,6 +326,10 @@ p. 356
 
 fgetpos() and fsetpos() actually set errno to EIO if there is an error.
 
+p. 357
+
+If fgets() encounters a read error, it will return a null pointer, but the buffer s may have been modified; its contents are indeterminate.
+
 p. 359
 
 The fprintf() family of functions has been updated to support several new features specified by C99.  Also, the snprintf() and vsnprintf() functions have been added.  See "Library Updates," below.
@@ -1908,6 +1912,12 @@ int foo(int[42]);
 (Dave Tribby)
 
 209. The native code peephole optimizer might not correctly analyze whether short branch instructions can be used around an asm statement with one or more dcl directives.  This could cause "Relative address out of range" linker errors in some cases, or generate bad code without reporting any errors in others.
+
+210. If fgets() or gets() encounters end-of-file after reading one or more characters, they should return a pointer to the buffer, not a null pointer.
+
+211. If fgets() encounters end-of-file before reading any characters, it should leave the buffer unmodified.  (In some cases, it would write two zero bytes.)
+
+212. If fgets() is called with an n value of 1, it should write a single terminating null character to the buffer.  (It was writing two.)
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
