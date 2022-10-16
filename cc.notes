@@ -1919,6 +1919,8 @@ int foo(int[42]);
 
 212. If fgets() is called with an n value of 1, it should write a single terminating null character to the buffer.  (It was writing two.)
 
+213. If a floating-point constant beginning with . had a line continuation between the . and the first digit, a spurious error would be reported.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

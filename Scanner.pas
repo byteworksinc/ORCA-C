@@ -4610,6 +4610,61 @@ else begin                              {record the name}
 end; {CheckIdentifier}
 
 
+function PeekCh: char;
+
+{ Peek at the next character from the file, without advancing   }
+{ the character pointer.                                        }
+{                                                               }
+{ This is typically the character that will be produced by the  }
+{ next call to NextCh, but this function only deals with        }
+{ translation phases 1 and 2 (trigraphs and line continuations).}
+{ It does not skip comments.                                    }
+
+label 1;
+
+var
+   cp: ptr;                             {work pointer}
+   ch: char;                            {work character}
+
+begin {PeekCh}
+cp := chPtr;
+1:
+if cp = eofPtr then
+   PeekCh := chr(0)
+else begin
+   ch := chr(cp^);
+   if ch = '?' then                     {handle trigraphs}
+      if ord4(eofPtr)-ord4(cp) > 2 then
+         if chr(ptr(ord4(cp)+1)^) = '?' then
+            if chr(ptr(ord4(cp)+2)^) in
+               ['=','(','/',')','''','<','!','>','-'] then begin
+               case chr(ptr(ord4(cp)+2)^) of
+                  '(': ch := '[';
+                  '<': ch := '{';
+                  '/': ch := '\';
+                 '''': ch := '^';
+                  '=': ch := '#';
+                  ')': ch := ']';
+                  '>': ch := '}';
+                  '!': ch := '|';
+                  '-': ch := '~';
+                  end; {case}
+               cp := pointer(ord4(cp)+2);
+               end; {if}
+   if ch = '\' then                     {handle line continuations}
+      if ord4(eofPtr)-ord4(cp) > 1 then
+         if charKinds[ptr(ord4(cp)+1)^] = ch_eol then begin
+            if ord4(eofPtr)-ord4(cp) > 2 then
+               if ptr(ord4(cp)+2)^ in [$06,$07] then
+                  cp := pointer(ord4(cp)+1); {skip debugger characters}
+            cp := pointer(ord4(cp)+2);
+            goto 1;
+            end; {if}
+   PeekCh := ch;
+   end; {else}
+end; {PeekCh}
+
+
 procedure NextToken;
 
 { Read the next token from the file.                            }
@@ -5180,7 +5235,7 @@ case charKinds[ord(ch)] of
       else if ch = ':' then begin
          NextCh;
          token.isDigraph := true;
-         if (ch = '%') and (chPtr <> eofPtr) and (chr(chPtr^) = ':') then begin
+         if (ch = '%') and (PeekCh = ':') then begin
             token.kind := poundpoundop; {%:%: digraph}
             NextCh;
             NextCh;
@@ -5228,11 +5283,11 @@ case charKinds[ord(ch)] of
       end;
 
    ch_dot   : begin                     {tokens that start with '.'}
-      if charKinds[chPtr^] = digit then
+      if charKinds[ord(PeekCh)] = digit then
          DoNumber(false)
       else begin
          NextCh;
-         if (ch = '.') and (chPtr <> eofPtr) and (chr(chPtr^) = '.') then begin
+         if (ch = '.') and (PeekCh = '.') then begin
             token.kind := dotdotdotsy;
             NextCh;
             NextCh;
