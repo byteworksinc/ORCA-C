@@ -2750,15 +2750,15 @@ end; {DoStaticAssert}
 
 
 procedure DeclarationSpecifiers (var declSpecifiers: declSpecifiersRecord;
-   allowedTokens: tokenSet; expectedNext: tokenEnum);
+   allowedTokens: tokenSet; badNextTokenError: integer);
 
 { handle declaration specifiers or a specifier-qualifier list   }
 {                                                               }
 { parameters:                                                   }
 {       declSpecifiers - record to hold result type & specifiers}
 {       allowedTokens - specifiers/qualifiers that can be used  }
-{       expectedNext - token usually expected after declaration }
-{               specifiers (used for error messages only)       }
+{       badNextTokenError - error code for an unexpected token  }
+{               following the declaration specifiers            }
 {                                                               }
 { outputs:                                                      }
 {       isForwardDeclared - is the field list component         }
@@ -2866,7 +2866,7 @@ var
          DoStaticAssert;
          goto 1;
          end; {if}
-      DeclarationSpecifiers(fieldDeclSpecifiers, specifierQualifierListElement, ident);
+      DeclarationSpecifiers(fieldDeclSpecifiers, specifierQualifierListElement, 176);
       repeat                            {declare the variables...}
          if didFlexibleArray then
             Error(118);
@@ -3091,7 +3091,7 @@ var
       myTypeSpec := boolPtr;
       end {else if}
    else
-      UnexpectedTokenError(expectedNext);
+      Error(badNextTokenError);
    end; {ResolveType}
 
 
@@ -3112,7 +3112,7 @@ while token.kind in allowedTokens do begin
          myDeclarationModifiers := myDeclarationModifiers + [token.kind];
          if myStorageClass <> ident then begin
             if typeDone or (typeSpecifiers <> []) then
-               UnexpectedTokenError(expectedNext)
+               Error(badNextTokenError)
             else
                Error(26);
             end; {if}
@@ -3181,7 +3181,7 @@ while token.kind in allowedTokens do begin
          if token.kind = lparench then begin
             {_Atomic(typename) as type specifier}
             if typeDone or (typeSpecifiers <> []) then
-               UnexpectedTokenError(expectedNext);
+               Error(badNextTokenError);
             NextToken;
             myTypeSpec := TypeName;
             Match(rparench, 12);
@@ -3193,7 +3193,7 @@ while token.kind in allowedTokens do begin
       unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,voidsy,
       compsy,extendedsy,_Boolsy: begin
          if typeDone then
-            UnexpectedTokenError(expectedNext)
+            Error(badNextTokenError)
          else if token.kind in typeSpecifiers then begin
             if (token.kind = longsy) and 
                ((myTypeSpec = longPtr) or (myTypeSpec = uLongPtr)) then begin
@@ -3201,7 +3201,7 @@ while token.kind in allowedTokens do begin
                ResolveType;
                end
             else
-               UnexpectedTokenError(expectedNext);
+               Error(badNextTokenError);
             end {if}
          else begin
             if restrictsy in myDeclarationModifiers then begin
@@ -3221,7 +3221,7 @@ while token.kind in allowedTokens do begin
 
       enumsy: begin                     {enum}
          if typeDone or (typeSpecifiers <> []) then
-            UnexpectedTokenError(expectedNext)
+            Error(badNextTokenError)
          else if restrictsy in myDeclarationModifiers then
             Error(143);
          NextToken;                     {skip the 'enum' token}
@@ -3313,7 +3313,7 @@ while token.kind in allowedTokens do begin
       structsy,                         {struct}
       unionsy: begin                    {union}
          if typeDone or (typeSpecifiers <> []) then
-            UnexpectedTokenError(expectedNext)
+            Error(badNextTokenError)
          else if restrictsy in myDeclarationModifiers then
             Error(143);
          globalStruct := false;         {we didn't make it global}
@@ -3717,7 +3717,7 @@ lUseGlobalPool := useGlobalPool;
                                         {handle a TypeSpecifier/declarator}
 typeFound := token.kind in declarationSpecifiersElement;
 declaredTagOrEnumConst := false;
-DeclarationSpecifiers(declSpecifiers, declarationSpecifiersElement, ident);
+DeclarationSpecifiers(declSpecifiers, declarationSpecifiersElement, 176);
 isPascal := pascalsy in declSpecifiers.declarationModifiers;
 isAsm := asmsy in declSpecifiers.declarationModifiers;
 isInline := inlinesy in declSpecifiers.declarationModifiers;
@@ -4273,7 +4273,7 @@ var
 
 begin {TypeName}
 {read and process the type specifier}
-DeclarationSpecifiers(declSpecifiers, specifierQualifierListElement, rparench);
+DeclarationSpecifiers(declSpecifiers, specifierQualifierListElement, 12);
 
 {_Alignas is not allowed in most uses of type names.            }
 {TODO: _Alignas should be allowed in compound literals.         }

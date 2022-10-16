@@ -119,13 +119,6 @@ procedure Error (err: integer);
 { err - error number                                            }
 
 
-procedure UnexpectedTokenError (expectedToken: tokenEnum);
-
-{ flag an error for an unexpected token                         }
-{                                                               }
-{ expectedToken - what was expected                             }
-
-
 procedure InitScanner (start, endPtr: ptr);
 
 { initialize the scanner                                        }
@@ -3549,33 +3542,6 @@ end; {Error}
 {writeln('Error ', err:1, ' flagged at location ', loc:1);
 Error(err);
 end; {Error2}
-
-
-procedure UnexpectedTokenError {expectedToken: tokenEnum};
-
-{ flag an error for an unexpected token                         }
-{                                                               }
-{ expectedToken - what was expected                             }
-
-begin {UnexpectedTokenError}
-case expectedToken of
-   ident:       Error(9);
-   rparench:    Error(12);
-   lparench:    Error(13);
-   gtch:        Error(15);
-   intconst:    Error(18);
-   semicolonch: Error(22);
-   rbracech:    Error(23);
-   rbrackch:    Error(24);
-   lbracech:    Error(27);
-   colonch:     Error(29);
-   whilesy:     Error(30);
-   stringconst: Error(83);
-   commach:     Error(86);
-   dotch:       Error(89);
-   otherwise:   Error(140);
-   end; {case}
-end; {UnexpectedTokenError}
 
 
 procedure DoNumber {scanWork: boolean};
