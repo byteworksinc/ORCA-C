@@ -1,5 +1,7 @@
 /* Conformance Test 3.3.5.1:  Verification of undefining/redefining macros */
 
+int printf(const char *, ...);
+
 #undef     macroNotDefinedYet          /* not an error to undefine an */
                                        /*   undefined macro           */
 #define    macroNotDefinedYet  8
@@ -13,13 +15,13 @@
 #undef     A23__BD8
 #define    A23__BD8            "Passed Conformance Test 3.3.5.1\n"
 
-main ()
+int main (void)
   {
    if (macroNotDefinedYet != 23)
        goto Fail;
 
    printf (A23__BD8);
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 3.3.5.1\n");

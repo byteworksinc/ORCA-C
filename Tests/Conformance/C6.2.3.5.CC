@@ -2,9 +2,10 @@
 /*                            to integer types                               */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
-main ()
+int main (void)
   {
    float    f;
    double   d;
@@ -41,7 +42,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 6.2.3.5\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Passed Conformance Test 6.2.3.5\n");

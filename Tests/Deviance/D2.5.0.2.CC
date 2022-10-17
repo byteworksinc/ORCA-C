@@ -1,5 +1,8 @@
 /* Deviance Test 2.5.0.2:  Ensure reserved words cannot be used as identifiers */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int       auto;
    int       break;

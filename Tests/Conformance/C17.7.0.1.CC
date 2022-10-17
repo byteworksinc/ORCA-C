@@ -1,8 +1,9 @@
 /* Conformance Test 17.7.0.1:  Verification of fgets function, text stream */
 
 #include <stdio.h>
+#include <string.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    int  i;
@@ -60,21 +61,21 @@ main ()
        goto Fail3;
 
    printf ("Passed Conformance Test 17.7.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.7.0.1\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to open temp file for Conformance Test 17.7.0.1\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Unable to write to temp file for Conformance Test 17.7.0.1\n");
-   return;
+   return 0;
 
 Fail3:
    printf ("Unable to close temp file for Conformance Test 17.7.0.1\n");
-   return;
+   return 0;
   }

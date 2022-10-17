@@ -3,6 +3,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 static   int       *i1 [50];                               /* all basic types */
 static   long      *L1 [9];
 static   comp      *c1 [3];
@@ -27,7 +29,7 @@ union longOrShort { int  first;
 static union longOrShort *u1 [12], U;
 
 
-main ()
+int main (void)
   {
    static int TestEm (void);
 

@@ -1,5 +1,7 @@
 /* Conformance Test 3.3.2.1:  Verification of macros with parameters */
 
+int printf(const char *, ...);
+
 #define subtract(x,y)  x - y
 #define noParmsPass()  printf ("Passed Conformance Test 3.3.2.1\n");
 #define noParmsFail()  printf ("Failed Conformance Test 3.3.2.1\n");
@@ -7,7 +9,7 @@
 a+b+c+d+e+f+g+h+i+j+k+l+m+n+o+p+q+r+s+t+u+v+w+x+y+z
 #define real           float
 
-main ()
+int main (void)
   {
    double f1(), g1();
    int  i;
@@ -30,7 +32,7 @@ main ()
        goto Fail;
 
    noParmsPass ()
-   return;
+   return 0;
 
 Fail:
    noParmsFail ()

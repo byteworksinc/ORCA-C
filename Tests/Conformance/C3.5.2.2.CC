@@ -1,6 +1,8 @@
 /* Conformance Test 3.5.2.2:  Verification of #elif command, using macro */
 /*                            substitution                               */
 
+int printf(const char *, ...);
+
 #define MACRO1(x,y,z)      ((x) + (y) * (z))
 #define PASS               "Passed Conformance Test 3.5.2.2\n"
 #define FAIL               "Failed Conformance Test 3.5.2.2\n"
@@ -54,7 +56,7 @@
    # define MSG FAIL
 #endif
 
-main ()
+int main (void)
   {
    printf (MSG);
   }

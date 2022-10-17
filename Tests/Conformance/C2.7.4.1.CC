@@ -1,5 +1,10 @@
 /* Conformance Test 2.7.4.1:  Test implementation of ORCA/C p-strings */
-main ()
+
+#include <string.h>
+
+int printf(const char *, ...);
+
+int main (void)
   {
    char a [300];
 
@@ -16,7 +21,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.7.4.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.4.1\n");

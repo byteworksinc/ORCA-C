@@ -4,6 +4,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 int ExternTest (void)
   {
    int count = 0;

@@ -8,11 +8,13 @@
 #pragma optimize -1
 #include <stdarg.h>
 
+int printf(const char *, ...);
+
 enum types { integer, character, singlePrecision, doublePrecision,
              extendedPrecision, endOfList };
 
 
-main ()
+int main (void)
   {
    int      i  = 2;
    char     ch = 'c';

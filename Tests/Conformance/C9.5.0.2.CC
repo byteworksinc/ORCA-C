@@ -9,7 +9,7 @@ return x*2;
 }
 
 
-void main(void)
+int main(void)
 
 {
    int i,j;
@@ -22,7 +22,7 @@ void main(void)
    if (j != 3) goto Fail;
 
    printf ("Passed Conformance Test 9.5.0.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 9.5.0.2\n");

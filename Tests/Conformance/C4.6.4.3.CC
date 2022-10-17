@@ -43,7 +43,7 @@ int *ip[27] = {
                &tensor[2][2][2]
                };
 
-main()
+int main(void)
 
 {
 int i;

@@ -6,12 +6,13 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 struct S { int   i;
            float f;
            char  c; };
 
-main ()
+int main (void)
   {
    struct S s [3] = { 1, 1.0, 'a', 2, 2.0, 'b', 3, 3.0, 'c' };
    struct S buff [3];
@@ -120,7 +121,7 @@ main ()
        goto Fail2;
 
    printf ("Passed Special Conformance Test 17.16.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Special Conformance Test 17.16.0.1\n");

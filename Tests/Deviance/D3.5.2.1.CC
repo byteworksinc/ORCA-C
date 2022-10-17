@@ -1,5 +1,7 @@
 /* Deviance Test 3.5.2.1: Ensure illegal #elif commands are flagged as errors */
 
+int printf(const char *, ...);
+
 #if 0
    #define WHO_CARES 0
 #elif 0
@@ -27,7 +29,7 @@
 #elif      /* no expression */
 #endif
 
-main ()
+int main (void)
   {
    printf ("Failed Deviance Test 3.5.2.1\n");
   }

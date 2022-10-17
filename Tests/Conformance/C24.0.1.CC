@@ -92,14 +92,14 @@ Fail:
    return 1;
 }
 
-main ()
+int main (void)
   {
    if (sub1()) goto Fail;
    if (sub2()) goto Fail;
    if (sub3()) goto Fail;
 
    printf ("Passed Conformance Test 24.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 24.0.1\n");

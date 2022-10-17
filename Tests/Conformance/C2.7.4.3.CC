@@ -1,9 +1,13 @@
 /* Conformance Test 2.7.4.3:  Test strings of critical length in scanner */
 
+#pragma stacksize 8192
+
+int printf(const char *, ...);
+
 #include <stdio.h>
 #include <string.h>
 
-main ()
+int main (void)
   {
    int i;
    char *strPtr;
@@ -210,7 +214,7 @@ abcdefghijklmnopqrstuvwxyz01234567890123456789AB", 100))
        goto Fail;
 
    printf ("Passed Conformance Test 2.7.4.3\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.4.3\n");

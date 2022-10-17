@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    float f = 1.1;                    /* can only apply ^ operator to integers */
    double d = 2.2;

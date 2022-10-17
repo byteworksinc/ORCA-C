@@ -1,6 +1,9 @@
 /* Conformance Test 2.7.3.2:  Ensure char variables are implemented as */
 /*                            unsigned 8-bit integers                  */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    char a;
    int  i;
@@ -13,7 +16,7 @@ main ()
      }
 
    printf ("Passed Conformance Test 2.7.3.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.3.2\n");

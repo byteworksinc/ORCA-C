@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    FILE *f1;                           /* file pointer */
    int i, j, k, m;
@@ -88,25 +88,25 @@ main ()
        goto Fail4;
 
    printf ("Passed Conformance Test 17.5.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.5.0.1\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Could not open tmp file for Conformance Test 17.5.0.1\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Could not write to file for Conformance Test 17.5.0.1\n");
-   return;
+   return 0;
 
 Fail3:
    printf ("Error while reading file for Conformance Test 17.5.0.1\n");
-   return;
+   return 0;
 
 Fail4:
    printf ("Could not close file for Conformance Test 17.5.0.1\n");
-   return;
+   return 0;
   }

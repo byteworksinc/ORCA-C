@@ -1,5 +1,7 @@
 /* Deviance Test 3.5.1.1:  Check invalid #if, #else commands */
 
+int printf(const char *, ...);
+
 #if                            /* #if with no operand */
 #else
 #endif
@@ -29,7 +31,7 @@
    #endif
 /* missing endif */
 
-main ()
+int main (void)
   {
    printf ("Failed Deviance Test 3.5.1.1\n");
   }

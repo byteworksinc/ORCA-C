@@ -1,6 +1,8 @@
 /* Conformance Test 3.5.4.2:  Verification of #elif character constant */
 /*                            expressions                              */
 
+int printf(const char *, ...);
+
 #define FIVE '5'
 #define SIX  '6'
 
@@ -128,7 +130,7 @@
 #if 0
 #elif (defined(FIVE)) && (defined(SIX)) && (NUM1 == 0xAF0) && (NUM2 == 1)\
        && (NUM3 == NUM2)
-main ()
+int main (void)
   {
    if (NUM1    != 2800  )  goto Fail;
    if (NUM2    != 1     )  goto Fail;
@@ -147,14 +149,14 @@ main ()
    if ((NUM15) != 1     )  goto Fail;
 
    printf ("Passed Conformance Test 3.5.4.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 3.5.4.2; location 1\n");
   }
 
 #else
-main ()
+int main (void)
   {
    printf ("Failed Conformance Test 3.5.4.2; location 2\n");
   }

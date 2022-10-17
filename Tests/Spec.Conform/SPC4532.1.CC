@@ -3,6 +3,8 @@
 
 #include "spc4532.h"
 
+int printf(const char *, ...);
+
 int  TestEm (void)
   {
    int count = 0;

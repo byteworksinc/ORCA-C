@@ -1,5 +1,10 @@
 /* Conformance Test 2.1.1.2:  Verification of newline character */
-main ()
+
+#include <string.h>
+
+int printf(const char *, ...);
+
+int main (void)
   {
    char string [10];
 
@@ -16,7 +21,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.1.1.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.1.1.2\n");

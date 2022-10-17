@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 struct S { int   a;
            float b; };
 union  U { int  i;
@@ -40,7 +42,7 @@ extended E1 (void)
 
 /******************************************************************************/
 
-main ()
+int main (void)
   {
 
    static int IDisp (int (*func) (void));          /* declare dispatcher rtns */
@@ -151,7 +153,7 @@ main ()
 
 
    printf ("Passed Conformance Test 4.6.3.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.3.2\n");

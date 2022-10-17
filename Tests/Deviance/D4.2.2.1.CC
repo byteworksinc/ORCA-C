@@ -1,6 +1,8 @@
 /* Deviance Test 4.2.2.1:  Ensure "hiding" identifiers with same scope is */
 /*                         detected                                       */
 
+int printf(const char *, ...);
+
 #define MAC1 1                         /* macro name        */
 #define MAC1 8
 
@@ -28,7 +30,7 @@ enum   stillOthers { red, black, green, green };
 double D2 (int x, int z);              /* function names    */
 int    D2 (char k);
 
-main ()
+int main (void)
   {
    #define MAC2 2                         /* macro name        */
    #define MAC2 3

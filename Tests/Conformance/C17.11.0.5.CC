@@ -2,8 +2,9 @@
 /*                              c format code                              */
 
 #include <stdio.h>
+#include <string.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    int   i, i1, i2;
@@ -28,18 +29,18 @@ main ()
 
    /* Write formatted output as string to the output file. */
 
-   i = fprintf (f1, " %#+ -010.10c  %05.7hc  %.6lc  %+ *.*lc  D\n",
-                ui1, ui1, ui2, i1, i2, 'd');
+   i = fprintf (f1, " %+ -10c  %5c  %c  %+ *c  D\n",
+                ui1, ui1, ui2, i1, 'd');
    if (i != 30)
        goto Fail;
 
-   i = printf (" %#+ -010.10c  %05.7hc  %.6lc  %+ *.*lc  D\n",
-               ui1, ui1, ui2, i1, i2, 'd');
+   i = printf (" %+ -10c  %5c  %c  %+ *c  D\n",
+               ui1, ui1, ui2, i1, 'd');
    if (i != 30)
        goto Fail;
 
-   i = sprintf (sstring, " %#+ -010.10c  %05.7hc  %.6lc  %+ *.*lc  D\n",
-                ui1, ui1, ui2, i1, i2, 'd');
+   i = sprintf (sstring, " %+ -10c  %5c  %c  %+ *c  D\n",
+                ui1, ui1, ui2, i1, 'd');
    if (i != 30)
        goto Fail;
 
@@ -73,25 +74,25 @@ main ()
        goto Fail2;
 
    printf ("Passed Conformance Test 17.11.0.5\n");
-   return;
+   return 0;
 
 Fail:
    fprintf (stderr, "Failed Conformance Test 17.11.0.5\n");
-   return;
+   return 0;
 
 Fail1:
    fprintf (stderr, "Unable to open output file for Conformance Test 17.11.0.5\n");
-   return;
+   return 0;
 
 Fail2:
    fprintf (stderr, "Unable to close output file for Conformance Test 17.11.0.5\n");
-   return;
+   return 0;
 
 Fail3:
    fprintf (stderr, "Unable to read output file for Conformance Test 17.11.0.5\n");
-   return;
+   return 0;
 
 Fail4:
    fprintf (stderr, "Unable to redirect stdout for Conformance Test 17.11.0.5\n");
-   return;
+   return 0;
   }

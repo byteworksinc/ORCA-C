@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    int i, j;
@@ -53,25 +53,25 @@ main ()
        goto Fail4;
 
    printf ("Passed Conformance Test 17.6.0.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.6.0.2\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to open temp file for Conformance Test 17.6.0.2\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Unable to write to temp file for Conformance Test 17.6.0.2\n");
-   return;
+   return 0;
 
 Fail3:
    printf ("Unable to seek to temp file for Conformance Test 17.6.0.2\n");
-   return;
+   return 0;
 
 Fail4:
    printf ("Unable to close temp file for Conformance Test 17.6.0.2\n");
-   return;
+   return 0;
   }

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #define  youStillCan  1
 
-main ()
+int main (void)
   {
    int F1 (int i, int j);
    int i = 65, j = 7, k;
@@ -85,7 +85,7 @@ main ()
 
 
    printf ("Passed Conformance Test 8.8.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 8.8.0.1\n");

@@ -3,11 +3,16 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+int printf(const char *, ...);
+
 
 /******************************************************************************/
 
-int Compare (int *i1, int *i2)
+int Compare (const void *p1, const void *p2)
   {
+   int const *i1 = p1;
+   int const *i2 = p2;
+
    if (*i1 < *i2)
        return (-1);
 
@@ -21,7 +26,7 @@ int Compare (int *i1, int *i2)
 
 /******************************************************************************/
 
-main ()
+int main (void)
   {
    int i [10] = { 3, 4, 6, 8, 0, 2, 1, 5, 3, 7 };
    int j, *iptr;
@@ -58,7 +63,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 22.5.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 22.5.0.1\n");

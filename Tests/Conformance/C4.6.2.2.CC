@@ -7,6 +7,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 static float f1 = { -1.0E2 + (float) 2 * 5.0 / 20.0 - (double) 6 };
 static double d1 = { 89.76E5 * 17.6 - (extended) 1 + (float) (-3) / 8.0 };
 static extended e1;
@@ -16,7 +18,7 @@ float f2 = 5.1 * 7 - 88 / 4 + (extended) (double) (float) 8;
 double d2 = { 10.0e20 / 0.04E-6 };
 extended e2 = 15.5 - .5 * 3 + 1;
 
-main ()
+int main (void)
   {
    static double d0;
 
@@ -74,7 +76,7 @@ main ()
 
    printf ("Passed Conformance Test 4.6.2.2\n");
 
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.2.2\n");

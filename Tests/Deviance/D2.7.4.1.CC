@@ -1,7 +1,9 @@
 /* Deviance Test 2.7.4.1:  Ensure string constants with no closing " are */
 /*                         flagged as errors                             */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    char string [] = "badly formed string ;
 

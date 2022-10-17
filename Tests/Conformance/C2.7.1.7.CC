@@ -1,5 +1,8 @@
 /* Conformance Test 2.7.1.7:  Test unsigned integer constants */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    unsigned           a;
    unsigned int       b;
@@ -51,7 +54,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.7.1.7\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.1.7\n");

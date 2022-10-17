@@ -2,7 +2,9 @@
 
 #include <orca.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    startgraph (640);
    if ( toolerror () )
@@ -12,7 +14,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 23.5.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 23.5.0.1\n");

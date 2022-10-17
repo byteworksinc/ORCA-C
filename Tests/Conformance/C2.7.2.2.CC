@@ -2,7 +2,9 @@
 
 #include <math.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    double a;
 
@@ -56,7 +58,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.7.2.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.2.2\n");

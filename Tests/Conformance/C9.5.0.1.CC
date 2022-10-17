@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 struct S { int   i;
            float f;
@@ -32,7 +33,7 @@ void Func1 (int i, char ch [], float f, struct S s, union U u)
 
 /****************************************************************************/
 
-main ()
+int main (void)
   {
    char   string [4] = "hey";
    struct S s = { 1, 2.0, 1, 2, 3, 4, 5 };
@@ -52,7 +53,7 @@ main ()
 
 
    printf ("Passed Conformance Test 9.5.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 9.5.0.1\n");

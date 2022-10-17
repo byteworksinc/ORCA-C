@@ -4,7 +4,9 @@
 #include <stddef.h>
 #include <string.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    char s1 [80] = "a b c d e f g h i j k : ' - _ + ";
    char *strPtr;
@@ -72,7 +74,7 @@ main ()
 
 
    printf ("Passed Conformance Test 15.6.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 15.6.0.1\n");

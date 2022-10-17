@@ -1,8 +1,11 @@
-/* Deviance Test 2.7.3.5: Ensure functions cannot contain character string */
+/* Deviance Test 2.7.4.4: Ensure functions cannot contain character string */
 /*                        constants whose total length exceeds 32760 bytes */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
-       printf ("Failed Deviance Test 2.7.3.5\n");
+       printf ("Failed Deviance Test 2.7.4.4\n");
       }
 
 int Dummy ()
@@ -541,5 +544,5 @@ abcdefghijklmnopqrstuvwxyz01234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 abcdefghijklmnopqrstuvwxyz01234567890123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 "ab";
 
-   return;
+   return 0;
   }

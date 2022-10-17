@@ -2,7 +2,9 @@
 
 #include <stdlib.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int i, j, array1 [20], array30 [20];
 
@@ -41,7 +43,7 @@ main ()
 
 
    printf ("Passed Conformance Test 19.7.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 19.7.0.1\n");

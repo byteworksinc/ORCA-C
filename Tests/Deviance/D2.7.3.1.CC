@@ -1,6 +1,9 @@
 /* Deviance Test 2.7.3.1:  Ensure unterminated character constants are */
 /*                         flagged as errors                           */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    char a;
    int  j;

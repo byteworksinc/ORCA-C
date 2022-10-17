@@ -1,6 +1,9 @@
 /* Conformance Test 2.5.0.6:  Test characters comprising identifiers for */
 /*                            enumerations                               */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    enum _____________________________________________9 {
 
@@ -63,7 +66,7 @@ Zabcdefghijklmnopqrstuvwxyz_____________0123456789987654321;
            goto Fail;
 
    printf ("Passed Conformance Test 2.5.0.6\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.5.0.6\n");

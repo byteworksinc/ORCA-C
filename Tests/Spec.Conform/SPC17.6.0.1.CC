@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int  i, j;
    char s [255], ch;
@@ -214,7 +214,7 @@ main ()
        goto Fail5;
    printf ("\n");
 
-   return;
+   return 0;
 
 Fail:
    perror ("File open failure in Special Conformance Test 17.6.0.1 ");

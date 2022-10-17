@@ -1,6 +1,9 @@
 /* Conformance Test 2.5.0.3:  Test characters comprising identifiers for */
 /*                            user-defined types                         */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    typedef short  _____________________________________________9;
 
@@ -41,7 +44,7 @@ Zabcdefghijklmnopqrstuvwxyz_____________0123456789987654321  y;
        goto Fail;
 
    printf ("Passed Conformance Test 2.5.0.3\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.5.0.3\n");

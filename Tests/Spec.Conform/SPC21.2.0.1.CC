@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 
-main ()
+int main (void)
   {
    int i;
    i = system ("catalog\r");

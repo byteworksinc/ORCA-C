@@ -14,7 +14,7 @@
 
 static int i1  = 33;
 
-main ()
+int main (void)
   {
    int   count = 0, i;
    char  *chPtr;
@@ -85,7 +85,7 @@ main ()
 
 Out:
    printf ("Passed Conformance Test 25.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("count = %d  i = %d\n", count, i);

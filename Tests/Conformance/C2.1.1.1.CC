@@ -1,7 +1,9 @@
 /* Conformance Test 2.1.1.1:  Verification of encoding for null */
 #include <string.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    char string [4];
 
@@ -14,7 +16,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.1.1.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.1.1.1\n");

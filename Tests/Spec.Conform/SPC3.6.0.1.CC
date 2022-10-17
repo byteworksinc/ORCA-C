@@ -9,7 +9,7 @@ void Sub (void)
 
 #line 9999                     /* expect trace back to report error on line  */
                                /*    9999+4 (call to Sub)                    */
-main ()
+int main (void)
   {
    Sub ();
   }

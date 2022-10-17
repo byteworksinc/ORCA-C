@@ -7,7 +7,9 @@
 #include <stddef.h>
 #include <time.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    time_t secondTime, theTime, *tptr = &theTime;
    char   *timeString;
@@ -72,7 +74,7 @@ main ()
    if (d != 0.0)
        goto Fail;
 
-   return;
+   return 0;
 
 Fail:
    printf ("Call to a time function in spc20.2.0.1\n");

@@ -3,7 +3,9 @@
 #include <stddef.h>
 #include <string.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    char string [] = " this is the source string, a source string";
    char *strPtr;
@@ -18,7 +20,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 15.7.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 15.7.0.1\n");

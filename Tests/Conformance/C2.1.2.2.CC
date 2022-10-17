@@ -1,5 +1,8 @@
 /* Conformance Test 2.1.2.2:  Ensure '\' can be used to continue source lines */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int i;
 
@@ -28,7 +31,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.1.2.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.1.2.2\n");

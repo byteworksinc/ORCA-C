@@ -1,12 +1,16 @@
 /* Special Conformance Test 3.6.0.3:  Test explicit line numbering (#line) */
 /*                                    with filenames                       */
 
+#include <string.h>
+
+int printf(const char *, ...);
+
 #include <stdio.h>
 #define  FileName(x)   x
 #define  LINE_NUM      10
 #line LINE_NUM FileName ("onemorefile")
 
-main ()
+int main (void)
   {
    if (strcmp (__FILE__, "onemorefile"))
      {

@@ -1,6 +1,8 @@
 /* Deviance Test 4.6.6.1:  Ensure illegal initialization of structures is */
 /*                         detected                                       */
 
+int printf(const char *, ...);
+
 struct S1 { int   i;
             float f; } s1 = { 3, 8.0, 'a' };           /* too many values */
 
@@ -9,7 +11,7 @@ struct S1 s2 = 2, 7.6;                         /* can't omit outer braces */
 static struct S1 s3 = { 5, 5.0, 6.0, 77.77 };          /* too many values */
 static struct S1 s4 = 0, 0.0;                  /* can't omit outer braces */
 
-main ()
+int main (void)
   {
    int   i = 8;
    float f = 3.5;

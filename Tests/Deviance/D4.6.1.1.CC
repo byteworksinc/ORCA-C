@@ -1,6 +1,8 @@
 /* Deviance Test 4.6.1.1:  Ensure non-constant initialization of static and */
 /*                         extern variables is detected                     */
 
+int printf(const char *, ...);
+
 static int  i = 5;
 static int  j = i + 2;
 static long L1 = &i - j;
@@ -14,7 +16,7 @@ char ext3 = ch1 / ch1;
 unsigned int  ext4 = ext3 || ext1;
 unsigned long ext5 = ul1;
 
-main ()
+int main (void)
   {
    static int  m1 = m1 - 0;
    static long m2 = ch1;

@@ -2,6 +2,8 @@
 /*                         identifiers in the same overloading class and */
 /*                         sharing the same scope are detected           */
 
+int printf(const char *, ...);
+
 /* Errors at top level */
 
 #define macro1 "hey"                   /* preprocessor macro names */
@@ -50,7 +52,7 @@ enum    numbers { L, one, two };
 
 /* Errors within a function */
 
-main ()
+int main (void)
   {
 #define macro99  99                    /* preprocessor macro names */
 #define macro99  999

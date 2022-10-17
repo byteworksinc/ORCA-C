@@ -1,5 +1,7 @@
 /* Conformance Test 4.6.7.1:  Verification of union initialization */
 
+int printf(const char *, ...);
+
 union U1 { int   i;
            long  L;
            float f; };
@@ -7,7 +9,7 @@ union U1 { int   i;
 union U1 u1 = { 3 };
 static union U1 u2 = { 5 };
 
-main ()
+int main (void)
   {
    auto union U1 u3 = { 32767 };
 
@@ -21,7 +23,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.6.7.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.7.1\n");

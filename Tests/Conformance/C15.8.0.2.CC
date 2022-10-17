@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 
-void main (void)
+int main (void)
   {
             long L1;
    unsigned long UL1;
@@ -60,7 +60,7 @@ void main (void)
        goto Fail;
 
    printf ("Passed Conformance Test 15.8.0.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 15.8.0.2\n");

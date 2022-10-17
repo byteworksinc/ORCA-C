@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Check size supplied by compiler */
 
@@ -30,7 +31,7 @@ struct S2 { char   ch1, ch2;
             double d1, d2; } s2 [4] = { {'a', 'b', 3.3, 4.4},
                                         {'l', 'm', 3.5, 4.6} };
 
-main ()
+int main (void)
   {
    int i, j, k, m;                     /* local variables */
    double   d3;
@@ -83,8 +84,8 @@ main ()
    if (strcmp (ch1, "Now is the time"))                        /* ch1 */
        goto Fail;
 
-   if ((strcmp (&ch2 [1], "to come to the aid ")) ||           /* ch2 */
-       (strcmp (&ch2 [0], "for all good people")))
+   if ((strcmp (ch2 [1], "to come to the aid ")) ||            /* ch2 */
+       (strcmp (ch2 [0], "for all good people")))
        goto Fail;
 
    for (d3 = 5.4, i = 0; i < 4; i++)                           /* d1 */
@@ -176,7 +177,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.6.4.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.4.1\n");

@@ -1,9 +1,11 @@
 /* Conformance Test 3.5.2.3:  Verification of nested #elif commands */
 
+int printf(const char *, ...);
+
 #define PASS  "Passed Conformance Test 3.5.2.3\n"
 #define FAIL  "Failed Conformance Test 3.5.2.3\n"
 
-main ()
+int main (void)
   {
    #if 1
        #if 2

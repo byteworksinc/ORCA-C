@@ -1,5 +1,8 @@
 /* Conformance Test 2.7.1.3:  Test hexadecimal integer constants */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int   a;
    short b;
@@ -44,7 +47,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.7.1.3\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.1.3\n");

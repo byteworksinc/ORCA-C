@@ -22,7 +22,7 @@ void ( f (void) ) ()         /* f is a func returning a func returning void */
 /*****************************************************************************/
 
 
-main ()
+int main (void)
   {
    printf ("Failed Deviance Test 9.2.0.1\n");
   }

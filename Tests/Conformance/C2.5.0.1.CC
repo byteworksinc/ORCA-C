@@ -1,6 +1,9 @@
 /* Conformance Test 2.5.0.1:  Test characters comprising identifiers for */
 /*                            variables                                  */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int    a_______________000000000000000000000000000000;
    short  _____________________________________________9;
@@ -58,7 +61,7 @@ Zabcdefghijklmnopqrstuvwxyz_____________0123456789987654321 != 3)
        goto Fail;
 
    printf ("Passed Conformance Test 2.5.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.5.0.1\n");

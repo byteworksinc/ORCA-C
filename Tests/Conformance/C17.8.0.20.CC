@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int   i;
    unsigned short us1;
@@ -55,13 +55,13 @@ main ()
        goto Fail1;
 
    printf ("Passed Conformance Test 17.8.0.20\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.8.0.20\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to redirect stdin for Conformance Test 17.8.0.20\n");
-   return;
+   return 0;
   }

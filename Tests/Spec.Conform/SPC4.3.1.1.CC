@@ -9,7 +9,9 @@
 /*                                    this test                           */
 /*                                                                        */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int    I1 (char ch);
    double D1 (float f);
@@ -26,7 +28,7 @@ main ()
        goto Fail;
 
    printf ("Passed Special Conformance Test 4.3.1.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Special Conformance Test 4.3.1.1\n");

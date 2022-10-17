@@ -1,6 +1,8 @@
 /* Deviance Test 3.3.4.1:  Ensure cannot redefine or undefine ORCA/C's */
 /*                         predefined macros                           */
 
+int printf(const char *, ...);
+
 #define    __LINE__    5
 #define    __FILE__    "d3.3.4.1.cc"
 #define    __DATE__    "Mar 01 1989"
@@ -13,7 +15,7 @@
 #undef    __TIME__
 #undef    __STDC__
 
-main ()
+int main (void)
   {
    printf ("Failed Deviance Test 3.3.4.1\n");
   }

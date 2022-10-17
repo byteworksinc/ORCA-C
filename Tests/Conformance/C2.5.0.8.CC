@@ -1,6 +1,9 @@
 /* Conformance Test 2.5.0.8:  Test characters comprising identifiers for */
 /*                            labels                                     */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    goto _____________________________________________9;
 
@@ -30,5 +33,4 @@ tuvwxyz_____________01234567899876543210ABCDEFGHIJKLMNOPQRSTUVWXY\
 Zabcdefghijklmnopqrstuvwxyz_____________0123456789987654321:
 
    printf ("Passed Conformance Test 2.5.0.8\n");
-   return;
  }

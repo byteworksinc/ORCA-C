@@ -1,5 +1,7 @@
 /* Deviance Test 3.3.5.1:  Check error generation for #undef commands */
 
+int printf(const char *, ...);
+
 #undef Name    #define Name    "hey"   /* macro replacement is NOT done */
                                        /*   for #undef commands         */
 
@@ -10,7 +12,7 @@
 #define    cantUseIt   10
 #undef     cantUseIt
 
-main ()
+int main (void)
   {
    char a[] = A;
    int  i;

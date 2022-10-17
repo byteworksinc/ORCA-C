@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    char buf [80];
@@ -19,17 +19,17 @@ main ()
        goto Fail;
 
    printf ("Passed Deviance Test 17.3.0.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Deviance Test 17.3.0.2\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to open work file for Deviance Test 17.3.0.2\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Unable to write to file for Deviance Test 17.3.0.2\n");
-   return;
+   return 0;
   }

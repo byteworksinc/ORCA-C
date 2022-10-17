@@ -7,7 +7,7 @@
 #include <stdio.h>
 static char buf [BUFSIZ];
 
-main ()
+int main (void)
   {
    int count = 0;
    FILE *f1;                                               /* file pointer */
@@ -51,22 +51,22 @@ main ()
        goto Fail3;
 
    printf ("Passed Special Conformance Test 17.3.0.4\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Special Conformance Test 17.3.0.4: count = %d\n", count);
-   return;
+   return 0;
 
 Fail1:
    printf ("Could not open tmp file for Special Conformance Test 17.3.0.4\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Could not write to file for Special Conformance Test 17.3.0.4\n");
-   return;
+   return 0;
 
 Fail3:
    printf ("Could not close file for Special Conformance Test 17.3.0.4\n");
-   return;
+   return 0;
 
   }

@@ -1,6 +1,8 @@
 /* Conformance Test 3.5.1.5:  Ensure #if, #else with no lines to compile */
 /*                            are not errors                             */
 
+int printf(const char *, ...);
+
 #if 5
 #else
 #endif
@@ -21,7 +23,7 @@
    #define fail 0
 #endif
 
-main ()
+int main (void)
   {
    if (TRUE != 1)
        goto Fail;
@@ -30,7 +32,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 3.5.1.5\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 3.5.1.5\n");

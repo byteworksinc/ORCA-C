@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int   i, j;
    char  ch;
@@ -42,7 +42,7 @@ main ()
      }
 
      printf ("Passed Conformance Test 14.8.0.1\n");
-     return;
+     return 0;
 
 Fail:
      printf ("Failed Conformance Test 14.8.0.1\n");

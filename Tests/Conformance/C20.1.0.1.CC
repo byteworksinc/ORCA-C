@@ -10,7 +10,9 @@
 #include   <desk.h>
 #include   <quickdraw.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    clock_t clicks;
    char    **dpHandle, *dPageAddr;
@@ -82,7 +84,7 @@ main ()
    MTShutDown ();
 
    printf ("Passed Conformance Test 20.1.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 20.1.0.1\n");

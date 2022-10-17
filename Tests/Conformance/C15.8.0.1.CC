@@ -4,7 +4,9 @@
 #include <math.h>
 #include <errno.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    double d1;
    char   string [] = "  -32767  0567  -3.4e+2  ";
@@ -30,7 +32,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 15.8.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 15.8.0.1\n");

@@ -15,7 +15,7 @@ return iexp(x,y-1)*x;
 }
 
 
-void main(void)
+int main(void)
 
 {
 
@@ -25,7 +25,7 @@ if (iexp(1,50) != 1)    goto Fail;
 if (iexp(7,3) != 343)   goto Fail;
 
    printf ("Passed Conformance Test 9.3.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 9.3.0.1\n");

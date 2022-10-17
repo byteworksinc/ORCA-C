@@ -1,6 +1,8 @@
 /* Deviance Test 4.6.3.1: Ensure illegal pointer initializations are detected */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int i2 [5], i1 = 5;
 

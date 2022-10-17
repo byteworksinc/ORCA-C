@@ -5,8 +5,11 @@
 /*                                       file with parameters        */
 
 #include <orca.h>
+#include <string.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    char *cmdLine;
 
@@ -15,7 +18,7 @@ main ()
        goto Fail;
 
    printf ("Passed Special Conformance Test 23.2.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Special Conformance Test 23.2.0.1\n");

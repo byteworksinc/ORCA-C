@@ -20,7 +20,7 @@ extern char * Init_Ch  (void);
 extern int  * Init_Int (int i []);
 
 
-main ()
+int main (void)
   {
    char  *chPtr;
    int   *iPtr;
@@ -64,7 +64,7 @@ main ()
 
 Out:
    printf ("Passed Conformance Test 25.0.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("count = %d\n", count);

@@ -1,7 +1,6 @@
 * Exec file to run Special Conformance Test 4.3.1.1 *
 
 unset exit
-set   echo  on
 
 compile spc4.3.1.1.cc keep=3/spc4311.mn
 set errNo {status}

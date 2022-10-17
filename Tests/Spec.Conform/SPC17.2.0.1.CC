@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int i, count = 0;
 
@@ -153,12 +153,12 @@ main ()
        goto Fail2;
 
    printf ("Passed Special Conformance Test 17.2.0.1 ");
-   return;
+   return 0;
 
 Fail:
    printf ("count = %d\n", count);
    perror ("File creation failure in Special Conformance Test 17.2.0.1 ");
-   return;
+   return 0;
 
 Fail2:
    printf ("count = %d\n", count);

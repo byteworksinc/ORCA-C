@@ -3,7 +3,9 @@
 
 #include <math.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int      i, j, k, n;                                    /* loop indices */
    long     L;                                             /* l-values     */
@@ -122,7 +124,7 @@ main ()
            goto Fail;
 
    printf ("Passed Conformance Test 4.5.3.3\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.5.3.3\n");

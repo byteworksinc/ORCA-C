@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int  i  = 5;
    long L  = 32777;
@@ -25,7 +25,7 @@ main ()
 
 
    printf ("Passed Conformance Test 7.4.5.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 7.4.5.1\n");

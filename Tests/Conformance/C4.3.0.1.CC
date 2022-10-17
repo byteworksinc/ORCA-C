@@ -1,6 +1,8 @@
 /* Conformance Test 4.3.0.1:  Verification of auto, register, and static */
 /*                            storage classes                            */
 
+int printf(const char *, ...);
+
 static long L1 (register int a1, float x1);    /* test forward referencing */
                                                /*   at top level           */
 
@@ -9,7 +11,7 @@ static int j = 2;                              /*   initialized correctly */
 static int i;                                  /* should automatically be */
                                                /*   set to zero           */
 
-main ()
+int main (void)
   {
    static void V1 (void);              /* test forward referencing within */
                                        /*   function                      */
@@ -19,7 +21,7 @@ main ()
        goto Fail;
 
      {
-       auto i = 10;                    /* this i hides top-level i        */
+       int auto i = 10;                /* this i hides top-level i        */
        for (; i < 15; i++)
          {
            V1 ();
@@ -71,7 +73,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.3.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.3.0.1\n");

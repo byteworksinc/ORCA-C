@@ -1,6 +1,9 @@
 /* Deviance Test 2.7.1.2: Ensure long integer constant overflows are */
 /*                        caught as errors                           */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    long a;
 

@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    int i, j;
@@ -20,7 +20,7 @@ main ()
        goto Fail;
 
    printf ("Passed Deviance Test 17.5.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Deviance Test 17.5.0.1\n");

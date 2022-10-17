@@ -1,5 +1,8 @@
 /* Conformance Test 2.2.0.2:  Comments crossing multiple lines */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    /* Should ignore this
        comment line

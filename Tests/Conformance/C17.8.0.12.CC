@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    char  string [] = "  327678  0x0  D   0xFFFFFFFFm   0x7fEd0X10 ";
    int   i;
@@ -39,9 +39,9 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 17.8.0.12\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.8.0.12\n");
-   return;
+   return 0;
   }

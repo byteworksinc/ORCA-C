@@ -1,13 +1,15 @@
 /* Conformance Test 3.5.2.4:  Verification of nested #elif commands, using */
 /*                            macro substitution                           */
 
+int printf(const char *, ...);
+
 #define PASS  "Passed Conformance Test 3.5.2.4\n"
 #define FAIL  "Failed Conformance Test 3.5.2.4\n"
 
 #define CALL1(a,b,c)   ((a) - (b) * (c))
 #define CALL2(x,y)     ((x) || (y))
 
-main ()
+int main (void)
   {
    #if CALL1 (6,2,3)
        #if CALL1 (8,2,4)

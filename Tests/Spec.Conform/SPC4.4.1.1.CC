@@ -1,12 +1,14 @@
 /* Special Conformance Test 4.4.1.1:  Verification of ability to omit either */
 /*                                    type specifier or storage class in     */
 /*                                    declarations, and both in function     */
-/*                                    definitions                            */
+/*                                    definitions (C89/C90 only)             */
 /*                                                                           */
 /* Other files needed: spc4411.exec - separately compiles, links, and        */
 /*                                    executes the files spc4.4.1.1.cc and   */
 /*                                    spc4411.1.cc                           */
 /*                                                                           */
+
+int printf(const char *, ...);
 
 static x;                                    /* type of x is int             */
 float y;                                     /* storage class of y is extern */

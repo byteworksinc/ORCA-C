@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    char   ch;
    short  sh;
@@ -80,7 +80,7 @@ main ()
 
 
    printf ("Passed Conformance Test 7.5.1.5\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Passed Conformance Test 7.5.1.5\n");

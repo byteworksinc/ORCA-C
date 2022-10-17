@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 
-main ()
+int main (void)
   {
    float f1, f2, f3, f4;
    double d1, d2, d3;
@@ -43,13 +43,13 @@ main ()
        goto Fail1;
 
    printf ("Passed Conformance Test 17.8.0.23\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.8.0.23\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to redirect stdin for Conformance Test 17.8.0.23\n");
-   return;
+   return 0;
   }

@@ -5,7 +5,7 @@
 
 #include   <stdio.h>
 
-main ()
+int main (void)
   {
    int i = 0;
 
@@ -47,7 +47,7 @@ main ()
    if (i)
        goto Fail;
    printf ("Passed Conformance Test 25.0.13\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 25.0.13\n");

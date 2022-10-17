@@ -1,6 +1,8 @@
 /* Deviance Test 4.3.0.1:  Ensure illegal storage class specifications are */
 /*                         detected                                        */
 
+int printf(const char *, ...);
+
 typedef double DblFunc (void);
 
 static int ReturnInt (long l); /* ReturnInt should be defined later in file */
@@ -8,7 +10,7 @@ static int ReturnInt (long l); /* ReturnInt should be defined later in file */
 auto int s;                    /* auto can only be used in head of block */
 register short f;              /* register can only be used with local   */
                                /*   variables and function parameters    */
-main ()
+int main (void)
   {
    int i;
 

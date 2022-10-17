@@ -1,5 +1,8 @@
 /* Deviance Test 2.4.0.1:  Ensure compound operators are scanned as one token */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    struct a {
               int b;

@@ -3,9 +3,11 @@
 
 #include <stddef.h>
 
+int printf(const char *, ...);
+
 extended e1 [800];
 
-main ()
+int main (void)
   {
    int i [10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
    int *i1 = i;
@@ -28,7 +30,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 13.1.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 13.1.0.1\n");

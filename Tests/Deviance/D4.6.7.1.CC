@@ -1,5 +1,7 @@
 /* Deviance Test 4.6.7.1: Ensure illegal initialization of unions is detected */
 
+int printf(const char *, ...);
+
 union U1 { int   i;
            long  L;
            char ch [5]; };
@@ -11,7 +13,7 @@ union U1 u3 = { 5, 6, "a", 2, 3 };   /* too many values */
 static union U1 u4 = { 2, 4, 6.0 };
 
 
-main ()
+int main (void)
   {
    int i = 5;
 

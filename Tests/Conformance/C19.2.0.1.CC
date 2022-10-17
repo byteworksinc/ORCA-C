@@ -2,7 +2,9 @@
 
 #include <stdlib.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    div_t  d1;
    ldiv_t ld1;
@@ -17,7 +19,7 @@ main ()
 
 
    printf ("Passed Conformance Test 19.2.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 19.2.0.1\n");

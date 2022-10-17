@@ -1,6 +1,9 @@
 /* Conformance Test 2.5.0.4:  Test characters comprising identifiers for */
 /*                            structures                                 */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    struct _____________________________________________9 {
 
@@ -104,7 +107,7 @@ Zabcdefghijklmnopqrstuvwxyz_____________0123456789987654321)
 
 
    printf ("Passed Conformance Test 2.5.0.4\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.5.0.4\n");

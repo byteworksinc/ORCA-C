@@ -5,7 +5,7 @@
 FILE *f1;
 int  i;
 
-main ()
+int main (void)
   {
 
    i = ungetc ('a', f1);                /* trying to read an unopened stream */
@@ -15,7 +15,7 @@ main ()
        goto Fail;
 
    printf ("Passed Deviance Test 17.6.0.3\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Deviance Test 17.6.0.3\n");

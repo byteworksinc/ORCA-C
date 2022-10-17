@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int i, count = 0;
 
@@ -228,7 +228,7 @@ main ()
        goto Fail4;
 
    printf ("Passed Special Conformance Test 17.2.0.2 ");
-   return;
+   return 0;
 
 Fail:
    perror ("File open failure in Special Conformance Test 17.2.0.2 ");

@@ -5,6 +5,8 @@
 /*                     spc4531.1.cc - Extern function which tests the arrays  */
 /*                     spc4531.h    - Header file declaring global arrays     */
 
+int printf(const char *, ...);
+
 int  i1 [50], i3 [3] [5] [8];                          /* all basic types */
 long L1 [9], L2 [2] [6];
 
@@ -29,7 +31,7 @@ union longOrShort { int  first;
                     long second; };
 union longOrShort u2 [3] [3], u1 [12];
 
-main ()
+int main (void)
   {
    extern int TestArray (void);
 

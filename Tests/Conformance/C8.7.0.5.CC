@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-void main(void)
+int main(void)
 
 {
 int i, hundreds = 0;

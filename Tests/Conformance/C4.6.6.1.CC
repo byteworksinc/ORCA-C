@@ -2,6 +2,7 @@
 /*                            initialization                              */
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 struct S1 { int      i;
@@ -41,7 +42,7 @@ struct S3 s6 = { { 7654, 'x', 65535, 876.0, 877.0, 878.0, 033 },
                    { 0x01 } } };
 
 
-main ()
+int main (void)
   {
    int      i, j;
    long     k;
@@ -149,7 +150,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.6.6.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.6.1\n");

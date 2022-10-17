@@ -1,6 +1,8 @@
 /* Deviance Test 3.3.2.1:  Ensure invalid macro definitions/invocations */
 /*                         are flagged as errors                        */
 
+int printf(const char *, ...);
+
 #define sameName1(name1,name1)         name1 * name1
 #define missingRParen(x,y              x / y
 #define sameName1(a,b)                 a | b
@@ -10,7 +12,7 @@
 #define oneGoodOne(z1,z2)              z1 * z2
 #define sameName2                      " same name 2 "
 
-main ()
+int main (void)
   {
    int a, b, c;
 

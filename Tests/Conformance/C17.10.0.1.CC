@@ -1,8 +1,9 @@
 /* Conformance Test 17.10.0.1:  Verification of fputs and puts */
 
 #include <stdio.h>
+#include <string.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    int   i,j;
@@ -53,21 +54,21 @@ main ()
        goto Fail2;
 
    printf ("Passed Conformance Test 17.10.0.1\n");
-   return;
+   return 0;
 
 Fail:
    fprintf (stderr, "Failed Conformance Test 17.10.0.1\n");
-   return;
+   return 0;
 
 Fail1:
    fprintf (stderr, "Unable to open input file for Conformance Test 17.10.0.1\n");
-   return;
+   return 0;
 
 Fail2:
    fprintf (stderr, "Unable to close input file for Conformance Test 17.10.0.1\n");
-   return;
+   return 0;
 
 Fail3:
    fprintf (stderr, "Unable to redirect stdout for Conformance Test 17.10.0.1\n");
-   return;
+   return 0;
   }

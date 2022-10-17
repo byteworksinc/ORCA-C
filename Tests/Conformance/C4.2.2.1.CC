@@ -4,6 +4,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 typedef  int  *numPtr;                 /* user-defined type    */
 
 float  f;                              /* variables            */
@@ -29,7 +31,7 @@ int i (char ch)
 
 /******************************************************************************/
 
-main ()
+int main (void)
   {
    int   i;
    typedef float *numPtr;              /* redefine the global types */
@@ -75,7 +77,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.2.2.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.2.2.1\n");

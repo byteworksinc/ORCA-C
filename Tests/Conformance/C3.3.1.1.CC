@@ -1,17 +1,21 @@
 /* Conformance Test 3.3.1.1:  Verification of simple macro definitions */
 
+#include <string.h>
+
+int printf(const char *, ...);
+
 #define A_LONG_MACRO_NAME   7 * 3999 / 18 + count - digits;
 #define SUBSTITUTION        a_variable
 #define EXPRESSION          (3 + 21 / 6)
-#define STRING"This string was made for testing, and that's just what\
+#define STRING "This string was made for testing, and that's just what\
                it does"
 #define LABEL     Fail
 #define begin     {
 #define end       }
 #define pass_msg  ("Passed Conformance Test 3.3.1.1\n");
-#define letsSplit return
+#define letsSplit return 0
 
-main ()
+int main (void)
   begin
    long SUBSTITUTION;
    char string [] = STRING;

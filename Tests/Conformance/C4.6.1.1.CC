@@ -1,5 +1,7 @@
 /* Conformance Test 4.6.1.1:  Initialization of integer variables */
 
+int printf(const char *, ...);
+
 #define ONE 1
 #define TWO 2
 
@@ -12,7 +14,7 @@ char ch = ~'a' - 0x20;
 int gk = 0x7D;
 unsigned gu1 = 0x7D;
 
-main ()
+int main (void)
   {
    /* auto & register integers can be initialized with arbitrary expressions */
    /* default storage class at head of block is auto                         */
@@ -40,7 +42,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.6.1.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.1.1\n");

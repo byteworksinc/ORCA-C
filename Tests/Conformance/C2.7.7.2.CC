@@ -1,6 +1,11 @@
 /* Conformance Test 2.7.7.2:  Verification of numeric escape codes */
 /*                            within character strings             */
-main ()
+
+#include <string.h>
+
+int printf(const char *, ...);
+
+int main (void)
   {
    char a [300];
 
@@ -57,7 +62,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.7.7.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.7.2\n");

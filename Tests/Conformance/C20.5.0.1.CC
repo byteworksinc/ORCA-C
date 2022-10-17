@@ -3,7 +3,9 @@
 #include <stddef.h>
 #include <time.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    double d1;
    time_t t1, t0;
@@ -19,7 +21,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 20.5.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 20.5.0.1\n");

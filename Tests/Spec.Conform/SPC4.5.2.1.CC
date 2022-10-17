@@ -8,7 +8,7 @@
 
 #include "spc4521.h"
 
-main ()
+int main (void)
   {
    extern void F1 (void);
    F1 ();

@@ -1,11 +1,13 @@
 /* Conformance Test 3.3.6.1:  Verify precedence setting with parentheses */
 /*                            in macro expansions                        */
 
+int printf(const char *, ...);
+
 #define    SQUARE1(x)  x * x
 #define    SQUARE2(x)  (x) * (x)
 #define    SQUARE3(x)  ( (x) * (x) )
 
-main ()
+int main (void)
   {
    float y;
    int   i;
@@ -24,7 +26,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 3.3.6.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 3.3.6.1\n");

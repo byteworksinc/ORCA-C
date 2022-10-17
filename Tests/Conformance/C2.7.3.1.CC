@@ -1,6 +1,9 @@
 /* Conformance Test 2.7.3.1:  Check ASCII encodings for all character */
 /*                            constants                               */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    char a;
 
@@ -419,7 +422,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.7.3.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.3.1\n");

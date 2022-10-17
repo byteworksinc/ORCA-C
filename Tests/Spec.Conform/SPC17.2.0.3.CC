@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int i, j;
    char s [255];                                       /* input buffer */
@@ -162,7 +162,7 @@ main ()
    printf ("\n");
 
    printf ("Passed Special Conformance Test 17.2.0.3 ");
-   return;
+   return 0;
 
 Fail:
    perror ("File open failure in Special Conformance Test 17.2.0.3 ");

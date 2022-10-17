@@ -1,5 +1,7 @@
 /* Conformance Test 4.3.0.2:  Check uniqueness of static variables       */
 
+int printf(const char *, ...);
+
 static int var;
 
 int sub1(void)
@@ -44,7 +46,7 @@ return 0;
 }
 
 
-void main (void)
+int main (void)
 
 {
 var = 1;
@@ -54,7 +56,7 @@ if (sub2()) goto Fail;
 if (var != 1) goto Fail;
 
 printf ("Passed Conformance Test 4.3.0.2\n");
-return;
+return 0;
 
 Fail: printf ("Failed Conformance Test 4.3.0.2\n");
 }

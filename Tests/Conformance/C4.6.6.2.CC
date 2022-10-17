@@ -2,6 +2,7 @@
 /*                            initialization                              */
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 struct S1 { int      i;
@@ -25,7 +26,7 @@ struct S3 { struct S1 s1;
             struct S2 s2; };
 
 
-main ()
+int main (void)
   {
    int      i, j;
    long     k;
@@ -40,12 +41,12 @@ main ()
 
    register struct S1 s1 = { 1, 'a', -2147483647, 4.3, 4.3e100, 4.3e300, 0xFF };
 
-   register struct S2 s2 = { { 1, 2, 3, 4, 5 }, "an array ", { 8, 9, 10 },
+   auto struct S2 s2 =   { { 1, 2, 3, 4, 5 }, "an array ", { 8, 9, 10 },
                            { 5.1, 5.2, 5.3, 5.4 }, { 5.1e50, 5.2e50, 5.3e50 },
                            { 5.1e200, 5.2e200, 5.3e200 }, { 0xFFFF, 0xFFFE,
                            0xFFFD } };
 
-   register struct S3 s3 = { { 9, 'd', 80000, 88.9, 88.99, 888.999, 0x33 },
+   auto struct S3 s3 =   { { 9, 'd', 80000, 88.9, 88.99, 888.999, 0x33 },
                            { { 9, 8, 7, 6, 5 }, "ten chars",
                              { 32768, 32769, 32770 }, { 6.0, 7.0, 8.0, 9.0 },
                              { 66.0, 77.0, 88.0, }, { 666.0, 777.0 },
@@ -262,7 +263,7 @@ main ()
 
 
    printf ("Passed Conformance Test 4.6.6.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.6.2\n");

@@ -1,5 +1,7 @@
 /* Deviance Test 4.6.4.1:  Ensure illegal array initializations are detected */
 
+int printf(const char *, ...);
+
 static int i1 [3] = { 1, 2, 3, 4 };                    /* too many elements */
 static long L1 [4] = { 1, 2, 3, 4, 5, 5, 7 };
 static double d1 [3] = { 1.0, 2.0, 3.0, 4.0 };
@@ -21,7 +23,7 @@ static struct S1 s2 [2] = { i3 [0], f2 };
 unsigned int i4 [2] = { i3 [1], i2 };
 unsigned long L2 [4] = { (unsigned long) f2 + 3 };
 
-main ()
+int main (void)
   {
    int i5 [7] = { 14, 15, 16, 17, 18, 19, 20, 21 };    /* too many elements */
    float f5 [3] = { 1.1, 1.1, 1.1, 1.1, 4.4 };

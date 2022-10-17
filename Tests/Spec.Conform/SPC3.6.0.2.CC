@@ -12,12 +12,12 @@ void Sub (void)
 
 #line lineNum(88) "noFile"     /* expect trace back to report error on line  */
                                /*   91 (call to Sub), in file noFile         */
-Sub2()
+int Sub2 (void)
 {
 Sub();
 }
 
-main ()
+int main (void)
   {
    Sub2 ();
   }

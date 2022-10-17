@@ -1,7 +1,9 @@
 /* Conformance Test 2.1.0.3:  Verification of ANSI C trigraphs in */
 /*                            character constants                 */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    char a;
 
@@ -42,7 +44,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.1.0.3\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.1.0.3\n");

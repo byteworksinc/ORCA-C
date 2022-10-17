@@ -4,10 +4,13 @@
 
 #include <stdio.h>
 
+extern pascal void SysIOStartup (void);
+extern pascal void SysIOShutDown (void);
+
 int main (void)
   {
-   SYSIOSTARTUP();
+   SysIOStartup();
    printf ("Passed Conformance Test 23.2.0.1\n");
-   SYSIOSHUTDOWN();
-   return;
+   SysIOShutDown();
+   return 0;
   }

@@ -1,9 +1,11 @@
 /* Conformance Test 4.2.5.1:  Verification of duplicate extern references */
 
+int printf(const char *, ...);
+
 int   a;
 extern float F1 (int x, int y);
 
-main ()
+int main (void)
   {
    extern   int   a;
    extern   float F1 (int x, int y);
@@ -19,7 +21,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.2.5.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.2.5.1\n");

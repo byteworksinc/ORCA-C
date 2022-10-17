@@ -3,6 +3,8 @@
 /*                            zeroing of non-initialized static variables */
 /*                            is also checked.                            */
 
+int printf(const char *, ...);
+
 #define ONE 1
 #define TWO 2
 
@@ -13,7 +15,7 @@ static int i;
 long j = { ONE <= 5 };     /* default storage class at top-level is extern */
 char ch = {~'a' - 0x20};
 
-main ()
+int main (void)
   {
    /* auto & register integers can be initialized with arbitrary expressions */
    /* default storage class at head of block is auto                         */
@@ -44,7 +46,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.6.1.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.1.2\n");

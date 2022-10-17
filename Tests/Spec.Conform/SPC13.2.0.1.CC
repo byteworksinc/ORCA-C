@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <math.h>
 
-main ()
+int main (void)
   {
    int i;
    char ch [] = "Error message is";

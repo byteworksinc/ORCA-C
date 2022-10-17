@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 
-main ()
+int main (void)
   {
    int i [5] = { 1, 2, 3, 4, 5 }, *iptr = i;
    struct S { float f; char ch; } s = { 2.2, 'k' }, *sptr = &s;
@@ -28,7 +28,7 @@ main ()
 
 
    printf ("Passed Conformance Test 7.4.1.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 7.4.1.1\n");

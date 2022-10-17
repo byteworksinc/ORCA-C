@@ -3,6 +3,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
                                        /* pointers to all the basic types */
 static   int            *intPtr, i;
 static   long           *longPtr, L;
@@ -22,7 +24,7 @@ static   enum   colors  { red, black, green } *colorPtr, color;
 static   union  longOrShort { int first;
                               long second; } *unionPtr, un;
 
-main ()
+int main (void)
   {
    void F1 (void);
    F1();

@@ -2,7 +2,9 @@
 
 #include <math.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
             char     ch;
             int      i, j, k, n;                           /* loop indices */
@@ -238,7 +240,7 @@ main ()
            goto Fail;
 
    printf ("Passed Conformance Test 4.5.3.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.5.3.1\n");

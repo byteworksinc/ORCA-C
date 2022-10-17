@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    int   i;
@@ -23,14 +23,14 @@ main ()
        goto Fail1;
 
    ch = 'a';                               /* no assignment should be made */
-   i  = scanf ("%*hc");                    /*   h ignored                  */
+   i  = scanf ("%*c");
    if (i != 0)
        goto Fail;
    if (ch != 'a')
        goto Fail;
 
-   i = scanf ("%10lc", string);           /* test assignment to string*/
-   if (i != 1)                            /*   l ignored              */
+   i = scanf ("%10c", string);            /* test assignment to string*/
+   if (i != 1)
        goto Fail;
    if (strncmp (string, "ten chars!", 10))
        goto Fail;
@@ -40,13 +40,13 @@ main ()
        goto Fail1;
 
    printf ("Passed Conformance Test 17.8.0.21\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.8.0.21\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to redirect stdin for Conformance Test 17.8.0.21\n");
-   return;
+   return 0;
   }

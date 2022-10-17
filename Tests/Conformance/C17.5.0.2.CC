@@ -2,8 +2,9 @@
 /*                             functions for text files                 */
 
 #include <stdio.h>
+#include <string.h>
 
-main ()
+int main (void)
   {
    FILE *f1;                           /* file pointer */
    int i, j, m;
@@ -44,7 +45,7 @@ main ()
    j = fseek (f1, 0L, SEEK_END);
    if (j)
        goto Fail;
-   j = fscanf (f1, "%c", &m);
+   j = fscanf (f1, "%c", (char*)&m);
    if (j != EOF)
        goto Fail3;
 
@@ -108,25 +109,25 @@ main ()
        goto Fail4;
 
    printf ("Passed Conformance Test 17.5.0.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.5.0.2\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Could not open tmp file for Conformance Test 17.5.0.2\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Could not write to file for Conformance Test 17.5.0.2\n");
-   return;
+   return 0;
 
 Fail3:
    printf ("Error while reading file for Conformance Test 17.5.0.2\n");
-   return;
+   return 0;
 
 Fail4:
    printf ("Could not close file for Conformance Test 17.5.0.2\n");
-   return;
+   return 0;
   }

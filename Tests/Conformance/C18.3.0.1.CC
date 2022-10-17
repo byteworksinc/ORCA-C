@@ -2,11 +2,14 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
+
+int printf(const char *, ...);
 
 struct S { int i;  extended e; char ch [40]; };
 
-main ()
+int main (void)
   {
    struct S *rgn, *ptr1;
    struct S s [3] = { {1, 1.0, "hey"}, {2, 2.0, "you"}, {3, 3.0, "person!"} };
@@ -57,13 +60,13 @@ main ()
 
 
    printf ("Passed Conformance Test 18.3.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 18.3.0.1\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to allocate memory for Conformance Test 18.3.0.1\n");
-   return;
+   return 0;
   }

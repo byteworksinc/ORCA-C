@@ -1,5 +1,7 @@
 /* Conformance Test 4.4.2.1:  Ensure compile accepts missing declarators   */
 
+int printf(const char *, ...);
+
 extern struct S;                       /* forward-declared struct type,    */
                                        /* storage class ignored            */
 
@@ -11,7 +13,7 @@ struct S;
 static enum E {a, b, c};               /* storage class ignored            */
 extern enum {x, y, z};
 
-main ()
+int main (void)
   {
    struct S;                           /* different from the global one    */
    volatile const register struct T;

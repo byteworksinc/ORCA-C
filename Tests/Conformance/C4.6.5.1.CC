@@ -1,9 +1,11 @@
 /* Conformance Test 4.6.5.1:  Verification of enumeration initializations */
 
+int printf(const char *, ...);
+
 static enum E1 { a, b, c } e1 = b;
 enum E2 { d, e } e2 = e;
 
-main ()
+int main (void)
   {
    enum E3 { f, g, h } e3 = f;
 {  enum E3 e4 = e3;
@@ -18,7 +20,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.6.5.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.5.1\n");

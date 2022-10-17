@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    FILE *f1;                                               /* file pointer */
    int i, j;
@@ -30,22 +30,22 @@ main ()
        goto Fail4;
 
    printf ("Passed Special Conformance Test 17.3.0.3\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Could not open tmp file for Special Conformance Test 17.3.0.3\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("setvbuf command failed in Special Conformance Test 17.3.0.3\n");
-   return;
+   return 0;
 
 Fail3:
    printf ("Could not write to file for Special Conformance Test 17.3.0.3\n");
-   return;
+   return 0;
 
 Fail4:
    printf ("Could not close file for Special Conformance Test 17.3.0.3\n");
-   return;
+   return 0;
 
   }

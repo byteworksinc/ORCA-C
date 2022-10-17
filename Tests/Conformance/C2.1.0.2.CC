@@ -1,8 +1,12 @@
 /* Conformance Test 2.1.0.2:  Verification of ANSI C trigraphs */
 
+#include <string.h>
+
+int printf(const char *, ...);
+
 ??=define ten 10                       /* ??= is '#' */
 
-main ()
+int main (void)
   ??<                                  /* ??< is '{' */
    int  i;
    char a, b??(10??) = "abc";          /* ??( is '[' */
@@ -34,7 +38,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.1.0.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.1.0.2\n");

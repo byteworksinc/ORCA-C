@@ -3,6 +3,10 @@
 /*                            words except GOTO, IF, and RETURN are   */
 /*                            checked.  (They're used in the program) */
 
+int printf(const char *, ...);
+
+typedef int T;
+
 #define    asm         1
 #define    auto        2
 #define    break       3
@@ -39,7 +43,7 @@
 #define    volatile    34
 #define    while       35
 
-main ()
+T main ()
   {
    if (asm         != 1)
        goto Fail;
@@ -113,7 +117,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.6.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.6.0.1\n");

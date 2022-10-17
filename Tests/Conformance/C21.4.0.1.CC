@@ -2,6 +2,8 @@
 
 #include <setjmp.h>
 
+int printf(const char *, ...);
+
 jmp_buf env;                       /* setjmp, longjmp environment array */
 
 
@@ -17,7 +19,7 @@ void F1 (char ch)
 
 /*****************************************************************************/
 
-main ()
+int main (void)
   {
    int i;
 
@@ -29,7 +31,7 @@ main ()
    else if (i == 1)                /* check second return from setjmp */
      {
        printf ("Passed Conformance Test 21.4.0.1\n");
-       return;
+       return 0;
      }
 
    else

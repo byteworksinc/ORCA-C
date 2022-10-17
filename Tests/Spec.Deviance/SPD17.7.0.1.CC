@@ -6,7 +6,7 @@ FILE *f1;
 char string [80], *s;
 int  i;
 
-main ()
+int main (void)
   {
 
    s = fgets (string, 90, f1);         /* trying to read an unopened stream */
@@ -16,7 +16,7 @@ main ()
        goto Fail;
 
    printf ("Passed Deviance Test 17.7.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Deviance Test 17.7.0.1\n");

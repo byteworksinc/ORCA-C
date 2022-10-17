@@ -3,7 +3,9 @@
 #include <assert.h>
 #define NDEBUG 1
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int i = 7;
    assert (i == 7);

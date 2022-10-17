@@ -1,5 +1,7 @@
 /* Conformance Test 3.5.2.1:  Verification of #elif command */
 
+int printf(const char *, ...);
+
 #if 0
    # define MSG "Failed Conformance Test 3.5.2.1; location 1\n"
 
@@ -31,7 +33,7 @@
    # define MSG "Failed Conformance Test 3.5.2.1; location 9\n"
 #endif
 
-main ()
+int main (void)
   {
    printf (MSG);
   }

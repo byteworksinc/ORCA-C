@@ -1,6 +1,9 @@
 /* Conformance Test 2.5.0.5:  Test characters comprising identifiers for */
 /*                            unions                                     */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    union _____________________________________________9 {
 
@@ -105,7 +108,7 @@ Zabcdefghijklmnopqrstuvwxyz_____________0123456789987654321)
            goto Fail;
 
    printf ("Passed Conformance Test 2.5.0.5\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.5.0.5\n");

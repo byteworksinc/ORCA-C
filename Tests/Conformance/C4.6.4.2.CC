@@ -2,8 +2,9 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
-main ()
+int main (void)
   {
    int i, j, k, m;                     /* local variables */
    double   d3;
@@ -176,7 +177,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.6.4.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.4.2\n");

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    signed char  ch = 0X57;
    int   i  = 0xabcd;
@@ -50,7 +50,7 @@ main ()
 
 
    printf ("Passed Conformance Test 7.9.2.5\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 7.9.2.5\n");

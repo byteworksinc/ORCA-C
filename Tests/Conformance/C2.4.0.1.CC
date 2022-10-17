@@ -1,5 +1,8 @@
 /* Conformance Test 2.4.0.1:  Ensure =+ is assigment followed by unary plus */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int a;
 

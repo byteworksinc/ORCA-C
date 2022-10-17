@@ -2,7 +2,9 @@
 
 #include <stdlib.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    double d1;
    int    i;
@@ -22,7 +24,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 15.9.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 15.9.0.1\n");

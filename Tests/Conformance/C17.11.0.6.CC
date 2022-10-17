@@ -2,8 +2,9 @@
 /*                              s format code                              */
 
 #include <stdio.h>
+#include <string.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    int   i, j, k;
@@ -27,17 +28,17 @@ main ()
 
    /* Write formatted output as string to the output files and sstring. */
 
-   i = fprintf (f1, " %#+ -10.10s  %015.7hs  %*.*s  %s  E\n",
+   i = fprintf (f1, " %+ -10.10s  %15.7s  %*.*s  %s  E\n",
                 arg1, arg1, j, k, arg2,  "very short string");
    if (i != 77)
        goto Fail;
 
-   i = printf (" %#+ -10.10s  %015.7hs  %*.*s  %s  E\n",
+   i = printf (" %+ -10.10s  %15.7s  %*.*s  %s  E\n",
                arg1, arg1, j, k, arg2,  "very short string");
    if (i != 77)
        goto Fail;
 
-   i = sprintf (sstring, " %#+ -10.10s  %015.7hs  %*.*s  %s  E\n",
+   i = sprintf (sstring, " %+ -10.10s  %15.7s  %*.*s  %s  E\n",
                 arg1, arg1, j, k, arg2,  "very short string");
    if (i != 77)
        goto Fail;
@@ -75,25 +76,25 @@ main ()
        goto Fail2;
 
    printf ("Passed Conformance Test 17.11.0.6\n");
-   return;
+   return 0;
 
 Fail:
    fprintf (stderr, "Failed Conformance Test 17.11.0.6\n");
-   return;
+   return 0;
 
 Fail1:
    fprintf (stderr, "Unable to open output file for Conformance Test 17.11.0.6\n");
-   return;
+   return 0;
 
 Fail2:
    fprintf (stderr, "Unable to close output file for Conformance Test 17.11.0.6\n");
-   return;
+   return 0;
 
 Fail3:
    fprintf (stderr, "Unable to read output file for Conformance Test 17.11.0.6\n");
-   return;
+   return 0;
 
 Fail4:
    fprintf (stderr, "Unable to redirect stdout for Conformance Test 17.11.0.6\n");
-   return;
+   return 0;
   }

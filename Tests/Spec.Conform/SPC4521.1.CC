@@ -3,6 +3,8 @@
 #include <math.h>
 #include <limits.h>
 
+int printf(const char *, ...);
+
 /* Global data */
 
 int            *intPtr, i;             /* pointers to all the basic types */

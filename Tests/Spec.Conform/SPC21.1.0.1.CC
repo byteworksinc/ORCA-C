@@ -6,7 +6,9 @@
 #undef     NDEBUG
 #include   <assert.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    assert (0);
    printf ("Failed Special Conformance Test 21.1.0.1\n");

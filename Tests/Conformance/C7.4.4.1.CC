@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int  i  = 5, j;
    long L  = 32777;
@@ -43,7 +43,7 @@ main ()
       goto Fail;
 
    printf ("Passed Conformance Test 7.4.4.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 7.4.4.1\n");

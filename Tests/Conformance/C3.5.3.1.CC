@@ -1,5 +1,7 @@
 /* Conformance Test 3.5.3.1:  Verification of #ifdef and #ifndef commands */
 
+int printf(const char *, ...);
+
 #define ONE    1
 #define TWO    2
 #define THREE  3
@@ -42,7 +44,7 @@
    #define COUNT8  8
 #endif
 
-main ()
+int main (void)
   {
    int a;
 
@@ -50,7 +52,7 @@ main ()
    if (a != 36)
        goto Fail;
    printf ("Passed Conformance Test 3.5.3.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 3.5.3.1\n");

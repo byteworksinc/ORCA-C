@@ -5,7 +5,9 @@
 /* the key echoed is the same key.                                            */
 /*                                                                            */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    static char *keyBoard = (char *) 0xC000ul, *strobe = (char *) 0xC010ul, ch;
 
@@ -15,7 +17,7 @@ main ()
    *strobe = 1;
    ch = *keyBoard;
    printf ("The character typed is: %c\n", ch);
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Special Conformance Test 4.6.3.5\n");

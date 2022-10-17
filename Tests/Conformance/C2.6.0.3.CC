@@ -1,6 +1,9 @@
 /* Conformance Test 2.6.0.3:  Ensure reserved words within identifiers are    */
 /*                            ignored                                         */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int     asmm, auto_1, tbreak, casechar, continue_default, dodoubleelse;
    short   _comp, extended_, inlinee, pascal0, segment_;

@@ -1,7 +1,9 @@
 /* Deviance Test 3.5.3.1:  Ensure only macro names can be checked with the */
 /*                         #ifdef and #ifndef commands                     */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    #ifdef a * 2
    #endif

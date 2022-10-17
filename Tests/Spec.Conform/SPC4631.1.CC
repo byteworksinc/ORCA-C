@@ -3,6 +3,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 struct S { int   a;
            float b; };
 union  U { int  i;

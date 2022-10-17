@@ -6,7 +6,9 @@
 /* verify that the __TIME__ macro return the computer's current clock time  */
 /* in the form:  hh:mm:ss.                                                  */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    printf ("The current date is: '%s'\n", __DATE__);
    printf ("The current time is: '%s'\n", __TIME__);

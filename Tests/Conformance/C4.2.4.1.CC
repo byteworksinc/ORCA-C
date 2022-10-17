@@ -1,6 +1,10 @@
 /* Conformance Test 4.2.4.1:  Ensure the same names in different overloading */
 /*                            classes are allowed                            */
 
+#include <string.h>
+
+int printf(const char *, ...);
+
 struct rect { int h1;                       /* struct, union, enum type tags */
               int v1;                       /* struct/union components       */
               int h2;
@@ -13,7 +17,7 @@ enum  repeats { h1, v1, h2, v2, first, second };  /* all others: variables, */
                                                   /*   functions, typedefs, */
                                                   /*   enumeration constants*/
 
-main ()
+int main (void)
   {
    int    rect;                                   /* can give variables same */
    double longOrShort;                            /*   names as labels, tags,*/
@@ -88,7 +92,7 @@ main ()
        goto label;
 
    printf ("Passed Conformance Test 4.2.4.1\n");
-   return;
+   return 0;
 
 label: ;
 Label2: ;

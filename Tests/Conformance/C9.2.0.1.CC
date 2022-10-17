@@ -10,7 +10,7 @@ return i+j;
 }
 
 
-void main(void)
+int main(void)
 
 {
 
@@ -20,7 +20,7 @@ if (pasFunc(8,1) != 9)  goto Fail;
 if (pasFunc(1,1) != 2)  goto Fail;
 
    printf ("Passed Conformance Test 9.2.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 9.2.0.1\n");

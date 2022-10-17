@@ -1,4 +1,6 @@
-/* Deviance Test 4.5.3.0.1:  Ensure illegal array dimensions are detected */
+/* Deviance Test 4.5.3.1:  Ensure illegal array dimensions are detected */
+
+int printf(const char *, ...);
 
 static  int x [0];                     /* zero not allowed for dimension */
 static  float y [0] [5] [9];
@@ -25,7 +27,7 @@ long L1 (char ch1 [] [])
 /*****************************************************************************/
 
 
-main ()
+int main (void)
   {
    char ch0 [0], ch2 [9] [0], ch3 [8] [7] [0] [6];
    extended ext [2] [0] [9] [0];
@@ -36,5 +38,5 @@ main ()
    k = F1 (n [5] []);
    k = F1 (n);
 
-   printf ("Failed Deviance Test 4.5.3.0.1\n");
+   printf ("Failed Deviance Test 4.5.3.1\n");
   }

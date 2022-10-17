@@ -1,9 +1,14 @@
 /* Conformance Test 3.3.0.1:  Ensure macro names are ignored in comments */
 /*                            and string constants                       */
+
+#include <string.h>
+
+int printf(const char *, ...);
+
 #define sum(x,y)  x+y
 #define mult(x,y) x*y
 
-main ()
+int main (void)
   {
    char  a[25];
    int   x, y;
@@ -19,7 +24,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 3.3.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 3.3.0.1\n");

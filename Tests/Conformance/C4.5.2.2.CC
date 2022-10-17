@@ -3,7 +3,9 @@
 
 #include <math.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
                                        /* pointers to all the basic types */
    typedef int *intPtr;
@@ -134,7 +136,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.5.2.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.5.2.2\n");

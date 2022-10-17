@@ -1,7 +1,9 @@
 /* Deviance Test 4.6.0.2:  Ensure attempt to initialize variables of type */
 /*                         void and function is detected                  */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    void v3 = 99.0;
    register void v4 = 'a';

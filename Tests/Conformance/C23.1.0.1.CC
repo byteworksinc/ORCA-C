@@ -2,7 +2,9 @@
 
 #include <string.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    char *ptr;
    char pstring [] = "\pThis is a so-called Pascal string";
@@ -27,7 +29,7 @@ M a b c d e f g h i j k l m n o p q r s t u v")) )
        goto Fail;
 
    printf ("Passed Conformance Test 23.1.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 23.1.0.1\n");

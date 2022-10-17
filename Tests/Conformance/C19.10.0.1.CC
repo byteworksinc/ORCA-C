@@ -3,7 +3,9 @@
 
 #include <math.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    double d1;
 
@@ -20,7 +22,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 19.10.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 19.10.0.1\n");

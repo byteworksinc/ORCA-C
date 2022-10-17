@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 static int  i1 [50], i3 [3] [5] [8];             /* all basic types */
 static long L1 [9], L2 [2] [6];
 
@@ -26,7 +28,7 @@ union longOrShort { int  first;
                     long second; };
 static union longOrShort u2 [3] [3], u1 [12];
 
-main ()
+int main (void)
   {
    static int TestArray (void);
 

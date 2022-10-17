@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    short i1, i3;
@@ -74,17 +74,17 @@ main ()
        goto Fail2;
 
    printf ("Passed Conformance Test 17.8.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.8.0.1\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to open input file for Conformance Test 17.8.0.1\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Unable to close input file for Conformance Test 17.8.0.1\n");
-   return;
+   return 0;
   }

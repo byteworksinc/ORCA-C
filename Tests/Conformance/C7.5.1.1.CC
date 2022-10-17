@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    signed char  ch = 'Z';
    int   i  = 80, j, k [7];
@@ -52,7 +52,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 7.5.1.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 7.5.1.1\n");

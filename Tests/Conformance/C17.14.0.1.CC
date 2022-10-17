@@ -6,7 +6,7 @@ struct S { int   i;
            float f;
            char  c; };
 
-main ()
+int main (void)
   {
    struct S s [3] = { 1, 1.0, 'a', 2, 2.0, 'b', 3, 3.0, 'c' };
    struct S buff [3];
@@ -47,17 +47,17 @@ main ()
        goto Fail2;
 
    printf ("Passed Conformance Test 17.14.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.14.0.1\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to open temp file for Conformance Test 17.14.0.1\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Unable to close output file for Conformance Test 17.14.0.1\n");
-   return;
+   return 0;
   }

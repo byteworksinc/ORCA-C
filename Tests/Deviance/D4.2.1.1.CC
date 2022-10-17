@@ -1,6 +1,8 @@
 /* Deviance Test 4.2.1.1:  Ensure invalid scoping of identifiers is detected */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int     i;
 

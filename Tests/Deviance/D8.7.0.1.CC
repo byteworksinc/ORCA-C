@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int i = 3, j = 4;
    unsigned short s = 7;

@@ -1,7 +1,11 @@
 /* Conformance Test 3.3.4.1:  Verification of ANSI C and ORCA/C predefined */
 /*                            macros                                       */
 
-main ()
+#include <string.h>
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int    i, j;
    float  x, y;
@@ -23,7 +27,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 3.3.4.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 3.3.4.1\n");

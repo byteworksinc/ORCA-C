@@ -1,5 +1,8 @@
 /* Deviance Test 2.5.0.1:  Ensure error flagging for invalid identifiers */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int       1n;
    char      !v_9;

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 
-main ()
+int main (void)
   {
    int  i [3]  = { 5, 6, 7 }, *i1ptr = i, *i2ptr = &i [2];
    int  j, k, m, n;
@@ -43,7 +43,7 @@ main ()
 
 
    printf ("Passed Conformance Test 7.7.1.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 7.7.1.1\n");

@@ -1,11 +1,13 @@
 /* Conformance Test 3.3.3.1:  Ensure correct macro expansion for nested */
 /*                            macros and nested macro calls             */
 
+int printf(const char *, ...);
+
 #define    addMult(a,b,c)  mult ( (add((a),(c))), (b) )
 #define    mult(x,y)       (y) * (x)
 #define    add(i,j)        (i) + (j)
 
-main ()
+int main (void)
   {
    long i, j, k, m;
 
@@ -26,7 +28,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 3.3.3.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 3.3.3.1\n");

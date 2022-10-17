@@ -8,6 +8,8 @@
 /*                     spc4532.exec - EXEC file which separately compiles*/
 /*                                    links and executes test 4.5.3.0.2  */
 
+int printf(const char *, ...);
+
 int       *i1 [50];                               /* all basic types */
 long      *L1 [9];
 comp      *c1 [3];
@@ -32,7 +34,7 @@ union longOrShort { int  first;
 union longOrShort *u1 [12], U;
 
 
-main ()
+int main (void)
   {
    extern int TestEm (void);
 

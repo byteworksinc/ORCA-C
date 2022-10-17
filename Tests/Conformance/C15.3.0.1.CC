@@ -3,7 +3,9 @@
 #include <stddef.h>
 #include <string.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    char s1 [80] = "this is the first string argument";
    char s2 [80] = ", and this is the second string argument!";
@@ -32,7 +34,7 @@ main ()
 
 
    printf ("Passed Conformance Test 15.3.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 15.3.0.1\n");

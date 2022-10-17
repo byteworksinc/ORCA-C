@@ -1,10 +1,12 @@
 /* Deviance Test 3.3.3.1:  Ensure macros which expand into preprocessor */
 /*                         commands are not parsed as preprocessor cmds */
 
+int printf(const char *, ...);
+
 #define includeFile    #include <string.h>
 #define badValue       #define  reallyBadValue     5
 
-main ()
+int main (void)
   {
    includeFile
    badValue

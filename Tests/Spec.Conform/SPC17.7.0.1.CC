@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    int  i;
    char string [20] = "";           /* initialize input string to null string */

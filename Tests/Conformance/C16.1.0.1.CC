@@ -5,7 +5,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int  i;
    char *rgn, *ptr1;
@@ -37,7 +39,7 @@ main ()
    if (ptr1 != string+14)
        goto Fail;
 
-   ptr1 = (char *) (memchr (string, 'Z', 88));
+   ptr1 = (char *) (memchr (string, 'Z', sizeof(string)));
    if (ptr1 != NULL)
        goto Fail;
 
@@ -56,13 +58,13 @@ main ()
 
 
    printf ("Passed Conformance Test 16.1.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 16.1.0.1\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to allocate memory for Conformance Test 16.1.0.1\n");
-   return;
+   return 0;
   }

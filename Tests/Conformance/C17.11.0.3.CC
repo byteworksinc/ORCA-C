@@ -2,8 +2,9 @@
 /*                              o format code                              */
 
 #include <stdio.h>
+#include <string.h>
 
-main ()
+int main (void)
   {
    FILE *f1;
    int   i, i1, i2;
@@ -75,25 +76,25 @@ main ()
        goto Fail2;
 
    printf ("Passed Conformance Test 17.11.0.3\n");
-   return;
+   return 0;
 
 Fail:
    fprintf (stderr, "Failed Conformance Test 17.11.0.3\n");
-   return;
+   return 0;
 
 Fail1:
    fprintf (stderr, "Unable to open output file for Conformance Test 17.11.0.3\n");
-   return;
+   return 0;
 
 Fail2:
    fprintf (stderr, "Unable to close output file for Conformance Test 17.11.0.3\n");
-   return;
+   return 0;
 
 Fail3:
    fprintf (stderr, "Unable to read output file for Conformance Test 17.11.0.3\n");
-   return;
+   return 0;
 
 Fail4:
    fprintf (stderr, "Unable to redirect stdout for Conformance Test 17.11.0.3\n");
-   return;
+   return 0;
   }

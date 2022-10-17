@@ -4,7 +4,7 @@
 
 static int j;
 
-void main(void)
+int main(void)
 
 {
 static int i;

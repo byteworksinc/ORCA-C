@@ -1,5 +1,7 @@
 /* Conformance Test 3.5.1.1:  Verification of #if constant expressions */
 
+int printf(const char *, ...);
+
 #define FIVE 5
 #define SIX  6
 
@@ -71,12 +73,12 @@
 
 #if (defined(FIVE)) && (defined(SIX)) && (NUM1 == 0x10) && (NUM2 == 4)\
     && (NUM3 == NUM2)
-main ()
+int main (void)
   {
    printf ("Passed Conformance Test 3.5.1.1\n");
   }
 #else
-main ()
+int main (void)
   {
    printf ("Failed Conformance Test 3.5.1.1\n");
   }

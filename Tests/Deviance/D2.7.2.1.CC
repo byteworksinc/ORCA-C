@@ -1,6 +1,9 @@
 /* Deviance Test 2.7.2.1:  Ensure misformed floating-point constants are */
 /*                         flagged as errors                             */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    float   a;
    double  b;

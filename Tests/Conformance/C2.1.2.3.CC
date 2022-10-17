@@ -4,7 +4,7 @@
 <stdio.h>
 #define  CONSTANT \
                     5
-main ()
+int main (void)
   {
    if (CONSTANT != 5)
        printf ("Failed Conformance Test 2.1.2.3\n");

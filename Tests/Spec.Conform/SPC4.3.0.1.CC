@@ -28,9 +28,12 @@
 /*****************************************************************************/
 
 #include <math.h>
+#include <string.h>
 #include "spc4301.h"
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int count = 0;
 

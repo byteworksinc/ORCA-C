@@ -1,6 +1,8 @@
 #include <math.h>
 #include "spc4531.h"
 
+int printf(const char *, ...);
+
 /****************************************************************************/
 
 int TestArray ( void )

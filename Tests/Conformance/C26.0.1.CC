@@ -63,7 +63,7 @@
 #include <video.h>
 #include <window.h>
 
-main ()
+int main (void)
   {
    printf ("Passed Conformance Test 26.0.1\n");
   }

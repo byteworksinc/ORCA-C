@@ -1,5 +1,8 @@
 /* Conformance Test 2.1.0.1:  Verification of character set */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    char string1 [] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
    char string2 [] = "abcdefghijklmnopqrstuvwxyz";
@@ -57,7 +60,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 2.1.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.1.0.1\n");

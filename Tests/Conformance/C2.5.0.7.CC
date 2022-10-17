@@ -1,5 +1,8 @@
 /* Conformance Test 2.5.0.7:  Test characters comprising identifiers for */
 /*                            preprocessor macros                        */
+
+int printf(const char *, ...);
+
 #define  _____________________________________________9  10
 
 #define  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
@@ -14,7 +17,7 @@ abcdefghijklmnopqrstuvwxyz_____________01234567899876543210\
 ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_____________\
 0123456789987654321   30
 
-main ()
+int main (void)
   {
    if (_____________________________________________9 != 10)
        goto Fail;
@@ -32,7 +35,7 @@ Zabcdefghijklmnopqrstuvwxyz_____________0123456789987654321 != 30)
        goto Fail; 
 
    printf ("Passed Conformance Test 2.5.0.7\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.5.0.7\n");

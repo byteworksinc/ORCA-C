@@ -4,6 +4,8 @@
 
 #include <stddef.h>
 
+int printf(const char *, ...);
+
 struct S { int   a;
            float b; };
 union  U { int  i;
@@ -40,7 +42,7 @@ struct S *struct2Ptr = NULL;
 union  U *union2Ptr  = NULL;
 enum   E *enum2Ptr   = NULL;
 
-main ()
+int main (void)
   {
    /* local pointer variables can also be set to NULL */
 
@@ -93,7 +95,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.6.3.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.6.3.1\n");

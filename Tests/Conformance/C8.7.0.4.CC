@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-void main(void)
+int main(void)
 
 {
 enum color {red, orange, yellow, green, blue, violet} c;

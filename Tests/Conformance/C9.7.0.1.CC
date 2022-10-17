@@ -24,7 +24,7 @@ void V1 (void)
 
 /**************************************************************************/
 
-main ()
+int main (void)
   {
    /* Func1 returns an enumeration E constant. */
 
@@ -97,7 +97,7 @@ main ()
 
 
    printf ("Passed Conformance Test 9.7.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 9.7.0.1\n");

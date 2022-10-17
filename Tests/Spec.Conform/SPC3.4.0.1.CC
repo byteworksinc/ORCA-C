@@ -6,6 +6,8 @@
 /*                         ufile1                                             */
 /*                         userfile2                                          */
 
+int printf(const char *, ...);
+
 #define    libFile(x)      <x>
 #define    userFile(x)     x
 #include   libFile(cfile1)

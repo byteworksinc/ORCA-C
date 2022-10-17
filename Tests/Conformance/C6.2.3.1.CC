@@ -1,8 +1,9 @@
 /* Conformance Test 5.11.0.1:  Verification of type equivalence:  int types */
 
 #include <stdio.h>
+#include <stdlib.h>
 
-main ()
+int main (void)
   {
    char  ch = 'Z';
    int   i  = 80, k;
@@ -35,7 +36,7 @@ main ()
 
 
    printf ("Passed Conformance Test 6.2.3.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 6.2.3.1\n");

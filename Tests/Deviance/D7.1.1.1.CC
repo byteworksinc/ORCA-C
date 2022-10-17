@@ -1,6 +1,8 @@
 /* Deviance Test 7.1.1.1:  Ensure illegal use of non-lvalues is detected */
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int i [10];                         /* names of arrays, functions, enum */
    enum E {a, b, c};                   /*   constants, & void variables    */

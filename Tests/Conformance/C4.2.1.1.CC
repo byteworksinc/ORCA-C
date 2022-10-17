@@ -5,6 +5,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 #define MAC_NAME1  10                  /* macro name           */
 
 typedef  int  *intPtr;                 /* user-defined type    */
@@ -21,7 +23,7 @@ union  LongOrShort { long longNum;     /* type tag name        */
 enum flowers { rose, iris, carnation };    /* type tag name    */
                                            /*   and enum const */
 
-main ()
+int main (void)
   {
    char   ch;
    int    m;
@@ -58,13 +60,13 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.2.1.1\n");
-   return;
+   return 0;
 
    printf ("This code can never be reached !!!\n");
 
 Fail:
    printf ("Failed Conformance Test 4.2.1.1\n");
-   return;
+   return 0;
 
    printf ("Nor can this code ever be reached !!!\n");
   }

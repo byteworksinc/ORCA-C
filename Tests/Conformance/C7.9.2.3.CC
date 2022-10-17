@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    char  ch = 87;
    int   i  = 32767;
@@ -32,7 +32,7 @@ main ()
 
 
    printf ("Passed Conformance Test 7.9.2.3\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 7.9.2.3\n");

@@ -1,5 +1,7 @@
 /* Conformance Test 3.5.4.1:  Verification of #elif constant expressions */
 
+int printf(const char *, ...);
+
 #define FIVE 5
 #define SIX  6
 
@@ -117,7 +119,7 @@
    #define NUM15 0
 #endif
 
-main ()
+int main (void)
   {
    if ( ! ((FIVE == 5) && (1 == NUM10)) )
        goto Fail;
@@ -139,7 +141,7 @@ main ()
    if (NUM15 != 1     )  goto Fail;
 
    printf ("Passed Conformance Test 3.5.4.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Passed Conformance Test 3.5.4.1\n");

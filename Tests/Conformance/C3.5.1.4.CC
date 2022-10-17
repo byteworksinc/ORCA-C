@@ -1,6 +1,8 @@
 /* Conformance Test 3.5.1.4:  Verification of macro expansions in #if */
 /*                            commands                                */
 
+int printf(const char *, ...);
+
 #define ONE    1
 #define TWO    2
 #define THREE  3
@@ -81,12 +83,12 @@
 
 #if (defined(FIVE)) && (defined(SIX)) && (NUM1 == 54) && (NUM2 == 18)\
     && (NUM3 == NUM2)
-main ()
+int main (void)
   {
    printf ("Passed Conformance Test 3.5.1.4\n");
   }
 #else
-main ()
+int main (void)
   {
 printf("%d %d %d\n", NUM1, NUM2, NUM3);
    printf ("Failed Conformance Test 3.5.1.4\n");

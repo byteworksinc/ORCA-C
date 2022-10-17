@@ -1,9 +1,11 @@
 /* Deviance Test 4.2.9.1:  Ensure illegal scoping of extern variables is */
 /*                         detected                                      */
 
+int printf(const char *, ...);
+
 double X;
 
-main ()
+int main (void)
   {
    int i;
 

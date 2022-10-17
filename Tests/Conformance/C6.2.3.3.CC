@@ -1,8 +1,9 @@
 /* Conformance Test 6.2.3.3:  Verification of type equivalence:  long types */
 
 #include <stdio.h>
+#include <stdlib.h>
 
-main ()
+int main (void)
   {
    signed char  ch;
    int   i;
@@ -30,7 +31,7 @@ main ()
    TestCnv (uL, uL, uL, uL, uL, uL, uL, uL);
 
    printf ("Passed Conformance Test 6.2.3.3\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 6.2.3.3\n");

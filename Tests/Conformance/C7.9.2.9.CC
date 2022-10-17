@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-main ()
+int main (void)
 
 {
 int i,j;

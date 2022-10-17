@@ -3,7 +3,9 @@
 
 #include <math.h>
 
-main ()
+int printf(const char *, ...);
+
+int main (void)
   {
    int            *intPtr, i;          /* pointers to all the basic types */
    long           *longPtr, L;
@@ -96,7 +98,7 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 4.5.2.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.5.2.1\n");

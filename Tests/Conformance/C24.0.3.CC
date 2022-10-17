@@ -7,7 +7,7 @@
 
 typedef enum {false, true} boolean;
 
-void main (void)
+int main (void)
 
 {
 boolean fail;

@@ -1,5 +1,8 @@
 /* Conformance Test 2.7.1.5:  Test octal long integer constants */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    long     a;
    long int b;
@@ -41,7 +44,7 @@ main ()
 000000000000000000000000000007;
 
    printf ("Passed Conformance Test 2.7.1.5\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.7.1.5\n");

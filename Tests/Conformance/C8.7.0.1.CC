@@ -19,7 +19,7 @@ int F1 (int i)
 
 /****************************************************************************/
 
-main ()
+int main (void)
   {
    char ch = 'd';
    int   i = 3;
@@ -145,7 +145,7 @@ Out:
 }
 
    printf ("Passed Conformance Test 8.7.0.1\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 8.7.0.1\n");

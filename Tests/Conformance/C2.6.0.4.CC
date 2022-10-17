@@ -1,5 +1,8 @@
 /* Conformance Test 2.6.0.4: Ensure reserved words within strings are ignored */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    char s0 [] = "asm";
    char s1 [] = "auto";

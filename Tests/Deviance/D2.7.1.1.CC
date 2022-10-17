@@ -1,5 +1,8 @@
 /* Deviance Test 2.7.1.1:  Ensure misformed integers are flagged as errors */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    int  a;
 

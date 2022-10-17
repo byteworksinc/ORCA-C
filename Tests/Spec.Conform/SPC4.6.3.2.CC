@@ -10,6 +10,8 @@
 
 #include <math.h>
 
+int printf(const char *, ...);
+
 /* static and extern pointer variables can use only constant expressions */
 
 struct S { int   a;
@@ -82,7 +84,7 @@ struct S (*struct2Ptr) = S2;
 union  U (*union2Ptr ) = U2;
 
 
-main ()
+int main (void)
   {
    int count = 0;
    extern int ExternTest (void);
@@ -140,7 +142,7 @@ main ()
        goto Fail2;
 
    printf ("Passed Special Conformance Test 4.6.3.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("count = %d\n", count);

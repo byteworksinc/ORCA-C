@@ -4,6 +4,10 @@
 /*                                       links, and executes test    */
 /*                                       file with 3 parameters      */
 
+#include <string.h>
+
+int printf(const char *, ...);
+
 int main (int argc, char *argv [])
   {
    int count = 0;

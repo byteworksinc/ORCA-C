@@ -1,6 +1,9 @@
 /* Deviance Test 2.2.0.2:  Ensure comments without terminators are flagged */
 /*                         as errors                                       */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    /* don't terminate this one
 

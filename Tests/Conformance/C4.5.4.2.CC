@@ -28,7 +28,7 @@ static int I2 (func)
 /***************************************************************************/
 
 
-main ()
+int main ()
   {
    int i;
 
@@ -65,7 +65,7 @@ main ()
 
 
    printf ("Passed Conformance Test 4.5.4.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 4.5.4.2\n");

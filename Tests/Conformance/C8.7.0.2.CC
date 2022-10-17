@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-void main(void)
+int main(void)
 
 {
 int i, sum1 = 0, sum2 = 0;

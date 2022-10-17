@@ -1,6 +1,6 @@
 /* Deviance Test 4.2.3.1:  Ensure illegal forward references are detected */
 
-main ()
+int main (void)
   {
    int  i;
    aPtr x;                        /* forward reference to user-defined type   */

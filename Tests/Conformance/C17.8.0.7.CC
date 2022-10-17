@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 
-main ()
+int main (void)
   {
    FILE *f;
    float f1, f2, f3, f4;
@@ -37,17 +37,17 @@ main ()
        goto Fail2;
 
    printf ("Passed Conformance Test 17.8.0.7\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.8.0.7\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Unable to open input file for Conformance Test 17.8.0.7\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Unable to close input file for Conformance Test 17.8.0.7\n");
-   return;
+   return 0;
   }

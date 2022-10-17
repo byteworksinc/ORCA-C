@@ -1,6 +1,9 @@
 /* Conformance Test 2.6.0.5:  Ensure reserved words within comments are       */
 /*                            ignored                                         */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    /* int     auto, break, case, char, continue, default, do, double;   */
    /* long    else, enum, extern, float, for, goto, if, int, long;      */

@@ -1,5 +1,8 @@
 /* Conformance Test 2.5.0.2:  Test characters comprising function identifiers */
-main ()
+
+int printf(const char *, ...);
+
+int main (void)
   {
    extern double i_______________000000000000000000000000000000__________ ();
 
@@ -33,7 +36,7 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_____________\
        goto Fail;
 
    printf ("Passed Conformance Test 2.5.0.2\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 2.5.0.2\n");

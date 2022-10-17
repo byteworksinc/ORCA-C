@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    break;                /* break outside of while, do, for, switch statement */
    continue;             /* continue outside of while, do, for statement      */

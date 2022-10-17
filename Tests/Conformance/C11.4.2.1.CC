@@ -6,18 +6,18 @@
 
 struct foo {
    int i;
-   const j;
-   volatile k;
+   int const j;
+   volatile int k;
    } ;
 
-main ()
+int main (void)
 
 {
 int i,j;
 
 j = 4;
-i = (const) j;
-i = (volatile) j;
+i = (const int) j;
+i = (int volatile) j;
 
 printf ("Passed Conformance Test 11.4.2.1\n");
 }

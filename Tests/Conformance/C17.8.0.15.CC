@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 
-main ()
+int main (void)
   {
    char  sstr [] = " 23 -3.8E20  -   e-   +25e-  00002.00008e000049.9 ";
    float f1, f2, f3, f4;
@@ -27,9 +27,9 @@ main ()
        goto Fail;
 
    printf ("Passed Conformance Test 17.8.0.15\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Conformance Test 17.8.0.15\n");
-   return;
+   return 0;
   }

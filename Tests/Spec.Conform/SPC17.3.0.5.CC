@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    FILE *f1;                                               /* file pointer */
    int i, j;
@@ -31,22 +31,22 @@ main ()
        goto Fail3;
 
    printf ("Passed Special Conformance Test 17.3.0.5\n");
-   return;
+   return 0;
 
 Fail:
    printf ("Failed Special Conformance Test 17.3.0.5\n");
-   return;
+   return 0;
 
 Fail1:
    printf ("Could not open tmp file for Special Conformance Test 17.3.0.5\n");
-   return;
+   return 0;
 
 Fail2:
    printf ("Could not write to file for Special Conformance Test 17.3.0.5\n");
-   return;
+   return 0;
 
 Fail3:
    printf ("Could not close file for Special Conformance Test 17.3.0.5\n");
-   return;
+   return 0;
 
   }

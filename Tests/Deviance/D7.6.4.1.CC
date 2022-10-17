@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-main ()
+int main (void)
   {
    float f = 1.1, *fptr = &f;      /* can only compare pointers with pointers */
    char  ch = 'a', *chptr = &ch;
