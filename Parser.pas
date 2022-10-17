@@ -1330,6 +1330,7 @@ var
       lLastParameter: identPtr;         {next parameter to process}
       luseGlobalPool: boolean;          {local copy of useGlobalPool}
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
+      ldeclaredTagOrEnumConst: boolean; {local copy of declaredTagOrEnumConst}
 
    begin {StackDeclarations}
    lastWasIdentifier := false;          {used to see if the declaration is a fn}
@@ -1484,9 +1485,12 @@ var
                prototyped := true;      {it is prototyped}
                repeat                   {collect the declarations}
                   if token.kind in declarationSpecifiersElement then begin
+                     ldeclaredTagOrEnumConst := declaredTagOrEnumConst;
                      lLastParameter := lastParameter;
                      DoDeclaration(true);
                      lastParameter := lLastParameter;
+                     declaredTagOrEnumConst :=
+                        ldeclaredTagOrEnumConst or declaredTagOrEnumConst;
                      if protoType <> nil then begin
                         wp := pointer(Malloc(sizeof(parameterRecord)));
                         wp^.next := parameterList;

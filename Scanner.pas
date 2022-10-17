@@ -693,7 +693,7 @@ if list or (numErr <> 0) then begin
         114: msg := @'a function call was made to a non-function';
         115: msg := @'illegal bit field declaration';
         116: msg := @'missing field name';
-        117: msg := @'field cannot have incomplete type';
+        117: msg := @'field cannot have incomplete or function type';
         118: msg := @'flexible array must be last member of structure';
         119: msg := @'inline specifier is only allowed on functions';
         120: msg := @'non-static inline functions are not supported';
