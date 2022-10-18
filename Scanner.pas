@@ -715,7 +715,7 @@ if list or (numErr <> 0) then begin
         136: msg := @'complex or imaginary types are not supported by ORCA/C';
         137: msg := @'atomic types are not supported by ORCA/C';
         138: msg := @'unsupported alignment';
-        139: msg := @'thread-local storage is not supported by ORCA/C';
+       {139: msg := @'thread-local storage is not supported by ORCA/C';}
         140: msg := @'unexpected token';
         141: msg := @'_Noreturn specifier is only allowed on functions';
         142: msg := @'_Alignas may not be used in this declaration or type name';
@@ -753,6 +753,8 @@ if list or (numErr <> 0) then begin
         174: msg := @'''__VA_ARGS__'' may only be used in a variadic macro';
         175: msg := @'duplicate macro parameter name';
         176: msg := @'declarator expected';
+        177: msg := @'_Thread_local may not be used with the specified storage class';
+        178: msg := @'_Thread_local may not appear in a function declaration';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

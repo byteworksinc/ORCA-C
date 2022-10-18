@@ -426,7 +426,7 @@ ORCA/C 2.2.0 adds support for several new C language features.  Most are feature
    restrict
    inline (already treated as a keyword by ORCA/C)
 
-Of these, _Atomic, _Complex, _Imaginary, and _Thread_local are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
+Of these, _Atomic, _Complex, and _Imaginary are recognized as keywords, but the corresponding language features are not supported, so any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
 
 2.  (C99) Statements and declarations may now be mixed within a block; declarations are no longer required to come before statements.  The first clause of a for loop statement may also be a declaration (with auto or register storage class only).  Variables may only be referred to by name in code syntactically after their declaration, but their lifetime continues as long as control remains in the enclosing block scope, even if it returns to a point before the declaration.  Initializers for variables with automatic storage duration are evaluated whenever execution reaches the point where they appear in the code.
 
@@ -578,6 +578,10 @@ Here is an example of a structure containing an anonymous union that in turn con
    } s;
 
 Members of anonymous structures or unions (including nested ones) may be accessed as if they are members of the containing structure or union.  For example, given the declaration above, the expressions s.a, s.b, s.c, and s.d may be used to access the various fields.  All the fields must have distinct names.
+
+28. (C11) ORCA/C can now accept the _Thread_local storage-class specifier, which indicates that a variable has thread-local storage.  On platforms that support multithreading, there would be a separate copy of the variable for each running thread in the program.  ORCA/C does not support multithreading, so the whole execution of an ORCA/C program consists of a single thread, and therefore there is only one copy of each thread-local variable.  Accordingly, the _Thread_local storage-class specifier is essentially ignored by ORCA/C, but it may be used in portable code designed to support multithreading on other systems.
+
+The _Thread_local storage-class specifier may be used together with static or extern.  This has the normal effect of the other storage-class specifier while also indicating that the variable has thread-local storage.  For declarations within a function, _Thread_local must be used together with static or extern.
 
 
 Multi-Character Character Constants

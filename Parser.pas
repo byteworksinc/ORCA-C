@@ -3139,12 +3139,18 @@ while token.kind in allowedTokens do begin
          if doingForLoopClause1 then
             if not (myStorageClass in [autosy,registersy]) then
                Error(127);
+         if _Thread_localsy in myDeclarationModifiers then
+            if not (myStorageClass in [staticsy,externsy]) then
+               Error(177);
          NextToken;
          end;
 
       _Thread_localsy: begin
          myDeclarationModifiers := myDeclarationModifiers + [token.kind];
-         Error(139);
+         if doingParameters then
+            Error(87);
+         if not (myStorageClass in [ident,staticsy,externsy]) then
+            Error(177);
          NextToken;
          end;
 
@@ -3464,6 +3470,10 @@ while token.kind in allowedTokens do begin
 isForwardDeclared := myIsForwardDeclared;
 skipDeclarator := mySkipDeclarator;
 declSpecifiers.declarationModifiers := myDeclarationModifiers;
+if _Thread_localsy in myDeclarationModifiers then
+   if myStorageClass = ident then
+      if doingFunction then
+         Error(177);
 if myTypeSpec = nil then begin
    myTypeSpec := intPtr;                {under C89, default type is int}
    if (lint & lintC99Syntax) <> 0 then
@@ -3780,6 +3790,8 @@ if isFunction then begin
          Error(120);
    if alignmentSpecified then
       Error(142);
+   if _Thread_localsy in declSpecifiers.declarationModifiers then
+      Error(178);
    if isPascal then begin		{reverse prototyped parameters}
       p1 := fnType^.parameterList;
       if p1 <> nil then begin
