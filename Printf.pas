@@ -136,7 +136,7 @@ var
       WriteLine;
       if s <> nil then begin
          Write('   > "');
-         for i := 1 to s^.length do begin
+         for i := 1 to s^.length-1 do begin
             ch := s^.str[i];
             if ch in [' '..'~'] then begin
                if ch in ['"','\','?'] then
@@ -167,13 +167,13 @@ var
    Write('     ');
    if offset = 0 then
       if s <> nil then begin
-         offset := s^.length;
+         offset := s^.length-1;
          write(' ');
          end; {if}
-   if offset > 0 then begin
-      if s <> nil then begin
-         if offset > s^.length then
-            offset := s^.length;
+   if s <> nil then begin
+      if offset > 0 then begin
+         if offset > s^.length-1 then
+            offset := s^.length-1;
          for i := 1 to offset do begin
             ch := s^.str[i];
             if ch in [' '..'~'] then begin
