@@ -2579,21 +2579,8 @@ var
                   done := false;
                   end; {if}
                end {if}
-            else if token.kind in [dotch,dotdotdotsy] then begin
-               if token.kind = dotdotdotsy then
-                  NextToken
-               else begin
-                  NextToken;
-                  if token.kind = dotch then begin
-                     NextToken;                  
-                     if token.kind = dotch then
-                        NextToken
-                     else
-                        Error(89);
-                     end
-                  else
-                     Error(89);
-                  end; {else}
+            else if token.kind = dotdotdotsy then begin
+               NextToken;
                new(np);
                np^.next := nil;
                np^.str := '__VA_ARGS__';

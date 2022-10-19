@@ -1508,14 +1508,7 @@ var
                            NextToken;
                            varargs := true;
                            done2 := true;
-                           end {if}
-                        else if token.kind = dotch then begin
-                           NextToken;
-                           Match(dotch,89);
-                           Match(dotch,89);
-                           varargs := true;
-                           done2 := true;
-                           end; {else if}
+                           end; {if}
                         end {if}
                      else
                         done2 := true;
