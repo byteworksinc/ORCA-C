@@ -2342,7 +2342,7 @@ var
    begin {NumericDirective}
    doingPPExpression := true;
    NextToken;                            {skip the directive name}
-   Expression(preprocessorExpression, []); {evaluate the expression}
+   Expression(preprocessorExpression, [eolsy]); {evaluate the expression}
    doingPPExpression := false;
    end; {NumericDirective}
 
