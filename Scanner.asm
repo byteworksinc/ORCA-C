@@ -548,19 +548,26 @@ lb2      anop
          brl   le2
 !    else begin
 lb3      anop
-!       {purge the current source file}
-!       with ffDCBGS do begin
-!          pCount := 5;
+!       if not doingFakeFile then begin
+         lda   doingFakeFile
+         bne   lb3a
+!          {purge the current source file}
+!          with ffDCBGS do begin
+!             pCount := 5;
          lda   #5
          sta   ffDCBGS
-!          action := 7;
+!             action := 7;
          lda   #7
          sta   ffDCBGS+2
-!          name := @includeFileGS.theString
+!             name := @includeFileGS.theString
          lla   ffDCBGS+12,includeFileGS+2
-!          end; {with}
-!       FastFileGS(ffDCBGS);
+!             end; {with}
+!          FastFileGS(ffDCBGS);
          FastFileGS ffDCBGS
+!          end; {if}
+lb3a     anop
+!       doingFakeFile := false;
+         stz   doingFakeFile
 !       fp := fileList;                   {open the file that included this one}
          move4 fileList,fp
 !       fileList := fp^.next;

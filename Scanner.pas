@@ -80,6 +80,7 @@ var
    suppressMacroExpansions: boolean;    {suppress printing even if requested?}
    reportEOL: boolean;                  {report eolsy as a token?}
    token: tokenType;                    {next token to process}
+   doingFakeFile: boolean;              {processing tokens from fake "file" in memory?}
 
                                         {#pragma ignore flags}
                                         {--------------------}
@@ -495,7 +496,8 @@ bPtr := pointer(ord4(macros) + Hash(name));
 mPtr := bPtr^;
 while mPtr <> nil do begin
    if mPtr^.name^ = name^ then begin
-      IsDefined := true;
+      if mPtr^.algorithm <> 8 then      {if not _Pragma pseudo-macro}
+         IsDefined := true;
       goto 1;
       end; {if}
    mPtr := mPtr^.next;
@@ -535,6 +537,8 @@ procedure WriteLine;
 {   firstPtr - points to the first char in the line             }
 {   chPtr - points to the end of line character                 }
 
+label 1;
+
 var
    cl: integer;                         {column number loop index}
    cp: ptr;                             {work pointer}
@@ -547,7 +551,16 @@ if list or (numErr <> 0) then begin
       if numErr <> 0 then
          if filenamesInErrors then
             writeln('In ',sourceFileGS.theString.theString,':');
-      write(lineNumber:4, ' ');         {write the line #}
+      if doingFakeFile then begin
+         if numErr = 0 then
+            goto 1
+         else begin
+            writeln('In expansion of _Pragma on line ', fileList^.lineNumber:1, ':');
+            write('     ');
+            end; {else}
+         end {if}
+      else
+         write(lineNumber:4, ' ');      {write the line #}
       cp := firstPtr;                   {write the characters in the line}
       while (cp <> eofPtr) and (charKinds[ord(cp^)] <> ch_eol) do begin
          write(chr(cp^));
@@ -755,13 +768,16 @@ if list or (numErr <> 0) then begin
         176: msg := @'declarator expected';
         177: msg := @'_Thread_local may not be used with the specified storage class';
         178: msg := @'_Thread_local may not appear in a function declaration';
+        179: msg := @'_Pragma requires one string literal argument';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
        if terminalErrors and (numErrors <> 0)
           and (lintIsError or not (num in lintErrors)) then begin
           if enterEditor then begin
-             if line = lineNumber then
+             if doingFakeFile then
+                ExitToEditor(msg, fileList^.disp-1)
+             else if line = lineNumber then
                 ExitToEditor(msg, ord4(firstPtr)+col-ord4(bofPtr)-1)
              else
                 ExitToEditor(msg, ord4(firstPtr)-ord4(bofPtr)-1);
@@ -785,6 +801,7 @@ else
       ClearHourglass;
       end; {if}
 Spin;					{twirl the spinner}
+1:
 end; {WriteLine}
 
 
@@ -1089,6 +1106,11 @@ function OpenFile (doInclude, default: boolean): boolean; forward;
 {    default - use the name <defaults.h>?			}
 {								}
 { Returns: result from GetFileName				}
+
+
+procedure PreProcess; forward;
+
+{ Handle preprocessor commands                                  }
 
 
 function FindMacro (name: stringPtr): macroRecordPtr;
@@ -1632,6 +1654,68 @@ else begin				{handle a file name error}
 end; {DoInclude}
 
 
+procedure FakeInclude(buf: ptr; offset, length: longint; prevCh: char);
+
+{ Set up to process tokens from a buffer in memory, treating it }
+{ similarly to an included file.                                }
+{                                                               }
+{ Parameters:                                                   }
+{    buf - the buffer                                           }
+{    offset - offset in buffer to start tokenizing from         }
+{    length - length of buffer                                  }
+{    prevCh - character considered to be the previous char      }
+
+var
+   fp: filePtr;                         {pointer to an include file record}
+
+begin
+new(fp);                                {get a file record for the current file}
+fp^.next := fileList;
+fileList := fp;
+fp^.name := includeFileGS;
+fp^.sname := sourceFileGS;
+fp^.lineNumber := lineNumber;
+fp^.disp := ord4(chPtr)-ord4(bofPtr);
+
+bofPtr := buf;
+chPtr := ptr(ord4(buf)+offset);         {set the start, end pointers}
+eofPtr := pointer(ord4(bofPtr)+length);
+firstPtr := bofPtr;                     {first char in line}
+ch := prevCh;                           {set the initial character}
+currentChPtr := buf;
+doingFakeFile := true;
+end;
+
+
+procedure Do_Pragma (str: tokenType);
+
+{ Handle a _Pragma(...) preprocessing operator                  }
+{                                                               }
+{ Parameters:                                                   }
+{    str - the argument to _Pragma (a stringconst token)        }
+
+var
+   lfirstPtr: ptr;                      {local copy of firstPtr}
+   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
+   line: pString;
+
+begin {Do_Pragma}
+                                        {build a buffer with #pragma directive}
+line := concat('#pragma ',str.sval^.str);
+
+lfirstPtr := firstPtr;                  {include tokens from the buffer}
+WriteLine;
+wroteLine := false;
+FakeInclude(@line[1], 1, ord(line[0]), ' ');
+lSuppressMacroExpansions := suppressMacroExpansions;
+suppressMacroExpansions := true;
+PreProcess;
+suppressMacroExpansions := lSuppressMacroExpansions;
+wroteLine := true;
+firstPtr := lfirstPtr;
+end; {Do_Pragma}
+
+
 procedure Expand (macro: macroRecordPtr);
 
 { Expand a preprocessor macro                                   }
@@ -1833,10 +1917,20 @@ if macro^.readOnly then begin           {handle special macros}
             end {else}
          end;
 
+      8: begin                          {_Pragma pseudo-macro}
+         if (parms <> nil) and (parms^.tokens <> nil)
+            and (parms^.tokens^.token.kind = stringconst)
+            and (parms^.tokens^.next = nil) then
+            Do_Pragma(parms^.tokens^.token)
+         else
+            Error(179);
+         end;
+
       otherwise: Error(57);
 
       end; {case}
-   PutBackToken(token, true);
+   if macro^.algorithm <> 8 then        {if not _Pragma}
+      PutBackToken(token, true);
    end {if}
 else begin
 
@@ -4221,6 +4315,7 @@ charStrPrefix := prefix_none;           {no char/str prefix seen}
 mergingStrings := false;                {not currently merging strings}
 customDefaultName := nil;               {no custom default name}
 pragmaKeepFile := nil;                  {no #pragma keep file so far}
+doingFakeFile := false;                 {not doing a fake file}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
@@ -4378,6 +4473,17 @@ mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
 mp^.algorithm := 7;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {_Pragma pseudo-macro}
+mp^.name := @'_Pragma';
+mp^.parameters := 1;
+mp^.isVarargs := true;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.saved := true;
+mp^.algorithm := 8;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
