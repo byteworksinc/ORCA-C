@@ -816,6 +816,8 @@ var
    msgGS: gsosInString;			{message}
 
 begin {ExitToEditor}
+if disp < 0 then                        {sanity check disp}
+   disp := 0;
 msgGS.size := length(msg^);		{set up the error message}
 msgGS.theString := msg^;
 liDCBGS.org := disp;			{mark the error}
