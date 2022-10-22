@@ -190,7 +190,7 @@ const
 type
    errorType = record                   {record of a single error}
       num: integer;                     {error number}
-      line: integer;                    {line number}
+      line: longint;                    {line number}
       col: integer;                     {column number}
       end;
 
@@ -201,7 +201,7 @@ type
       next: filePtr;                    {next file in include stack}
       name: gsosOutString;		{name of the file}
       sname: gsosOutString;		{name of the file for __FILE__}
-      lineNumber: integer;              {line number at the #include}
+      lineNumber: longint;              {line number at the #include}
       disp: longint;                    {disp of next character to process}
       end;
 
@@ -253,7 +253,7 @@ var
    flagOverflows: boolean;              {flag numeric overflows?}
    gettingFileName: boolean;            {are we in GetFileName?}
    lastWasReturn: boolean;              {was the last character an eol?}
-   lineStr: string[5];			{string form of __LINE__}
+   lineStr: string[10];			{string form of __LINE__}
    ifList: ifPtr;                       {points to the top prep. parse record}
    includeChPtr: ptr;			{chPtr at start of current token}
    includeCount: 0..maxint;		{nested include files (for EndInclude)}
@@ -271,7 +271,7 @@ var
    skipping: boolean;                   {skipping tokens?}
    timeStr: longStringPtr;              {macro time string}
    tokenColumn: 0..maxint;              {column number at start of this token}
-   tokenLine: 0..maxint;                {line number at start of this token}
+   tokenLine: 0..maxint4;               {line number at start of this token}
    tokenList: tokenListRecordPtr;       {token putback buffer}
    tokenStart: ptr;                     {pointer to the first char in the token}
    tokenEnd: ptr;                       {pointer to the first char past the token}
@@ -573,8 +573,11 @@ if list or (numErr <> 0) then begin
      with errors[i] do begin
        if line = lineNumber then begin
          write('     ');
-         if lineNumber >= 10000 then
-           write(' ');
+         while lineNumber >= 10000 do begin
+            lineNumber := lineNumber div 10;
+            write(' ');
+            end; {while}
+         lineNumber := line;
          cp := firstPtr;
          for cl := 1 to col-1 do begin
            if cp^ = HT then
@@ -1829,11 +1832,18 @@ if macro^.readOnly then begin           {handle special macros}
    case macro^.algorithm of
 
       1: begin                          {__LINE__}
-         token.kind := intconst;
+         if lineNumber <= maxint then begin
+            token.kind := intconst;
+            token.class := intconstant;
+            token.ival := ord(lineNumber);
+            end {if}
+         else begin
+            token.kind := longconst;
+            token.class := longconstant;
+            token.lval := lineNumber;
+            end; {else}
          token.numString := @lineStr;
-         token.class := intconstant;
-         token.ival := lineNumber;
-         lineStr := cnvis(token.ival);
+         lineStr := cnvis(lineNumber);
          tokenStart := @lineStr[1];
          tokenEnd := pointer(ord4(tokenStart)+length(lineStr));
          end;
@@ -2403,7 +2413,7 @@ var
    lReportEOL: boolean;                 {local copy of reportEOL}
    tSkipping: boolean;                  {temp copy of the skipping variable}
    val: integer;                        {expression value}
-   nextLineNumber: integer;             {number for next line}
+   nextLineNumber: longint;             {number for next line}
 
 
    function Defined: boolean;
@@ -3279,6 +3289,10 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                   NextToken;
                   if token.kind = intconst then begin
                      nextLineNumber := token.ival;
+                     NextToken;
+                     end {if}
+                  else if token.kind = longconst then begin
+                     nextLineNumber := token.lval;
                      NextToken;
                      end {if}
                   else

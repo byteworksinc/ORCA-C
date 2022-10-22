@@ -277,7 +277,7 @@ function MakeCompoundLiteral(tp: typePtr): identPtr; extern;
 {       tp - the type of the compound literal                   }
 
 
-procedure AutoInit (variable: identPtr; line: integer;
+procedure AutoInit (variable: identPtr; line: longint;
    isCompoundLiteral: boolean); extern;
 
 { generate code to initialize an auto variable                  }

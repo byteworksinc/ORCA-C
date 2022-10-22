@@ -533,7 +533,7 @@ la3      stz   ch
          beq   lb1
          jsl   WriteLine
          stz   wroteLine
-         inc   lineNumber
+         inc4  lineNumber
          move4 chPtr,firstPtr
 lb1      anop
 
@@ -596,6 +596,10 @@ lb4      lda   [p1],Y
          ldy   #4+maxPath+4+maxPath+4
          lda   [fp],Y
          sta   lineNumber
+         iny
+         iny
+         lda   [fp],Y
+         sta   lineNumber+2
 !       ReadFile;
          jsl   ReadFile
 !       eofPtr := pointer(ord4(bofPtr) + ffDCBGS.fileLength);
@@ -603,7 +607,7 @@ lb4      lda   [p1],Y
 !       chPtr := pointer(ord4(bofPtr) + fp^.disp);
 !       includeChPtr := chPtr;
 !       firstPtr := chPtr;
-         ldy   #4+maxPath+4+maxPath+4+2
+         ldy   #4+maxPath+4+maxPath+4+4
          clc
          lda   bofPtr
          adc   [fp],Y
@@ -648,7 +652,7 @@ lb5      anop
          beq   lb6
          jsl   WriteLine
          stz   wroteLine
-         inc   lineNumber
+         inc4  lineNumber
          move4 chPtr,firstPtr
 lb6      anop
 !    needWriteLine := charKinds[ord(ch)] = ch_eol;
@@ -772,7 +776,7 @@ lc2b     move4 chPtr,p1
          bne   lc3
          jsl   WriteLine
          stz   wroteLine
-         inc   lineNumber
+         inc4  lineNumber
          add4  chPtr,#1,firstPtr
 lc3      anop
 !             chPtr := pointer(ord4(chPtr)+1);

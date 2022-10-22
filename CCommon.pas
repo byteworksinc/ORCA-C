@@ -488,9 +488,9 @@ var
    infoStringGS: gsosOutString;         {language specific command line info}
    intLabel: integer;                   {last used label number}
    languageNumber: integer;             {our language number}
-   lastLine: 0..maxint;                 {last line number used by pc_nam}
+   lastLine: 0..maxint4;                {last line number used by pc_nam}
    liDCBGS: getLInfoDCBGS;		{get/set LInfo DCB}
-   lineNumber: 0..maxint;               {source line number}
+   lineNumber: 0..maxint4;              {source line number}
    nameFound: boolean;                  {has a pc_nam been generated?}
    nextLocalLabel: integer;             {next available local data label number}
    numErrors: integer;                  {number of errors in the program}

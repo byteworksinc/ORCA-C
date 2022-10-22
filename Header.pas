@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'SCANNER'}
 
 const
-   symFileVersion = 30;                 {version number of .sym file format}
+   symFileVersion = 31;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -800,7 +800,7 @@ procedure EndInclude {chPtr: ptr};
                   p_keep: WriteLongString(@pragmaKeepFile^.theString);
 
                   p_line: begin
-                     WriteWord(lineNumber);
+                     WriteLong(lineNumber);
                      WriteLongString(@sourceFileGS.theString);
                      end;
 
@@ -1456,7 +1456,7 @@ var
             end;
 
          p_line: begin
-            lineNumber := ReadWord;
+            lineNumber := ReadLong;
             lsPtr := ReadLongString;
             sourceFileGS.theString.size := lsPtr^.length;
             for i := 1 to sourceFileGS.theString.size do

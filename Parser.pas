@@ -47,7 +47,7 @@ function TypeName: typePtr;
 { returns: a pointer to the type                                }
 
 
-procedure AutoInit (variable: identPtr; line: integer;
+procedure AutoInit (variable: identPtr; line: longint;
    isCompoundLiteral: boolean);
 
 { generate code to initialize an auto variable                  }
@@ -408,7 +408,7 @@ NextToken;                              {remove the rbracech token}
 end; {EndCompoundStatement}
 
 
-procedure RecordLineNumber (lineNumber: integer);
+procedure RecordLineNumber (lineNumber: longint);
 
 { generate debug code to record the line number as specified    }
 
@@ -421,11 +421,11 @@ if (lastLine <> lineNumber) or changedSourceFile then begin
    if changedSourceFile then begin
       newSourceFileGS := pointer(Malloc(sizeof(gsosOutString)));
       newSourceFileGS^ := sourceFileGS;
-      Gen2Name(pc_lnm, lineNumber, ord(debugType), pointer(newSourceFileGS));
+      Gen2Name(pc_lnm, ord(lineNumber), ord(debugType), pointer(newSourceFileGS));
       changedSourceFile := false;
       end {if}
    else
-      Gen2Name(pc_lnm, lineNumber, ord(debugType), nil);
+      Gen2Name(pc_lnm, ord(lineNumber), ord(debugType), nil);
    end; {if}
 end; {RecordLineNumber}
 
@@ -3510,7 +3510,7 @@ var
    tp: typePtr;                         {for tracing type lists}
    tk: tokenType;                       {work token}
    typeFound: boolean;                  {has some type specifier been found?}
-   startLine: integer;                  {line where this declaration starts}
+   startLine: longint;                  {line where this declaration starts}
    declSpecifiers: declSpecifiersRecord; {type & specifiers for the declaration}
 
 
@@ -4382,7 +4382,7 @@ case statementList^.kind of
 end; {DoStatement}
 
 
-procedure AutoInit {variable: identPtr; line: integer;
+procedure AutoInit {variable: identPtr; line: longint;
    isCompoundLiteral: boolean};
 
 { generate code to initialize an auto variable                  }
