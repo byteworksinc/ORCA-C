@@ -1942,6 +1942,8 @@ int foo(int[42]);
 
 213. If a floating-point constant beginning with . had a line continuation between the . and the first digit, a spurious error would be reported.
 
+214. If the #line directive was used, line numbering would be off by one when using a .sym file.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

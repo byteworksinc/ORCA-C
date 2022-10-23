@@ -1456,7 +1456,7 @@ var
             end;
 
          p_line: begin
-            lineNumber := ReadLong;
+            lineNumber := ReadLong - 1;
             lsPtr := ReadLongString;
             sourceFileGS.theString.size := lsPtr^.length;
             for i := 1 to sourceFileGS.theString.size do
