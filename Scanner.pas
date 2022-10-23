@@ -245,6 +245,7 @@ var
    customDefaultName: stringPtr;        {name of custom pre-included default file}
    dateStr: longStringPtr;              {macro date string}
    doingCommandLine: boolean;           {are we processing the cc= command line?}
+   doingDigitSequence: boolean;         {do we want a digit sequence (for #line)?}
    doingPPExpression: boolean;          {are we processing a preprocessor expression?}
    doingStringOrCharacter: boolean;     {used to suppress comments in strings}
    errors: array[1..maxErr] of errorType; {errors in this line}
@@ -772,6 +773,7 @@ if list or (numErr <> 0) then begin
         177: msg := @'_Thread_local may not be used with the specified storage class';
         178: msg := @'_Thread_local may not appear in a function declaration';
         179: msg := @'_Pragma requires one string literal argument';
+        180: msg := @'decimal digit sequence expected';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -2411,6 +2413,7 @@ label 2;
 var
    lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
    lReportEOL: boolean;                 {local copy of reportEOL}
+   lSaveNumber: boolean;                {local copy of saveNumber}
    tSkipping: boolean;                  {temp copy of the skipping variable}
    val: integer;                        {expression value}
    nextLineNumber: longint;             {number for next line}
@@ -3286,17 +3289,26 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                if token.name^ = 'line' then begin
                   if tskipping then goto 2;
                   FlagPragmas(p_line);
+                  lsaveNumber := saveNumber;
+                  saveNumber := true;
+                  doingDigitSequence := true;
                   NextToken;
-                  if token.kind = intconst then begin
-                     nextLineNumber := token.ival;
-                     NextToken;
-                     end {if}
-                  else if token.kind = longconst then begin
-                     nextLineNumber := token.lval;
+                  doingDigitSequence := false;
+                  saveNumber := lsaveNumber;
+                  if token.kind in [intconst,longconst] then begin
+                     nextLineNumber := 0;
+                     for val := 1 to ord(token.numString^[0]) do begin
+                        if not (token.numString^[val] in ['0'..'9']) then begin
+                           Error(180);
+                           goto 2;
+                           end; {if}
+                        nextLineNumber := nextLineNumber * 10 + 
+                           ord(token.numString^[val]) - ord('0');
+                        end; {for}
                      NextToken;
                      end {if}
                   else
-                     Error(18);
+                     Error(180);
                   if (token.kind = stringconst) 
                      and (token.prefix = prefix_none) then begin
                      LongToPString(
@@ -3962,7 +3974,8 @@ else begin                            {hex, octal, & binary}
             end {if}
          else begin
             if numString[i] in ['8','9'] then
-               FlagError(7);
+               if not doingDigitSequence then
+                  FlagError(7);
             ShiftAndOrValue(3, ord(numString[i]) & $0007);
             i := i+1;
             end; {else}
@@ -4330,6 +4343,7 @@ mergingStrings := false;                {not currently merging strings}
 customDefaultName := nil;               {no custom default name}
 pragmaKeepFile := nil;                  {no #pragma keep file so far}
 doingFakeFile := false;                 {not doing a fake file}
+doingDigitSequence := false;            {not expecting a digit sequence}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}

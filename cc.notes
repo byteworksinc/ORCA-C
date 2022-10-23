@@ -1944,6 +1944,8 @@ int foo(int[42]);
 
 214. If the #line directive was used, line numbering would be off by one when using a .sym file.
 
+215. The digit sequence in the #line directive should be interpreted as a decimal number (not octal) even if it begins with a 0.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
