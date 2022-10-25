@@ -3328,6 +3328,11 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                if token.name^ = 'pragma' then begin
                   if tskipping then goto 2;
                   NextToken;
+                  if token.class <> identifier then begin
+                     if (lint & lintPragmas) <> 0 then
+                        Error(110);
+                     goto 2;
+                     end; {if}
                   if token.name^ = 'keep' then
                      DoKeep
                   else if token.name^ = 'debug' then begin
