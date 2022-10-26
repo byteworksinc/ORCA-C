@@ -15,7 +15,7 @@ interface
 
 uses CCommon, MM, Scanner, Symbol, CGI;
 
-{$segment 'SCANNER'}
+{$segment 'HEADER'}
 
 const
    symFileVersion = 31;                 {version number of .sym file format}

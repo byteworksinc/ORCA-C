@@ -174,6 +174,7 @@ implementation
 const
                                         {special key values}
                                         {------------------}
+   ALERT        = 7;                    {alert (bell)}
    BS           = 8;                    {backspace}
    FF           = 12;                   {form feed}
    HT           = 9;                    {horizontal tab}
@@ -1682,6 +1683,7 @@ fp^.sname := sourceFileGS;
 fp^.lineNumber := lineNumber;
 fp^.disp := ord4(chPtr)-ord4(bofPtr);
 
+needWriteLine := false;
 bofPtr := buf;
 chPtr := ptr(ord4(buf)+offset);         {set the start, end pointers}
 eofPtr := pointer(ord4(bofPtr)+length);
@@ -1702,22 +1704,108 @@ procedure Do_Pragma (str: tokenType);
 var
    lfirstPtr: ptr;                      {local copy of firstPtr}
    lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
-   line: pString;
+   buf: longStringPtr;                  {buffer to hold #pragma directive}
+   i: 0..maxint;                        {index variable}
+   c8ptr: ^byte;                        {pointer to 8-bit char in input string}
+   c16ptr: ^integer;                    {pointer to char16_t in input string}
+   c32ptr: ^longint;                    {pointer to char32_t in input string}
+   endptr: ptr;                         {pointer to end of input string}
+   ch: integer;
+
+   procedure PutChar (ch: integer);
+
+   { write string constant representation of ch to buf          }
+
+   begin {PutChar}
+   if ch < 0 then
+      Error(146)
+   else if chr(ch) in [chr(HT),' '..'~',chr($80)..chr($ff)] then begin
+      if i > longstringlen then
+         Error(90)
+      else begin
+         buf^.str[i] := chr(ch);
+         i := i+1;
+         end; {else}
+      end {else if}
+   else if ch in [ALERT,BS,FF,NEWLINE,RETURN,VT] then begin
+      if i > longstringlen-1 then
+         Error(90)
+      else begin
+         buf^.str[i] := '\';
+         case ch of
+            ALERT:   buf^.str[i+1] := 'a';
+            BS:      buf^.str[i+1] := 'b';
+            FF:      buf^.str[i+1] := 'f';
+            NEWLINE: buf^.str[i+1] := 'n';
+            RETURN:  buf^.str[i+1] := 'r';
+            VT:      buf^.str[i+1] := 'v';
+            end; {case}
+         i := i+2;
+         end; {else}
+      end {else if}
+   else begin
+      if i > longstringlen-3 then
+         Error(90)
+      else begin
+         buf^.str[i]   := '\';
+         buf^.str[i+1] := chr(((ch >> 6) & $0007) + ord('0'));
+         buf^.str[i+2] := chr(((ch >> 3) & $0007) + ord('0'));
+         buf^.str[i+3] := chr(( ch       & $0007) + ord('0'));
+         i := i+4;
+         end; {else}
+      end; {else}
+   end; {PutChar}
 
 begin {Do_Pragma}
-                                        {build a buffer with #pragma directive}
-line := concat('#pragma ',str.sval^.str);
+new(buf);                               {build a buffer with #pragma directive}
+buf^.str := '#pragma ';
+i := 9;
+case str.prefix of
+   prefix_none, prefix_u8: begin
+      c8ptr := pointer(@str.sval^.str[1]);
+      endPtr := pointer(ord4(c8ptr) + str.sval^.length - 1);
+      while ord4(c8ptr) < ord4(endPtr) do begin
+         ch := c8ptr^;
+         if (str.prefix = prefix_u8) and (ch > 127) then
+            ch := -1;
+         PutChar(ch);
+         c8ptr := pointer(ord4(c8ptr)+1);
+         end; {while}
+      end;
+
+   prefix_u16: begin
+      c16ptr := pointer(@str.sval^.str[1]);
+      endPtr := pointer(ord4(c16ptr) + str.sval^.length - 2);
+      while ord4(c16ptr) < ord4(endPtr) do begin
+         ch := ConvertUCSToMacRoman(ord4(c16ptr^));
+         PutChar(ch);
+         c16ptr := pointer(ord4(c16ptr)+2);
+         end; {while}
+      end;
+
+   prefix_u32: begin
+      c32ptr := pointer(@str.sval^.str[1]);
+      endPtr := pointer(ord4(c32ptr) + str.sval^.length - 4);
+      while ord4(c32ptr) < ord4(endPtr) do begin
+         ch := ConvertUCSToMacRoman(c32ptr^);
+         PutChar(ch);
+         c32ptr := pointer(ord4(c32ptr)+4);
+         end; {while}
+      end;
+   end; {case}
+buf^.length := i-1;
 
 lfirstPtr := firstPtr;                  {include tokens from the buffer}
 WriteLine;
 wroteLine := false;
-FakeInclude(@line[1], 1, ord(line[0]), ' ');
+FakeInclude(@buf^.str[1], 1, buf^.length, ' ');
 lSuppressMacroExpansions := suppressMacroExpansions;
 suppressMacroExpansions := true;
 PreProcess;
 suppressMacroExpansions := lSuppressMacroExpansions;
 wroteLine := true;
 firstPtr := lfirstPtr;
+dispose(buf);
 end; {Do_Pragma}
 
 
