@@ -1946,6 +1946,8 @@ int foo(int[42]);
 
 215. The digit sequence in the #line directive should be interpreted as a decimal number (not octal) even if it begins with a 0.
 
+216. Preprocessing directive names could be subject to macro replacement, potentially altering their behavior (e.g. due to a definition like "#define ifdef ifndef").  Now directive names are not expanded as macros, even if there is a macro of the same name.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

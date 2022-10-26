@@ -3215,7 +3215,9 @@ nextLineNumber := -1;
 while charKinds[ord(ch)] = ch_white do  {skip white space}
    NextCh;
 if ch in ['a','d','e','i','l','p','u','w'] then begin
+   expandMacros := false;
    NextToken;
+   expandMacros := true;
    case token.kind of
       ifsy: begin
          if not tSkipping then
@@ -3327,11 +3329,18 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
             'p':
                if token.name^ = 'pragma' then begin
                   if tskipping then goto 2;
+                  expandMacros := false;
                   NextToken;
+                  expandMacros := true;
                   if token.class <> identifier then begin
                      if (lint & lintPragmas) <> 0 then
                         Error(110);
                      goto 2;
+                     end; {if}
+                  if token.name^ <> 'STDC' then begin
+                     {Allow macro expansion, other than for STDC   }
+                     PutBackToken(token, true);
+                     NextToken;
                      end; {if}
                   if token.name^ = 'keep' then
                      DoKeep
