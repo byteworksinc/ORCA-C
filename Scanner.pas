@@ -1681,7 +1681,7 @@ fileList := fp;
 fp^.name := includeFileGS;
 fp^.sname := sourceFileGS;
 fp^.lineNumber := lineNumber;
-fp^.disp := ord4(chPtr)-ord4(bofPtr);
+fp^.disp := ord4(currentChPtr)-ord4(bofPtr);
 
 needWriteLine := false;
 bofPtr := buf;
