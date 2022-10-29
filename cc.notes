@@ -583,6 +583,20 @@ Members of anonymous structures or unions (including nested ones) may be accesse
 
 The _Thread_local storage-class specifier may be used together with static or extern.  This has the normal effect of the other storage-class specifier while also indicating that the variable has thread-local storage.  For declarations within a function, _Thread_local must be used together with static or extern.
 
+29. (C99) ORCA/C now supports the _Pragma preprocessing operator.  A token sequence of the form
+
+   _Pragma ( string-literal )
+
+is processed as if the contents of the string literal were the operands of a #pragma preprocessing directive.  For example,
+
+   _Pragma("optimize 1")
+
+is equivalent to the directive
+
+   #pragma optimize 1
+
+The _Pragma("...") token sequence may be formed using preprocessor macros.
+
 
 Multi-Character Character Constants
 -----------------------------------
