@@ -3781,6 +3781,10 @@ if isFunction then begin
    if isInline then
       if declSpecifiers.storageClass <> staticsy then
          Error(120);
+   if isInline or isNoreturn then
+      if not (isNewDeskAcc or isClassicDeskAcc or isCDev or isNBA or isXCMD) then
+         if variable^.name^ = 'main' then
+            Error(181);
    if alignmentSpecified then
       Error(142);
    if _Thread_localsy in declSpecifiers.declarationModifiers then

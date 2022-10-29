@@ -775,6 +775,7 @@ if list or (numErr <> 0) then begin
         178: msg := @'_Thread_local may not appear in a function declaration';
         179: msg := @'_Pragma requires one string literal argument';
         180: msg := @'decimal digit sequence expected';
+        181: msg := @'''main'' may not have any function specifiers';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
