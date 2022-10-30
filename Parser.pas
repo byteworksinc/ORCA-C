@@ -3779,7 +3779,7 @@ if isFunction then begin
       goto 1;
       end; {if}
    if isInline then
-      if declSpecifiers.storageClass <> staticsy then
+      if not (declSpecifiers.storageClass in [staticsy,externsy]) then
          Error(120);
    if isInline or isNoreturn then
       if not (isNewDeskAcc or isClassicDeskAcc or isCDev or isNBA or isXCMD) then
