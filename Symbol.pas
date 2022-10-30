@@ -22,7 +22,6 @@
 {                                                               }
 {  External Variables:                                          }
 {                                                               }
-{  noDeclarations - have we declared anything at this level?    }
 {  table - current symbol table                                 }
 {                                                               }
 {  charPtr - pointer to the base type for char                  }
@@ -79,7 +78,6 @@ type
       end;
 
 var
-   noDeclarations: boolean;             {have we declared anything at this level?}
    table: symbolTablePtr;               {current symbol table}
    globalTable: symbolTablePtr;         {global symbol table}
    functionTable: symbolTablePtr;       {table for top level of current function}
@@ -1465,7 +1463,6 @@ staticNum := '~0000';                   {no functions processed}
 table := nil;                           {initialize the global symbol table}
 PushTable;
 globalTable := table;
-noDeclarations := false;
 functionTable := nil;
                                         {declare base types}
 new(sCharPtr);                          {signed char}
@@ -2055,22 +2052,16 @@ if space <> fieldListSpace then begin   {are we defining a function?}
       and (itype^.fieldList = nil) and doingParameters then begin
       useGlobalPool := true;
       end; {else if}
-   if noDeclarations then begin         {if we need a symbol table, create it}
-      if not isGlobal then 
-         noDeclarations := false;
-      end {if}
-   else begin                           {check for duplicates}
-      cs := FindSymbol(tk, space, true, false);
-      if cs <> nil then begin
-         if (not CompTypes(cs^.itype, itype))
-            or ((cs^.state = initialized) and (state = initialized))
-            or (globalTable <> table) then
-            if (not doingParameters) or (cs^.state <> declared) then
-               Error(42);
-         p := cs;
-         needSymbol := false;
-         end; {if}
-      end; {else}
+   cs := FindSymbol(tk, space, true, false);            {check for duplicates}
+   if cs <> nil then begin
+      if (not CompTypes(cs^.itype, itype))
+         or ((cs^.state = initialized) and (state = initialized))
+         or (globalTable <> table) then
+         if (not doingParameters) or (cs^.state <> declared) then
+            Error(42);
+      p := cs;
+      needSymbol := false;
+      end; {if}
    end; {if}
 if class = staticsy then                {statics go in the global symbol table}
    if not isGLobal then
