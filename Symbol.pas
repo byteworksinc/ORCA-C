@@ -2040,12 +2040,10 @@ if space <> fieldListSpace then begin   {are we defining a function?}
          if cs^.state = defined then
             if state = defined then
                Error(42);
+         if cs^.itype <> nil then
+            itype := MakeCompositeType(cs^.itype, itype);
          p := cs;
          needSymbol := false;
-         if not itype^.prototyped then begin
-            itype^.prototyped := cs^.itype^.prototyped;
-            itype^.parameterList := cs^.itype^.parameterList;
-            end; {if}
          end; {if}
       end {if}
    else if (itype <> nil) and (itype^.kind in [structType,unionType])
@@ -2059,6 +2057,9 @@ if space <> fieldListSpace then begin   {are we defining a function?}
          or (globalTable <> table) then
          if (not doingParameters) or (cs^.state <> declared) then
             Error(42);
+      if itype <> nil then
+         if cs^.itype <> nil then
+            itype := MakeCompositeType(cs^.itype, itype);
       p := cs;
       needSymbol := false;
       end; {if}
@@ -2072,6 +2073,9 @@ if class = staticsy then                {statics go in the global symbol table}
                or ((cs^.state = defined) and (state <> initialized))
                or (cs^.state = initialized) then
                Error(42);
+            if itype <> nil then
+               if cs^.itype <> nil then
+                  itype := MakeCompositeType(cs^.itype, itype);
             p := cs;
             needSymbol := false;
             end; {if}
