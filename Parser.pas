@@ -189,7 +189,6 @@ var
                                         { referencing a forward struct/union?  }
    isFunction: boolean;                 {is the declaration a function?}
    returnLabel: integer;                {label for exit point}
-   skipDeclarator: boolean;             {for enum,struct,union with no declarator}
    statementList: statementPtr;         {list of open statements}
    savedVolatile: boolean;              {saved copy of volatile}
    doingForLoopClause1: boolean;        {doing the first clause of a for loop?}
@@ -2760,8 +2759,6 @@ procedure DeclarationSpecifiers (var declSpecifiers: declSpecifiersRecord;
 { outputs:                                                      }
 {       isForwardDeclared - is the field list component         }
 {               referencing a forward struct/union?             }
-{       skipDeclarator - for enum,struct,union with no          }
-{               declarator                                      }
 {       declaredTagOrEnumConst - set if a tag or an enum const  }
 {               is declared (otherwise unchanged)               }
 
@@ -2787,7 +2784,6 @@ var
    typeQualifiers: typeQualifierSet;    {set of type qualifiers found}
 
    myIsForwardDeclared: boolean;        {value of isForwardDeclared to generate}
-   mySkipDeclarator: boolean;           {value of skipDeclarator to generate}
    myTypeSpec: typePtr;                 {value of typeSpec to generate}
    myDeclarationModifiers: tokenSet;    {all modifiers in this declaration}
    myStorageClass: tokenEnum;           {storage class}
@@ -3095,7 +3091,6 @@ var
 begin {DeclarationSpecifiers}
 myTypeSpec := nil;
 myIsForwardDeclared := false;           {not doing a forward reference (yet)}
-mySkipDeclarator := false;              {declarations are required (so far)}
 myDeclarationModifiers := [];
 myStorageClass := ident;
 typeQualifiers := [];
@@ -3308,8 +3303,7 @@ while token.kind in allowedTokens do begin
                SkipStatement;
                end; {else}
             end; {if}
-1:       mySkipDeclarator := token.kind = semicolonch;
-         myTypeSpec := intPtr;
+1:       myTypeSpec := intPtr;
          typeDone := true;
          end;
   
@@ -3412,7 +3406,6 @@ while token.kind in allowedTokens do begin
          if globalStruct then
             useGlobalPool := lUseGlobalPool;
          myTypeSpec := structTypePtr;
-         mySkipDeclarator := token.kind = semicolonch;
          if tKind = structType then
             myDeclarationModifiers := myDeclarationModifiers + [structsy]
          else
@@ -3461,7 +3454,6 @@ while token.kind in allowedTokens do begin
    end; {while}
 3:
 isForwardDeclared := myIsForwardDeclared;
-skipDeclarator := mySkipDeclarator;
 declSpecifiers.declarationModifiers := myDeclarationModifiers;
 if _Thread_localsy in myDeclarationModifiers then
    if myStorageClass = ident then
@@ -3490,7 +3482,6 @@ procedure DoDeclaration {doingPrototypes: boolean};
 label 1,2,3,4;
 
 var
-   done: boolean;                       {for loop termination}
    fName: stringPtr;                    {for forming uppercase names}
    i: integer;                          {loop variable}
    isAsm: boolean;                      {has the asm modifier been used?}
@@ -3734,19 +3725,17 @@ if token.kind = semicolonch then
    if not doingPrototypes then
       if not declaredTagOrEnumConst then
          Error(176);
-if not skipDeclarator then begin
-   variable := nil;
-   Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
-   if variable = nil then begin
-      inhibitHeader := false;
-      if token.kind = semicolonch then
-         NextToken
-      else begin
-         Error(22);
-         SkipStatement;
-         end; {else}
-      goto 1;
-      end; {if}
+variable := nil;
+Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
+if variable = nil then begin
+   inhibitHeader := false;
+   if token.kind = semicolonch then
+      NextToken
+   else begin
+      Error(22);
+      SkipStatement;
+      end; {else}
+   goto 1;
    end; {if}
 
 {make sure variables have some type info}
@@ -4052,61 +4041,55 @@ else {if not isFunction then} begin
    if alignmentSpecified then
       if declSpecifiers.storageClass in [typedefsy,registersy] then
          Error(142);
-   if not SkipDeclarator then
-      repeat
-         if isPascal then
-            variable^.itype := MakePascalType(variable^.itype);
-         if isInline then
-            Error(119);
-         if isNoreturn then
-            Error(141);
-         if token.kind = eqch then begin
-            if declSpecifiers.storageClass = typedefsy then
-               Error(52);
-            if doingPrototypes then
-               Error(88);
+   if isPascal then
+      variable^.itype := MakePascalType(variable^.itype);
+   if isInline then
+      Error(119);
+   if isNoreturn then
+      Error(141);
+   if token.kind = eqch then begin
+      if declSpecifiers.storageClass = typedefsy then
+         Error(52);
+      if doingPrototypes then
+         Error(88);
                                         {allocate copy of incomplete array type,}
-            tp := variable^.itype;      {so it can be completed by Initializer}
-            if (tp^.kind = arrayType) and (tp^.elements = 0) then begin
-               variable^.itype := pointer(Malloc(sizeof(typeRecord)));
-               variable^.itype^ := tp^;
-               variable^.itype^.saveDisp := 0;
-               end;
-            TermHeader;                 {make sure the header file is closed}
-            NextToken;                  {handle an initializer}
-            Initializer(variable);
-            end; {if}
+      tp := variable^.itype;            {so it can be completed by Initializer}
+      if (tp^.kind = arrayType) and (tp^.elements = 0) then begin
+         variable^.itype := pointer(Malloc(sizeof(typeRecord)));
+         variable^.itype^ := tp^;
+         variable^.itype^.saveDisp := 0;
+         end;
+      TermHeader;                       {make sure the header file is closed}
+      NextToken;                        {handle an initializer}
+      Initializer(variable);
+      end; {if}
                                         {check to insure array sizes are specified}
-         if declSpecifiers.storageClass <> typedefsy then
-            CheckArray(variable,
-               (declSpecifiers.storageClass = externsy) 
-               or doingParameters or not doingFunction);
+   if declSpecifiers.storageClass <> typedefsy then
+      CheckArray(variable,
+         (declSpecifiers.storageClass = externsy) 
+         or doingParameters or not doingFunction);
                                         {allocate space}
-         if variable^.storage = stackFrame then begin
-            variable^.lln := GetLocalLabel;
-            Gen2(dc_loc, variable^.lln, long(variable^.itype^.size).lsw);
-            if variable^.state = initialized then
-               AutoInit(variable, startLine, false); {initialize auto variable}
-            end; {if}
-         if (token.kind = commach) and (not doingPrototypes) then begin
-            done := false;              {allow multiple variables on one line}
-            NextToken;
-            variable := nil;
-            Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
-            if variable = nil then begin
-               if token.kind = semicolonch then
-                  NextToken
-               else begin
-                  Error(22);
-                  SkipStatement;
-                  end; {else}
-               goto 1;
-               end; {if}
-            goto 3;
-            end {if}
-         else
-            done := true;
-      until done or (token.kind = eofsy);
+   if variable^.storage = stackFrame then begin
+      variable^.lln := GetLocalLabel;
+      Gen2(dc_loc, variable^.lln, long(variable^.itype^.size).lsw);
+      if variable^.state = initialized then
+         AutoInit(variable, startLine, false); {initialize auto variable}
+      end; {if}
+   if (token.kind = commach) and (not doingPrototypes) then begin
+      NextToken;                        {allow multiple variables on one line}
+      variable := nil;
+      Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
+      if variable = nil then begin
+         if token.kind = semicolonch then
+            NextToken
+         else begin
+            Error(22);
+            SkipStatement;
+            end; {else}
+         goto 1;
+         end; {if}
+      goto 3;
+      end; {if}
    if doingPrototypes then begin
       protoVariable := variable;        {make the var available to Declarator}
       if protoVariable = nil then
