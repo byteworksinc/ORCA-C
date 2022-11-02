@@ -3482,6 +3482,8 @@ procedure DoDeclaration {doingPrototypes: boolean};
 label 1,2,3,4;
 
 var
+   declarationSpecifierFound: boolean;  {has some decl specifier been found?}
+   first: boolean;                      {handling first declarator in decl?}
    fName: stringPtr;                    {for forming uppercase names}
    i: integer;                          {loop variable}
    isAsm: boolean;                      {has the asm modifier been used?}
@@ -3493,14 +3495,12 @@ var
    lp,tlp,tlp2: identPtr;               {for tracing parameter list}
    lUseGlobalPool: boolean;             {local copy of useGlobalPool}
    nextPdisp: integer;                  {for calculating parameter disps}
-   noFDefinitions: boolean;             {are function definitions inhibited?}
    p1,p2,p3: parameterPtr;              {for reversing prototyped parameters}
    variable: identPtr;                  {pointer to the variable being declared}
    fnType: typePtr;                     {function type}
    segType: integer;                    {segment type}
    tp: typePtr;                         {for tracing type lists}
    tk: tokenType;                       {work token}
-   typeFound: boolean;                  {has some type specifier been found?}
    startLine: longint;                  {line where this declaration starts}
    declSpecifiers: declSpecifiersRecord; {type & specifiers for the declaration}
 
@@ -3700,12 +3700,11 @@ if token.kind = _Static_assertsy then begin
    goto 4;
    end; {if}
 lDoingParameters := doingParameters;    {record the status}
-noFDefinitions := false;                {are function definitions inhibited?}
+first := true;                          {preparing to handle first declarator}
 if doingPrototypes then                 {prototypes implies a parm list}
    doingParameters := true
 else
    lastParameter := nil;                {init parm list if we're not doing prototypes}
-isFunction := false;                    {assume it's not a function}
 startLine := lineNumber;
 if not doingFunction then               {handle any segment statements}
    while token.kind = segmentsy do
@@ -3713,7 +3712,7 @@ if not doingFunction then               {handle any segment statements}
 inhibitHeader := true;			{block imbedded includes in headers}
 lUseGlobalPool := useGlobalPool;
                                         {handle a TypeSpecifier/declarator}
-typeFound := token.kind in declarationSpecifiersElement;
+declarationSpecifierFound := token.kind in declarationSpecifiersElement;
 declaredTagOrEnumConst := false;
 DeclarationSpecifiers(declSpecifiers, declarationSpecifiersElement, 176);
 isPascal := pascalsy in declSpecifiers.declarationModifiers;
@@ -3725,6 +3724,9 @@ if token.kind = semicolonch then
    if not doingPrototypes then
       if not declaredTagOrEnumConst then
          Error(176);
+
+3:
+isFunction := false;                    {assume it's not a function}
 variable := nil;
 Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
 if variable = nil then begin
@@ -3738,21 +3740,17 @@ if variable = nil then begin
    goto 1;
    end; {if}
 
-{make sure variables have some type info}
-if isFunction then begin
-   if not typeFound then
-      if (lint & lintNoFnType) <> 0 then
-         if (lint & lintC99Syntax) = 0 then
-            Error(104);
-   end {if}
-else
-   if not typeFound then
-      Error(26);
-
-3:
 {handle a function declaration}
 if isFunction then begin
 
+   if not declarationSpecifierFound then
+      if first then
+         if doingPrototypes or (token.kind in [commach,semicolonch]) then
+            Error(26)
+         else
+            if (lint & lintNoFnType) <> 0 then
+               if (lint & lintC99Syntax) = 0 then
+                  Error(104);
    if doingParameters then              {a function cannot be a parameter}
       Error(28);
    fnType := variable^.itype;           {get the type of the function}
@@ -3834,19 +3832,7 @@ if isFunction then begin
       else if (token.kind = commach) and (not doingPrototypes) then begin
          PopTable;			{pop the symbol table}
          NextToken;                     {allow further declarations}
-         variable := nil;
-         isFunction := false;
-         Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
-         if variable = nil then begin
-            inhibitHeader := false;
-            if token.kind = semicolonch then
-               NextToken
-            else begin
-               Error(22);
-               SkipStatement;
-               end; {else}
-            goto 1;
-            end; {if}
+         first := false;
          goto 3;
          end {else if}
       else begin
@@ -3866,7 +3852,7 @@ if isFunction then begin
 
    {local declaration}
    else begin
-      if noFDefinitions then
+      if not first then
          Error(22);
       ftype := fnType^.ftype;           {record the type of the function}
       while fType^.kind = definedType do
@@ -4037,7 +4023,9 @@ if isFunction then begin
 
 {handle a variable declaration}
 else {if not isFunction then} begin
-   noFDefinitions := true;
+   if not declarationSpecifierFound then
+      if first then
+         Error(26);
    if alignmentSpecified then
       if declSpecifiers.storageClass in [typedefsy,registersy] then
          Error(142);
@@ -4077,17 +4065,7 @@ else {if not isFunction then} begin
       end; {if}
    if (token.kind = commach) and (not doingPrototypes) then begin
       NextToken;                        {allow multiple variables on one line}
-      variable := nil;
-      Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
-      if variable = nil then begin
-         if token.kind = semicolonch then
-            NextToken
-         else begin
-            Error(22);
-            SkipStatement;
-            end; {else}
-         goto 1;
-         end; {if}
+      first := false;
       goto 3;
       end; {if}
    if doingPrototypes then begin
