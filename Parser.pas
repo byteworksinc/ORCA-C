@@ -1285,6 +1285,7 @@ var
    i: integer;                          {loop variable}
    lastWasIdentifier: boolean;          {for deciding if the declarator is a function}
    lastWasPointer: boolean;             {was the last type a pointer?}
+   madeFunctionTable: boolean;          {made symbol table for function type?}
    newName: stringPtr;                  {new symbol name}
    parameterStorage: boolean;           {is the new symbol in a parm list?}
    state: stateKind;                    {declaration state of the variable}
@@ -1292,7 +1293,7 @@ var
    tPtr2: typePtr;                      {work pointer}
    tsPtr: typeDefPtr;                   {work pointer}
    typeStack: typeDefPtr;               {stack of type definitions}
-   firstIteration: boolean;             {first iteration of type-unstacking loop?}
+   lTable: symbolTablePtr;              {saved copy of table}
 
                                         {for checking function compatibility}
                                         {-----------------------------------}
@@ -1571,6 +1572,10 @@ var
             if not tPtr2^.prototyped then
                Error(105);
          Match(rparench,12);            {insist on a closing ')' token}
+         if madeFunctionTable or not lastWasIdentifier then
+            PopTable
+         else
+            madeFunctionTable := true;
          end {if}
 
       {handle array declarations}
@@ -1651,11 +1656,11 @@ if declSpecifiers.storageClass = externsy then  {decide on a storage state}
    state := declared
 else
    state := defined;
+madeFunctionTable := false;             {no symbol table for function}
 typeStack := nil;                       {no types so far}
 parameterStorage := false;              {symbol is not in a parameter list}
 checkParms := false;                    {assume we won't need to check for parameter type errors}
 StackDeclarations;                      {stack the type records}
-firstIteration := true;
 while typeStack <> nil do begin         {reverse the type stack}
    tsPtr := typeStack;
    typeStack := tsPtr^.next;
@@ -1667,9 +1672,6 @@ while typeStack <> nil do begin         {reverse the type stack}
    else
       tPtr2 := tsPtr^.typeDef;
    dispose(tsPtr);
-   if tPtr^.kind = functionType then
-      if not firstIteration then
-         PopTable;                      {balance push in StackDeclarations}
    case tPtr2^.kind of
       pointerType: begin
          tPtr2^.pType := tPtr;                     
@@ -1688,7 +1690,6 @@ while typeStack <> nil do begin         {reverse the type stack}
       otherwise: ;
       end; {case}
    tPtr := tPtr2;
-   firstIteration := false;
    end; {while}
 
 if doingParameters then                 {adjust array parameters to pointers}
@@ -1813,6 +1814,10 @@ if tPtr^.kind = functionType then begin {declare the identifier}
    end; {if}
 if tPtr^.kind = functionType then
    state := declared;
+if madeFunctionTable then begin
+   lTable := table;
+   table := table^.next;
+   end; {if}
 if newName <> nil then                  {declare the variable}
    variable := NewSymbol(newName, tPtr, declSpecifiers.storageClass, space, state)
 else if unnamedParm then
@@ -1822,6 +1827,8 @@ else begin
       Error(9);
    variable := nil;
    end; {else}
+if madeFunctionTable then
+   table := lTable;
 if variable <> nil then begin
    if parameterStorage then
       variable^.storage := parameter;
