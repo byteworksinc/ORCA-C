@@ -3861,6 +3861,8 @@ if isFunction then begin
    else begin
       if not first then
          Error(22);
+      if variable^.state = defined then
+         Error(42);
       ftype := fnType^.ftype;           {record the type of the function}
       while fType^.kind = definedType do
          fType := fType^.dType;
