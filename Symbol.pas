@@ -2043,7 +2043,8 @@ if space <> fieldListSpace then begin   {are we defining a function?}
          or ((cs^.state = initialized) and (state = initialized))
          or ((class = typedefsy) <> (cs^.class = typedefsy))
          or ((globalTable <> table) 
-            and ((class <> externsy) or (cs^.class <> externsy))))
+            and (not (class in [externsy,typedefsy])
+               or not (cs^.class in [externsy,typedefsy]))))
          and ((not doingParameters) or (cs^.state <> declared))
          then
          Error(42)
