@@ -2049,6 +2049,9 @@ if space <> fieldListSpace then begin   {are we defining a function?}
          Error(42)
       else begin
          itype := MakeCompositeType(cs^.itype, itype);
+         if class = externsy then
+            if cs^.class = staticsy then
+               class := staticsy;
          p := cs;
          needSymbol := false;
          end; {else}

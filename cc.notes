@@ -1966,6 +1966,8 @@ int foo(int[42]);
 
 218. If a function declared within a block had the same name as a variable in an outer scope, the symbol table entry for that variable could be corrupted, leading to spurious errors or incorrect code generation. 
 
+219. If a function is first declared as "static" and then subsequently redeclared or defined as "extern" or with no storage-class specifier, it should be private to the source file, the same as if it was just declared "static".
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
