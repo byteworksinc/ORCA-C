@@ -1964,6 +1964,8 @@ int foo(int[42]);
 
 217. If there were multiple declarations of a variable with internal or external linkage, only the type from the latest declaration would be used, rather than properly forming the composite type from the various declarations.  If a global array was first declared with a size specified and subsequently redeclared without a size, this could cause the proper storage not to be allocated for it.
 
+218. If a function declared within a block had the same name as a variable in an outer scope, the symbol table entry for that variable could be corrupted, leading to spurious errors or incorrect code generation. 
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

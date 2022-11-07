@@ -2009,6 +2009,7 @@ var
    cs: identPtr;                        {current symbol}
    hashPtr: ^identPtr;                  {pointer to hash bucket in symbol table}
    i: integer;                          {loop variable}
+   isFunction: boolean;                 {is this the symbol for a function?}
    isGlobal: boolean;                   {are we using the global table?}
    lUseGlobalPool: boolean;             {use the global symbol pool?}
    needSymbol: boolean;                 {do we need to declare it?}
@@ -2020,68 +2021,45 @@ begin {NewSymbol}
 needSymbol := true;                     {assume we need a symbol}
 cs := nil;                              {no current symbol found}
 isGlobal := false;                      {set up defaults}
+isFunction := false;
 lUseGlobalPool := useGlobalPool;
 tk.name := name;
 tk.symbolPtr := nil;
 if space <> fieldListSpace then begin   {are we defining a function?}
    if (itype <> nil) and (itype^.kind = functionType) then begin
-      isGlobal := true;
-      useGlobalPool := true;
+      isFunction := true;
       if class in [autosy, ident] then
          class := externsy;
-      if not lUseGlobalPool then begin
-         np := pointer(Malloc(length(name^)+1));
-         CopyString(pointer(np), pointer(name));
-         tk.name := np;
-         name := np;
-         end; {if}
-      cs := FindSymbol(tk, space, false, true);
-      if cs <> nil then begin
-         if cs^.state = defined then
-            if state = defined then
-               Error(42);
-         if cs^.itype <> nil then
-            itype := MakeCompositeType(cs^.itype, itype);
-         p := cs;
-         needSymbol := false;
-         end; {if}
       end {if}
    else if (itype <> nil) and (itype^.kind in [structType,unionType])
       and (itype^.fieldList = nil) and doingParameters then begin
       useGlobalPool := true;
       end; {else if}
-   cs := FindSymbol(tk, space, true, false);            {check for duplicates}
+   cs := FindSymbol(tk, space, true, true); {check for duplicates}
    if cs <> nil then begin
-      if (not CompTypes(cs^.itype, itype))
+      if ((itype = nil)
+         or (cs^.itype = nil)
+         or (not CompTypes(cs^.itype, itype))
          or ((cs^.state = initialized) and (state = initialized))
-         or (globalTable <> table) then
-         if (not doingParameters) or (cs^.state <> declared) then
-            Error(42);
-      if itype <> nil then
-         if cs^.itype <> nil then
-            itype := MakeCompositeType(cs^.itype, itype);
-      p := cs;
-      needSymbol := false;
+         or ((class = typedefsy) <> (cs^.class = typedefsy))
+         or ((globalTable <> table) 
+            and ((class <> externsy) or (cs^.class <> externsy))))
+         and ((not doingParameters) or (cs^.state <> declared))
+         then
+         Error(42)
+      else begin
+         itype := MakeCompositeType(cs^.itype, itype);
+         p := cs;
+         needSymbol := false;
+         end; {else}
       end; {if}
    end; {if}
 if class = staticsy then                {statics go in the global symbol table}
-   if not isGLobal then
+   if not isFunction then
       if globalTable <> table then begin
-         cs := FindSymbol(tk, space, true, true);
-         if cs <> nil then begin        {check for duplicates}
-            if (not CompTypes(cs^.itype, itype))
-               or ((cs^.state = defined) and (state <> initialized))
-               or (cs^.state = initialized) then
-               Error(42);
-            if itype <> nil then
-               if cs^.itype <> nil then
-                  itype := MakeCompositeType(cs^.itype, itype);
-            p := cs;
-            needSymbol := false;
-            end; {if}
          isGlobal := true;              {note that we will use the global table}
          useGlobalPool := true;
-         np := pointer(GMalloc(length(name^)+6));
+         np := pointer(GMalloc(length(name^)+6)); {form static name}
          np^[0] := chr(5+length(name^));
          for i := 1 to 5 do
             np^[i] := table^.staticNum[i];
@@ -2096,6 +2074,7 @@ if needSymbol then begin
    p^.state := state;                   {set the state}
    {p^.isForwardDeclared := false;}     {assume no forward declarations are used}
    p^.name := name;                     {record the name}
+   {p^.next := nil;}
    if space <> fieldListSpace then      {insert the symbol in the hash bucket}
       begin
       if itype = nil then
@@ -2108,9 +2087,7 @@ if needSymbol then begin
          hashPtr := pointer(ord4(hashPtr) + 4*(hashSize+1));
       p^.next := hashPtr^;
       hashPtr^ := p;
-      end {if}
-   else
-      p^.next := nil;
+      end; {if}
    end; {if}
 if space = fieldListSpace then          {check and set the storage class}
    p^.storage := none
