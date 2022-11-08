@@ -1328,7 +1328,6 @@ var
                                         {---------------------------------}
       lisFunction: boolean;             {local copy of isFunction}
       lLastParameter: identPtr;         {next parameter to process}
-      luseGlobalPool: boolean;          {local copy of useGlobalPool}
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
       ldeclaredTagOrEnumConst: boolean; {local copy of declaredTagOrEnumConst}
 
@@ -1477,8 +1476,6 @@ var
          if token.kind in declarationSpecifiersElement then begin
             {handle a prototype variable list}
             numberOfParameters := 0;    {don't allow K&R parm declarations}
-            luseGlobalPool := useGlobalPool; {use global memory}
-            useGlobalPool := true;
             done2 := false;
             lisFunction := isFunction;  {preserve global variables}
             with tPtr2^ do begin
@@ -1530,7 +1527,6 @@ var
                until done2;
                end; {with}
             isFunction := lisFunction;  {restore global variables}
-            useGlobalPool := luseGlobalPool;
             end {if prototype}
          else if token.kind = ident then begin
 
@@ -1664,13 +1660,7 @@ StackDeclarations;                      {stack the type records}
 while typeStack <> nil do begin         {reverse the type stack}
    tsPtr := typeStack;
    typeStack := tsPtr^.next;
-   if isFunction and (not useGlobalPool) then begin
-      tPtr2 := pointer(GMalloc(sizeof(typeRecord)));
-      tPtr2^ := tsPtr^.typeDef^;
-      tPtr2^.saveDisp := 0;
-      end {if}
-   else
-      tPtr2 := tsPtr^.typeDef;
+   tPtr2 := tsPtr^.typeDef;
    dispose(tsPtr);
    case tPtr2^.kind of
       pointerType: begin
