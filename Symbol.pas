@@ -2019,7 +2019,6 @@ var
 
 begin {NewSymbol}
 needSymbol := true;                     {assume we need a symbol}
-cs := nil;                              {no current symbol found}
 isGlobal := false;                      {set up defaults}
 isFunction := false;
 lUseGlobalPool := useGlobalPool;
@@ -2056,7 +2055,18 @@ if space <> fieldListSpace then begin   {are we defining a function?}
          p := cs;
          needSymbol := false;
          end; {else}
-      end; {if}
+      end {if}
+   else if class = externsy then        {check for outer decl of same object/fn}
+      if table <> globalTable then begin
+         cs := FindSymbol(tk, space, false, true);
+         if cs <> nil then
+            if cs^.name^[1] <> '~' then {exclude block-scope statics}
+               if cs^.storage in [global,external,private] then begin
+                  if not CompTypes(cs^.itype, itype) then
+                     Error(47);
+                  itype := MakeCompositeType(cs^.itype, itype);
+                  end; {if}
+         end; {if}
    end; {if}
 if class = staticsy then                {statics go in the global symbol table}
    if not isFunction then
