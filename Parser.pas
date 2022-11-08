@@ -3738,8 +3738,11 @@ variable := nil;
 Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
 if variable = nil then begin
    inhibitHeader := false;
-   if token.kind = semicolonch then
-      NextToken
+   if token.kind = semicolonch then begin
+      if not first then
+         Error(176);
+      NextToken;
+      end {if}
    else begin
       Error(22);
       SkipStatement;
