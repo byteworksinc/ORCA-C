@@ -77,6 +77,7 @@ var
    macros: ^macroTable;                 {preprocessor macro list}
    pathList: pathRecordPtr;		{additional search paths}
    printMacroExpansions: boolean;       {print the token list?}
+   preprocessing: boolean;              {doing pp directive or macro params?}
    suppressMacroExpansions: boolean;    {suppress printing even if requested?}
    reportEOL: boolean;                  {report eolsy as a token?}
    token: tokenType;                    {next token to process}
@@ -1059,6 +1060,8 @@ case token.kind of
                         write('%:%:');
 
    dotdotdotsy:      write('...');
+   
+   otherch:          write(token.ch);
 
    macroParm:        write('$', token.pnum:1);
 
@@ -1838,6 +1841,7 @@ var
    i: integer;                          {loop counter}
    inhibit: boolean;                    {inhibit parameter expansion?}
    lexpandMacros: boolean;              {local copy of expandMacros}
+   lPreprocessing: boolean;             {local copy of preprocessing}
    lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
    mPtr: macroRecordPtr;                {for checking list of macros}
    newParm: parameterPtr;               {for building a new parameter entry}
@@ -1861,6 +1865,8 @@ parms := nil;                           {no parms so far}
 if macro^.parameters >= 0 then begin    {find the values of the parameters}
    NextToken;                           {get the '(' (we hope...)}
    if token.kind = lparench then begin
+      lPreprocessing := preprocessing;
+      preprocessing := true;
       NextToken;                        {skip the '('}
       paramCount := 0;                  {process the parameters}
       parmEnd := nil;
@@ -1912,6 +1918,7 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
             PutBackToken(token, true);
          Error(12);
          end; {if}
+      preprocessing := lPreprocessing;
       end {if}
    else begin
       Error(13);
@@ -3294,6 +3301,7 @@ var
 
 
 begin {PreProcess}
+preprocessing := true;
 lSuppressMacroExpansions := suppressMacroExpansions; {inhibit token printing}
 suppressMacroExpansions := true;
 lReportEOL := reportEOL;                {we need to see eol's}
@@ -3693,6 +3701,7 @@ expandMacros := true;
 reportEOL := lReportEOL;                {restore flags}
 suppressMacroExpansions := lSuppressMacroExpansions;
 skipping := tskipping;
+preprocessing := false;
 if nextLineNumber >= 0 then
    lineNumber := nextLineNumber;
 end; {PreProcess}
@@ -4447,6 +4456,7 @@ customDefaultName := nil;               {no custom default name}
 pragmaKeepFile := nil;                  {no #pragma keep file so far}
 doingFakeFile := false;                 {not doing a fake file}
 doingDigitSequence := false;            {not expecting a digit sequence}
+preprocessing := false;                 {not preprocessing}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
@@ -5681,8 +5691,18 @@ case charKinds[ord(ch)] of
       CheckIdentifier;
       end;
 
-   digit :                               {numeric constants}
+   digit :                              {numeric constants}
       DoNumber(false);
+
+   ch_other: begin                      {other non-whitespace char (pp-token)}
+      token.kind := otherch;
+      token.class := otherCharacter;
+      token.ch := ch;
+      NextCh;
+      if skipping or preprocessing then
+         if not skipIllegalTokens then
+            Error(1);
+      end;
 
    otherwise: Error(57);
    end; {case}
@@ -5728,6 +5748,10 @@ if doingPPExpression then begin
    end; {if}
 if printMacroExpansions and not suppressMacroExpansions then
    PrintToken(token);                   {print the token stream}
+if token.kind = otherch then
+   if not (skipping or preprocessing or suppressMacroExpansions)
+      or doingPPExpression then
+      Error(1);
 end; {NextToken}
 
 

@@ -19,7 +19,7 @@ charKinds start                         character set
          enum  (illegal,ch_special,ch_dash,ch_plus,ch_lt,ch_gt,ch_eq,ch_exc),0
          enum  (ch_and,ch_bar,ch_dot,ch_white,ch_eol,ch_eof,ch_char,ch_string)
          enum  (ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,ch_colon)
-         enum  (ch_backslash,letter,digit)
+         enum  (ch_backslash,ch_other,letter,digit)
 
 ! STANDARD
          dc    i'ch_eof'                nul
@@ -58,7 +58,7 @@ charKinds start                         character set
          dc    i'ch_exc'                !
          dc    i'ch_string'             "
          dc    i'ch_pound'              #
-         dc    i'illegal'               $
+         dc    i'ch_other'              $
          dc    i'ch_percent'            %
          dc    i'ch_and'                &
          dc    i'ch_char'               '
@@ -86,7 +86,7 @@ charKinds start                         character set
          dc    i'ch_eq'                 =
          dc    i'ch_gt'                 >
          dc    i'ch_special'            ?
-         dc    i'illegal'               @
+         dc    i'ch_other'              @
          dc    i'letter'                A
          dc    i'letter'                B
          dc    i'letter'                C
@@ -118,7 +118,7 @@ charKinds start                         character set
          dc    i'ch_special'            ]
          dc    i'ch_carot'              ^
          dc    i'letter'                _
-         dc    i'illegal'               `
+         dc    i'ch_other'              `
          dc    i'letter'                a
          dc    i'letter'                b
          dc    i'letter'                c
@@ -183,24 +183,24 @@ charKinds start                         character set
          dc    i'letter'                gs
          dc    i'letter'                rs
          dc    i'letter'                us
-         dc    i'illegal'               space
-         dc    i'illegal'               !
-         dc    i'illegal'               "
-         dc    i'illegal'               #
-         dc    i'illegal'               $
-         dc    i'illegal'               %
-         dc    i'illegal'               &
+         dc    i'ch_other'              space
+         dc    i'ch_other'              !
+         dc    i'ch_other'              "
+         dc    i'ch_other'              #
+         dc    i'ch_other'              $
+         dc    i'ch_other'              %
+         dc    i'ch_other'              &
          dc    i'letter'                '
-         dc    i'illegal'               (
-         dc    i'illegal'               )
-         dc    i'illegal'               *
-         dc    i'illegal'               +
-         dc    i'illegal'               ,
+         dc    i'ch_other'              (
+         dc    i'ch_other'              )
+         dc    i'ch_other'              *
+         dc    i'ch_other'              +
+         dc    i'ch_other'              ,
          dc    i'ch_special'            -
          dc    i'letter'                .
          dc    i'letter'                /
-         dc    i'illegal'               0
-         dc    i'illegal'               1
+         dc    i'ch_other'              0
+         dc    i'ch_other'              1
          dc    i'ch_special'            2
          dc    i'ch_special'            3
          dc    i'letter'                4
@@ -209,49 +209,49 @@ charKinds start                         character set
          dc    i'letter'                7
          dc    i'letter'                8
          dc    i'letter'                9
-         dc    i'illegal'               :
+         dc    i'ch_other'              :
          dc    i'letter'                ;
          dc    i'letter'                <
          dc    i'letter'                =
          dc    i'letter'                >
          dc    i'letter'                ?
-         dc    i'illegal'               @
-         dc    i'illegal'               A
-         dc    i'illegal'               B
-         dc    i'illegal'               C
+         dc    i'ch_other'              @
+         dc    i'ch_other'              A
+         dc    i'ch_other'              B
+         dc    i'ch_other'              C
          dc    i'letter'                D
-         dc    i'illegal'               E
+         dc    i'ch_other'              E
          dc    i'letter'                F
          dc    i'ch_special'            G
          dc    i'ch_special'            H
-         dc    i'illegal'               I
+         dc    i'ch_other'              I
          dc    i'ch_white'              J
          dc    i'letter'                K
          dc    i'letter'                L
          dc    i'letter'                M
          dc    i'letter'                N
          dc    i'letter'                O
-         dc    i'illegal'               P
-         dc    i'illegal'               Q
-         dc    i'illegal'               R
-         dc    i'illegal'               S
-         dc    i'illegal'               T
-         dc    i'illegal'               U
+         dc    i'ch_other'              P
+         dc    i'ch_other'              Q
+         dc    i'ch_other'              R
+         dc    i'ch_other'              S
+         dc    i'ch_other'              T
+         dc    i'ch_other'              U
          dc    i'ch_special'            V
-         dc    i'illegal'               W
+         dc    i'ch_other'              W
          dc    i'letter'                X
          dc    i'letter'                Y
-         dc    i'illegal'               Z
-         dc    i'illegal'               [
-         dc    i'illegal'               \
-         dc    i'illegal'               ]
+         dc    i'ch_other'              Z
+         dc    i'ch_other'              [
+         dc    i'ch_other'              \
+         dc    i'ch_other'              ]
          dc    i'letter'                ^
          dc    i'letter'                _
-         dc    i'illegal'               `
-         dc    i'illegal'               a
-         dc    i'illegal'               b
-         dc    i'illegal'               c
-         dc    i'illegal'               d
+         dc    i'ch_other'              `
+         dc    i'ch_other'              a
+         dc    i'ch_other'              b
+         dc    i'ch_other'              c
+         dc    i'ch_other'              d
          dc    i'letter'                e
          dc    i'letter'                f
          dc    i'letter'                g
@@ -263,22 +263,22 @@ charKinds start                         character set
          dc    i'letter'                m
          dc    i'letter'                n
          dc    i'letter'                o
-         dc    i'illegal'               p
+         dc    i'ch_other'              p
          dc    i'letter'                q
          dc    i'letter'                r
          dc    i'letter'                s
          dc    i'letter'                t
          dc    i'letter'                u
-         dc    i'illegal'               v
-         dc    i'illegal'               w
-         dc    i'illegal'               x
-         dc    i'illegal'               y
-         dc    i'illegal'               z
-         dc    i'illegal'               {
-         dc    i'illegal'               |
-         dc    i'illegal'               }
-         dc    i'illegal'               ~
-         dc    i'illegal'               rub
+         dc    i'ch_other'              v
+         dc    i'ch_other'              w
+         dc    i'ch_other'              x
+         dc    i'ch_other'              y
+         dc    i'ch_other'              z
+         dc    i'ch_other'              {
+         dc    i'ch_other'              |
+         dc    i'ch_other'              }
+         dc    i'ch_other'              ~
+         dc    i'ch_other'              rub
          end
 
 charSym  start                          single character symbols

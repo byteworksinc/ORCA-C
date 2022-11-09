@@ -196,6 +196,7 @@ type
                barbarop,pluseqop,minuseqop,asteriskeqop,slasheqop,
                percenteqop,ltlteqop,gtgteqop,andeqop,caroteqop,
                bareqop,poundpoundop,dotdotdotsy,
+               otherch,                 {other non-whitespace char (pp-token)}
                eolsy,eofsy,             {control characters}
                typedef,                 {user types}
                uminus,uand,uasterisk,   {converted operations}
@@ -209,14 +210,15 @@ type
       (illegal,ch_special,ch_dash,ch_plus,ch_lt,ch_gt,ch_eq,ch_exc,
        ch_and,ch_bar,ch_dot,ch_white,ch_eol,ch_eof,ch_char,ch_string,
        ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,ch_colon,
-       ch_backslash,letter,digit);
+       ch_backslash,ch_other,letter,digit);
 
                                         {prefixes of a character/string literal}
    charStrPrefixEnum = (prefix_none,prefix_L,prefix_u16,prefix_U32,prefix_u8);
 
    tokenSet = set of tokenEnum;
    tokenClass = (reservedWord,reservedSymbol,identifier,intConstant,longConstant,
-                 longlongConstant,realConstant,stringConstant,macroParameter);
+                 longlongConstant,realConstant,stringConstant,otherCharacter,
+                 macroParameter);
    identPtr = ^identRecord;             {^ to a symbol table entry}
    tokenType = record                   {a token}
       kind: tokenEnum;                  {kind of token}
@@ -233,6 +235,7 @@ type
          stringConstant: (sval: longstringPtr;
                           ispstring: boolean;
                           prefix: charStrPrefixEnum);
+         otherCharacter: (ch: char);    {used for preprocessing tokens only}
          macroParameter: (pnum: integer);
      end;
  
