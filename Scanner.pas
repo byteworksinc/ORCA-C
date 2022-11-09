@@ -4871,7 +4871,7 @@ procedure NextToken;
 
 { Read the next token from the file.                            }
 
-label 1,2,3,4,5,6,7;
+label 1,2,3,4,5,6,7,8;
 
 type
    three = (s100,s1000,sMAX);           {these declarations are used for a}
@@ -5644,8 +5644,8 @@ case charKinds[ord(ch)] of
       while charKinds[ord(ch)] in [letter,digit,ch_backslash] do begin
          i := i+1;
          if ch = '\' then begin
-            NextCh;
-            if ch in ['u','U'] then begin
+            if PeekCh in ['u','U'] then begin
+               NextCh;
                codePoint := UniversalCharacterName;
                if not ValidUCNForIdentifier(codePoint, i=1) then
                   Error(149);
@@ -5659,8 +5659,8 @@ case charKinds[ord(ch)] of
                   end; {else}
                end {if}
             else begin
-               Error(1);
-               workString[i] := '?';
+               i := i-1;
+               goto 8;
                end; {else}
             end {if}
          else begin
@@ -5668,7 +5668,7 @@ case charKinds[ord(ch)] of
             NextCh;
             end; {if}
          end; {while}
-      workString[0] := chr(i);
+8:    workString[0] := chr(i);
       if i = 1 then begin               {detect prefixed char/string literal}
          if charKinds[ord(ch)] in [ch_char,ch_string] then begin
             if workString[1] in ['L','u','U'] then begin
@@ -5688,7 +5688,14 @@ case charKinds[ord(ch)] of
                charStrPrefix := prefix_u8;
                goto 6;
                end; {if}
-      CheckIdentifier;
+      if i = 0 then begin               {\ preprocessing token}
+         token.kind := otherch;
+         token.class := otherCharacter;
+         token.ch := ch;
+         NextCh;
+         end {if}
+      else
+         CheckIdentifier;
       end;
 
    digit :                              {numeric constants}
