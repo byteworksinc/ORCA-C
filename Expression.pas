@@ -1008,7 +1008,7 @@ var
          {fnPtr^.dispatcher := 0;}
          np := pointer(GMalloc(length(fToken.name^)+1));
          CopyString(pointer(np), pointer(fToken.name));
-         id := NewSymbol(np, fnPtr, ident, variableSpace, declared);
+         id := NewSymbol(np, fnPtr, ident, variableSpace, declared, false);
          if ((lint & lintUndefFn) <> 0) or ((lint & lintC99Syntax) <> 0) then
             Error(51);
          end {if}

@@ -374,7 +374,7 @@ type
         parameter:  (pln: integer;      {paramater label #}
                      pdisp: integer;    {disp of parameter}
                      pnext: identPtr);  {next parameter}
-        external: ();
+        external:   (inlineDefinition: boolean); {(potential) inline definition of function?}
         global,private: ();
         none: (anonMemberField: boolean); {field from an anonymous struct/union member?}
      end;

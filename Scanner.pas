@@ -715,7 +715,7 @@ if list or (numErr <> 0) then begin
         117: msg := @'field cannot have incomplete or function type';
         118: msg := @'flexible array must be last member of structure';
         119: msg := @'inline specifier is only allowed on functions';
-        120: msg := @'inline functions without ''static'' or ''extern'' are not supported';
+       {120: msg := @'inline functions without ''static'' or ''extern'' are not supported';}
         121: msg := @'invalid digit for binary constant';
         122: msg := @'arithmetic is not allowed on a pointer to an incomplete or function type';
         123: msg := @'array element type may not be an incomplete or function type';

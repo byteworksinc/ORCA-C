@@ -234,7 +234,8 @@ function Unqualify (tp: typePtr): typePtr;
 
 
 function NewSymbol (name: stringPtr; itype: typePtr; class: tokenEnum;
-                   space: spaceType; state: stateKind): identPtr;
+                   space: spaceType; state: stateKind; isInline: boolean):
+                   identPtr;
 
 { insert a new symbol in the symbol table                       }
 {                                                               }
@@ -1991,7 +1992,8 @@ end; {Unqualify}
 
 
 function NewSymbol {name: stringPtr; itype: typePtr; class: tokenEnum;
-                   space: spaceType; state: stateKind): identPtr};
+                   space: spaceType; state: stateKind; isInline: boolean):
+                   identPtr};
 
 { insert a new symbol in the symbol table                       }
 {                                                               }
@@ -2016,6 +2018,35 @@ var
    np: stringPtr;                       {for forming static name}
    p: identPtr;                         {work pointer}
    tk: tokenType;                       {fake token; for FindSymbol}
+   
+   procedure UnInline;
+
+   { Generate a non-inline definition for a function previously }
+   { defined with an (apparent) inline definition.              }
+   
+   var
+      fName: stringPtr;                 {name of function}
+      i: integer;                       {loop variable}
+   
+   begin {UnInline}
+   if cs^.iType^.isPascal then begin
+      fName := pointer(Malloc(length(name^)+1));
+      CopyString(pointer(fName), pointer(name));
+      for i := 1 to length(fName^) do
+         if fName^[i] in ['a'..'z'] then
+            fName^[i] := chr(ord(fName^[i]) & $5F);
+      end {if}
+   else
+      fName := name;
+   Gen2Name(dc_str, 0, 0, fName);
+   code^.s := m_jml;
+   code^.q := 0;
+   code^.r := ord(longabsolute);
+   new(code^.lab);
+   code^.lab^ := concat('~inline~',name^);
+   Gen0(pc_nat);
+   Gen0(dc_enp);
+   end; {UnInline}
 
 begin {NewSymbol}
 needSymbol := true;                     {assume we need a symbol}
@@ -2028,7 +2059,9 @@ if space <> fieldListSpace then begin   {are we defining a function?}
    if (itype <> nil) and (itype^.kind = functionType) then begin
       isFunction := true;
       if class in [autosy, ident] then
-         class := externsy;
+         class := externsy
+      else                              {If explicit storage class is given,}
+         isInline := false;             {this is not an inline definition.  }
       end {if}
    else if (itype <> nil) and (itype^.kind in [structType,unionType])
       and (itype^.fieldList = nil) and doingParameters then begin
@@ -2052,6 +2085,14 @@ if space <> fieldListSpace then begin   {are we defining a function?}
          if class = externsy then
             if cs^.class = staticsy then
                class := staticsy;
+         if cs^.storage = external then
+            if isInline then
+               isInline := cs^.inlineDefinition
+            else if cs^.inlineDefinition then
+               if iType^.kind = functionType then
+                  if cs^.state = defined then
+                     if table = globalTable then
+                        UnInline;
          p := cs;
          needSymbol := false;
          end; {else}
@@ -2124,8 +2165,10 @@ else if class = ident then begin
    else
       p^.storage := global;
    end {else if}
-else if class = externsy then
-   p^.storage := external
+else if class = externsy then begin
+   p^.storage := external;
+   p^.inlineDefinition := isInline;
+   end {else if}
 else if class = staticsy then
    p^.storage := private
 else

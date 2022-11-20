@@ -451,7 +451,13 @@ The flexible array member does not contribute to the size of the struct as repor
 
 (Kelvin Sherlock)
 
-6.  (C99) Functions may be declared as "static inline" or "extern inline".  These have the same semantics as if "inline" was omitted.  The "inline" function specifier suggests (but does not require) that calls to the function should be inlined or otherwise optimized.  ORCA/C currently does not inline these functions or apply any other special optimizations, but future versions might introduce such features.  Note that inline functions without a "static" or "extern" storage-class specifier are not currently supported.
+6.  (C99) Functions may be declared with the "inline" function specifier, which suggests (but does not require) that calls to the function should be inlined.
+
+Functions declared as "static inline" or "extern inline" have the same semantics as if "inline" was omitted.
+
+Other function definitions with the "inline" specifier provide an inline definition of the function, which is potentially usable only within the source file containing it.  There should also be a non-inline definition of the function in another source file, and it is unspecified which definition will be used for calls to the function within the file containing the inline definition.
+
+ORCA/C currently does not inline any functions and does not generate calls to inline definitions of functions, but future versions might add such features.
 
 7.  (Draft C23) Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.
 

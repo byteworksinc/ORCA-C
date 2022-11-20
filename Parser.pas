@@ -1547,7 +1547,7 @@ var
                      end; {if}
                   if token.kind = ident then begin
                      pvar := NewSymbol(token.name, nil, ident, variableSpace,
-                        declared);
+                        declared, false);
                      pvar^.storage := parameter;
                      pvar^.pnext := lastParameter;
                      lastParameter := pvar;
@@ -1809,7 +1809,8 @@ if madeFunctionTable then begin
    table := table^.next;
    end; {if}
 if newName <> nil then                  {declare the variable}
-   variable := NewSymbol(newName, tPtr, declSpecifiers.storageClass, space, state)
+   variable := NewSymbol(newName, tPtr, declSpecifiers.storageClass,
+      space, state, inlinesy in declSpecifiers.declarationModifiers)
 else if unnamedParm then
    variable^.itype := tPtr
 else begin
@@ -2873,7 +2874,7 @@ var
                      or (unionsy in fieldDeclSpecifiers.declarationModifiers))
                   then begin
                   variable := NewSymbol(@'~anonymous', tPtr, ident,
-                     fieldListSpace, defined);
+                     fieldListSpace, defined, false);
                   anonMember := true;
                   end; {if}
                end {if}
@@ -3248,7 +3249,7 @@ while token.kind in allowedTokens do begin
             tPtr^.qualifiers := [];
             tPtr^.kind := enumType;
             variable :=
-               NewSymbol(ttoken.name, tPtr, ident, tagSpace, defined);
+               NewSymbol(ttoken.name, tPtr, ident, tagSpace, defined, false);
             end {if}
          else if token.kind <> lbracech then
             Error(9);
@@ -3263,8 +3264,8 @@ while token.kind in allowedTokens do begin
                tPtr^.qualifiers := [];
                tPtr^.kind := enumConst;
                if token.kind = ident then begin
-                  variable :=
-                     NewSymbol(token.name, tPtr, ident, variableSpace, defined);
+                  variable := NewSymbol(token.name, tPtr, ident, variableSpace,
+                     defined, false);
                   NextToken;
                   end {if}
                else
@@ -3352,7 +3353,7 @@ while token.kind in allowedTokens do begin
                  {structTypePtr^.constMember := false;}
                  {structTypePtr^.flexibleArrayMember := false;}
                   structPtr := NewSymbol(ttoken.name, structTypePtr, ident,
-                     tagSpace, defined);
+                     tagSpace, defined, false);
                   structTypePtr^.sName := structPtr^.name;
                   declaredTagOrEnumConst := true;
                   end;
@@ -3765,9 +3766,6 @@ if isFunction then begin
       SkipStatement;
       goto 1;
       end; {if}
-   if isInline then
-      if not (declSpecifiers.storageClass in [staticsy,externsy]) then
-         Error(120);
    if isInline or isNoreturn then
       if not (isNewDeskAcc or isClassicDeskAcc or isCDev or isNBA or isXCMD) then
          if variable^.name^ = 'main' then
@@ -3918,16 +3916,19 @@ if isFunction then begin
          end; {if}
       foundFunction := true;            {got one...}
       segType := ord(variable^.class = staticsy) * $4000;
-      if fnType^.isPascal then begin
+      if (variable^.storage = external) and variable^.inlineDefinition then begin
+         new(fname);
+         fname^ := concat('~inline~', variable^.name^);
+         segType := $4000;
+         end {if}
+      else if fnType^.isPascal then begin
          fName := pointer(Malloc(length(variable^.name^)+1));
          CopyString(pointer(fName), pointer(variable^.name));
          for i := 1 to length(fName^) do
             if fName^[i] in ['a'..'z'] then
                fName^[i] := chr(ord(fName^[i]) & $5F);
-         Gen2Name (dc_str, segType, 0, fName);
-         end {if}
-      else
-         Gen2Name (dc_str, segType, 0, variable^.name);
+         end; {if}
+      Gen2Name(dc_str, segType, 0, fName);
       doingMain := variable^.name^ = 'main';
       hasVarargsCall := false;
       firstCompoundStatement := true;
@@ -3989,7 +3990,7 @@ if isFunction then begin
                                         {set up struct/union area}
          if variable^.itype^.ftype^.kind in [structType,unionType] then begin
             lp := NewSymbol(@'@struct', variable^.itype^.ftype, staticsy,
-               variablespace, declared);
+               variablespace, declared, false);
             tk.kind := ident;
             tk.class := identifier;
             tk.name := @'@struct';
@@ -4007,7 +4008,7 @@ if isFunction then begin
          functionTable := table;
          if fnType^.varargs then begin  {make internal va info for varargs funcs}
             lp := NewSymbol(@'__orcac_va_info', vaInfoPtr, autosy,
-               variableSpace, declared);
+               variableSpace, declared, false);
             lp^.lln := GetLocalLabel;
             Gen2(dc_loc, lp^.lln, ord(vaInfoPtr^.size));
             Gen2(pc_lda, lastParameterLLN, lastParameterSize);
@@ -4732,7 +4733,7 @@ tp^.size := len;
 tp^.kind := arrayType;
 tp^.aType := constCharPtr;
 tp^.elements := len;
-id := NewSymbol(@'__func__', tp, staticsy, variableSpace, initialized);
+id := NewSymbol(@'__func__', tp, staticsy, variableSpace, initialized, false);
 
 sval := pointer(GCalloc(len + sizeof(integer)));
 sval^.length := len;
@@ -4777,7 +4778,7 @@ else
    class := staticsy;
 name := pointer(Malloc(25));
 name^ := concat('~CompoundLiteral', cnvis(compoundLiteralNumber));
-id := NewSymbol(name, tp, class, variableSpace, defined);
+id := NewSymbol(name, tp, class, variableSpace, defined, false);
 compoundLiteralNumber := compoundLiteralNumber + 1;
 if compoundLiteralNumber = 0 then
    Error(57);
