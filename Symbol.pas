@@ -699,17 +699,17 @@ procedure DoGlobals;
                   Gen2Name(dc_glb, 0, ord(sp^.storage = private), sp^.name);
                   ip := sp^.iPtr;
                   while ip <> nil do begin
-                     case ip^.itype of
+                     case ip^.basetype of
                         cgByte,cgUByte,cgWord,cgUWord: begin
                            lval := ip^.ival;
-                           Gen2t(dc_cns, long(lval).lsw, ip^.count, ip^.itype);
+                           Gen2t(dc_cns, long(lval).lsw, ip^.count, ip^.basetype);
                            end;
                         cgLong,cgULong:
                            GenL1(dc_cns, ip^.ival, ip^.count);
                         cgQuad,cgUQuad:
                            GenQ1(dc_cns, ip^.qval, ip^.count);
                         cgReal,cgDouble,cgComp,cgExtended:
-                           GenR1t(dc_cns, ip^.rval, ip^.count, ip^.itype);
+                           GenR1t(dc_cns, ip^.rval, ip^.count, ip^.basetype);
                         cgString:
                            GenS(dc_cns, ip^.sval);
                         ccPointer: begin
@@ -790,17 +790,17 @@ procedure DoGlobals;
                if sp^.state = initialized then begin
                   Gen2Name(dc_glb, 0, ord(sp^.storage = private), sp^.name);
                   ip := sp^.iPtr;
-                  case ip^.itype of
+                  case ip^.basetype of
                      cgByte,cgUByte,cgWord,cgUWord: begin
                         lval := ip^.ival;
-                        Gen2t(dc_cns, long(lval).lsw, 1, ip^.itype);
+                        Gen2t(dc_cns, long(lval).lsw, 1, ip^.basetype);
                         end;
                      cgLong,cgULong:
                         GenL1(dc_cns, ip^.ival, 1);
                      cgQuad,cgUQuad:
                         GenQ1(dc_cns, ip^.qval, 1);
                      cgReal,cgDouble,cgComp,cgExtended:
-                        GenR1t(dc_cns, ip^.rval, 1, ip^.itype);
+                        GenR1t(dc_cns, ip^.rval, 1, ip^.basetype);
                      cgString:
                         GenS(dc_cns, ip^.sval);
                      ccPointer: begin

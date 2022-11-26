@@ -328,7 +328,7 @@ type
       case isConstant: boolean of       {is this a constant initializer?}
          false: (iTree: tokenPtr);
          true : (                       {Note: qVal.lo must overlap iVal}
-            case itype: baseTypeEnum of
+            case basetype: baseTypeEnum of
                cgByte,
                cgUByte,
                cgWord,

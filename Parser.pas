@@ -1888,13 +1888,13 @@ var
       iPtr^.isStructOrUnion := false;
       iPtr^.iVal := bitvalue;
       if bitcount <= 8 then
-         iPtr^.itype := cgUByte
+         iPtr^.basetype := cgUByte
       else if bitcount <= 16 then
-         iPtr^.itype := cgUWord
+         iPtr^.basetype := cgUWord
       else if bitcount > 24 then
-         iPtr^.itype := cgULong
+         iPtr^.basetype := cgULong
       else begin                        {3-byte bitfield: split into two parts}
-         iPtr^.itype := cgUWord;
+         iPtr^.basetype := cgUWord;
          iPtr^.iVal := bitvalue & $0000FFFF;
          bitcount := bitcount - 16;
          bitvalue := bitvalue >> 16;
@@ -2064,7 +2064,7 @@ var
             iPtr^.qval.hi := 0;
             iPtr^.iVal := expressionValue;
             end; {else}
-         iPtr^.itype := tp^.baseType;
+         iPtr^.basetype := tp^.baseType;
          InitializeBitField;
          end; {if}
       case tp^.kind of
@@ -2128,7 +2128,7 @@ var
             if (etype = stringTypePtr) or (etype = utf16StringTypePtr)
                or (etype = utf32StringTypePtr) then begin
                iPtr^.isConstant := true;
-               iPtr^.iType := ccPointer;
+               iPtr^.basetype := ccPointer;
                iPtr^.pval := 0;
                iPtr^.pPlus := false;
                iPtr^.isName := false;
@@ -2137,7 +2137,7 @@ var
             else if etype^.kind = scalarType then
                if etype^.baseType in [cgByte..cgULong] then
                   if expressionValue = 0 then
-                     iPtr^.iType := cgULong
+                     iPtr^.basetype := cgULong
                   else begin
                      Error(47);
                      errorFound := true;
@@ -2145,7 +2145,7 @@ var
                else if etype^.baseType in [cgQuad,cgUQuad] then
                   if (llExpressionValue.hi = 0) and
                      (llExpressionValue.lo = 0) then
-                     iPtr^.iType := cgULong
+                     iPtr^.basetype := cgULong
                   else begin
                      Error(47);
                      errorFound := true;
@@ -2155,7 +2155,7 @@ var
                   errorFound := true;
                   end {else}
             else if etype^.kind = pointerType then begin
-               iPtr^.iType := cgULong;
+               iPtr^.basetype := cgULong;
                iPtr^.pval := expressionValue;
                end {else if}
             else begin
@@ -2179,7 +2179,7 @@ var
          or ((tp^.kind = scalarType) and (tp^.baseType in [cgLong,cgULong])))
          and (bitsize = 0)
          then begin
-         iPtr^.iType := ccPointer;
+         iPtr^.basetype := ccPointer;
          if variable^.storage in [external,global,private] then begin
 
             {do pointer constants with + or -}
@@ -2431,13 +2431,13 @@ var
            {iPtr^.isStructOrUnion := false;}
             if iPtr^.isConstant then begin
                if tp^.kind = scalarType then
-                  iPtr^.itype := tp^.baseType
+                  iPtr^.basetype := tp^.baseType
                else if tp^.kind = pointertype then begin
-                  iPtr^.itype := cgULong;
+                  iPtr^.basetype := cgULong;
                  {iPtr^.iVal := 0;}
                   end {else if}
                else begin
-                  iPtr^.itype := cgWord;
+                  iPtr^.basetype := cgWord;
                   Error(47);
                   errorFound := true;
                   end; {else}
@@ -2530,7 +2530,7 @@ var
             iPtr^.isStructOrUnion := false;
             if (variable^.storage in [external,global,private]) then begin
                iPtr^.isConstant := true;
-               iPtr^.itype := cgString;
+               iPtr^.basetype := cgString;
                iPtr^.sval := token.sval;
                count := tp^.elements - stringLength;
                if count > 0 then
@@ -4775,7 +4775,7 @@ iPtr^.count := 1;
 {iPtr^.bitsize := 0;}
 {iPtr^.isStructOrUnion := false;}
 iPtr^.isConstant := true;
-iPtr^.itype := cgString;
+iPtr^.basetype := cgString;
 iPtr^.sval := sval;
 id^.iPtr := iPtr;
 
