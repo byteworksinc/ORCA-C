@@ -3496,6 +3496,7 @@ var
    isPascal: boolean;                   {has the pascal modifier been used?}
    alignmentSpecified: boolean;         {was an alignment explicitly specified?}
    lDoingParameters: boolean;           {local copy of doingParameters}
+   lInhibitHeader: boolean;             {local copy of inhibitHeader}
    lp,tlp,tlp2: identPtr;               {for tracing parameter list}
    lUseGlobalPool: boolean;             {local copy of useGlobalPool}
    nextPdisp: integer;                  {for calculating parameter disps}
@@ -3699,6 +3700,7 @@ var
 
 
 begin {DoDeclaration}
+lInhibitHeader:= inhibitHeader;
 inhibitHeader := true;			{block imbedded includes in headers}
 if token.kind = _Static_assertsy then begin
    DoStaticAssert;
@@ -3734,7 +3736,7 @@ isFunction := false;                    {assume it's not a function}
 variable := nil;
 Declarator(declSpecifiers, variable, variableSpace, doingPrototypes);
 if variable = nil then begin
-   inhibitHeader := false;
+   inhibitHeader := lInhibitHeader;
    if token.kind = semicolonch then begin
       if not first then
          Error(176);
@@ -3830,7 +3832,7 @@ if isFunction then begin
             end; {with}
       doingParameters := doingPrototypes; {not doing parms any more}
       if token.kind = semicolonch then begin
-         inhibitHeader := false;
+         inhibitHeader := lInhibitHeader;
          NextToken;                     {skip the trailing semicolon}
          end {if}
       else if (token.kind = commach) and (not doingPrototypes) then begin
@@ -4085,7 +4087,7 @@ else {if not isFunction then} begin
          protoType := protoVariable^.iType;
       end {if}
    else begin
-      inhibitHeader := false;
+      inhibitHeader := lInhibitHeader;
       if token.kind = semicolonch then  {must end with a semicolon}
          NextToken
       else begin
@@ -4098,7 +4100,7 @@ else {if not isFunction then} begin
 doingParameters := lDoingParameters;    {restore the status}
 useGlobalPool := lUseGlobalPool;
 4:
-inhibitHeader := false;
+inhibitHeader := lInhibitHeader;
 end; {DoDeclaration}
 
 

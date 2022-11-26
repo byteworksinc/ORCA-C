@@ -1974,7 +1974,7 @@ int foo(int[42]);
 
 219. If a function is first declared as "static" and then subsequently redeclared or defined as "extern" or with no storage-class specifier, it should be private to the source file, the same as if it was just declared "static".
 
-220. A header that ended with a partial declaration would not be represented correctly in the .sym file.  This could cause errors or misbehavior on subsequent compiles.
+220. In certain cases where a header starts or ends in the middle of a declaration, it would not be represented correctly in the .sym file.  This could cause errors or misbehavior on subsequent compiles.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
