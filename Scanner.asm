@@ -628,8 +628,13 @@ lb4      lda   [p1],Y
          jsl   ~Dispose
 !       includeCount := includeCount + 1;
          inc   includeCount
+!       if inhibitHeader then
+         lda   inhibitHeader
+         beq   lb4a
+!          TermHeader;
+         jsl   TermHeader
 !       goto 1;
-         brl   lab1
+lb4a     brl   lab1
 !       end; {if}
 !    end {if}
 

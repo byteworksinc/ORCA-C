@@ -3699,6 +3699,7 @@ var
 
 
 begin {DoDeclaration}
+inhibitHeader := true;			{block imbedded includes in headers}
 if token.kind = _Static_assertsy then begin
    DoStaticAssert;
    goto 4;
@@ -3713,7 +3714,6 @@ startLine := lineNumber;
 if not doingFunction then               {handle any segment statements}
    while token.kind = segmentsy do
       SegmentStatement;
-inhibitHeader := true;			{block imbedded includes in headers}
 lUseGlobalPool := useGlobalPool;
                                         {handle a TypeSpecifier/declarator}
 declarationSpecifierFound := token.kind in declarationSpecifiersElement;
@@ -4097,8 +4097,8 @@ else {if not isFunction then} begin
 1:
 doingParameters := lDoingParameters;    {restore the status}
 useGlobalPool := lUseGlobalPool;
-inhibitHeader := false;
 4:
+inhibitHeader := false;
 end; {DoDeclaration}
 
 
