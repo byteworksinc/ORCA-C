@@ -2811,15 +2811,15 @@ var
       tPtr: typePtr;                    {for building types}
       anonMember: boolean;              {processing an anonymous struct/union?}
       
-      procedure AddField(variable: identPtr; anonMemberField: boolean);
+      procedure AddField(variable: identPtr; anonMember: identPtr);
  
       { add a field to the field list                            }
       {                                                          }
       { parameters                                               }
       {     variable - field to add                              }
-      {     checkDups - check for duplicate-named fields         }
-      {     anonMemberField - is this a field from an anonymous  }
-      {                       struct/union member?               }
+      {     anonMember - anonymous struct/union that this field  }
+      {         came from, if any (nil if not an anonymous       }
+      {         member field)                                    }
 
       label 1;
       
@@ -2838,7 +2838,12 @@ var
             end; {while}
          end; {if}
 1:    variable^.next := fl;
-      variable^.anonMemberField := anonMemberField;
+      if anonMember <> nil then begin
+         variable^.anonMemberField := true;
+         variable^.anonMember := anonMember;
+         end {if}
+      else
+         variable^.anonMemberField := false;
       fl := variable;
       end; {AddField}
  
@@ -2876,12 +2881,13 @@ var
                   variable := NewSymbol(@'~anonymous', tPtr, ident,
                      fieldListSpace, defined, false);
                   anonMember := true;
+                  TermHeader;           {cannot record anon member in .sym file}
                   end; {if}
                end {if}
             else
                Declarator(fieldDeclSpecifiers, variable, fieldListSpace, false);
             if variable <> nil then     {enter the var in the field list}
-               AddField(variable, false);
+               AddField(variable, nil);
             end; {if}
          if kind = unionType then begin
             disp := 0;
@@ -2938,7 +2944,7 @@ var
                while tfl <> nil do begin
                   ufl := pointer(Malloc(sizeof(identRecord)));
                   ufl^ := tfl^;
-                  AddField(ufl, true);
+                  AddField(ufl, variable);
                   ufl^.disp := ufl^.disp + disp;
                   tfl := tfl^.next;
                   end; {while}

@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 33;                 {version number of .sym file format}
+   symFileVersion = 34;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1105,10 +1105,9 @@ procedure EndInclude {chPtr: ptr};
          WriteByte(ord(ip^.isForwardDeclared));
          WriteByte(ord(ip^.class));
          WriteByte(ord(ip^.storage));
-         if ip^.storage = none then
-            WriteByte(ord(ip^.anonMemberField))
-         else if ip^.storage = external then
+         if ip^.storage = external then
             WriteByte(ord(ip^.inlineDefinition));
+         {if ip^.storage = none then ip^.anonMemberField must be false}
 	 end; {WriteIdent}
          
 
@@ -1810,7 +1809,7 @@ var
       sp^.class := tokenEnum(ReadByte);
       sp^.storage := storageType(ReadByte);
       if sp^.storage = none then
-         sp^.anonMemberField := boolean(ReadByte)
+         sp^.anonMemberField := false
       else if sp^.storage = external then
          sp^.inlineDefinition := boolean(ReadByte);
       ReadIdent := sp;

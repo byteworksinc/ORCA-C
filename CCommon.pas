@@ -376,7 +376,11 @@ type
                      pnext: identPtr);  {next parameter}
         external:   (inlineDefinition: boolean); {(potential) inline definition of function?}
         global,private: ();
-        none: (anonMemberField: boolean); {field from an anonymous struct/union member?}
+        none: (
+           case anonMemberField: boolean of {field from an anonymous struct/union member?}
+              true : (anonMember: identPtr); {containing anonymous struct/union}
+              false: ();
+        );
      end;
 
                                         {mini-assembler}
