@@ -777,6 +777,8 @@ if list or (numErr <> 0) then begin
         179: msg := @'_Pragma requires one string literal argument';
         180: msg := @'decimal digit sequence expected';
         181: msg := @'''main'' may not have any function specifiers';
+        182: msg := @'''='' expected';
+        183: msg := @'array index out of bounds';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

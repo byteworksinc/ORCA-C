@@ -2036,25 +2036,6 @@ var
 
 
    begin {GetInitializerValue}
-   if token.kind in [dotch,lbrackch] then begin
-      {designated initializer: give error and skip over it}
-      Error(150);
-      while token.kind in [dotch,lbrackch] do begin
-         if token.kind = lbrackch then begin
-            NextToken;
-            Expression(arrayExpression, [rbrackch]);
-            if token.kind = rbrackch then
-               NextToken;
-            end {if}
-         else {if token.kind = dotch then} begin
-            NextToken;
-            if token.kind in [ident,typedef] then
-               NextToken;
-            end {if}
-         end; {while}
-      if token.kind = eqch then
-         NextToken;
-      end; {if}
    if variable^.storage = stackFrame then
       Expression(autoInitializerExpression, [commach,rparench,rbracech])
    else
@@ -2361,7 +2342,7 @@ var
 
 
    procedure InitializeTerm (tp: typePtr; bitsize,bitdisp: integer;
-      main: boolean);
+      main, nestedDesignator: boolean);
  
    { initialize one level of the type                           }
    {                                                            }
@@ -2370,6 +2351,10 @@ var
    {     bitsize - size of bit field (0 for non-bit fields)     }
    {     bitdisp - disp of bit field; unused if bitsize = 0     }
    {     main - is this a call from the main level?             }
+   {     nestedDesignator - handling second or later level of   }
+   {         designator in a designator list?                   }
+
+   label 1;
  
    var
       bitCount: integer;                {# of bits in a union}
@@ -2381,6 +2366,7 @@ var
       kind: typeKind;                   {base type of an initializer}
       ktp: typePtr;			{array type with definedTypes removed}
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
+      skipToNext: boolean;              {skip to next array/struct element?}
       stringElementType: typePtr;       {element type of string literal}
       stringLength: integer;            {elements in a string literal}
 
@@ -2505,6 +2491,13 @@ var
    while tp^.kind = definedType do
       tp := tp^.dType;
    kind := tp^.kind;
+                                        {check for designators that need to}
+                                        {be handled at an outer level      }
+   if token.kind in [dotch,lbrackch] then
+      if not (braces or nestedDesignator) then begin
+         {TODO fill?}
+         goto 1;
+         end; {if}
    if kind = arrayType then begin
       ktp := tp^.atype;
       while ktp^.kind = definedType do
@@ -2571,23 +2564,49 @@ var
          maxCount := tp^.elements;
          if token.kind <> rbracech then
             repeat
-               InitializeTerm(ktp, 0, 0, false);
-               count := count+1;
-               if count <> maxCount then begin
-                  if token.kind = commach then begin
-                     NextToken;
-                     done := token.kind = rbracech;
+               skipToNext := false;
+               if token.kind = lbrackch then begin
+                  NextToken;
+                  Expression(arrayExpression, [rbrackch]);
+                  if (expressionValue < 0)
+                     or ((maxCount <> 0) and (expressionValue >= maxCount)) then begin
+                     Error(183);
+                     count := 0;
                      end {if}
                   else
-                     done := true;
-                  end {if}
+                     count := expressionValue;
+                  Match(rbrackch, 24);
+                  {TODO if first designator (or expanding array size) and not nestedDesignator then fill in rest with zeros}
+                  if token.kind in [dotch,lbrackch] then begin
+                     InitializeTerm(ktp, 0, 0, false, true);
+                     skipToNext := true;
+                     end {if}
+                  else
+                     Match(eqch, 182);
+                  end; {if}
+               if not skipToNext then
+                  InitializeTerm(ktp, 0, 0, false, false);
+               count := count+1;
+               if (count = maxCount) and not braces then
+                  done := true
+               else if token.kind = commach then begin
+                  NextToken;
+                  done := token.kind = rbracech;
+                  if not done then
+                     if count = maxCount then
+                        if not (token.kind = lbrackch) then begin
+                           Error(183);
+                           count := 0;
+                           end; {if}
+                  end {else if}
                else
                   done := true;
-            until done or (token.kind = eofsy) or (count = maxCount);
+            until done or (token.kind = eofsy);
          if maxCount <> 0 then begin
             count := maxCount-count;
             if count <> 0 then          {if there weren't enough initializers...}
-               Fill(count,ktp);         { fill in the blank spots}
+               if not nestedDesignator then
+                  Fill(count,ktp);      { fill in the blank spots}
             end {if}
          else begin
             tp^.elements := count;      {set the array size}
@@ -2629,7 +2648,7 @@ var
                   count := count-bitCount;
                   bitCount := 0;
                   end; {if}
-            InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false);
+            InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false, false);
             if ip^.bitSize <> 0 then begin
                bitCount := bitCount + ip^.bitSize;
                if bitCount > maxBitField then begin
@@ -2692,6 +2711,7 @@ var
          errorFound := true;
          end; {else}
       end; {if}
+1:
    end; {InitializeTerm}
 
 begin {Initializer}
@@ -2707,7 +2727,7 @@ if not (token.kind in [lbracech,stringConst]) then
       Error(27);
       errorFound := true;
       end; {if}
-InitializeTerm(variable^.itype, 0, 0, true); {do the initialization}
+InitializeTerm(variable^.itype, 0, 0, true, false); {do the initialization}
 variable^.state := initialized;         {mark the variable as initialized}
 iPtr := variable^.iPtr;                 {reverse the initializer list}
 jPtr := nil;
