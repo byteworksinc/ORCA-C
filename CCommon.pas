@@ -327,7 +327,10 @@ type
       bitsize: integer;                 {width in bits; 0 for byte sizes}
       isStructOrUnion: boolean;         {is this a struct or union initializer?}
       case isConstant: boolean of       {is this a constant initializer?}
-         false: (iTree: tokenPtr);
+         false: (
+            iType: typePtr;             {type being initialized}
+            iTree: tokenPtr;            {initializer expression}
+            );
          true : (                       {Note: qVal.lo must overlap iVal}
             case basetype: baseTypeEnum of
                cgByte,

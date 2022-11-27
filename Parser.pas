@@ -2348,6 +2348,7 @@ var
          end; {else}
       iPtr^.isConstant := false;
       iPtr^.iTree := initializerTree;
+      iPtr^.iType := tp;
       iPtr^.bitdisp := bitdisp;
       iPtr^.bitsize := bitsize;
       end; {else}
@@ -2465,6 +2466,7 @@ var
                tk^.token.class := intConstant;
                tk^.token.ival := 0;
                iPtr^.iTree := tk;
+               iPtr^.iType := tp;
                end; {else}
             if count < 16384 then begin
                iPtr^.count := long(count).lsw;
@@ -2562,6 +2564,7 @@ var
                iPtr^.isConstant := false;
                new(ep);
                iPtr^.iTree := ep;
+               iPtr^.iType := tp;
                ep^.next := nil;
                ep^.left := nil;
                ep^.middle := nil;
@@ -4520,6 +4523,10 @@ var
    case itype^.kind of
 
       scalarType,pointerType,enumType,functionType: begin
+         if not CompTypes(itype, iptr^.itype) then begin
+            writeln('Incompatible initializer type');
+            Error(57);
+            end; {debug}
          tree := iptr^.itree;           
          if tree = nil then goto 2;     {don't generate code in error case}
          LoadAddress;                   {load the destination address}
