@@ -325,7 +325,6 @@ type
       count: integer;                   {# of duplicate records}
       bitdisp: integer;                 {disp in byte (field lists only)}
       bitsize: integer;                 {width in bits; 0 for byte sizes}
-      isStructOrUnion: boolean;         {is this a struct or union initializer?}
       case isConstant: boolean of       {is this a constant initializer?}
          false: (
             iType: typePtr;             {type being initialized}

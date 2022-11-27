@@ -1901,7 +1901,6 @@ var
       iPtr^.count := 1;
       iPtr^.bitdisp := 0;
       iPtr^.bitsize := 0;
-      iPtr^.isStructOrUnion := false;
       iPtr^.iVal := bitvalue;
       if bitcount <= 8 then
          iPtr^.basetype := cgUByte
@@ -2063,7 +2062,6 @@ var
       iPtr^.count := 1;
       iPtr^.bitdisp := 0;
       iPtr^.bitsize := 0;
-      iPtr^.isStructOrUnion := false;
       end; {if}
    etype := expressionType;
    AssignmentConversion(tp, expressionType, isConstant, expressionValue,
@@ -2328,9 +2326,7 @@ var
             DisposeTree(initializerTree);
             goto 1;
             end; {if}
-         end {if}
-      else if tp^.kind in [structType,unionType] then
-         iPtr^.isStructOrUnion := true;
+         end; {if}
 
       {handle auto variables}
       if bitsize <> 0 then begin
@@ -2340,7 +2336,6 @@ var
          iPtr^.count := 1;
          iPtr^.bitdisp := bitdisp;
          iPtr^.bitsize := bitsize;
-         iPtr^.isStructOrUnion := false;
          end; {if}
       if variable^.storage in [external,global,private] then begin
          Error(41);
@@ -2442,7 +2437,6 @@ var
             iPtr^.isConstant := variable^.storage in [external,global,private];
            {iPtr^.bitdisp := 0;}
            {iPtr^.bitsize := 0;}
-           {iPtr^.isStructOrUnion := false;}
             if iPtr^.isConstant then begin
                if tp^.kind = scalarType then
                   iPtr^.basetype := tp^.baseType
@@ -2542,7 +2536,6 @@ var
             iPtr^.count := 1;
             iPtr^.bitdisp := 0;
             iPtr^.bitsize := 0;
-            iPtr^.isStructOrUnion := false;
             if (variable^.storage in [external,global,private]) then begin
                InsertInitializerRecord(iPtr, token.sval^.length);
                iPtr^.isConstant := true;
@@ -4601,19 +4594,17 @@ var
 1:          end;
 
       structType,unionType: begin
-         if iPtr^.isStructOrUnion then begin
-            LoadAddress;                {load the destination address}
-            GenerateCode(iptr^.iTree);  {load the struct address}
+         LoadAddress;                   {load the destination address}
+         GenerateCode(iptr^.iTree);     {load the struct address}
                                         {do the assignment}
-            AssignmentConversion(itype, expressionType, isConstant, val,
-               true, false);
-            with expressionType^ do
-               Gen2(pc_mov, long(size).msw, long(size).lsw);
-            Gen0t(pc_pop, UsualUnaryConversions);
-            if isCompoundLiteral then
-               AddOperation;
-            end; {if}
-         end;
+         AssignmentConversion(itype, expressionType, isConstant, val,
+            true, false);
+         with expressionType^ do
+            Gen2(pc_mov, long(size).msw, long(size).lsw);
+         Gen0t(pc_pop, UsualUnaryConversions);
+         if isCompoundLiteral then
+            AddOperation;
+         end; {if}
 
       otherwise: Error(57);
       end; {case}
@@ -4700,7 +4691,6 @@ iPtr := pointer(GCalloc(sizeof(initializerRecord)));
 iPtr^.count := 1;
 {iPtr^.bitdisp := 0;}
 {iPtr^.bitsize := 0;}
-{iPtr^.isStructOrUnion := false;}
 iPtr^.isConstant := true;
 iPtr^.basetype := cgString;
 iPtr^.sval := sval;
