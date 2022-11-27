@@ -4420,32 +4420,24 @@ var
    ldoDispose: boolean;                 {local copy of doDispose}
 
 
-   procedure Initialize (id: identPtr; disp: longint; itype: typePtr);
+   procedure Initialize (id: identPtr);
 
-   { initialize a variable                                      }
+   { initialize (part of) a variable using the initializer iPtr }
    {                                                            }
    { parameters:                                                }
    {    id - pointer to the identifier                          }
-   {    disp - disp past the identifier to initialize           }
-   {    itype - type of the variable to initialize              }
    {                                                            }
    { variables:                                                 }
    {    count - number of times to re-use the initializer       }
-   {    ip - pointer to the initializer record to use           }
+   {    iPtr - pointer to the initializer record to use         }
 
    label 1,2;
 
    var
+      disp: longint;                    {displacement to initialize at}
       elements: longint;                {# array elements}
-      fp: identPtr;                     {for tracing field lists}
+      itype: typePtr;                   {the type being initialized}
       size: integer;                    {fill size}
-      union: boolean;                   {are we doing a union?}
-      startDisp,endDisp: longint;       {disp at start/end of struct/union}
-
-                                        {bit field manipulation}
-                                        {----------------------}
-      bitcount: integer;                {# if bits so far}
-      bitsize,bitdisp: integer;         {defines size, location of a bit field}
 
                                         {assignment conversion}
                                         {---------------------}
@@ -4513,20 +4505,13 @@ var
       
 
    begin {Initialize}
-   if disp <> iptr^.disp then
-      if count = iptr^.count then begin
-         writeln('Mismatched disp from ',id^.name^,': ', iptr^.disp:1, ' vs ', disp:1);
-         Error(57);
-         end; {debug}
+   itype := iPtr^.iType;
+   disp := iPtr^.disp;
    while itype^.kind = definedType do
       itype := itype^.dType;
    case itype^.kind of
 
       scalarType,pointerType,enumType,functionType: begin
-         if not CompTypes(itype, iptr^.itype) then begin
-            writeln('Incompatible initializer type');
-            Error(57);
-            end; {debug}
          tree := iptr^.itree;           
          if tree = nil then goto 2;     {don't generate code in error case}
          LoadAddress;                   {load the destination address}
@@ -4612,52 +4597,10 @@ var
                   if isCompoundLiteral then
                      AddOperation;
                   end; {if}
-               iPtr := iPtr^.next;
-               goto 1;
                end; {if}
-         itype := itype^.atype;
-         if ZeroFill(elements, itype, count, iPtr) then begin
-            if itype^.kind = enumType then
-               size := cgWordSize
-            else
-               size := TypeSize(itype^.baseType);
-            size := size * long(elements).lsw;
-            LoadAddress;
-            Gen0t(pc_stk, cgULong);
-            Gen1t(pc_ldc, size, cgWord);
-            Gen0t(pc_stk, cgWord);
-            Gen0t(pc_bno, cgULong);
-            Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
-            if isCompoundLiteral then
-               AddOperation;
-            disp := disp + size;
-            count := count - long(elements).lsw;
-            if count = 0 then begin
-               iPtr := iPtr^.next;
-               if iPtr <> nil then
-                  count := iPtr^.count;
-               end; {if}
-            end {if}
-         else begin
-            while elements <> 0 do begin
-               Initialize(id, disp, itype);
-               if itype^.kind in [scalarType,pointerType,enumType] then begin
-                  count := count-1;
-                  if count = 0 then begin
-                     iPtr := iPtr^.next;
-                     if iPtr <> nil then
-                        count := iPtr^.count;
-                     end; {if}
-                  end; {if}
-               disp := disp+itype^.size;
-               elements := elements-1;
-               end; {while}
-            end; {else}
 1:          end;
 
       structType,unionType: begin
-         startDisp := disp;
-         endDisp := disp + itype^.size;
          if iPtr^.isStructOrUnion then begin
             LoadAddress;                {load the destination address}
             GenerateCode(iptr^.iTree);  {load the struct address}
@@ -4669,64 +4612,7 @@ var
             Gen0t(pc_pop, UsualUnaryConversions);
             if isCompoundLiteral then
                AddOperation;
-            end {if}
-         else begin
-            union := itype^.kind = unionType;
-            fp := itype^.fieldList;
-            while fp <> nil do begin
-               itype := fp^.itype;
-               disp := startDisp + fp^.disp;
-               bitdisp := fp^.bitdisp;
-               bitsize := fp^.bitsize;
-{              writeln('Initialize:    disp = ',    disp:3, '; fp^.   Disp = ', fp^.disp:3, 'itype^.size = ', itype^.size:1); {debug}
-{              writeln('            bitDisp = ', bitDisp:3, '; fp^.bitDisp = ', fp^.bitDisp:3); {debug}
-{              writeln('            bitSize = ', bitSize:3, '; fp^.bitSize = ', fp^.bitSize:3); {debug}
-               Initialize(id, disp, itype);
-               if bitsize = 0 then begin
-                  if bitcount <> 0 then begin
-                     bitcount := 0;
-                     end {if}
-                  else if fp^.bitSize <> 0 then begin
-                     bitcount := 8;
-                     while (fp <> nil) and (bitcount > 0) do begin
-                        bitcount := bitcount - fp^.bitSize;
-                        if bitcount > 0 then
-                           if fp^.next <> nil then
-                              if fp^.next^.bitSize <> 0 then
-                                 fp := fp^.next
-                              else
-                                 bitcount := 0;
-                        end; {while}
-                     bitcount := 0;
-                     end; {else if}
-                  end {if}
-               else if fp^.bitSize = 0 then begin
-                  bitsize := 0;
-                  end {else if}
-               else begin
-                  bitcount := bitsize + bitdisp;
-                  end; {else}
-               if itype^.kind in [scalarType,pointerType,enumType] then begin
-                  count := count-1;
-                  if count = 0 then begin
-                     iPtr := iPtr^.next;
-                     if iPtr <> nil then begin
-                        count := iPtr^.count;
-                        bitsize := iPtr^.bitsize;
-                        bitdisp := iPtr^.bitdisp;
-                        end; {if}
-                     end; {if}
-                  end; {if}
-               if union then
-                  fp := nil
-               else begin
-                  fp := fp^.next;
-                  while (fp <> nil) and fp^.anonMemberField do
-                     fp := fp^.next;
-                  end; {else}
-               end; {while}
-            end; {else}
-         disp := endDisp;
+            end; {if}
          end;
 
       otherwise: Error(57);
@@ -4750,7 +4636,15 @@ if variable^.class <> staticsy then begin
          if (statementList <> nil) and not statementList^.doingDeclaration then
             if lineNumber <> 0 then
                RecordLineNumber(line);
-   Initialize(variable, 0, variable^.itype);
+   while iPtr <> nil do begin
+      Initialize(variable);
+      if count = 1 then begin
+         iPtr := iPtr^.next;
+         count := iPtr^.count;
+         end {if}
+      else
+         count := count - 1;
+      end; {while}
    end; {if}
 if isCompoundLiteral then begin
    while treeCount > 1 do begin
