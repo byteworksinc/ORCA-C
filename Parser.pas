@@ -1856,11 +1856,29 @@ procedure Initializer (var variable: identPtr);
 var
    bitcount: integer;                   {# if bits initialized}
    bitvalue: longint;                   {bit field initializer value}
+   disp: longint;                       {disp within overall object being initialized}
    done: boolean;                       {for loop termination}
    errorFound: boolean;                 {used to remove bad initializations}
    iPtr,jPtr,kPtr: initializerPtr;      {for reversing the list}
    ip: identList;                       {used to place an id in the list}
    luseGlobalPool: boolean;             {local copy of useGlobalPool}
+
+
+   procedure InsertInitializerRecord (iPtr: initializerPtr; size: longint);
+
+   { Insert an initializer record in the initializer list       }
+   {                                                            }
+   { parameters:                                                }
+   {    iPtr - the record to insert                             }
+   {    size - number of bytes initialized by this record       }
+   
+   begin {InsertInitializerRecord}
+   iPtr^.disp := disp;
+   iPtr^.next := variable^.iPtr;
+   variable^.iPtr := iPtr;
+{  writeln('Inserted initializer record with size ', size:1, ' at disp ', disp:1); {debug}
+   disp := disp + size;
+   end; {InsertInitializerRecord}
 
 
    procedure InitializeBitField;
@@ -1879,8 +1897,6 @@ var
 { writeln('InitializeBitField; bitcount = ', bitcount:1); {debug}
                                         {create the initializer entry}
       iPtr := pointer(Malloc(sizeof(initializerRecord)));
-      iPtr^.next := variable^.iPtr;
-      variable^.iPtr := iPtr;
       iPtr^.isConstant := isConstant;
       iPtr^.count := 1;
       iPtr^.bitdisp := 0;
@@ -1889,12 +1905,12 @@ var
       iPtr^.iVal := bitvalue;
       if bitcount <= 8 then
          iPtr^.basetype := cgUByte
-      else if bitcount <= 16 then
+      else if bitcount <= 24 then
          iPtr^.basetype := cgUWord
-      else if bitcount > 24 then
-         iPtr^.basetype := cgULong
-      else begin                        {3-byte bitfield: split into two parts}
-         iPtr^.basetype := cgUWord;
+      else
+         iPtr^.basetype := cgULong;
+      InsertInitializerRecord(iPtr, TypeSize(iPtr^.basetype));
+      if bitcount in [17..24] then begin {3-byte bitfield: split into two parts}
          iPtr^.iVal := bitvalue & $0000FFFF;
          bitcount := bitcount - 16;
          bitvalue := bitvalue >> 16;
@@ -2042,8 +2058,7 @@ var
       Expression(initializerExpression, [commach,rparench,rbracech]);
    if bitsize = 0 then begin
       iPtr := pointer(Malloc(sizeof(initializerRecord)));
-      iPtr^.next := variable^.iPtr;
-      variable^.iPtr := iPtr;
+      InsertInitializerRecord(iPtr, tp^.size);
       iPtr^.isConstant := isConstant;
       iPtr^.count := 1;
       iPtr^.bitdisp := 0;
@@ -2320,8 +2335,7 @@ var
       {handle auto variables}
       if bitsize <> 0 then begin
          iPtr := pointer(Malloc(sizeof(initializerRecord)));
-         iPtr^.next := variable^.iPtr;
-         variable^.iPtr := iPtr;
+         InsertInitializerRecord(iPtr, 0); {TODO should size be 0?}
          iPtr^.isConstant := isConstant;
          iPtr^.count := 1;
          iPtr^.bitdisp := bitdisp;
@@ -2367,6 +2381,7 @@ var
       ktp: typePtr;			{array type with definedTypes removed}
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
       skipToNext: boolean;              {skip to next array/struct element?}
+      startingDisp: longint;            {disp at start of this term}
       stringElementType: typePtr;       {element type of string literal}
       stringLength: integer;            {elements in a string literal}
 
@@ -2423,8 +2438,6 @@ var
          {fill a single value}
          while count <> 0 do begin
             iPtr := pointer(Calloc(sizeof(initializerRecord)));
-            iPtr^.next := variable^.iPtr;
-            variable^.iPtr := iPtr;
             iPtr^.isConstant := variable^.storage in [external,global,private];
            {iPtr^.bitdisp := 0;}
            {iPtr^.bitsize := 0;}
@@ -2461,6 +2474,7 @@ var
                iPtr^.count := 16384;
                count := count-16384;
                end; {else}
+            InsertInitializerRecord(iPtr, tp^.size * iPtr^.count);
             end; {while}
       end; {Fill}
  
@@ -2498,6 +2512,7 @@ var
          {TODO fill?}
          goto 1;
          end; {if}
+   startingDisp := disp;
    if kind = arrayType then begin
       ktp := tp^.atype;
       while ktp^.kind = definedType do
@@ -2522,13 +2537,12 @@ var
             end; {else if}
          with ktp^ do begin
             iPtr := pointer(Malloc(sizeof(initializerRecord)));
-            iPtr^.next := variable^.iPtr;
-            variable^.iPtr := iPtr;
             iPtr^.count := 1;
             iPtr^.bitdisp := 0;
             iPtr^.bitsize := 0;
             iPtr^.isStructOrUnion := false;
             if (variable^.storage in [external,global,private]) then begin
+               InsertInitializerRecord(iPtr, token.sval^.length);
                iPtr^.isConstant := true;
                iPtr^.basetype := cgString;
                iPtr^.sval := token.sval;
@@ -2543,6 +2557,8 @@ var
                   end; {else if}
                end {if}
             else begin
+               InsertInitializerRecord(iPtr,
+                  tp^.elements * stringElementType^.size);
                iPtr^.isConstant := false;
                new(ep);
                iPtr^.iTree := ep;
@@ -2573,8 +2589,10 @@ var
                      Error(183);
                      count := 0;
                      end {if}
-                  else
+                  else begin
                      count := expressionValue;
+                     disp := startingDisp + count * ktp^.size;
+                     end; {else}
                   Match(rbrackch, 24);
                   {TODO if first designator (or expanding array size) and not nestedDesignator then fill in rest with zeros}
                   if token.kind in [dotch,lbrackch] then begin
@@ -2647,6 +2665,7 @@ var
                   bitCount := (bitCount+7) div 8;
                   count := count-bitCount;
                   bitCount := 0;
+                  disp := startingDisp + tp^.size - count;
                   end; {if}
             InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false, false);
             if ip^.bitSize <> 0 then begin
@@ -2679,6 +2698,7 @@ var
             bitCount := (bitCount+7) div 8;
             count := count-bitCount;
             bitCount := 0;
+            disp := startingDisp + tp^.size - count;
             end; {if}
          if count > 0 then
             if variable^.storage in [external,global,private] then
@@ -2717,6 +2737,7 @@ var
 begin {Initializer}
 bitcount := 0;                          {set up for bit fields}
 bitvalue := 0;
+disp := 0;                              {start at beginning of the object}
 errorFound := false;                    {no errors found so far}
 luseGlobalPool := useGlobalPool;        {use global memory for global vars}
 useGlobalPool := (variable^.storage in [external,global,private])
@@ -4489,6 +4510,11 @@ var
       
 
    begin {Initialize}
+   if disp <> iptr^.disp then
+      if count = iptr^.count then begin
+         writeln('Mismatched disp from ',id^.name^,': ', iptr^.disp:1, ' vs ', disp:1);
+         Error(57);
+         end; {debug}
    while itype^.kind = definedType do
       itype := itype^.dType;
    case itype^.kind of

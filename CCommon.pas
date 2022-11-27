@@ -321,6 +321,7 @@ type
    initializerPtr = ^initializerRecord; {initializers}
    initializerRecord = record
       next: initializerPtr;             {next record in the chain}
+      disp: longint;                    {disp within overall object being initialized}
       count: integer;                   {# of duplicate records}
       bitdisp: integer;                 {disp in byte (field lists only)}
       bitsize: integer;                 {width in bits; 0 for byte sizes}
