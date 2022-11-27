@@ -1862,6 +1862,7 @@ var
    iPtr,jPtr,kPtr: initializerPtr;      {for reversing the list}
    ip: identList;                       {used to place an id in the list}
    luseGlobalPool: boolean;             {local copy of useGlobalPool}
+   skipComma: boolean;                  {skip an expected comma}
 
 
    procedure InsertInitializerRecord (iPtr: initializerPtr; size: longint);
@@ -2506,6 +2507,7 @@ var
    if token.kind in [dotch,lbrackch] then
       if not (braces or nestedDesignator) then begin
          {TODO fill?}
+         skipComma := true;
          goto 1;
          end; {if}
    startingDisp := disp;
@@ -2578,6 +2580,10 @@ var
             repeat
                skipToNext := false;
                if token.kind = lbrackch then begin
+                  if not (braces or nestedDesignator) then begin
+                     skipComma := true;
+                     goto 1;
+                     end; {if}
                   NextToken;
                   Expression(arrayExpression, [rbrackch]);
                   if (expressionValue < 0)
@@ -2603,8 +2609,11 @@ var
                count := count+1;
                if (count = maxCount) and not braces then
                   done := true
-               else if token.kind = commach then begin
-                  NextToken;
+               else if (token.kind = commach) or skipComma then begin
+                  if skipComma then
+                     skipComma := false
+                  else
+                     NextToken;
                   done := token.kind = rbracech;
                   if not done then
                      if count = maxCount then
@@ -2735,6 +2744,7 @@ bitcount := 0;                          {set up for bit fields}
 bitvalue := 0;
 disp := 0;                              {start at beginning of the object}
 errorFound := false;                    {no errors found so far}
+skipComma := false;
 luseGlobalPool := useGlobalPool;        {use global memory for global vars}
 useGlobalPool := (variable^.storage in [external,global,private])
    or useGlobalPool;
