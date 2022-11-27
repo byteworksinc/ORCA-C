@@ -2372,11 +2372,14 @@ var
       braces: boolean;                  {is the initializer inclosed in braces?}
       count,maxCount: longint;          {for tracking the size of an initializer}
       ep: tokenPtr;                     {for forming string expression}
+      fillSize: longint;                {size to fill with zeros}
       iPtr: initializerPtr;             {for creating an initializer entry}
       ip: identPtr;                     {for tracing field lists}
       kind: typeKind;                   {base type of an initializer}
       ktp: typePtr;			{array type with definedTypes removed}
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
+      maxDisp: longint;                 {maximum disp value so far}
+      newDisp: longint;                 {new disp set by a designator}
       skipToNext: boolean;              {skip to next array/struct element?}
       startingDisp: longint;            {disp at start of this term}
       stringElementType: typePtr;       {element type of string literal}
@@ -2576,27 +2579,40 @@ var
          begin
          count := 0;                    {get the expressions|initializers}
          maxCount := tp^.elements;
+         maxDisp := disp;
          if token.kind <> rbracech then
             repeat
                skipToNext := false;
                if token.kind = lbrackch then begin
-                  if not (braces or nestedDesignator) then begin
+                  if not (braces or (nestedDesignator and (disp=startingDisp)))
+                     then begin
                      skipComma := true;
                      goto 1;
                      end; {if}
                   NextToken;
                   Expression(arrayExpression, [rbrackch]);
                   if (expressionValue < 0)
-                     or ((maxCount <> 0) and (expressionValue >= maxCount)) then begin
+                     or ((maxCount <> 0) and (expressionValue >= maxCount)) then
+                     begin
                      Error(183);
                      count := 0;
                      end {if}
                   else begin
                      count := expressionValue;
-                     disp := startingDisp + count * ktp^.size;
                      end; {else}
                   Match(rbrackch, 24);
-                  {TODO if first designator (or expanding array size) and not nestedDesignator then fill in rest with zeros}
+                  newDisp := startingDisp + count * ktp^.size;
+                  if not nestedDesignator then begin
+                     fillSize := newDisp - maxDisp;
+                     if token.kind in [lbrackch,dotch] then
+                        fillSize := fillSize + ktp^.size;
+                     if fillSize > 0 then begin
+                        disp := maxDisp;
+                        Fill(fillSize, charPtr);
+                        maxDisp := disp;
+                        end; {if}
+                     end; {if}
+                  disp := newDisp;
                   if token.kind in [dotch,lbrackch] then begin
                      InitializeTerm(ktp, 0, 0, false, true);
                      skipToNext := true;
@@ -2606,6 +2622,8 @@ var
                   end; {if}
                if not skipToNext then
                   InitializeTerm(ktp, 0, 0, false, false);
+               if disp > maxDisp then
+                  maxDisp := disp;
                count := count+1;
                if (count = maxCount) and not braces then
                   done := true
@@ -2625,16 +2643,19 @@ var
                else
                   done := true;
             until done or (token.kind = eofsy);
-         if maxCount <> 0 then begin
-            count := maxCount-count;
-            if count <> 0 then          {if there weren't enough initializers...}
-               if not nestedDesignator then
-                  Fill(count,ktp);      { fill in the blank spots}
-            end {if}
-         else begin
-            tp^.elements := count;      {set the array size}
+         if maxCount = 0 then begin     {set the array size}
+            maxCount := (maxDisp - startingDisp + ktp^.size - 1) div ktp^.size;
+            tp^.elements := maxCount;   
             RecomputeSizes(variable^.itype);
-            end; {else}
+            end; {if}
+         if not nestedDesignator then begin
+            disp := startingDisp + maxCount * ktp^.size;
+            if disp > maxDisp then begin {if there weren't enough initializers...}
+               fillSize := disp - maxDisp;
+               disp := maxDisp;
+               Fill(fillSize, charPtr); { fill in the blank spots}
+               end; {if}
+            end; {if}
          end {else if}
 
       else begin
