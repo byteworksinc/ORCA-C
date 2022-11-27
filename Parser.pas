@@ -4527,12 +4527,12 @@ var
       
 
    begin {InitializeOneElement}
-   itype := iPtr^.iType;
    disp := iPtr^.disp;
    count := iPtr^.count;
+3: itype := iPtr^.iType;
    while itype^.kind = definedType do
       itype := itype^.dType;
-3: case itype^.kind of
+   case itype^.kind of
 
       scalarType,pointerType,enumType,functionType: begin
          tree := iptr^.itree;           
@@ -4557,6 +4557,14 @@ var
                else
                   isConstant := false;
                end; {else}
+        
+         if isConstant then             {zero-initialize two bytes at a time}
+            if val = 0 then
+               if count > 1 then
+                  if itype^.size = 1 then begin
+                     itype := shortPtr;
+                     count := count - 1;
+                     end; {if}
 
 {        if isConstant then
             if tree^.token.class = intConstant then
