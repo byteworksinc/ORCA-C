@@ -4413,14 +4413,12 @@ var
    ldoDispose: boolean;                 {local copy of doDispose}
 
 
-   procedure Initialize (id: identPtr);
+   procedure InitializeOneElement;
 
    { initialize (part of) a variable using the initializer iPtr }
    {                                                            }
-   { parameters:                                                }
-   {    id - pointer to the identifier                          }
-   {                                                            }
    { variables:                                                 }
+   {    variable - the variable to initialize                   }
    {    count - number of times to re-use the initializer       }
    {    iPtr - pointer to the initializer record to use         }
 
@@ -4444,8 +4442,8 @@ var
       { Load the address of the operand                         }
 
       begin {LoadAddress}
-      if id^.storage = stackFrame then
-         Gen2(pc_lda, id^.lln, ord(disp))
+      if variable^.storage = stackFrame then
+         Gen2(pc_lda, variable^.lln, ord(disp))
       else
          Error(57);
       end; {LoadAddress}
@@ -4497,7 +4495,7 @@ var
       end; {AddOperation}
       
 
-   begin {Initialize}
+   begin {InitializeOneElement}
    itype := iPtr^.iType;
    disp := iPtr^.disp;
    while itype^.kind = definedType do
@@ -4608,7 +4606,7 @@ var
 
       otherwise: Error(57);
       end; {case}
-   end; {Initialize}
+   end; {InitializeOneElement}
 
 
 begin {AutoInit}
@@ -4628,7 +4626,7 @@ if variable^.class <> staticsy then begin
             if lineNumber <> 0 then
                RecordLineNumber(line);
    while iPtr <> nil do begin
-      Initialize(variable);
+      InitializeOneElement;
       if count = 1 then begin
          iPtr := iPtr^.next;
          count := iPtr^.count;
