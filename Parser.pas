@@ -4406,7 +4406,6 @@ procedure AutoInit {variable: identPtr; line: longint;
 {       isCompoundLiteral - initializing a compound literal?    }
 
 var
-   count: integer;                      {initializer counter}
    iPtr: initializerPtr;                {pointer to the next initializer}
    codeCount: longint;                  {number of initializer expressions}
    treeCount: integer;                  {current number of distinct trees}
@@ -4422,9 +4421,10 @@ var
    {    count - number of times to re-use the initializer       }
    {    iPtr - pointer to the initializer record to use         }
 
-   label 1,2;
+   label 1,2,3;
 
    var
+      count: integer;                   {initializer counter}
       disp: longint;                    {displacement to initialize at}
       elements: longint;                {# array elements}
       itype: typePtr;                   {the type being initialized}
@@ -4498,9 +4498,10 @@ var
    begin {InitializeOneElement}
    itype := iPtr^.iType;
    disp := iPtr^.disp;
+   count := iPtr^.count;
    while itype^.kind = definedType do
       itype := itype^.dType;
-   case itype^.kind of
+3: case itype^.kind of
 
       scalarType,pointerType,enumType,functionType: begin
          tree := iptr^.itree;           
@@ -4606,12 +4607,16 @@ var
 
       otherwise: Error(57);
       end; {case}
+   if count <> 1 then begin
+      count := count - 1;
+      disp := disp + itype^.size;
+      goto 3;
+      end; {if}
    end; {InitializeOneElement}
 
 
 begin {AutoInit}
 iPtr := variable^.iPtr;
-count := iPtr^.count;
 if isCompoundLiteral then begin
    treeCount := 0;
    codeCount := 0;
@@ -4627,12 +4632,7 @@ if variable^.class <> staticsy then begin
                RecordLineNumber(line);
    while iPtr <> nil do begin
       InitializeOneElement;
-      if count = 1 then begin
-         iPtr := iPtr^.next;
-         count := iPtr^.count;
-         end {if}
-      else
-         count := count - 1;
+      iPtr := iPtr^.next;
       end; {while}
    end; {if}
 if isCompoundLiteral then begin
