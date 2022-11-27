@@ -2353,7 +2353,7 @@ var
 
 
    procedure InitializeTerm (tp: typePtr; bitsize,bitdisp: integer;
-      main, nestedDesignator: boolean);
+      main, nestedDesignator, noFill: boolean);
  
    { initialize one level of the type                           }
    {                                                            }
@@ -2364,6 +2364,7 @@ var
    {     main - is this a call from the main level?             }
    {     nestedDesignator - handling second or later level of   }
    {         designator in a designator list?                   }
+   {     noFill - if set, do not fill empty space with zeros    }
 
    label 1;
  
@@ -2380,6 +2381,7 @@ var
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
       maxDisp: longint;                 {maximum disp value so far}
       newDisp: longint;                 {new disp set by a designator}
+      setNoFill: boolean;               {set noFill on recursive calls?}
       skipToNext: boolean;              {skip to next array/struct element?}
       startingDisp: longint;            {disp at start of this term}
       stringElementType: typePtr;       {element type of string literal}
@@ -2499,6 +2501,7 @@ var
    if token.kind = lbracech then begin
       NextToken;
       braces := true;
+      noFill := false;
       end; {if}
 
    {handle arrays}
@@ -2514,6 +2517,7 @@ var
          goto 1;
          end; {if}
    startingDisp := disp;
+   setNoFill := noFill;
    if kind = arrayType then begin
       ktp := tp^.atype;
       while ktp^.kind = definedType do
@@ -2602,7 +2606,7 @@ var
                      end; {else}
                   Match(rbrackch, 24);
                   newDisp := startingDisp + count * ktp^.size;
-                  if not nestedDesignator then begin
+                  if not noFill then begin
                      fillSize := newDisp - maxDisp;
                      if token.kind in [lbrackch,dotch] then
                         fillSize := fillSize + ktp^.size;
@@ -2612,16 +2616,17 @@ var
                         maxDisp := disp;
                         end; {if}
                      end; {if}
+                  setNoFill := true;
                   disp := newDisp;
                   if token.kind in [dotch,lbrackch] then begin
-                     InitializeTerm(ktp, 0, 0, false, true);
+                     InitializeTerm(ktp, 0, 0, false, true, true);
                      skipToNext := true;
                      end {if}
                   else
                      Match(eqch, 182);
                   end; {if}
                if not skipToNext then
-                  InitializeTerm(ktp, 0, 0, false, false);
+                  InitializeTerm(ktp, 0, 0, false, false, setNoFill);
                if disp > maxDisp then
                   maxDisp := disp;
                count := count+1;
@@ -2648,7 +2653,7 @@ var
             tp^.elements := maxCount;   
             RecomputeSizes(variable^.itype);
             end; {if}
-         if not nestedDesignator then begin
+         if not noFill then begin
             disp := startingDisp + maxCount * ktp^.size;
             if disp > maxDisp then begin {if there weren't enough initializers...}
                fillSize := disp - maxDisp;
@@ -2693,7 +2698,8 @@ var
                   bitCount := 0;
                   disp := startingDisp + tp^.size - count;
                   end; {if}
-            InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false, false);
+            InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false, false,
+               setNoFill);
             if ip^.bitSize <> 0 then begin
                bitCount := bitCount + ip^.bitSize;
                if bitCount > maxBitField then begin
@@ -2775,7 +2781,7 @@ if not (token.kind in [lbracech,stringConst]) then
       Error(27);
       errorFound := true;
       end; {if}
-InitializeTerm(variable^.itype, 0, 0, true, false); {do the initialization}
+InitializeTerm(variable^.itype, 0, 0, true, false, false); {do the initialization}
 variable^.state := initialized;         {mark the variable as initialized}
 iPtr := variable^.iPtr;                 {reverse the initializer list}
 jPtr := nil;
