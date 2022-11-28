@@ -2587,13 +2587,13 @@ var
          if token.kind <> rbracech then
             repeat
                hasNestedDesignator := false;
-               if token.kind = lbrackch then begin
+               if token.kind in [lbrackch,dotch] then begin
                   if not (braces or (nestedDesignator and (disp=startingDisp)))
                      then begin
                      skipComma := true;
                      goto 1;
                      end; {if}
-                  NextToken;
+                  Match(lbrackch, 35);
                   Expression(arrayExpression, [rbrackch]);
                   if (expressionValue < 0)
                      or ((maxCount <> 0) and (expressionValue >= maxCount)) then
@@ -2681,13 +2681,13 @@ var
             if token.kind = rbracech then       {fill remainder with zeros}
                goto 2;
             hasNestedDesignator := false;
-            if token.kind  = dotch then begin
+            if token.kind in [dotch,lbrackch] then begin
                if not (braces or (nestedDesignator and (disp=startingDisp)))
                   then begin
                   skipComma := true;
                   goto 1;
                   end; {if}
-               NextToken;
+               Match(dotch, 35);
                if token.kind = ident then begin
                   ip := tp^.fieldList;
                   done := false;
