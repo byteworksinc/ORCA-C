@@ -2366,7 +2366,7 @@ var
    {         designator in a designator list?                   }
    {     noFill - if set, do not fill empty space with zeros    }
 
-   label 1;
+   label 1,2;
  
    var
       bitCount: integer;                {# of bits in a union}
@@ -2374,6 +2374,7 @@ var
       count,maxCount: longint;          {for tracking the size of an initializer}
       ep: tokenPtr;                     {for forming string expression}
       fillSize: longint;                {size to fill with zeros}
+      hasNestedDesignator: boolean;     {nested designator in current designation?}
       iPtr: initializerPtr;             {for creating an initializer entry}
       ip: identPtr;                     {for tracing field lists}
       kind: typeKind;                   {base type of an initializer}
@@ -2382,7 +2383,6 @@ var
       maxDisp: longint;                 {maximum disp value so far}
       newDisp: longint;                 {new disp set by a designator}
       setNoFill: boolean;               {set noFill on recursive calls?}
-      skipToNext: boolean;              {skip to next array/struct element?}
       startingDisp: longint;            {disp at start of this term}
       stringElementType: typePtr;       {element type of string literal}
       stringLength: integer;            {elements in a string literal}
@@ -2586,7 +2586,7 @@ var
          maxDisp := disp;
          if token.kind <> rbracech then
             repeat
-               skipToNext := false;
+               hasNestedDesignator := false;
                if token.kind = lbrackch then begin
                   if not (braces or (nestedDesignator and (disp=startingDisp)))
                      then begin
@@ -2618,15 +2618,13 @@ var
                      end; {if}
                   setNoFill := true;
                   disp := newDisp;
-                  if token.kind in [dotch,lbrackch] then begin
-                     InitializeTerm(ktp, 0, 0, false, true, true);
-                     skipToNext := true;
-                     end {if}
+                  if token.kind in [dotch,lbrackch] then
+                     hasNestedDesignator := true
                   else
                      Match(eqch, 182);
                   end; {if}
-               if not skipToNext then
-                  InitializeTerm(ktp, 0, 0, false, false, setNoFill);
+               InitializeTerm(ktp, 0, 0, false, hasNestedDesignator, 
+                  setNoFill or hasNestedDesignator);
                if disp > maxDisp then
                   maxDisp := disp;
                count := count+1;
@@ -2675,21 +2673,47 @@ var
          count := tp^.size;
          ip := tp^.fieldList;
          bitCount := 0;
+         maxDisp := disp;
          lSuppressMacroExpansions := suppressMacroExpansions;
-         while (ip <> nil) and (ip^.itype^.size > 0) do begin
-            if ip^.isForwardDeclared then
+         while true do begin
+            if (ip <> nil) and ip^.isForwardDeclared then
                ResolveForwardReference(ip);
-            if token.kind = rbracech then begin {initialize this field to 0}
-               suppressMacroExpansions := true; {inhibit token echo}
-               PutBackToken(token, false);
-               PutBackToken(token, false);
-               token.kind := intconst;
-               token.class := intConstant;
-               token.ival := 0;
-               PutBackToken(token, false);
-               token.kind := lbracech;
-               token.class := reservedSymbol;
+            if token.kind = rbracech then       {fill remainder with zeros}
+               goto 2;
+            hasNestedDesignator := false;
+            if token.kind  = dotch then begin
+               if not (braces or (nestedDesignator and (disp=startingDisp)))
+                  then begin
+                  skipComma := true;
+                  goto 1;
+                  end; {if}
+               NextToken;
+               if token.kind = ident then begin
+                  ip := tp^.fieldList;
+                  done := false;
+                  while (ip <> nil) and not done do
+                     if ip^.name^ = token.name^ then
+                        done := true
+                     else
+                        ip := ip^.next;
+                  if ip = nil then
+                     Error(81);
+                  NextToken;
+                  {TODO if ip is an anonymous member field ...}
+                  {TODO fill}
+                  if token.kind in [dotch,lbrackch] then begin
+                     hasNestedDesignator := true;
+                     end {if}
+                  else
+                     Match(eqch, 182);
+                  end {if}
+               else begin
+                  Error(9);
+                  ip := nil;
+                  end; {else}
                end; {if}
+            if (ip = nil) or (ip^.itype^.size = 0) then
+               goto 2;
             if ip^.bitSize = 0 then
                if bitCount > 0 then begin
                   InitializeBitField;
@@ -2698,8 +2722,9 @@ var
                   bitCount := 0;
                   disp := startingDisp + tp^.size - count;
                   end; {if}
-            InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false, false,
-               setNoFill);
+            disp := startingDisp + ip^.disp;
+            InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false,
+               hasNestedDesignator, setNoFill or hasNestedDesignator);
             if ip^.bitSize <> 0 then begin
                bitCount := bitCount + ip^.bitSize;
                if bitCount > maxBitField then begin
@@ -2710,6 +2735,8 @@ var
             else begin
                count := count-ip^.itype^.size;
                end; {else}
+            if disp > maxDisp then
+               maxDisp := disp;
 {           writeln('Initializer: ', ip^.bitsize:10, ip^.bitdisp:10, bitCount:10); {debug}
             if kind = unionType then
                ip := nil
@@ -2718,20 +2745,22 @@ var
                while (ip <> nil) and ip^.anonMemberField do
                   ip := ip^.next;
                end; {else}
-            if token.kind = commach then begin
-               if ip <> nil then
-                  NextToken;
-               end {if}
+            if ((ip = nil) or (ip^.itype^.size = 0)) and not braces then
+               goto 2;
+            {TODO need other code to disallow dual commas before right brace?}
+            if token.kind = commach then
+               NextToken
             else if token.kind <> rbracech then
                ip := nil;
             end; {while}
-         if bitCount > 0 then begin
+2:       if bitCount > 0 then begin
             InitializeBitField;
             bitCount := (bitCount+7) div 8;
             count := count-bitCount;
             bitCount := 0;
             disp := startingDisp + tp^.size - count;
             end; {if}
+         {TODO fill as appropriate in auto case too}
          if count > 0 then
             if variable^.storage in [external,global,private] then
                Fill(count, sCharPtr);
