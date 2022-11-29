@@ -1858,6 +1858,7 @@ var
    disp: longint;                       {disp within overall object being initialized}
    done: boolean;                       {for loop termination}
    errorFound: boolean;                 {used to remove bad initializations}
+   haveExpression: boolean;             {has an expression been parsed but not used?}
    iPtr,jPtr,kPtr: initializerPtr;      {for reversing the list}
    ip: identList;                       {used to place an id in the list}
    isStatic: boolean;                   {static storage duration (or automatic)?}
@@ -1880,6 +1881,18 @@ var
    disp := disp + size;
    end; {InsertInitializerRecord}
 
+
+   procedure GetInitializerExpression;
+   
+   { get the expression for an initializer                       }
+   
+   begin {GetInitializerExpression}
+   if not isStatic then
+      Expression(autoInitializerExpression, [commach,rparench,rbracech])
+   else
+      Expression(initializerExpression, [commach,rparench,rbracech]);
+   end; {GetInitializerExpression}
+   
 
    procedure GetInitializerValue (tp: typePtr; bitsize,bitdisp: integer);
  
@@ -2011,10 +2024,12 @@ var
 
 
    begin {GetInitializerValue}
-   if not isStatic then
-      Expression(autoInitializerExpression, [commach,rparench,rbracech])
-   else
-      Expression(initializerExpression, [commach,rparench,rbracech]);
+   if not haveExpression then
+      GetInitializerExpression
+   else begin
+      NextToken;
+      haveExpression := false;
+      end; {else}
    iPtr := pointer(Malloc(sizeof(initializerRecord)));
    if bitsize <> 0 then
       size := (bitdisp + bitsize + 7) div 8
@@ -2590,6 +2605,26 @@ var
 
    {handle structures and unions}
    else if kind in [structType, unionType] then begin
+      if not braces then
+         if not nestedDesignator then
+            if not isStatic then
+               if (token.kind in startExpression-[stringconst]) then begin
+                  if not haveExpression then begin
+                     GetInitializerExpression;
+                     haveExpression := true;
+                     PutBackToken(token, false, true);
+                     token.kind := ident;  {dummy expression-starting token}
+                     token.class := identifier;
+                     token.name := @'__';
+                     token.symbolPtr := nil;                  
+                     while expressionType^.kind = definedType do
+                        expressionType := expressionType^.dType;
+                     end; {if}
+                  if CompTypes(tp, expressionType) then begin
+                     GetInitializerValue(tp, 0, 0);
+                     goto 1;
+                     end; {if}
+                  end; {if}
       if braces or (not main) then begin
          ip := tp^.fieldList;
          maxDisp := disp;
@@ -2695,8 +2730,10 @@ var
             end; {if}
          suppressMacroExpansions := lSuppressMacroExpansions;
          end {if}
-      else                              {struct/union assignment initializer}
-         GetInitializerValue(tp, bitsize, bitdisp);
+      else begin                        {struct/union assignment initializer}
+         Error(47);
+         errorFound := true;
+         end; {else}
       end {else if}
 
    {handle single-valued types}
@@ -2727,6 +2764,7 @@ var
 begin {Initializer}
 disp := 0;                              {start at beginning of the object}
 errorFound := false;                    {no errors found so far}
+haveExpression := false;                {no expression parsed yet}
                                         {static or automatic initialization?}
 isStatic := variable^.storage in [external,global,private];
 luseGlobalPool := useGlobalPool;        {use global memory for global vars}

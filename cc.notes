@@ -1976,6 +1976,8 @@ int foo(int[42]);
 
 220. In certain cases where a header starts or ends in the middle of a declaration, it would not be represented correctly in the .sym file.  This could cause errors or misbehavior on subsequent compiles.
 
+221. Structures with unnamed bit-fields were sometimes initialized incorrectly.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
