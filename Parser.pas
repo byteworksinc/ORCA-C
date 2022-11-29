@@ -2546,8 +2546,8 @@ var
                         maxDisp := disp;
                         end; {if}
                      end; {if}
-                  disp := newDisp;
                   end; {if}
+               disp := startingDisp + count * ktp^.size;
                InitializeTerm(ktp, 0, 0, false, hasNestedDesignator);
                if disp > maxDisp then
                   maxDisp := disp;
