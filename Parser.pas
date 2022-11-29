@@ -2618,7 +2618,7 @@ var
                         ip := ip^.next;
                   if ip = nil then
                      Error(81);
-                  if ip^.anonMemberField then begin
+                  if (ip <> nil) and ip^.anonMemberField then begin
                      PutBackToken(token, false, true);
                      token.kind := dotch;
                      token.class := reservedSymbol;
