@@ -2605,10 +2605,14 @@ var
                      count := expressionValue;
                      end; {else}
                   Match(rbrackch, 24);
+                  if token.kind in [dotch,lbrackch] then
+                     hasNestedDesignator := true
+                  else
+                     Match(eqch, 182);
                   newDisp := startingDisp + count * ktp^.size;
                   if not noFill then begin
                      fillSize := newDisp - maxDisp;
-                     if token.kind in [lbrackch,dotch] then
+                     if hasNestedDesignator then
                         fillSize := fillSize + ktp^.size;
                      if fillSize > 0 then begin
                         disp := maxDisp;
@@ -2618,10 +2622,6 @@ var
                      end; {if}
                   setNoFill := true;
                   disp := newDisp;
-                  if token.kind in [dotch,lbrackch] then
-                     hasNestedDesignator := true
-                  else
-                     Match(eqch, 182);
                   end; {if}
                InitializeTerm(ktp, 0, 0, false, hasNestedDesignator, 
                   setNoFill or hasNestedDesignator);
@@ -2670,7 +2670,6 @@ var
    {handle structures and unions}
    else if kind in [structType, unionType] then begin
       if braces or (not main) then begin
-         count := tp^.size;
          ip := tp^.fieldList;
          bitCount := 0;
          maxDisp := disp;
@@ -2700,27 +2699,34 @@ var
                      Error(81);
                   NextToken;
                   {TODO if ip is an anonymous member field ...}
-                  {TODO fill}
-                  if token.kind in [dotch,lbrackch] then begin
-                     hasNestedDesignator := true;
-                     end {if}
+                  if token.kind in [dotch,lbrackch] then
+                     hasNestedDesignator := true
                   else
                      Match(eqch, 182);
+                  newDisp := startingDisp + ip^.disp;
+                  if not noFill then begin
+                     fillSize := newDisp - maxDisp;
+                     if hasNestedDesignator and (ip^.bitsize = 0) then
+                        fillSize := fillSize + ip^.itype^.size;
+                     if fillSize > 0 then begin
+                        disp := maxDisp;
+                        Fill(fillSize, charPtr);
+                        maxDisp := disp;
+                        end; {if}
+                     end; {if}
                   end {if}
                else begin
                   Error(9);
-                  ip := nil;
+                  goto 2;
                   end; {else}
                end; {if}
             if (ip = nil) or (ip^.itype^.size = 0) then
                goto 2;
+            {TODO zero padding in bitfields}
             if ip^.bitSize = 0 then
                if bitCount > 0 then begin
                   InitializeBitField;
-                  bitCount := (bitCount+7) div 8;
-                  count := count-bitCount;
                   bitCount := 0;
-                  disp := startingDisp + tp^.size - count;
                   end; {if}
             disp := startingDisp + ip^.disp;
             InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false,
@@ -2728,13 +2734,9 @@ var
             if ip^.bitSize <> 0 then begin
                bitCount := bitCount + ip^.bitSize;
                if bitCount > maxBitField then begin
-                  count := count - (maxBitField div 8);
                   bitCount := ip^.bitSize;
                   end; {if}
-               end {if}
-            else begin
-               count := count-ip^.itype^.size;
-               end; {else}
+               end; {if}
             if disp > maxDisp then
                maxDisp := disp;
 {           writeln('Initializer: ', ip^.bitsize:10, ip^.bitdisp:10, bitCount:10); {debug}
@@ -2756,14 +2758,16 @@ var
 2:       if bitCount > 0 then begin
             InitializeBitField;
             bitCount := (bitCount+7) div 8;
-            count := count-bitCount;
             bitCount := 0;
-            disp := startingDisp + tp^.size - count;
             end; {if}
-         {TODO fill as appropriate in auto case too}
-         if count > 0 then
-            if variable^.storage in [external,global,private] then
-               Fill(count, sCharPtr);
+         if not noFill then begin
+            disp := startingDisp + tp^.size;
+            if disp > maxDisp then begin {if there weren't enough initializers...}
+               fillSize := disp - maxDisp;
+               disp := maxDisp;
+               Fill(fillSize, charPtr); { fill in the blank spots}
+               end; {if}
+            end; {if}
          suppressMacroExpansions := lSuppressMacroExpansions;
          end {if}
       else                              {struct/union assignment initializer}
