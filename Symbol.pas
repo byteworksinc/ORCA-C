@@ -1287,7 +1287,7 @@ var
       if ip = nil then ip := defaultStruct^.fieldList;
 
       while ip <> nil do begin
-         if ip^.name^ <> '~anonymous' then
+         if ip^.name^[1] <> '~' then
             GenSymbol(ip, none);
          ip := ip^.next;
          end; {while}

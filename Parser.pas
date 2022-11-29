@@ -182,6 +182,7 @@ type
       end;
 
 var
+   anonNumber: integer;                 {number for next anonymous struct/union}
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
    functionName: stringPtr;             {name of the current function}
@@ -2827,7 +2828,11 @@ var
 
    label 1;
 
+   type
+      anonNameString = packed array [0..11] of char;
+
    var
+      anonName: ^anonNameString;        {name for anonymous struct/union field}
       bitDisp: integer;                 {current bit disp}
       disp: longint;                    {current byte disp}
       done: boolean;                    {for loop termination}
@@ -2857,16 +2862,14 @@ var
          tfl: identPtr;                 {for traversing field list}
       
       begin {AddField}
-      if variable^.name^ <> '~anonymous' then begin
-         tfl := fl;                     {(check for dups)}
-         while tfl <> nil do begin
-            if tfl^.name^ = variable^.name^ then begin
-               Error(42);
-               goto 1;
-               end; {if}
-            tfl := tfl^.next;
-            end; {while}
-         end; {if}
+      tfl := fl;                        {(check for dups)}
+      while tfl <> nil do begin
+         if tfl^.name^ = variable^.name^ then begin
+            Error(42);
+            goto 1;
+            end; {if}
+         tfl := tfl^.next;
+         end; {while}
 1:    variable^.next := fl;
       if anonMember <> nil then begin
          variable^.anonMemberField := true;
@@ -2908,7 +2911,10 @@ var
                   and ((structsy in fieldDeclSpecifiers.declarationModifiers)
                      or (unionsy in fieldDeclSpecifiers.declarationModifiers))
                   then begin
-                  variable := NewSymbol(@'~anonymous', tPtr, ident,
+                  anonName := pointer(Malloc(sizeof(anonNameString)));
+                  anonName^ := concat('~anon', cnvis(anonNumber));
+                  anonNumber := anonNumber+1;
+                  variable := NewSymbol(anonName, tPtr, ident,
                      fieldListSpace, defined, false);
                   anonMember := true;
                   TermHeader;           {cannot record anon member in .sym file}
@@ -4758,6 +4764,7 @@ doingForLoopClause1 := false;           {not doing a for loop}
 fIsNoreturn := false;                   {not doing a noreturn function}
 compoundLiteralNumber := 1;             {no compound literals yet}
 compoundLiteralToAllocate := nil;       {no compound literals needing space yet}
+anonNumber := 0;                        {no anonymous structs/unions yet}
 
                                         {init syntactic classes of tokens}
                                         {See C17 section 6.7 ff.}
