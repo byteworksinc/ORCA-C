@@ -1854,8 +1854,6 @@ procedure Initializer (var variable: identPtr);
 {       variable - ptr to the identifier begin initialized      }
 
 var
-   bitcount: integer;                   {# if bits initialized}
-   bitvalue: longint;                   {bit field initializer value}
    disp: longint;                       {disp within overall object being initialized}
    done: boolean;                       {for loop termination}
    errorFound: boolean;                 {used to remove bad initializations}
@@ -1882,46 +1880,6 @@ var
    end; {InsertInitializerRecord}
 
 
-   procedure InitializeBitField;
-
-   { If bit fields have been initialized, fill them in          }
-   {                                                            }
-   { Inputs:                                                    }
-   {    bitcount - # of bits initialized                        }
-   {    bitvalue - value of initializer                         }
-
-   var
-      iPtr: initializerPtr;             {for creating an initializer entry}
-
-   begin {InitializeBitField}
-   if bitcount <> 0 then begin          {skip if there has been no initializer}
-{ writeln('InitializeBitField; bitcount = ', bitcount:1); {debug}
-                                        {create the initializer entry}
-      iPtr := pointer(Malloc(sizeof(initializerRecord)));
-      iPtr^.isConstant := isConstant;
-      iPtr^.count := 1;
-      iPtr^.bitdisp := 0;
-      iPtr^.bitsize := 0;
-      iPtr^.iVal := bitvalue;
-      if bitcount <= 8 then
-         iPtr^.basetype := cgUByte
-      else if bitcount <= 24 then
-         iPtr^.basetype := cgUWord
-      else
-         iPtr^.basetype := cgULong;
-      InsertInitializerRecord(iPtr, TypeSize(iPtr^.basetype));
-      if bitcount in [17..24] then begin {3-byte bitfield: split into two parts}
-         iPtr^.iVal := bitvalue & $0000FFFF;
-         bitcount := bitcount - 16;
-         bitvalue := bitvalue >> 16;
-         InitializeBitField;
-         end;
-      bitcount := 0;                    {reset the bit field values}
-      bitvalue := 0;
-      end; {if}
-   end; {InitializeBitField}
-
-
    procedure GetInitializerValue (tp: typePtr; bitsize,bitdisp: integer);
  
    { get the value of an initializer from a single expression    }
@@ -1931,10 +1889,9 @@ var
    {     bitsize - size of bit field (0 for non-bit fields)      }
    {     bitdisp - disp of bit field; unused if bitsize = 0      }
  
-   label 1,2,3;
+   label 1,2;
 
    var
-      bitmask: longint;                 {used to add a value to a bit field}
       bKind: baseTypeEnum;              {type of constant}
       etype: typePtr;                   {expression type}
       i: integer;                       {loop variable}
@@ -1943,6 +1900,7 @@ var
       kind: tokenEnum;                  {kind of constant}
       offset, offset2: longint;		{integer offset from a pointer}
       operator: tokenEnum;              {operator for constant pointers}
+      size: longint;                    {size of item being initialized}
       tKind: typeKind;                  {type of constant}
       tree: tokenPtr;                   {for evaluating pointer constants}
 
@@ -2056,31 +2014,30 @@ var
       Expression(autoInitializerExpression, [commach,rparench,rbracech])
    else
       Expression(initializerExpression, [commach,rparench,rbracech]);
-   if bitsize = 0 then begin
-      iPtr := pointer(Malloc(sizeof(initializerRecord)));
-      InsertInitializerRecord(iPtr, tp^.size);
-      iPtr^.isConstant := isConstant;
-      iPtr^.count := 1;
-      iPtr^.bitdisp := 0;
-      iPtr^.bitsize := 0;
-      end; {if}
+   iPtr := pointer(Malloc(sizeof(initializerRecord)));
+   if bitsize <> 0 then
+      size := (bitdisp + bitsize + 7) div 8
+   else
+      size := tp^.size;
+   InsertInitializerRecord(iPtr, size);
+   iPtr^.isConstant := isConstant;
+   iPtr^.count := 1;
+   iPtr^.bitdisp := bitdisp;
+   iPtr^.bitsize := bitsize;
    etype := expressionType;
    AssignmentConversion(tp, expressionType, isConstant, expressionValue,
       false, false);
    if variable^.storage = external then
       variable^.storage := global;
    if isConstant and (variable^.storage in [external,global,private]) then begin
-      if bitsize = 0 then begin
-         if etype^.baseType in [cgQuad,cgUQuad] then begin
-            iPtr^.qVal := llExpressionValue;
-            end {if}
-         else begin
-            iPtr^.qval.hi := 0;
-            iPtr^.iVal := expressionValue;
-            end; {else}
-         iPtr^.basetype := tp^.baseType;
-         InitializeBitField;
-         end; {if}
+      if etype^.baseType in [cgQuad,cgUQuad] then begin
+         iPtr^.qVal := llExpressionValue;
+         end {if}
+      else begin
+         iPtr^.qval.hi := 0;
+         iPtr^.iVal := expressionValue;
+         end; {else}
+      iPtr^.basetype := tp^.baseType;
       case tp^.kind of
 
          scalarType: begin
@@ -2099,7 +2056,7 @@ var
                         iPtr^.qVal.hi := -1
                      else
                         iPtr^.qVal.hi := 0;
-               goto 3;
+               goto 2;
                end; {if}
             if bKind in [cgReal,cgDouble,cgComp,cgExtended] then begin
                if etype^.baseType in [cgByte..cgULong] then
@@ -2107,26 +2064,10 @@ var
                else if etype^.baseType in
                   [cgReal,cgDouble,cgComp,cgExtended] then
                   iPtr^.rval := realExpressionValue;
-               goto 3;
+               goto 2;
                end; {if}
             Error(47);
             errorFound := true;
-            goto 2;
-
-3:          if bitsize <> 0 then begin
-
-               {set up a bit field value}
-               if bitdisp < bitcount then
-                  InitializeBitField;
-               bitmask := 0;
-               for i := 1 to bitsize do
-                  bitmask := (bitmask << 1) | 1;
-               bitmask := bitmask & expressionValue;
-               for i := 1 to bitdisp do
-                  bitmask := bitmask << 1;
-               bitvalue := bitvalue | bitmask;
-               bitcount := bitcount + bitsize;
-               end; {if}
             end;
 
          arrayType: begin
@@ -2330,14 +2271,6 @@ var
          end; {if}
 
       {handle auto variables}
-      if bitsize <> 0 then begin
-         iPtr := pointer(Malloc(sizeof(initializerRecord)));
-         InsertInitializerRecord(iPtr, 0); {TODO should size be 0?}
-         iPtr^.isConstant := isConstant;
-         iPtr^.count := 1;
-         iPtr^.bitdisp := bitdisp;
-         iPtr^.bitsize := bitsize;
-         end; {if}
       if variable^.storage in [external,global,private] then begin
          Error(41);
          errorFound := true;
@@ -2345,8 +2278,6 @@ var
       iPtr^.isConstant := false;
       iPtr^.iTree := initializerTree;
       iPtr^.iType := tp;
-      iPtr^.bitdisp := bitdisp;
-      iPtr^.bitsize := bitsize;
       end; {else}
 1:
    end; {GetInitializerValue}
@@ -2369,7 +2300,8 @@ var
    label 1,2;
  
    var
-      bitCount: integer;                {# of bits in a union}
+      bfp: identPtr;                    {pointer to bit-field in field list}
+      bfsize: integer;                  {number of bytes used by bit-field}
       braces: boolean;                  {is the initializer inclosed in braces?}
       count,maxCount: longint;          {for tracking the size of an initializer}
       ep: tokenPtr;                     {for forming string expression}
@@ -2403,8 +2335,6 @@ var
          ip: identPtr;                  {pointer to next field in a structure}
 
       begin {Fill}
-{     writeln('Fill tp^.kind = ', ord(tp^.kind):1, '; count = ', count:1); {debug}
-      InitializeBitField;               {if needed, do the bit field}
       if tp^.kind = arrayType then
 
          {fill an array}
@@ -2671,7 +2601,6 @@ var
    else if kind in [structType, unionType] then begin
       if braces or (not main) then begin
          ip := tp^.fieldList;
-         bitCount := 0;
          maxDisp := disp;
          lSuppressMacroExpansions := suppressMacroExpansions;
          while true do begin
@@ -2722,24 +2651,25 @@ var
                end; {if}
             if (ip = nil) or (ip^.itype^.size = 0) then
                goto 2;
-            {TODO zero padding in bitfields}
-            if ip^.bitSize = 0 then
-               if bitCount > 0 then begin
-                  InitializeBitField;
-                  bitCount := 0;
-                  end; {if}
             disp := startingDisp + ip^.disp;
+            if ip^.bitsize <> 0 then begin {zero out padding bits in bitfields}
+               bfp := ip;
+               while (bfp^.next <> nil) and (bfp^.next^.disp = bfp^.disp) 
+                  and (bfp^.next^.bitsize <> 0) do
+                  bfp := bfp^.next;
+               bfsize := (bfp^.bitdisp + bfp^.bitsize + 7) div 8;
+               if disp + bfsize > maxDisp then
+                  if (bfp <> ip) or (ip^.bitdisp <> 0)
+                     or (ip^.bitsize mod 8 <> 0) then begin
+                     Fill(bfsize, charPtr);
+                     maxDisp := disp;
+                     disp := startingDisp + ip^.disp;
+                     end; {if}
+               end; {if}
             InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false,
                hasNestedDesignator, setNoFill or hasNestedDesignator);
-            if ip^.bitSize <> 0 then begin
-               bitCount := bitCount + ip^.bitSize;
-               if bitCount > maxBitField then begin
-                  bitCount := ip^.bitSize;
-                  end; {if}
-               end; {if}
             if disp > maxDisp then
                maxDisp := disp;
-{           writeln('Initializer: ', ip^.bitsize:10, ip^.bitdisp:10, bitCount:10); {debug}
             if kind = unionType then
                ip := nil
             else begin
@@ -2755,12 +2685,7 @@ var
             else if token.kind <> rbracech then
                ip := nil;
             end; {while}
-2:       if bitCount > 0 then begin
-            InitializeBitField;
-            bitCount := (bitCount+7) div 8;
-            bitCount := 0;
-            end; {if}
-         if not noFill then begin
+2:       if not noFill then begin
             disp := startingDisp + tp^.size;
             if disp > maxDisp then begin {if there weren't enough initializers...}
                fillSize := disp - maxDisp;
@@ -2800,8 +2725,6 @@ var
    end; {InitializeTerm}
 
 begin {Initializer}
-bitcount := 0;                          {set up for bit fields}
-bitvalue := 0;
 disp := 0;                              {start at beginning of the object}
 errorFound := false;                    {no errors found so far}
 skipComma := false;
