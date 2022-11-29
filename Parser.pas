@@ -2540,6 +2540,7 @@ var
                      or ((maxCount <> 0) and (expressionValue >= maxCount)) then
                      begin
                      Error(183);
+                     errorFound := true;
                      count := 0;
                      end {if}
                   else begin
@@ -2576,6 +2577,7 @@ var
                      if count = maxCount then
                         if not (token.kind = lbrackch) then begin
                            Error(183);
+                           errorFound := true;
                            count := 0;
                            end; {if}
                   end {else if}
@@ -2652,8 +2654,10 @@ var
                         done := true
                      else
                         ip := ip^.next;
-                  if ip = nil then
+                  if ip = nil then begin
                      Error(81);
+                     errorFound := true;
+                     end; {if}
                   if (ip <> nil) and ip^.anonMemberField then begin
                      PutBackToken(token, false, true);
                      token.kind := dotch;
@@ -2681,6 +2685,7 @@ var
                   end {if}
                else begin
                   Error(9);
+                  errorFound := true;
                   goto 2;
                   end; {else}
                end; {if}
