@@ -988,7 +988,7 @@ case token.kind of
                         lToken := token;
                         NextToken;
                         tToken := token;
-                        PutBackToken(token, true);
+                        PutBackToken(token, true, false);
                         token := lToken;
                         suppressMacroExpansions := lSuppressMacroExpansions;
                         if tToken.kind = colonch then begin
@@ -1110,12 +1110,12 @@ Gen1(dc_lab, stPtr^.continueLab);       {define the continue label}
 
 tl := stPtr^.e3List;                    {place the expression back in the list}
 if tl <> nil then begin
-   PutBackToken(token, false);
+   PutBackToken(token, false, false);
    ltoken.kind := semicolonch;
    ltoken.class := reservedSymbol;
-   PutBackToken(ltoken, false);
+   PutBackToken(ltoken, false, false);
    while tl <> nil do begin
-      PutBackToken(tl^.token, false);
+      PutBackToken(tl^.token, false, false);
       tk := tl;
       tl := tl^.next;
       dispose(tk);
@@ -1463,12 +1463,12 @@ var
             NextToken;
             suppressMacroExpansions := lSuppressMacroExpansions;
             if token.kind = rparench then begin
-               PutBackToken(token, false);
+               PutBackToken(token, false, false);
                NextToken;
                tPtr2^.prototyped := true;
                end
             else begin
-               PutBackToken(token, false);
+               PutBackToken(token, false, false);
                token.kind := voidsy;
                token.class := reservedSymbol;
                end; {else}
@@ -1861,7 +1861,6 @@ var
    iPtr,jPtr,kPtr: initializerPtr;      {for reversing the list}
    ip: identList;                       {used to place an id in the list}
    luseGlobalPool: boolean;             {local copy of useGlobalPool}
-   skipComma: boolean;                  {skip an expected comma}
 
 
    procedure InsertInitializerRecord (iPtr: initializerPtr; size: longint);
@@ -2442,11 +2441,8 @@ var
                                         {check for designators that need to}
                                         {be handled at an outer level      }
    if token.kind in [dotch,lbrackch] then
-      if not (braces or nestedDesignator) then begin
-         {TODO fill?}
-         skipComma := true;
+      if not (braces or nestedDesignator) then
          goto 1;
-         end; {if}
    startingDisp := disp;
    setNoFill := noFill;
    if kind = arrayType then begin
@@ -2521,7 +2517,9 @@ var
                if token.kind in [lbrackch,dotch] then begin
                   if not (braces or (nestedDesignator and (disp=startingDisp)))
                      then begin
-                     skipComma := true;
+                     PutBackToken(token, false, true);
+                     token.kind := commach;
+                     token.class := reservedSymbol;
                      goto 1;
                      end; {if}
                   Match(lbrackch, 35);
@@ -2561,11 +2559,8 @@ var
                count := count+1;
                if (count = maxCount) and not braces then
                   done := true
-               else if (token.kind = commach) or skipComma then begin
-                  if skipComma then
-                     skipComma := false
-                  else
-                     NextToken;
+               else if (token.kind = commach) then begin
+                  NextToken;
                   done := token.kind = rbracech;
                   if not done then
                      if count = maxCount then
@@ -2613,7 +2608,9 @@ var
             if token.kind in [dotch,lbrackch] then begin
                if not (braces or (nestedDesignator and (disp=startingDisp)))
                   then begin
-                  skipComma := true;
+                  PutBackToken(token, false, true);
+                  token.kind := commach;
+                  token.class := reservedSymbol;
                   goto 1;
                   end; {if}
                Match(dotch, 35);
@@ -2628,7 +2625,7 @@ var
                   if ip = nil then
                      Error(81);
                   if ip^.anonMemberField then begin
-                     PutBackToken(token, false);
+                     PutBackToken(token, false, true);
                      token.kind := dotch;
                      token.class := reservedSymbol;
                      token.isDigraph := false;
@@ -2735,7 +2732,6 @@ var
 begin {Initializer}
 disp := 0;                              {start at beginning of the object}
 errorFound := false;                    {no errors found so far}
-skipComma := false;
 luseGlobalPool := useGlobalPool;        {use global memory for global vars}
 useGlobalPool := (variable^.storage in [external,global,private])
    or useGlobalPool;
@@ -4357,7 +4353,7 @@ case statementList^.kind of
             NextToken;
             suppressMacroExpansions := lSuppressMacroExpansions;
             nToken := token;
-            PutBackToken(nToken, false);
+            PutBackToken(nToken, false, false);
             token := lToken;
             if nToken.kind <> colonch then
                DoDeclaration(false)
