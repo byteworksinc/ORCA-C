@@ -1860,6 +1860,7 @@ var
    errorFound: boolean;                 {used to remove bad initializations}
    iPtr,jPtr,kPtr: initializerPtr;      {for reversing the list}
    ip: identList;                       {used to place an id in the list}
+   isStatic: boolean;                   {static storage duration (or automatic)?}
    luseGlobalPool: boolean;             {local copy of useGlobalPool}
 
 
@@ -2010,7 +2011,7 @@ var
 
 
    begin {GetInitializerValue}
-   if variable^.storage = stackFrame then
+   if not isStatic then
       Expression(autoInitializerExpression, [commach,rparench,rbracech])
    else
       Expression(initializerExpression, [commach,rparench,rbracech]);
@@ -2029,7 +2030,7 @@ var
       false, false);
    if variable^.storage = external then
       variable^.storage := global;
-   if isConstant and (variable^.storage in [external,global,private]) then begin
+   if isConstant and isStatic then begin
       if etype^.baseType in [cgQuad,cgUQuad] then begin
          iPtr^.qVal := llExpressionValue;
          end {if}
@@ -2135,7 +2136,7 @@ var
          and (bitsize = 0)
          then begin
          iPtr^.basetype := ccPointer;
-         if variable^.storage in [external,global,private] then begin
+         if isStatic then begin
 
             {do pointer constants with + or -}
             iPtr^.isConstant := true;
@@ -2271,7 +2272,7 @@ var
          end; {if}
 
       {handle auto variables}
-      if variable^.storage in [external,global,private] then begin
+      if isStatic then begin
          Error(41);
          errorFound := true;
          end; {else}
@@ -2340,7 +2341,7 @@ var
       else if tp^.kind = structType then begin
 
          {fill a structure}
-         if variable^.storage in [external,global,private] then
+         if isStatic then
             Fill(count * tp^.size, sCharPtr)
          else begin
             i := count;
@@ -2358,7 +2359,7 @@ var
       else if tp^.kind = unionType then begin
 
          {fill a union}
-         if variable^.storage in [external,global,private] then
+         if isStatic then
             Fill(count * tp^.size, sCharPtr)
          else
             Fill(count, tp^.fieldList^.iType);
@@ -2368,7 +2369,7 @@ var
          {fill a single value}
          while count <> 0 do begin
             iPtr := pointer(Calloc(sizeof(initializerRecord)));
-            iPtr^.isConstant := variable^.storage in [external,global,private];
+            iPtr^.isConstant := isStatic;
            {iPtr^.bitdisp := 0;}
            {iPtr^.bitsize := 0;}
             if iPtr^.isConstant then begin
@@ -2468,7 +2469,7 @@ var
             iPtr^.count := 1;
             iPtr^.bitdisp := 0;
             iPtr^.bitsize := 0;
-            if (variable^.storage in [external,global,private]) then begin
+            if isStatic then begin
                InsertInitializerRecord(iPtr, token.sval^.length);
                iPtr^.isConstant := true;
                iPtr^.basetype := cgString;
@@ -2726,9 +2727,10 @@ var
 begin {Initializer}
 disp := 0;                              {start at beginning of the object}
 errorFound := false;                    {no errors found so far}
+                                        {static or automatic initialization?}
+isStatic := variable^.storage in [external,global,private];
 luseGlobalPool := useGlobalPool;        {use global memory for global vars}
-useGlobalPool := (variable^.storage in [external,global,private])
-   or useGlobalPool;
+useGlobalPool := isStatic or useGlobalPool;
                                         {make sure a required '{' is there}
 if not (token.kind in [lbracech,stringConst]) then
    if variable^.itype^.kind = arrayType then begin
