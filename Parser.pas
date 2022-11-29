@@ -2627,8 +2627,15 @@ var
                         ip := ip^.next;
                   if ip = nil then
                      Error(81);
-                  NextToken;
-                  {TODO if ip is an anonymous member field ...}
+                  if ip^.anonMemberField then begin
+                     PutBackToken(token, false);
+                     token.kind := dotch;
+                     token.class := reservedSymbol;
+                     token.isDigraph := false;
+                     ip := ip^.anonMember;
+                     end {if}
+                  else
+                     NextToken;
                   if token.kind in [dotch,lbrackch] then
                      hasNestedDesignator := true
                   else
