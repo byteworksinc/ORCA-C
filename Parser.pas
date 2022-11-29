@@ -2284,7 +2284,7 @@ var
 
 
    procedure InitializeTerm (tp: typePtr; bitsize,bitdisp: integer;
-      main, nestedDesignator, noFill: boolean);
+      main, nestedDesignator: boolean);
  
    { initialize one level of the type                           }
    {                                                            }
@@ -2295,7 +2295,6 @@ var
    {     main - is this a call from the main level?             }
    {     nestedDesignator - handling second or later level of   }
    {         designator in a designator list?                   }
-   {     noFill - if set, do not fill empty space with zeros    }
 
    label 1,2;
  
@@ -2314,7 +2313,6 @@ var
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
       maxDisp: longint;                 {maximum disp value so far}
       newDisp: longint;                 {new disp set by a designator}
-      setNoFill: boolean;               {set noFill on recursive calls?}
       startingDisp: longint;            {disp at start of this term}
       stringElementType: typePtr;       {element type of string literal}
       stringLength: integer;            {elements in a string literal}
@@ -2431,7 +2429,6 @@ var
    if token.kind = lbracech then begin
       NextToken;
       braces := true;
-      noFill := false;
       end; {if}
 
    {handle arrays}
@@ -2444,7 +2441,6 @@ var
       if not (braces or nestedDesignator) then
          goto 1;
    startingDisp := disp;
-   setNoFill := noFill;
    if kind = arrayType then begin
       ktp := tp^.atype;
       while ktp^.kind = definedType do
@@ -2539,7 +2535,7 @@ var
                   else
                      Match(eqch, 182);
                   newDisp := startingDisp + count * ktp^.size;
-                  if not noFill then begin
+                  if braces then begin
                      fillSize := newDisp - maxDisp;
                      if hasNestedDesignator then
                         fillSize := fillSize + ktp^.size;
@@ -2549,11 +2545,9 @@ var
                         maxDisp := disp;
                         end; {if}
                      end; {if}
-                  setNoFill := true;
                   disp := newDisp;
                   end; {if}
-               InitializeTerm(ktp, 0, 0, false, hasNestedDesignator, 
-                  setNoFill or hasNestedDesignator);
+               InitializeTerm(ktp, 0, 0, false, hasNestedDesignator);
                if disp > maxDisp then
                   maxDisp := disp;
                count := count+1;
@@ -2577,7 +2571,7 @@ var
             tp^.elements := maxCount;   
             RecomputeSizes(variable^.itype);
             end; {if}
-         if not noFill then begin
+         if braces then begin
             disp := startingDisp + maxCount * ktp^.size;
             if disp > maxDisp then begin {if there weren't enough initializers...}
                fillSize := disp - maxDisp;
@@ -2638,7 +2632,7 @@ var
                   else
                      Match(eqch, 182);
                   newDisp := startingDisp + ip^.disp;
-                  if not noFill then begin
+                  if braces then begin
                      fillSize := newDisp - maxDisp;
                      if hasNestedDesignator and (ip^.bitsize = 0) then
                         fillSize := fillSize + ip^.itype^.size;
@@ -2672,7 +2666,7 @@ var
                      end; {if}
                end; {if}
             InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false,
-               hasNestedDesignator, setNoFill or hasNestedDesignator);
+               hasNestedDesignator);
             if disp > maxDisp then
                maxDisp := disp;
             if kind = unionType then
@@ -2690,7 +2684,7 @@ var
             else if token.kind <> rbracech then
                ip := nil;
             end; {while}
-2:       if not noFill then begin
+2:       if braces then begin
             disp := startingDisp + tp^.size;
             if disp > maxDisp then begin {if there weren't enough initializers...}
                fillSize := disp - maxDisp;
@@ -2741,7 +2735,7 @@ if not (token.kind in [lbracech,stringConst]) then
       Error(27);
       errorFound := true;
       end; {if}
-InitializeTerm(variable^.itype, 0, 0, true, false, false); {do the initialization}
+InitializeTerm(variable^.itype, 0, 0, true, false); {do the initialization}
 variable^.state := initialized;         {mark the variable as initialized}
 iPtr := variable^.iPtr;                 {reverse the initializer list}
 jPtr := nil;
