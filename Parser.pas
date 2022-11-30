@@ -2595,9 +2595,15 @@ var
                   done := true;
             until done or (token.kind = eofsy);
          if maxCount = 0 then begin     {set the array size}
-            maxCount := (maxDisp - startingDisp + ktp^.size - 1) div ktp^.size;
-            tp^.elements := maxCount;   
-            RecomputeSizes(variable^.itype);
+            if maxDisp <> startingDisp then begin
+               maxCount := (maxDisp - startingDisp + ktp^.size-1) div ktp^.size;
+               tp^.elements := maxCount;   
+               RecomputeSizes(variable^.itype);
+               end {if}
+            else begin
+               Error(49);
+               errorFound := true;
+               end; {else}
             end; {if}
          if braces then begin
             disp := startingDisp + maxCount * ktp^.size;
