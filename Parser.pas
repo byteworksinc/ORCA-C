@@ -1863,6 +1863,7 @@ var
    ip: identList;                       {used to place an id in the list}
    isStatic: boolean;                   {static storage duration (or automatic)?}
    luseGlobalPool: boolean;             {local copy of useGlobalPool}
+   tToken: tokenType;                   {temporary copy of token}
 
 
    procedure InsertInitializerRecord (iPtr: initializerPtr; size: longint);
@@ -2329,6 +2330,7 @@ var
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
       maxDisp: longint;                 {maximum disp value so far}
       newDisp: longint;                 {new disp set by a designator}
+      nextTokenKind: tokenEnum;         {kind of next token}
       startingDisp: longint;            {disp at start of this term}
       stringElementType: typePtr;       {element type of string literal}
       stringLength: integer;            {elements in a string literal}
@@ -2464,60 +2466,68 @@ var
       kind := ktp^.kind;
 
       {handle string constants}
-      if token.kind = stringConst then
+      if (token.kind = stringConst) and (kind = scalarType) then begin
          stringElementType := StringType(token.prefix)^.aType;
-      if (token.kind = stringConst) and (kind = scalarType) and 
-         (((ktp^.baseType in [cgByte,cgUByte])
-            and (stringElementType = charPtr))
-         or CompTypes(ktp,stringElementType)) then begin
-         stringLength := token.sval^.length div ord(stringElementType^.size);
-         if tp^.elements = 0 then begin
-            tp^.elements := stringLength;
-            RecomputeSizes(variable^.itype);
-            end {if}
-         else if tp^.elements < stringLength-1 then begin
-            Error(44);
-            errorFound := true;
-            end; {else if}
-         with ktp^ do begin
-            iPtr := pointer(Malloc(sizeof(initializerRecord)));
-            iPtr^.count := 1;
-            iPtr^.bitdisp := 0;
-            iPtr^.bitsize := 0;
-            if isStatic then begin
-               InsertInitializerRecord(iPtr, token.sval^.length);
-               iPtr^.isConstant := true;
-               iPtr^.basetype := cgString;
-               iPtr^.sval := token.sval;
-               count := tp^.elements - stringLength;
-               if count > 0 then
-                  Fill(count, stringElementType)
-               else if count = -1 then begin
-                  iPtr^.sval := pointer(GMalloc(token.sval^.length+2));
-                  CopyLongString(iPtr^.sval, token.sval);
-                  iPtr^.sval^.length :=
-                     iPtr^.sval^.length - ord(stringElementType^.size);
+         if ((ktp^.baseType in [cgByte,cgUByte]) and (stringElementType^.size=1))
+            or CompTypes(ktp,stringElementType) then begin
+            tToken := token;
+            NextToken;
+            nextTokenKind := token.kind;
+            PutBackToken(token, false, true);
+            token := tToken;
+            if nextTokenKind in [commach, rbracech, semicolonch] then begin
+               stringLength :=
+                  token.sval^.length div ord(stringElementType^.size);
+               if tp^.elements = 0 then begin
+                  tp^.elements := stringLength;
+                  RecomputeSizes(variable^.itype);
+                  end {if}
+               else if tp^.elements < stringLength-1 then begin
+                  Error(44);
+                  errorFound := true;
                   end; {else if}
-               end {if}
-            else begin
-               InsertInitializerRecord(iPtr,
-                  tp^.elements * stringElementType^.size);
-               iPtr^.isConstant := false;
-               new(ep);
-               iPtr^.iTree := ep;
-               iPtr^.iType := tp;
-               ep^.next := nil;
-               ep^.left := nil;
-               ep^.middle := nil;
-               ep^.right := nil;
-               ep^.token := token;
-               end; {else}
-            end; {with}
-         NextToken;
-         end {if}
+               with ktp^ do begin
+                  iPtr := pointer(Malloc(sizeof(initializerRecord)));
+                  iPtr^.count := 1;
+                  iPtr^.bitdisp := 0;
+                  iPtr^.bitsize := 0;
+                  if isStatic then begin
+                     InsertInitializerRecord(iPtr, token.sval^.length);
+                     iPtr^.isConstant := true;
+                     iPtr^.basetype := cgString;
+                     iPtr^.sval := token.sval;
+                     count := tp^.elements - stringLength;
+                     if count > 0 then
+                        Fill(count, stringElementType)
+                     else if count = -1 then begin
+                        iPtr^.sval := pointer(GMalloc(token.sval^.length+2));
+                        CopyLongString(iPtr^.sval, token.sval);
+                        iPtr^.sval^.length :=
+                           iPtr^.sval^.length - ord(stringElementType^.size);
+                        end; {else if}
+                     end {if}
+                  else begin
+                     InsertInitializerRecord(iPtr,
+                        tp^.elements * stringElementType^.size);
+                     iPtr^.isConstant := false;
+                     new(ep);
+                     iPtr^.iTree := ep;
+                     iPtr^.iType := tp;
+                     ep^.next := nil;
+                     ep^.left := nil;
+                     ep^.middle := nil;
+                     ep^.right := nil;
+                     ep^.token := token;
+                     end; {else}
+                  end; {with}
+               NextToken;
+               goto 1;
+               end; {if}
+            end; {if}
+         end; {if}
 
       {handle arrays not initialized with a string constant}
-      else if kind in
+      if kind in
          [scalarType,pointerType,enumType,arrayType,structType,unionType] then
          begin
          count := 0;                    {get the expressions|initializers}
@@ -2749,7 +2759,7 @@ var
       Error(47);
       errorFound := true;
       end; {else}
-
+1:
    if braces then begin                 {if there was an opening brace then }
       if token.kind = commach then      { insist on a closing brace         }
          NextToken;
@@ -2763,7 +2773,6 @@ var
          errorFound := true;
          end; {else}
       end; {if}
-1:
    end; {InitializeTerm}
 
 begin {Initializer}
