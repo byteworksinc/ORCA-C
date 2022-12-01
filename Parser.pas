@@ -2300,6 +2300,50 @@ var
    end; {GetInitializerValue}
 
 
+   procedure Fill (count: longint);
+
+   { fill in space in an initialized data structure with 0 bytes }
+   {                                                             }
+   { parameters:                                                 }
+   {   count - number of zero bytes to create                    }
+
+   var
+      iPtr: initializerPtr;             {for creating an initializer entry}
+      tk: tokenPtr;                     {expression record}
+
+   begin {Fill}
+   while count <> 0 do begin
+      iPtr := pointer(Calloc(sizeof(initializerRecord)));
+      iPtr^.isConstant := isStatic;
+     {iPtr^.bitdisp := 0;}
+     {iPtr^.bitsize := 0;}
+      if iPtr^.isConstant then
+         iPtr^.basetype := cgUByte
+      else begin
+         new(tk);
+         tk^.next := nil;
+         tk^.left := nil;
+         tk^.middle := nil;
+         tk^.right := nil;
+         tk^.token.kind := intconst;
+         tk^.token.class := intConstant;
+         tk^.token.ival := 0;
+         iPtr^.iTree := tk;
+         iPtr^.iType := charPtr;
+         end; {else}
+      if count <= maxint then begin
+         iPtr^.count := ord(count);
+         count := 0;
+         end {if}
+      else begin
+         iPtr^.count := maxint;
+         count := count-maxint;
+         end; {else}
+      InsertInitializerRecord(iPtr, iPtr^.count);
+      end; {while}
+   end; {Fill}
+
+
    procedure InitializeTerm (tp: typePtr; bitsize,bitdisp: integer;
       main, nestedDesignator: boolean);
  
@@ -2334,97 +2378,6 @@ var
       startingDisp: longint;            {disp at start of this term}
       stringElementType: typePtr;       {element type of string literal}
       stringLength: integer;            {elements in a string literal}
-
-
-      procedure Fill (count: longint; tp: typePtr);
-
-      { fill in unspecified space in an initialized array with 0  }
-      {                                                           }
-      { parameters:                                               }
-      {   count - ^ elements of this type to create               }
-      {   tp - ptr to type of elements to create                  }
-
-      var
-         i: longint;                    {loop variable}
-         iPtr: initializerPtr;          {for creating an initializer entry}
-         tk: tokenPtr;                  {expression record}
-         ip: identPtr;                  {pointer to next field in a structure}
-
-      begin {Fill}
-      if tp^.kind = arrayType then
-
-         {fill an array}
-         Fill(count*tp^.elements ,tp^.aType)
-      else if tp^.kind = structType then begin
-
-         {fill a structure}
-         if isStatic then
-            Fill(count * tp^.size, sCharPtr)
-         else begin
-            i := count;
-            while i <> 0 do begin
-               ip := tp^.fieldList;
-               while ip <> nil do begin
-                  if not ip^.anonMemberField then
-                     Fill(1, ip^.iType);
-                  ip := ip^.next;
-                  end; {while}
-               i := i-1;
-               end; {while}
-            end; {else}
-         end {else if}
-      else if tp^.kind = unionType then begin
-
-         {fill a union}
-         if isStatic then
-            Fill(count * tp^.size, sCharPtr)
-         else
-            Fill(count, tp^.fieldList^.iType);
-         end {else if}
-      else
-
-         {fill a single value}
-         while count <> 0 do begin
-            iPtr := pointer(Calloc(sizeof(initializerRecord)));
-            iPtr^.isConstant := isStatic;
-           {iPtr^.bitdisp := 0;}
-           {iPtr^.bitsize := 0;}
-            if iPtr^.isConstant then begin
-               if tp^.kind = scalarType then
-                  iPtr^.basetype := tp^.baseType
-               else if tp^.kind = pointertype then begin
-                  iPtr^.basetype := cgULong;
-                 {iPtr^.iVal := 0;}
-                  end {else if}
-               else begin
-                  iPtr^.basetype := cgWord;
-                  Error(47);
-                  errorFound := true;
-                  end; {else}
-               end {if}
-            else begin
-               new(tk);
-               tk^.next := nil;
-               tk^.left := nil;
-               tk^.middle := nil;
-               tk^.right := nil;
-               tk^.token.kind := intconst;
-               tk^.token.class := intConstant;
-               tk^.token.ival := 0;
-               iPtr^.iTree := tk;
-               iPtr^.iType := tp;
-               end; {else}
-            if count < 16384 then begin
-               iPtr^.count := long(count).lsw;
-               count := 0;
-               end {if}
-            else begin
-               iPtr^.count := 16384;
-               count := count-16384;
-               end; {else}
-            InsertInitializerRecord(iPtr, tp^.size * iPtr^.count);
-            end; {while}
-      end; {Fill}
  
  
       procedure RecomputeSizes (tp: typePtr);
@@ -2498,7 +2451,7 @@ var
                      iPtr^.sval := token.sval;
                      count := tp^.elements - stringLength;
                      if count > 0 then
-                        Fill(count, stringElementType)
+                        Fill(count * stringElementType^.size)
                      else if count = -1 then begin
                         iPtr^.sval := pointer(GMalloc(token.sval^.length+2));
                         CopyLongString(iPtr^.sval, token.sval);
@@ -2568,7 +2521,7 @@ var
                         fillSize := fillSize + ktp^.size;
                      if fillSize > 0 then begin
                         disp := maxDisp;
-                        Fill(fillSize, charPtr);
+                        Fill(fillSize);
                         maxDisp := disp;
                         end; {if}
                      end; {if}
@@ -2610,7 +2563,7 @@ var
             if disp > maxDisp then begin {if there weren't enough initializers...}
                fillSize := disp - maxDisp;
                disp := maxDisp;
-               Fill(fillSize, charPtr); { fill in the blank spots}
+               Fill(fillSize);          { fill in the blank spots}
                end; {if}
             end; {if}
          end {else if}
@@ -2694,7 +2647,7 @@ var
                         fillSize := fillSize + ip^.itype^.size;
                      if fillSize > 0 then begin
                         disp := maxDisp;
-                        Fill(fillSize, charPtr);
+                        Fill(fillSize);
                         maxDisp := disp;
                         end; {if}
                      end; {if}
@@ -2717,7 +2670,7 @@ var
                if disp + bfsize > maxDisp then
                   if (bfp <> ip) or (ip^.bitdisp <> 0)
                      or (ip^.bitsize mod 8 <> 0) then begin
-                     Fill(bfsize, charPtr);
+                     Fill(bfsize);
                      maxDisp := disp;
                      disp := startingDisp + ip^.disp;
                      end; {if}
@@ -2746,7 +2699,7 @@ var
             if disp > maxDisp then begin {if there weren't enough initializers...}
                fillSize := disp - maxDisp;
                disp := maxDisp;
-               Fill(fillSize, charPtr); { fill in the blank spots}
+               Fill(fillSize);          { fill in the blank spots}
                end; {if}
             end; {if}
          suppressMacroExpansions := lSuppressMacroExpansions;
