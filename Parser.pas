@@ -2697,9 +2697,15 @@ var
                end; {else}
             if ((ip = nil) or (ip^.itype^.size = 0)) and not braces then
                goto 2;
-            {TODO need other code to disallow dual commas before right brace?}
-            if token.kind = commach then
-               NextToken
+            if token.kind = commach then begin
+               NextToken;
+               if token.kind = commach then
+                  if ip = nil then
+                     if braces then begin
+                        Error(23);
+                        errorFound := true;
+                        end; {if}
+               end {if}
             else if token.kind <> rbracech then
                ip := nil;
             end; {while}
