@@ -2402,7 +2402,6 @@ var
       braces := true;
       end; {if}
 
-   {handle arrays}
    while tp^.kind = definedType do
       tp := tp^.dType;
    kind := tp^.kind;
@@ -2412,13 +2411,15 @@ var
       if not (braces or nestedDesignator) then
          goto 1;
    startingDisp := disp;
+
+   {handle arrays}
    if kind = arrayType then begin
       ktp := tp^.atype;
       while ktp^.kind = definedType do
 	 ktp := ktp^.dType;
       kind := ktp^.kind;
 
-      {handle string constants}
+      {handle arrays initialized with a string constant}
       if (token.kind = stringConst) and (kind = scalarType) then begin
          stringElementType := StringType(token.prefix)^.aType;
          if ((ktp^.baseType in [cgByte,cgUByte]) and (stringElementType^.size=1))
@@ -2489,6 +2490,7 @@ var
          if token.kind <> rbracech then
             repeat
                hasNestedDesignator := false;
+                                                {handle designators}
                if token.kind in [lbrackch,dotch] then begin
                   if not (braces or (nestedDesignator and (disp=startingDisp)))
                      then begin
@@ -2526,6 +2528,7 @@ var
                         end; {if}
                      end; {if}
                   end; {if}
+
                disp := startingDisp + count * ktp^.size;
                InitializeTerm(ktp, 0, 0, false, hasNestedDesignator);
                if disp > maxDisp then
@@ -2576,6 +2579,8 @@ var
 
    {handle structures and unions}
    else if kind in [structType, unionType] then begin
+
+      {handle initialization with an expression of struct/union type}
       if not braces then
          if not nestedDesignator then
             if not isStatic then
@@ -2596,6 +2601,8 @@ var
                      goto 1;
                      end; {if}
                   end; {if}
+
+      {handle struct/union initialization with an initializer list}
       if braces or (not main) then begin
          ip := tp^.fieldList;
          maxDisp := disp;
@@ -2606,6 +2613,7 @@ var
             if token.kind = rbracech then       {fill remainder with zeros}
                goto 2;
             hasNestedDesignator := false;
+                                                {handle designators}
             if token.kind in [dotch,lbrackch] then begin
                if not (braces or (nestedDesignator and (disp=startingDisp)))
                   then begin
@@ -2658,6 +2666,7 @@ var
                   goto 2;
                   end; {else}
                end; {if}
+
             if (ip = nil) or (ip^.itype^.size = 0) then
                goto 2;
             disp := startingDisp + ip^.disp;
