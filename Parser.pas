@@ -2623,7 +2623,7 @@ var
                   goto 1;
                   end; {if}
                Match(dotch, 35);
-               if token.kind = ident then begin
+               if token.kind in [ident,typedef] then begin
                   ip := tp^.fieldList;
                   done := false;
                   while (ip <> nil) and not done do
