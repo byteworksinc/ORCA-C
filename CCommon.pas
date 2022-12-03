@@ -322,7 +322,7 @@ type
    initializerRecord = record
       next: initializerPtr;             {next record in the chain}
       disp: longint;                    {disp within overall object being initialized}
-      count: integer;                   {# of duplicate records}
+      count: integer;                   {# of duplicate records (>1 for bytes only)}
       bitdisp: integer;                 {disp in byte (field lists only)}
       bitsize: integer;                 {width in bits; 0 for byte sizes}
       case isConstant: boolean of       {is this a constant initializer?}

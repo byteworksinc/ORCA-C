@@ -2774,6 +2774,12 @@ while iPtr <> nil do begin
    jPtr := kPtr;
    end; {while}
 variable^.iPtr := jPtr;
+if isStatic then                        {if doing static initialization }
+   if variable^.itype^.kind in [structType,unionType,definedType,arrayType]
+      then begin
+      disp := 0;                        {...ensure unnamed members are 0}
+      Fill(variable^.itype^.size);
+      end; {if}
 if errorFound then                      {eliminate bad initializers}
    variable^.state := defined;
 useGlobalPool := luseGlobalPool;        {restore useGlobalPool}
