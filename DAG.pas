@@ -202,7 +202,8 @@ else if (op1 <> nil) and (op2 <> nil) then
                                     or fastMath then
                                     CodesMatch := true;
                            cgString:
-                              CodesMatch := LongStrCmp(op1^.str, op2^.str);
+                              if not (op1^.isByteSeq or op1^.isByteSeq) then
+                                 CodesMatch := LongStrCmp(op1^.str, op2^.str);
                            cgVoid, ccPointer:
                               if op1^.pval = op2^.pval then
                                  CodesMatch := LongStrCmp(op1^.str, op2^.str);

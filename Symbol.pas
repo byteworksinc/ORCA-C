@@ -801,7 +801,7 @@ procedure DoGlobals;
    begin {StaticInit}
                                         {allocate buffer}
                                         {(+3 for possible bitfield overhang)}
-   buffHandle := NewHandle(variable^.itype^.size+3, UserID, $8000, nil);
+   buffHandle := NewHandle(variable^.itype^.size+3, globalID, $8000, nil);
    if ToolError <> 0 then TermError(5);
    buffPtr := buffHandle^;
    
@@ -892,25 +892,9 @@ procedure DoGlobals;
          endDisp := variable^.itype^.size
       else
          endDisp := relocs^.disp;
-      while endDisp - disp >= 8 do begin
-         qp := pointer(ord4(buffPtr) + disp);
-         GenQ1(dc_cns, qp^, 1);
-         disp := disp + 8;
-         end; {while}
-      if endDisp - disp >= 4 then begin
-         lp := pointer(ord4(buffPtr) + disp);
-         GenL1(dc_cns, lp^, 1);
-         disp := disp + 4;
-         end; {if}
-      if endDisp - disp >= 2 then begin
-         wp := pointer(ord4(buffPtr) + disp);
-         Gen2t(dc_cns, wp^, 1, cgUWord);
-         disp := disp + 2;
-         end; {if}
-      if endDisp - disp >= 1 then begin
-         bp := pointer(ord4(buffPtr) + disp);
-         Gen2t(dc_cns, bp^, 1, cgUByte);
-         disp := disp + 1;
+      if disp <> endDisp then begin
+         GenBS(dc_cns, pointer(ord4(buffPtr) + disp), endDisp - disp);
+         disp := endDisp;
          end; {if}
       if relocs <> nil then begin
          code^.optype := ccPointer;
@@ -930,8 +914,6 @@ procedure DoGlobals;
          disp := disp + cgPointerSize;
          end; {if}
       end; {while}
-
-   DisposeHandle(buffHandle);
    end; {StaticInit}
 
 
