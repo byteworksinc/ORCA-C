@@ -4451,7 +4451,7 @@ var
    {    count - number of times to re-use the initializer       }
    {    iPtr - pointer to the initializer record to use         }
 
-   label 1,2,3;
+   label 1,2,3,4;
 
    var
       count: integer;                   {initializer counter}
@@ -4477,31 +4477,6 @@ var
       else
          Error(57);
       end; {LoadAddress}
-
-
-      function ZeroFill (elements: longint; itype: typePtr;
-                         count: integer; iPtr: initializerPtr): boolean;
-
-      { See if an array can be zero filled			}
-      {								}
-      { parameters:						}
-      {    elements - elements in the array			}
-      {    itype - type of each array element			}
-      {    count - remaining initializer repetitions		}
-      {    iPtr - initializer record				}
-
-      begin {ZeroFill}
-      ZeroFill := false;
-      if not iPtr^.isConstant then
-         if itype^.kind in [scalarType,enumType] then
-            if count >= elements then
-               with iPtr^.itree^ do
-                  if token.kind = intconst then
-                     if token.ival = 0 then
-                                        {don't call ~ZERO for very small arrays}
-                        if elements * itype^.size > 10 then
-                           ZeroFill := true;
-      end; {ZeroFill}
 
 
       procedure AddOperation;
@@ -4557,12 +4532,25 @@ var
                   isConstant := false;
                end; {else}
         
-         if isConstant then             {zero-initialize two bytes at a time}
+         if isConstant then             
             if val = 0 then
                if count > 1 then
                   if itype^.size = 1 then begin
-                     itype := shortPtr;
-                     count := count - 1;
+                                        {call ~ZERO for > 50 zero bytes}
+                     if count > 50 then begin
+                        Gen0t(pc_stk, cgULong);
+                        Gen1t(pc_ldc, count, cgWord);
+                        Gen0t(pc_stk, cgWord);
+                        Gen0t(pc_bno, cgWord);
+                        Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
+                        if isCompoundLiteral then
+                           AddOperation;
+                        goto 4;
+                        end {if}
+                     else begin         {zero-initialize two bytes at a time}
+                        itype := shortPtr;
+                        count := count - 1;
+                        end; {else}
                      end; {if}
 
 {        if isConstant then
@@ -4622,7 +4610,7 @@ var
                   Gen0t(pc_stk, cgULong);
                   Gen1t(pc_ldc, ord(elements), cgWord);
                   Gen0t(pc_stk, cgWord);
-                  Gen0t(pc_bno, cgULong);
+                  Gen0t(pc_bno, cgWord);
                   Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
                   if isCompoundLiteral then
                      AddOperation;
@@ -4650,6 +4638,7 @@ var
       disp := disp + itype^.size;
       goto 3;
       end; {if}
+4:
    end; {InitializeOneElement}
 
 
