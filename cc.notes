@@ -2009,6 +2009,10 @@ int foo(int[42]);
 
 221. Structures with unnamed bit-fields were sometimes initialized incorrectly.
 
+222. If an expression of type unsigned long and value greater than LONG_MAX was used in the initializer for a floating-point variable with static storage duration, the wrong value would be produced.
+
+223. Expressions of floating-point type could not be used in initializers for integer variables with static storage duration.  This should be allowed, with a conversion performed as in the case of assignment.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

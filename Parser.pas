@@ -220,6 +220,16 @@ function slt64(a,b: longlong): boolean; extern;
 
 function sgt64(a,b: longlong): boolean; extern;
 
+{-- External conversion functions; imported from CGC.pas -------}
+
+procedure CnvXLL (var result: longlong; val: extended); extern;
+
+procedure CnvXULL (var result: longlong; val: extended); extern;
+
+function CnvLLX (val: longlong): extended; extern;
+
+function CnvULLX (val: longlong): extended; extern;
+
 {-- Parser Utility Procedures ----------------------------------}
 
 procedure Match {kind: tokenEnum; err: integer};
@@ -2073,16 +2083,36 @@ var
                         iPtr^.qVal.hi := -1
                      else
                         iPtr^.qVal.hi := 0;
+               if tp^.cType = ctBool then
+                  iPtr^.iVal := ord(expressionValue <> 0);
                goto 2;
                end; {if}
             if bKind in [cgReal,cgDouble,cgComp,cgExtended] then begin
-               if etype^.baseType in [cgByte..cgULong] then
-                  iPtr^.rVal := expressionValue
+               if etype^.baseType in [cgByte..cgULong] then begin
+                  iPtr^.rVal := expressionValue;
+                  if etype^.baseType = cgULong then
+                     if expressionValue < 0 then
+                        iPtr^.rVal := iPtr^.rVal + 4294967296.0;
+                  end {if}
                else if etype^.baseType in
                   [cgReal,cgDouble,cgComp,cgExtended] then
-                  iPtr^.rval := realExpressionValue;
+                  iPtr^.rval := realExpressionValue
+               else if eType^.baseType = cgQuad then
+                  iPtr^.rVal := CnvLLX(llExpressionValue)
+               else if eType^.baseType = cgUQuad then
+                  iPtr^.rVal := CnvULLX(llExpressionValue);
                goto 2;
                end; {if}
+            if (etype^.baseType in [cgReal,cgDouble,cgComp,cgExtended])
+               and (bKind in [cgByte..cgULong,cgQuad,cgUQuad]) then begin
+               if tp^.cType = ctBool then
+                  iPtr^.iVal := ord(realExpressionValue <> 0)
+               else if bKind = cgUQuad then
+                  CnvXULL(iPtr^.qVal, realExpressionValue)
+               else
+                  CnvXLL(iPtr^.qVal, realExpressionValue);
+               goto 2;
+               end;
             Error(47);
             errorFound := true;
             end;
