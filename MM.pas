@@ -23,6 +23,7 @@
 {       GCalloc - allocate & clear memory from the global pool  }
 {       GInit - initialize a global pool                        }
 {       GMalloc - allocate memory from the global pool          }
+{       GLongMalloc - allocate global memory                    }
 {       LInit - initialize a local pool                         }
 {       LMalloc - allocate memory from the local pool           }
 {       Malloc - allocate memory                                }
@@ -71,6 +72,15 @@ function GCalloc (bytes: integer): ptr; extern;
 procedure GInit;
 
 { Initialize a global pool                                      }
+
+
+function GLongMalloc (bytes: longint): ptr;
+
+{ Allocate a potentially large amount of global memory.         }
+{                                                               }
+{ Parameters:                                                   }
+{       bytes - number of bytes to allocate                     }
+{       ptr - points to the first byte of the allocated memory  }
 
 
 function GMalloc (bytes: integer): ptr;
@@ -180,6 +190,24 @@ GMalloc := globalPtr;                   {allocate memory from the pool}
 globalSize := globalSize - bytes;
 globalPtr := pointer(ord4(globalPtr) + bytes);
 end; {GMalloc}
+
+
+function GLongMalloc {bytes: longint): ptr};
+
+{ Allocate a potentially large amount of global memory.         }
+{                                                               }
+{ Parameters:                                                   }
+{       bytes - number of bytes to allocate                     }
+{       ptr - points to the first byte of the allocated memory  }
+
+var
+   myhandle: handle;                    {for dereferencing the block}
+
+begin {GLongMalloc}
+myhandle := NewHandle(bytes, globalID, $C000, nil);
+if ToolError <> 0 then TermError(5);
+GLongMalloc := myhandle^;
+end; {GLongMalloc}
 
 
 procedure LInit;

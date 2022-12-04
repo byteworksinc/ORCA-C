@@ -306,16 +306,6 @@ type
 var
    staticNum: packed array[1..6] of char; {static variable number}
 
-{---------------------------------------------------------------}
-
-                                        {GS memory manager}
-                                        {-----------------}
-
-procedure DisposeHandle (theHandle: handle); tool ($02, $10);
-
-function NewHandle (blockSize: longint; userID, memAttributes: integer;
-                    memLocation: ptr): handle; tool($02, $09);
-
 {- Imported from expression.pas --------------------------------}
 
 procedure GenerateCode (tree: tokenPtr); extern;
@@ -726,7 +716,6 @@ procedure DoGlobals;
 
    var
       buffPtr: ptr;                     {pointer to data buffer}
-      buffHandle: handle;               {handle to data buffer}
       count: integer;                   {# of duplicate records}
       disp: longint;                    {disp into buffer (for output)}
       endDisp: longint;                 {ending disp for current chunk}
@@ -801,9 +790,7 @@ procedure DoGlobals;
    begin {StaticInit}
                                         {allocate buffer}
                                         {(+3 for possible bitfield overhang)}
-   buffHandle := NewHandle(variable^.itype^.size+3, globalID, $8000, nil);
-   if ToolError <> 0 then TermError(5);
-   buffPtr := buffHandle^;
+   buffPtr := GLongMalloc(variable^.itype^.size+3);
    
    relocs := nil;                       {evaluate initializers}
    ip := variable^.iPtr;
