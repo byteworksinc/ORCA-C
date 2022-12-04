@@ -603,6 +603,37 @@ is equivalent to the directive
 
 The _Pragma("...") token sequence may be formed using preprocessor macros.
 
+30. (C99) ORCA/C now supports designated initializers, which let you explicitly specify the array element or struct/union member that should be initialized by an expression within a braced initializer list.  They have the form:
+
+   designator-list = expression
+
+Designators may be of the form
+
+   [ constant-expression ]
+
+to designate an element of an array, or
+
+   . identifier
+
+to designate a specific field of a structure or union.  A designator list may consist of one or more designators; successive designators correspond to successive levels of a nested data structure.
+
+Designated and non-designated initializers may be mixed within an initializer list.  If a non-designated initializer follows a designated one, it applies to the next subobject after the designated one, and initialization continues forward in the usual order until it is complete or another designator is encountered.  If a braced initializer list does not include initializers for all the elements of an array or all the named members of a structure, the other ones are initialized to 0 (the same as when not using designated initializers).
+
+Designated initializers make it possible to initialize subobjects in any order, and to initialize later subobjects without having to write an explicit initializer for earlier ones.  Designated initializers also allow union members other than the first one to be initialized.  It is also possible to initialize the same subobject multiple times, but in that case the initializer appearing latest in the initializer list will override any earlier ones.
+
+As an example, the declaration
+
+   struct {
+      int i;
+      union {
+         long x;
+         char y;
+      } u;
+      short a[3];
+   } s = {20, .a[0] = 9, .u.y = 'F', .i = 50, .a = {[1]=1,2}, .a[1] = 10};
+
+sets s.i to 50, s.u.y to 'F', s.a[0] to 0, s.a[1] to 10, and s.a[2] to 2.
+
 
 Multi-Character Character Constants
 -----------------------------------
