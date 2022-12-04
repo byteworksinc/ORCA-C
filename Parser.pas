@@ -2608,8 +2608,6 @@ var
          maxDisp := disp;
          lSuppressMacroExpansions := suppressMacroExpansions;
          while true do begin
-            if (ip <> nil) and ip^.isForwardDeclared then
-               ResolveForwardReference(ip);
             if token.kind = rbracech then       {fill remainder with zeros}
                goto 2;
             hasNestedDesignator := false;
@@ -2669,6 +2667,8 @@ var
 
             if (ip = nil) or (ip^.itype^.size = 0) then
                goto 2;
+            if ip^.isForwardDeclared then
+               ResolveForwardReference(ip);
             disp := startingDisp + ip^.disp;
             if ip^.bitsize <> 0 then begin {zero out padding bits in bitfields}
                bfp := ip;
