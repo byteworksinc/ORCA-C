@@ -57,7 +57,7 @@
 {  Gen2(pc_mov, banks, bytes)                                   }
 {                                                               }
 {  The top of stack contains a source address, and TOS-1 has a  }
-{  destination address.  The destination address is  removed,	}
+{  destination address.  The source address is removed,         }
 {  and BYTES bytes are moved from the source to the		}
 {  destination.  BANKS is the number of full banks to move; it	}
 {  is used when 64K or more must be moved.  The memory areas	}

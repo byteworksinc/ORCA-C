@@ -6501,7 +6501,7 @@ procedure GenTree {op: icptr};
       begin {Load}
       if op^.opcode = pc_lao then
          GenNative(opcode, immediate, op^.q, op^.lab, 0)
-      else begin
+      else if op^.opcode = pc_lca then begin
          GenNative(opcode, immediate, stringsize, nil, StringReference);
          if maxstring-stringsize >= op^.q then begin
             for i := 1 to op^.q do
@@ -6510,16 +6510,29 @@ procedure GenTree {op: icptr};
             end {if}
          else
             Error(cge3);
+         end {else if}
+      else {if op^.opcode = pc_lda then} begin
+         GenImplied(m_tdc);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, LabelToDisp(op^.r) + op^.q, nil, 0);
+         if opcode = m_ldy_imm then
+            GenImplied(m_tay)
+         else
+            GenImplied(m_tax);
          end; {else}
       end; {Load}
 
 
    begin {GenMov}
+   banks := op^.r;
    {determine if the destination address must be left on the stack}
-   if smallMemoryModel
+   if (banks = 0)
+      and (op^.q <> 0)
       and (not duplicate)
-      and (op^.left^.opcode in [pc_lao,pc_lca])
-      and (op^.right^.opcode in [pc_lao,pc_lca]) then begin
+      and ((op^.left^.opcode in [pc_lca,pc_lda])
+         or ((op^.left^.opcode = pc_lao) and smallMemoryModel))
+      and ((op^.right^.opcode in [pc_lca,pc_lda])
+         or ((op^.right^.opcode = pc_lao) and smallMemoryModel)) then begin
 
       {take advantage of any available short cuts}
       Load(m_ldy_imm, op^.left);
@@ -6530,13 +6543,17 @@ procedure GenTree {op: icptr};
       with op^.left^ do
 	 if opcode = pc_lao then
             GenNative(d_bmov, immediate, q, lab, shift16)
-	 else
-            GenNative(d_bmov, immediate, 0, nil, stringReference+shift16);
+	 else if opcode = pc_lca then
+            GenNative(d_bmov, immediate, 0, nil, stringReference+shift16)
+         else {if opcode = pc_lda then}
+            GenNative(d_bmov, immediate, 0, nil, 0);
       with op^.right^ do
 	 if opcode = pc_lao then
             GenNative(d_bmov, immediate, q, lab, shift16)
-	 else
-            GenNative(d_bmov, immediate, 0, nil, stringReference+shift16);
+	 else if opcode = pc_lca then
+            GenNative(d_bmov, immediate, 0, nil, stringReference+shift16)
+         else {if opcode = pc_lda then}
+            GenNative(d_bmov, immediate, 0, nil, 0);
       GenImplied(m_plb);
       end {if}
    else begin
@@ -6546,7 +6563,6 @@ procedure GenTree {op: icptr};
       GenTree(op^.left);
       gLong.preference := onStack;
       GenTree(op^.right);
-      banks := op^.r;
       if banks <> 0 then
 	 GenNative(m_pea, immediate, banks, nil, 0);
       GenNative(m_pea, immediate, op^.q, nil, 0);
