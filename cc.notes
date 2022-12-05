@@ -1364,7 +1364,7 @@ WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym
 // Comments
 -----------
 
-ORCA/C supports // comments.  These comments begin with the characters //, and continue to the end of the physical line.
+ORCA/C supports // comments.  These comments begin with the characters //, and continue to the end of the line.
 
 // comments are a flagrant violation of the ANSI C89 standard, although they are supported by the C99 and later standards.  This is legal ANSI C89, and it should print 4:
 
@@ -2016,6 +2016,8 @@ int foo(int[42]);
 223. Expressions of floating-point type could not be used in initializers for integer variables with static storage duration.  This should be allowed, with a conversion performed as in the case of assignment.
 
 224. Comparisons against four-byte values in global structures, unions, or arrays might not work correctly when using the large memory model.
+
+225. According to the C99 and later standards, a line continuation with \ should let a // comment continue to the next line.  ORCA/C now behaves accordingly.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 

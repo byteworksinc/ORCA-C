@@ -636,3 +636,48 @@
 .f
  mnote "Missing closing '}'",16
  mend
+ macro
+&l sub4 &m1,&m2,&m3
+ lclb &yistwo
+ lclc &c
+&l ~setm
+ aif c:&m3,.a
+&c amid "&m2",1,1
+ aif "&c"<>"#",.a
+&c amid "&m1",1,1
+ aif "&c"="{",.a
+ aif "&c"="[",.a
+&c amid "&m2",2,l:&m2-1
+ aif &c>=65536,.a
+ sec
+ ~lda &m1
+ ~op sbc,&m2
+ ~sta &m1
+ bcs ~&SYSCNT
+ ~op.h dec,&m1
+~&SYSCNT anop
+ ago .c
+.a
+ aif c:&m3,.b
+ lclc &m3
+&m3 setc &m1
+.b
+ sec
+ ~lda &m1
+ ~op sbc,&m2
+ ~sta &m3
+ ~lda.h &m1
+ ~op.h sbc,&m2
+ ~sta.h &m3
+.c
+ ~restm
+ mend
+ macro
+&l dec4 &a
+&l ~setm
+ lda &a
+ bne ~&SYSCNT
+ dec 2+&a
+~&SYSCNT dec &a
+ ~restm
+ mend

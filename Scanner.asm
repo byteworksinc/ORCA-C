@@ -743,11 +743,16 @@ lc2      anop
          lda   chPtr+2
          cmp   eofPtr+2
          jeq   lc5
-!          else if (cch = '/') and (chPtr^ = return) then begin
+!          else if (cch = '/') then begin
 lc2a     lda   cch
          cmp   #'/'
          bne   lc2b
-!             if charKinds[ord(ch)] = ch_eol then
+!             if (charKinds[ord(chPtr^)] = ch_eol)
+!                and (ptr(ord4(chPtr)-1)^ <> '\')
+!                and ((ptr(ord4(chPtr)-1)^ <> '/') 
+!                  or (ptr(ord4(chPtr)-2)^ <> '?')
+!                  or (ptr(ord4(chPtr)-3)^ <> '?'))
+!                then
 !                done := true
 !             else
 !                chPtr := pointer(ord4(chPtr)+1);
@@ -758,8 +763,19 @@ lc2a     lda   cch
          tax
          lda   charKinds,X
          cmp   #ch_eol
-         jeq   lc5
-         inc4  chPtr
+         bne   lc2aa
+         dec4  p1
+         lda   [p1]
+         and   #$00FF
+         cmp   #'\'
+         beq   lc2aa
+         cmp   #'/'
+         jne   lc5
+         sub4  p1,#2
+         lda   [p1]
+         cmp   #'??'
+         jne   lc5
+lc2aa    inc4  chPtr
          bra   lc2
 !             end {else if}
 !          else begin
