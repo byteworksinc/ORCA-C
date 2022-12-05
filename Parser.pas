@@ -182,6 +182,7 @@ type
       end;
 
 var
+   anonNumber: integer;                 {number for next anonymous struct/union}
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
    functionName: stringPtr;             {name of the current function}
@@ -218,6 +219,16 @@ var
 function slt64(a,b: longlong): boolean; extern;
 
 function sgt64(a,b: longlong): boolean; extern;
+
+{-- External conversion functions; imported from CGC.pas -------}
+
+procedure CnvXLL (var result: longlong; val: extended); extern;
+
+procedure CnvXULL (var result: longlong; val: extended); extern;
+
+function CnvLLX (val: longlong): extended; extern;
+
+function CnvULLX (val: longlong): extended; extern;
 
 {-- Parser Utility Procedures ----------------------------------}
 
@@ -987,7 +998,7 @@ case token.kind of
                         lToken := token;
                         NextToken;
                         tToken := token;
-                        PutBackToken(token, true);
+                        PutBackToken(token, true, false);
                         token := lToken;
                         suppressMacroExpansions := lSuppressMacroExpansions;
                         if tToken.kind = colonch then begin
@@ -1109,12 +1120,12 @@ Gen1(dc_lab, stPtr^.continueLab);       {define the continue label}
 
 tl := stPtr^.e3List;                    {place the expression back in the list}
 if tl <> nil then begin
-   PutBackToken(token, false);
+   PutBackToken(token, false, false);
    ltoken.kind := semicolonch;
    ltoken.class := reservedSymbol;
-   PutBackToken(ltoken, false);
+   PutBackToken(ltoken, false, false);
    while tl <> nil do begin
-      PutBackToken(tl^.token, false);
+      PutBackToken(tl^.token, false, false);
       tk := tl;
       tl := tl^.next;
       dispose(tk);
@@ -1462,12 +1473,12 @@ var
             NextToken;
             suppressMacroExpansions := lSuppressMacroExpansions;
             if token.kind = rparench then begin
-               PutBackToken(token, false);
+               PutBackToken(token, false, false);
                NextToken;
                tPtr2^.prototyped := true;
                end
             else begin
-               PutBackToken(token, false);
+               PutBackToken(token, false, false);
                token.kind := voidsy;
                token.class := reservedSymbol;
                end; {else}
@@ -1854,57 +1865,45 @@ procedure Initializer (var variable: identPtr);
 {       variable - ptr to the identifier begin initialized      }
 
 var
-   bitcount: integer;                   {# if bits initialized}
-   bitvalue: longint;                   {bit field initializer value}
+   disp: longint;                       {disp within overall object being initialized}
    done: boolean;                       {for loop termination}
    errorFound: boolean;                 {used to remove bad initializations}
+   haveExpression: boolean;             {has an expression been parsed but not used?}
    iPtr,jPtr,kPtr: initializerPtr;      {for reversing the list}
    ip: identList;                       {used to place an id in the list}
+   isStatic: boolean;                   {static storage duration (or automatic)?}
    luseGlobalPool: boolean;             {local copy of useGlobalPool}
+   tToken: tokenType;                   {temporary copy of token}
 
 
-   procedure InitializeBitField;
+   procedure InsertInitializerRecord (iPtr: initializerPtr; size: longint);
 
-   { If bit fields have been initialized, fill them in          }
+   { Insert an initializer record in the initializer list       }
    {                                                            }
-   { Inputs:                                                    }
-   {    bitcount - # of bits initialized                        }
-   {    bitvalue - value of initializer                         }
+   { parameters:                                                }
+   {    iPtr - the record to insert                             }
+   {    size - number of bytes initialized by this record       }
+   
+   begin {InsertInitializerRecord}
+   iPtr^.disp := disp;
+   iPtr^.next := variable^.iPtr;
+   variable^.iPtr := iPtr;
+{  writeln('Inserted initializer record with size ', size:1, ' at disp ', disp:1); {debug}
+   disp := disp + size;
+   end; {InsertInitializerRecord}
 
-   var
-      iPtr: initializerPtr;             {for creating an initializer entry}
 
-   begin {InitializeBitField}
-   if bitcount <> 0 then begin          {skip if there has been no initializer}
-{ writeln('InitializeBitField; bitcount = ', bitcount:1); {debug}
-                                        {create the initializer entry}
-      iPtr := pointer(Malloc(sizeof(initializerRecord)));
-      iPtr^.next := variable^.iPtr;
-      variable^.iPtr := iPtr;
-      iPtr^.isConstant := isConstant;
-      iPtr^.count := 1;
-      iPtr^.bitdisp := 0;
-      iPtr^.bitsize := 0;
-      iPtr^.isStructOrUnion := false;
-      iPtr^.iVal := bitvalue;
-      if bitcount <= 8 then
-         iPtr^.itype := cgUByte
-      else if bitcount <= 16 then
-         iPtr^.itype := cgUWord
-      else if bitcount > 24 then
-         iPtr^.itype := cgULong
-      else begin                        {3-byte bitfield: split into two parts}
-         iPtr^.itype := cgUWord;
-         iPtr^.iVal := bitvalue & $0000FFFF;
-         bitcount := bitcount - 16;
-         bitvalue := bitvalue >> 16;
-         InitializeBitField;
-         end;
-      bitcount := 0;                    {reset the bit field values}
-      bitvalue := 0;
-      end; {if}
-   end; {InitializeBitField}
-
+   procedure GetInitializerExpression;
+   
+   { get the expression for an initializer                       }
+   
+   begin {GetInitializerExpression}
+   if not isStatic then
+      Expression(autoInitializerExpression, [commach,rparench,rbracech])
+   else
+      Expression(initializerExpression, [commach,rparench,rbracech]);
+   end; {GetInitializerExpression}
+   
 
    procedure GetInitializerValue (tp: typePtr; bitsize,bitdisp: integer);
  
@@ -1915,10 +1914,9 @@ var
    {     bitsize - size of bit field (0 for non-bit fields)      }
    {     bitdisp - disp of bit field; unused if bitsize = 0      }
  
-   label 1,2,3;
+   label 1,2;
 
    var
-      bitmask: longint;                 {used to add a value to a bit field}
       bKind: baseTypeEnum;              {type of constant}
       etype: typePtr;                   {expression type}
       i: integer;                       {loop variable}
@@ -1927,6 +1925,7 @@ var
       kind: tokenEnum;                  {kind of constant}
       offset, offset2: longint;		{integer offset from a pointer}
       operator: tokenEnum;              {operator for constant pointers}
+      size: longint;                    {size of item being initialized}
       tKind: typeKind;                  {type of constant}
       tree: tokenPtr;                   {for evaluating pointer constants}
 
@@ -2036,56 +2035,36 @@ var
 
 
    begin {GetInitializerValue}
-   if token.kind in [dotch,lbrackch] then begin
-      {designated initializer: give error and skip over it}
-      Error(150);
-      while token.kind in [dotch,lbrackch] do begin
-         if token.kind = lbrackch then begin
-            NextToken;
-            Expression(arrayExpression, [rbrackch]);
-            if token.kind = rbrackch then
-               NextToken;
-            end {if}
-         else {if token.kind = dotch then} begin
-            NextToken;
-            if token.kind in [ident,typedef] then
-               NextToken;
-            end {if}
-         end; {while}
-      if token.kind = eqch then
-         NextToken;
-      end; {if}
-   if variable^.storage = stackFrame then
-      Expression(autoInitializerExpression, [commach,rparench,rbracech])
+   if not haveExpression then
+      GetInitializerExpression
+   else begin
+      NextToken;
+      haveExpression := false;
+      end; {else}
+   iPtr := pointer(Malloc(sizeof(initializerRecord)));
+   if bitsize <> 0 then
+      size := (bitdisp + bitsize + 7) div 8
    else
-      Expression(initializerExpression, [commach,rparench,rbracech]);
-   if bitsize = 0 then begin
-      iPtr := pointer(Malloc(sizeof(initializerRecord)));
-      iPtr^.next := variable^.iPtr;
-      variable^.iPtr := iPtr;
-      iPtr^.isConstant := isConstant;
-      iPtr^.count := 1;
-      iPtr^.bitdisp := 0;
-      iPtr^.bitsize := 0;
-      iPtr^.isStructOrUnion := false;
-      end; {if}
+      size := tp^.size;
+   InsertInitializerRecord(iPtr, size);
+   iPtr^.isConstant := isConstant;
+   iPtr^.count := 1;
+   iPtr^.bitdisp := bitdisp;
+   iPtr^.bitsize := bitsize;
    etype := expressionType;
    AssignmentConversion(tp, expressionType, isConstant, expressionValue,
       false, false);
    if variable^.storage = external then
       variable^.storage := global;
-   if isConstant and (variable^.storage in [external,global,private]) then begin
-      if bitsize = 0 then begin
-         if etype^.baseType in [cgQuad,cgUQuad] then begin
-            iPtr^.qVal := llExpressionValue;
-            end {if}
-         else begin
-            iPtr^.qval.hi := 0;
-            iPtr^.iVal := expressionValue;
-            end; {else}
-         iPtr^.itype := tp^.baseType;
-         InitializeBitField;
-         end; {if}
+   if isConstant and isStatic then begin
+      if etype^.baseType in [cgQuad,cgUQuad] then begin
+         iPtr^.qVal := llExpressionValue;
+         end {if}
+      else begin
+         iPtr^.qval.hi := 0;
+         iPtr^.iVal := expressionValue;
+         end; {else}
+      iPtr^.basetype := tp^.baseType;
       case tp^.kind of
 
          scalarType: begin
@@ -2104,34 +2083,38 @@ var
                         iPtr^.qVal.hi := -1
                      else
                         iPtr^.qVal.hi := 0;
-               goto 3;
+               if tp^.cType = ctBool then
+                  iPtr^.iVal := ord(expressionValue <> 0);
+               goto 2;
                end; {if}
             if bKind in [cgReal,cgDouble,cgComp,cgExtended] then begin
-               if etype^.baseType in [cgByte..cgULong] then
-                  iPtr^.rVal := expressionValue
+               if etype^.baseType in [cgByte..cgULong] then begin
+                  iPtr^.rVal := expressionValue;
+                  if etype^.baseType = cgULong then
+                     if expressionValue < 0 then
+                        iPtr^.rVal := iPtr^.rVal + 4294967296.0;
+                  end {if}
                else if etype^.baseType in
                   [cgReal,cgDouble,cgComp,cgExtended] then
-                  iPtr^.rval := realExpressionValue;
-               goto 3;
+                  iPtr^.rval := realExpressionValue
+               else if eType^.baseType = cgQuad then
+                  iPtr^.rVal := CnvLLX(llExpressionValue)
+               else if eType^.baseType = cgUQuad then
+                  iPtr^.rVal := CnvULLX(llExpressionValue);
+               goto 2;
                end; {if}
+            if (etype^.baseType in [cgReal,cgDouble,cgComp,cgExtended])
+               and (bKind in [cgByte..cgULong,cgQuad,cgUQuad]) then begin
+               if tp^.cType = ctBool then
+                  iPtr^.iVal := ord(realExpressionValue <> 0)
+               else if bKind = cgUQuad then
+                  CnvXULL(iPtr^.qVal, realExpressionValue)
+               else
+                  CnvXLL(iPtr^.qVal, realExpressionValue);
+               goto 2;
+               end;
             Error(47);
             errorFound := true;
-            goto 2;
-
-3:          if bitsize <> 0 then begin
-
-               {set up a bit field value}
-               if bitdisp < bitcount then
-                  InitializeBitField;
-               bitmask := 0;
-               for i := 1 to bitsize do
-                  bitmask := (bitmask << 1) | 1;
-               bitmask := bitmask & expressionValue;
-               for i := 1 to bitdisp do
-                  bitmask := bitmask << 1;
-               bitvalue := bitvalue | bitmask;
-               bitcount := bitcount + bitsize;
-               end; {if}
             end;
 
          arrayType: begin
@@ -2147,7 +2130,7 @@ var
             if (etype = stringTypePtr) or (etype = utf16StringTypePtr)
                or (etype = utf32StringTypePtr) then begin
                iPtr^.isConstant := true;
-               iPtr^.iType := ccPointer;
+               iPtr^.basetype := ccPointer;
                iPtr^.pval := 0;
                iPtr^.pPlus := false;
                iPtr^.isName := false;
@@ -2156,7 +2139,7 @@ var
             else if etype^.kind = scalarType then
                if etype^.baseType in [cgByte..cgULong] then
                   if expressionValue = 0 then
-                     iPtr^.iType := cgULong
+                     iPtr^.basetype := cgULong
                   else begin
                      Error(47);
                      errorFound := true;
@@ -2164,7 +2147,7 @@ var
                else if etype^.baseType in [cgQuad,cgUQuad] then
                   if (llExpressionValue.hi = 0) and
                      (llExpressionValue.lo = 0) then
-                     iPtr^.iType := cgULong
+                     iPtr^.basetype := cgULong
                   else begin
                      Error(47);
                      errorFound := true;
@@ -2174,7 +2157,7 @@ var
                   errorFound := true;
                   end {else}
             else if etype^.kind = pointerType then begin
-               iPtr^.iType := cgULong;
+               iPtr^.basetype := cgULong;
                iPtr^.pval := expressionValue;
                end {else if}
             else begin
@@ -2198,8 +2181,8 @@ var
          or ((tp^.kind = scalarType) and (tp^.baseType in [cgLong,cgULong])))
          and (bitsize = 0)
          then begin
-         iPtr^.iType := ccPointer;
-         if variable^.storage in [external,global,private] then begin
+         iPtr^.basetype := ccPointer;
+         if isStatic then begin
 
             {do pointer constants with + or -}
             iPtr^.isConstant := true;
@@ -2332,36 +2315,67 @@ var
             DisposeTree(initializerTree);
             goto 1;
             end; {if}
-         end {if}
-      else if tp^.kind in [structType,unionType] then
-         iPtr^.isStructOrUnion := true;
+         end; {if}
 
       {handle auto variables}
-      if bitsize <> 0 then begin
-         iPtr := pointer(Malloc(sizeof(initializerRecord)));
-         iPtr^.next := variable^.iPtr;
-         variable^.iPtr := iPtr;
-         iPtr^.isConstant := isConstant;
-         iPtr^.count := 1;
-         iPtr^.bitdisp := bitdisp;
-         iPtr^.bitsize := bitsize;
-         iPtr^.isStructOrUnion := false;
-         end; {if}
-      if variable^.storage in [external,global,private] then begin
+      if isStatic then begin
          Error(41);
          errorFound := true;
          end; {else}
       iPtr^.isConstant := false;
       iPtr^.iTree := initializerTree;
-      iPtr^.bitdisp := bitdisp;
-      iPtr^.bitsize := bitsize;
+      iPtr^.iType := tp;
       end; {else}
 1:
    end; {GetInitializerValue}
 
 
+   procedure Fill (count: longint);
+
+   { fill in space in an initialized data structure with 0 bytes }
+   {                                                             }
+   { parameters:                                                 }
+   {   count - number of zero bytes to create                    }
+
+   var
+      iPtr: initializerPtr;             {for creating an initializer entry}
+      tk: tokenPtr;                     {expression record}
+
+   begin {Fill}
+   while count <> 0 do begin
+      iPtr := pointer(Calloc(sizeof(initializerRecord)));
+      iPtr^.isConstant := isStatic;
+     {iPtr^.bitdisp := 0;}
+     {iPtr^.bitsize := 0;}
+      if iPtr^.isConstant then
+         iPtr^.basetype := cgUByte
+      else begin
+         new(tk);
+         tk^.next := nil;
+         tk^.left := nil;
+         tk^.middle := nil;
+         tk^.right := nil;
+         tk^.token.kind := intconst;
+         tk^.token.class := intConstant;
+         tk^.token.ival := 0;
+         iPtr^.iTree := tk;
+         iPtr^.iType := charPtr;
+         end; {else}
+      if count <= maxint then begin
+         iPtr^.count := ord(count);
+         count := 0;
+         end {if}
+      else begin
+         iPtr^.count := maxint;
+         count := count-maxint;
+         end; {else}
+      InsertInitializerRecord(iPtr, iPtr^.count);
+      end; {while}
+   end; {Fill}
+
+
    procedure InitializeTerm (tp: typePtr; bitsize,bitdisp: integer;
-      main: boolean);
+      main, nestedDesignator: boolean);
  
    { initialize one level of the type                           }
    {                                                            }
@@ -2370,113 +2384,30 @@ var
    {     bitsize - size of bit field (0 for non-bit fields)     }
    {     bitdisp - disp of bit field; unused if bitsize = 0     }
    {     main - is this a call from the main level?             }
+   {     nestedDesignator - handling second or later level of   }
+   {         designator in a designator list?                   }
+
+   label 1,2;
  
    var
-      bitCount: integer;                {# of bits in a union}
+      bfp: identPtr;                    {pointer to bit-field in field list}
+      bfsize: integer;                  {number of bytes used by bit-field}
       braces: boolean;                  {is the initializer inclosed in braces?}
       count,maxCount: longint;          {for tracking the size of an initializer}
       ep: tokenPtr;                     {for forming string expression}
+      fillSize: longint;                {size to fill with zeros}
+      hasNestedDesignator: boolean;     {nested designator in current designation?}
       iPtr: initializerPtr;             {for creating an initializer entry}
       ip: identPtr;                     {for tracing field lists}
       kind: typeKind;                   {base type of an initializer}
       ktp: typePtr;			{array type with definedTypes removed}
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
+      maxDisp: longint;                 {maximum disp value so far}
+      newDisp: longint;                 {new disp set by a designator}
+      nextTokenKind: tokenEnum;         {kind of next token}
+      startingDisp: longint;            {disp at start of this term}
       stringElementType: typePtr;       {element type of string literal}
       stringLength: integer;            {elements in a string literal}
-
-
-      procedure Fill (count: longint; tp: typePtr);
-
-      { fill in unspecified space in an initialized array with 0  }
-      {                                                           }
-      { parameters:                                               }
-      {   count - ^ elements of this type to create               }
-      {   tp - ptr to type of elements to create                  }
-
-      var
-         i: longint;                    {loop variable}
-         iPtr: initializerPtr;          {for creating an initializer entry}
-         tk: tokenPtr;                  {expression record}
-         ip: identPtr;                  {pointer to next field in a structure}
-
-      begin {Fill}
-{     writeln('Fill tp^.kind = ', ord(tp^.kind):1, '; count = ', count:1); {debug}
-      InitializeBitField;               {if needed, do the bit field}
-      if tp^.kind = arrayType then
-
-         {fill an array}
-         Fill(count*tp^.elements ,tp^.aType)
-      else if tp^.kind = structType then begin
-
-         {fill a structure}
-         if variable^.storage in [external,global,private] then
-            Fill(count * tp^.size, sCharPtr)
-         else begin
-            i := count;
-            while i <> 0 do begin
-               ip := tp^.fieldList;
-               while ip <> nil do begin
-                  if not ip^.anonMemberField then
-                     Fill(1, ip^.iType);
-                  ip := ip^.next;
-                  end; {while}
-               i := i-1;
-               end; {while}
-            end; {else}
-         end {else if}
-      else if tp^.kind = unionType then begin
-
-         {fill a union}
-         if variable^.storage in [external,global,private] then
-            Fill(count * tp^.size, sCharPtr)
-         else
-            Fill(count, tp^.fieldList^.iType);
-         end {else if}
-      else
-
-         {fill a single value}
-         while count <> 0 do begin
-            iPtr := pointer(Calloc(sizeof(initializerRecord)));
-            iPtr^.next := variable^.iPtr;
-            variable^.iPtr := iPtr;
-            iPtr^.isConstant := variable^.storage in [external,global,private];
-           {iPtr^.bitdisp := 0;}
-           {iPtr^.bitsize := 0;}
-           {iPtr^.isStructOrUnion := false;}
-            if iPtr^.isConstant then begin
-               if tp^.kind = scalarType then
-                  iPtr^.itype := tp^.baseType
-               else if tp^.kind = pointertype then begin
-                  iPtr^.itype := cgULong;
-                 {iPtr^.iVal := 0;}
-                  end {else if}
-               else begin
-                  iPtr^.itype := cgWord;
-                  Error(47);
-                  errorFound := true;
-                  end; {else}
-               end {if}
-            else begin
-               new(tk);
-               tk^.next := nil;
-               tk^.left := nil;
-               tk^.middle := nil;
-               tk^.right := nil;
-               tk^.token.kind := intconst;
-               tk^.token.class := intConstant;
-               tk^.token.ival := 0;
-               iPtr^.iTree := tk;
-               end; {else}
-            if count < 16384 then begin
-               iPtr^.count := long(count).lsw;
-               count := 0;
-               end {if}
-            else begin
-               iPtr^.count := 16384;
-               count := count-16384;
-               end; {else}
-            end; {while}
-      end; {Fill}
  
  
       procedure RecomputeSizes (tp: typePtr);
@@ -2501,98 +2432,173 @@ var
       braces := true;
       end; {if}
 
-   {handle arrays}
    while tp^.kind = definedType do
       tp := tp^.dType;
    kind := tp^.kind;
+                                        {check for designators that need to}
+                                        {be handled at an outer level      }
+   if token.kind in [dotch,lbrackch] then
+      if not (braces or nestedDesignator) then
+         goto 1;
+   startingDisp := disp;
+
+   {handle arrays}
    if kind = arrayType then begin
       ktp := tp^.atype;
       while ktp^.kind = definedType do
 	 ktp := ktp^.dType;
       kind := ktp^.kind;
 
-      {handle string constants}
-      if token.kind = stringConst then
+      {handle arrays initialized with a string constant}
+      if (token.kind = stringConst) and (kind = scalarType) then begin
          stringElementType := StringType(token.prefix)^.aType;
-      if (token.kind = stringConst) and (kind = scalarType) and 
-         (((ktp^.baseType in [cgByte,cgUByte])
-            and (stringElementType = charPtr))
-         or CompTypes(ktp,stringElementType)) then begin
-         stringLength := token.sval^.length div ord(stringElementType^.size);
-         if tp^.elements = 0 then begin
-            tp^.elements := stringLength;
-            RecomputeSizes(variable^.itype);
-            end {if}
-         else if tp^.elements < stringLength-1 then begin
-            Error(44);
-            errorFound := true;
-            end; {else if}
-         with ktp^ do begin
-            iPtr := pointer(Malloc(sizeof(initializerRecord)));
-            iPtr^.next := variable^.iPtr;
-            variable^.iPtr := iPtr;
-            iPtr^.count := 1;
-            iPtr^.bitdisp := 0;
-            iPtr^.bitsize := 0;
-            iPtr^.isStructOrUnion := false;
-            if (variable^.storage in [external,global,private]) then begin
-               iPtr^.isConstant := true;
-               iPtr^.itype := cgString;
-               iPtr^.sval := token.sval;
-               count := tp^.elements - stringLength;
-               if count > 0 then
-                  Fill(count, stringElementType)
-               else if count = -1 then begin
-                  iPtr^.sval := pointer(GMalloc(token.sval^.length+2));
-                  CopyLongString(iPtr^.sval, token.sval);
-                  iPtr^.sval^.length :=
-                     iPtr^.sval^.length - ord(stringElementType^.size);
+         if ((ktp^.baseType in [cgByte,cgUByte]) and (stringElementType^.size=1))
+            or CompTypes(ktp,stringElementType) then begin
+            tToken := token;
+            NextToken;
+            nextTokenKind := token.kind;
+            PutBackToken(token, false, true);
+            token := tToken;
+            if nextTokenKind in [commach, rbracech, semicolonch] then begin
+               stringLength :=
+                  token.sval^.length div ord(stringElementType^.size);
+               if tp^.elements = 0 then begin
+                  tp^.elements := stringLength;
+                  RecomputeSizes(variable^.itype);
+                  end {if}
+               else if tp^.elements < stringLength-1 then begin
+                  Error(44);
+                  errorFound := true;
                   end; {else if}
-               end {if}
-            else begin
-               iPtr^.isConstant := false;
-               new(ep);
-               iPtr^.iTree := ep;
-               ep^.next := nil;
-               ep^.left := nil;
-               ep^.middle := nil;
-               ep^.right := nil;
-               ep^.token := token;
-               end; {else}
-            end; {with}
-         NextToken;
-         end {if}
+               with ktp^ do begin
+                  iPtr := pointer(Malloc(sizeof(initializerRecord)));
+                  iPtr^.count := 1;
+                  iPtr^.bitdisp := 0;
+                  iPtr^.bitsize := 0;
+                  if isStatic then begin
+                     InsertInitializerRecord(iPtr, token.sval^.length);
+                     iPtr^.isConstant := true;
+                     iPtr^.basetype := cgString;
+                     iPtr^.sval := token.sval;
+                     count := tp^.elements - stringLength;
+                     if count > 0 then
+                        Fill(count * stringElementType^.size)
+                     else if count = -1 then begin
+                        iPtr^.sval := pointer(GMalloc(token.sval^.length+2));
+                        CopyLongString(iPtr^.sval, token.sval);
+                        iPtr^.sval^.length :=
+                           iPtr^.sval^.length - ord(stringElementType^.size);
+                        end; {else if}
+                     end {if}
+                  else begin
+                     InsertInitializerRecord(iPtr,
+                        tp^.elements * stringElementType^.size);
+                     iPtr^.isConstant := false;
+                     new(ep);
+                     iPtr^.iTree := ep;
+                     iPtr^.iType := tp;
+                     ep^.next := nil;
+                     ep^.left := nil;
+                     ep^.middle := nil;
+                     ep^.right := nil;
+                     ep^.token := token;
+                     end; {else}
+                  end; {with}
+               NextToken;
+               goto 1;
+               end; {if}
+            end; {if}
+         end; {if}
 
       {handle arrays not initialized with a string constant}
-      else if kind in
+      if kind in
          [scalarType,pointerType,enumType,arrayType,structType,unionType] then
          begin
          count := 0;                    {get the expressions|initializers}
          maxCount := tp^.elements;
+         maxDisp := disp;
          if token.kind <> rbracech then
             repeat
-               InitializeTerm(ktp, 0, 0, false);
-               count := count+1;
-               if count <> maxCount then begin
-                  if token.kind = commach then begin
-                     NextToken;
-                     done := token.kind = rbracech;
+               hasNestedDesignator := false;
+                                                {handle designators}
+               if token.kind in [lbrackch,dotch] then begin
+                  if not (braces or (nestedDesignator and (disp=startingDisp)))
+                     then begin
+                     PutBackToken(token, false, true);
+                     token.kind := commach;
+                     token.class := reservedSymbol;
+                     goto 1;
+                     end; {if}
+                  Match(lbrackch, 35);
+                  Expression(arrayExpression, [rbrackch]);
+                  if (expressionValue < 0)
+                     or ((maxCount <> 0) and (expressionValue >= maxCount)) then
+                     begin
+                     Error(183);
+                     errorFound := true;
+                     count := 0;
                      end {if}
+                  else begin
+                     count := expressionValue;
+                     end; {else}
+                  Match(rbrackch, 24);
+                  if token.kind in [dotch,lbrackch] then
+                     hasNestedDesignator := true
                   else
-                     done := true;
-                  end {if}
+                     Match(eqch, 182);
+                  newDisp := startingDisp + count * ktp^.size;
+                  if braces then begin
+                     fillSize := newDisp - maxDisp;
+                     if hasNestedDesignator then
+                        fillSize := fillSize + ktp^.size;
+                     if fillSize > 0 then begin
+                        disp := maxDisp;
+                        Fill(fillSize);
+                        maxDisp := disp;
+                        end; {if}
+                     end; {if}
+                  end; {if}
+
+               disp := startingDisp + count * ktp^.size;
+               InitializeTerm(ktp, 0, 0, false, hasNestedDesignator);
+               if disp > maxDisp then
+                  maxDisp := disp;
+               count := count+1;
+               if (count = maxCount) and not braces then
+                  done := true
+               else if (token.kind = commach) then begin
+                  NextToken;
+                  done := token.kind = rbracech;
+                  if not done then
+                     if count = maxCount then
+                        if not (token.kind = lbrackch) then begin
+                           Error(183);
+                           errorFound := true;
+                           count := 0;
+                           end; {if}
+                  end {else if}
                else
                   done := true;
-            until done or (token.kind = eofsy) or (count = maxCount);
-         if maxCount <> 0 then begin
-            count := maxCount-count;
-            if count <> 0 then          {if there weren't enough initializers...}
-               Fill(count,ktp);         { fill in the blank spots}
-            end {if}
-         else begin
-            tp^.elements := count;      {set the array size}
-            RecomputeSizes(variable^.itype);
-            end; {else}
+            until done or (token.kind = eofsy);
+         if maxCount = 0 then begin     {set the array size}
+            if maxDisp <> startingDisp then begin
+               maxCount := (maxDisp - startingDisp + ktp^.size-1) div ktp^.size;
+               tp^.elements := maxCount;   
+               RecomputeSizes(variable^.itype);
+               end {if}
+            else begin
+               Error(49);
+               errorFound := true;
+               end; {else}
+            end; {if}
+         if braces then begin
+            disp := startingDisp + maxCount * ktp^.size;
+            if disp > maxDisp then begin {if there weren't enough initializers...}
+               fillSize := disp - maxDisp;
+               disp := maxDisp;
+               Fill(fillSize);          { fill in the blank spots}
+               end; {if}
+            end; {if}
          end {else if}
 
       else begin
@@ -2603,44 +2609,115 @@ var
 
    {handle structures and unions}
    else if kind in [structType, unionType] then begin
+
+      {handle initialization with an expression of struct/union type}
+      if not braces then
+         if not nestedDesignator then
+            if not isStatic then
+               if (token.kind in startExpression-[stringconst]) then begin
+                  if not haveExpression then begin
+                     GetInitializerExpression;
+                     haveExpression := true;
+                     PutBackToken(token, false, true);
+                     token.kind := ident;  {dummy expression-starting token}
+                     token.class := identifier;
+                     token.name := @'__';
+                     token.symbolPtr := nil;                  
+                     while expressionType^.kind = definedType do
+                        expressionType := expressionType^.dType;
+                     end; {if}
+                  if CompTypes(tp, expressionType) then begin
+                     GetInitializerValue(tp, 0, 0);
+                     goto 1;
+                     end; {if}
+                  end; {if}
+
+      {handle struct/union initialization with an initializer list}
       if braces or (not main) then begin
-         count := tp^.size;
          ip := tp^.fieldList;
-         bitCount := 0;
+         maxDisp := disp;
          lSuppressMacroExpansions := suppressMacroExpansions;
-         while (ip <> nil) and (ip^.itype^.size > 0) do begin
+         while true do begin
+            if token.kind = rbracech then       {fill remainder with zeros}
+               goto 2;
+            hasNestedDesignator := false;
+                                                {handle designators}
+            if token.kind in [dotch,lbrackch] then begin
+               if not (braces or (nestedDesignator and (disp=startingDisp)))
+                  then begin
+                  PutBackToken(token, false, true);
+                  token.kind := commach;
+                  token.class := reservedSymbol;
+                  goto 1;
+                  end; {if}
+               Match(dotch, 35);
+               if token.kind in [ident,typedef] then begin
+                  ip := tp^.fieldList;
+                  done := false;
+                  while (ip <> nil) and not done do
+                     if ip^.name^ = token.name^ then
+                        done := true
+                     else
+                        ip := ip^.next;
+                  if ip = nil then begin
+                     Error(81);
+                     errorFound := true;
+                     end; {if}
+                  if (ip <> nil) and ip^.anonMemberField then begin
+                     PutBackToken(token, false, true);
+                     token.kind := dotch;
+                     token.class := reservedSymbol;
+                     token.isDigraph := false;
+                     ip := ip^.anonMember;
+                     end {if}
+                  else
+                     NextToken;
+                  if token.kind in [dotch,lbrackch] then
+                     hasNestedDesignator := true
+                  else
+                     Match(eqch, 182);
+                  newDisp := startingDisp + ip^.disp;
+                  if braces then begin
+                     fillSize := newDisp - maxDisp;
+                     if hasNestedDesignator and (ip^.bitsize = 0) then
+                        fillSize := fillSize + ip^.itype^.size;
+                     if fillSize > 0 then begin
+                        disp := maxDisp;
+                        Fill(fillSize);
+                        maxDisp := disp;
+                        end; {if}
+                     end; {if}
+                  end {if}
+               else begin
+                  Error(9);
+                  errorFound := true;
+                  goto 2;
+                  end; {else}
+               end; {if}
+
+            if (ip = nil) or (ip^.itype^.size = 0) then
+               goto 2;
             if ip^.isForwardDeclared then
                ResolveForwardReference(ip);
-            if token.kind = rbracech then begin {initialize this field to 0}
-               suppressMacroExpansions := true; {inhibit token echo}
-               PutBackToken(token, false);
-               PutBackToken(token, false);
-               token.kind := intconst;
-               token.class := intConstant;
-               token.ival := 0;
-               PutBackToken(token, false);
-               token.kind := lbracech;
-               token.class := reservedSymbol;
+            disp := startingDisp + ip^.disp;
+            if ip^.bitsize <> 0 then begin {zero out padding bits in bitfields}
+               bfp := ip;
+               while (bfp^.next <> nil) and (bfp^.next^.disp = bfp^.disp) 
+                  and (bfp^.next^.bitsize <> 0) do
+                  bfp := bfp^.next;
+               bfsize := (bfp^.bitdisp + bfp^.bitsize + 7) div 8;
+               if disp + bfsize > maxDisp then
+                  if (bfp <> ip) or (ip^.bitdisp <> 0)
+                     or (ip^.bitsize mod 8 <> 0) then begin
+                     Fill(bfsize);
+                     maxDisp := disp;
+                     disp := startingDisp + ip^.disp;
+                     end; {if}
                end; {if}
-            if ip^.bitSize = 0 then
-               if bitCount > 0 then begin
-                  InitializeBitField;
-                  bitCount := (bitCount+7) div 8;
-                  count := count-bitCount;
-                  bitCount := 0;
-                  end; {if}
-            InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false);
-            if ip^.bitSize <> 0 then begin
-               bitCount := bitCount + ip^.bitSize;
-               if bitCount > maxBitField then begin
-                  count := count - (maxBitField div 8);
-                  bitCount := ip^.bitSize;
-                  end; {if}
-               end {if}
-            else begin
-               count := count-ip^.itype^.size;
-               end; {else}
-{           writeln('Initializer: ', ip^.bitsize:10, ip^.bitdisp:10, bitCount:10); {debug}
+            InitializeTerm(ip^.itype, ip^.bitsize, ip^.bitdisp, false,
+               hasNestedDesignator);
+            if disp > maxDisp then
+               maxDisp := disp;
             if kind = unionType then
                ip := nil
             else begin
@@ -2648,26 +2725,34 @@ var
                while (ip <> nil) and ip^.anonMemberField do
                   ip := ip^.next;
                end; {else}
+            if ((ip = nil) or (ip^.itype^.size = 0)) and not braces then
+               goto 2;
             if token.kind = commach then begin
-               if ip <> nil then
-                  NextToken;
+               NextToken;
+               if token.kind = commach then
+                  if ip = nil then
+                     if braces then begin
+                        Error(23);
+                        errorFound := true;
+                        end; {if}
                end {if}
             else if token.kind <> rbracech then
                ip := nil;
             end; {while}
-         if bitCount > 0 then begin
-            InitializeBitField;
-            bitCount := (bitCount+7) div 8;
-            count := count-bitCount;
-            bitCount := 0;
+2:       if braces then begin
+            disp := startingDisp + tp^.size;
+            if disp > maxDisp then begin {if there weren't enough initializers...}
+               fillSize := disp - maxDisp;
+               disp := maxDisp;
+               Fill(fillSize);          { fill in the blank spots}
+               end; {if}
             end; {if}
-         if count > 0 then
-            if variable^.storage in [external,global,private] then
-               Fill(count, sCharPtr);
          suppressMacroExpansions := lSuppressMacroExpansions;
          end {if}
-      else                              {struct/union assignment initializer}
-         GetInitializerValue(tp, bitsize, bitdisp);
+      else begin                        {struct/union assignment initializer}
+         Error(47);
+         errorFound := true;
+         end; {else}
       end {else if}
 
    {handle single-valued types}
@@ -2678,7 +2763,7 @@ var
       Error(47);
       errorFound := true;
       end; {else}
-
+1:
    if braces then begin                 {if there was an opening brace then }
       if token.kind = commach then      { insist on a closing brace         }
          NextToken;
@@ -2695,19 +2780,20 @@ var
    end; {InitializeTerm}
 
 begin {Initializer}
-bitcount := 0;                          {set up for bit fields}
-bitvalue := 0;
+disp := 0;                              {start at beginning of the object}
 errorFound := false;                    {no errors found so far}
+haveExpression := false;                {no expression parsed yet}
+                                        {static or automatic initialization?}
+isStatic := variable^.storage in [external,global,private];
 luseGlobalPool := useGlobalPool;        {use global memory for global vars}
-useGlobalPool := (variable^.storage in [external,global,private])
-   or useGlobalPool;
+useGlobalPool := isStatic or useGlobalPool;
                                         {make sure a required '{' is there}
 if not (token.kind in [lbracech,stringConst]) then
    if variable^.itype^.kind = arrayType then begin
       Error(27);
       errorFound := true;
       end; {if}
-InitializeTerm(variable^.itype, 0, 0, true); {do the initialization}
+InitializeTerm(variable^.itype, 0, 0, true, false); {do the initialization}
 variable^.state := initialized;         {mark the variable as initialized}
 iPtr := variable^.iPtr;                 {reverse the initializer list}
 jPtr := nil;
@@ -2718,6 +2804,12 @@ while iPtr <> nil do begin
    jPtr := kPtr;
    end; {while}
 variable^.iPtr := jPtr;
+if isStatic then                        {if doing static initialization }
+   if variable^.itype^.kind in [structType,unionType,definedType,arrayType]
+      then begin
+      disp := 0;                        {...ensure unnamed members are 0}
+      Fill(variable^.itype^.size);
+      end; {if}
 if errorFound then                      {eliminate bad initializers}
    variable^.state := defined;
 useGlobalPool := luseGlobalPool;        {restore useGlobalPool}
@@ -2797,7 +2889,11 @@ var
 
    label 1;
 
+   type
+      anonNameString = packed array [0..11] of char;
+
    var
+      anonName: ^anonNameString;        {name for anonymous struct/union field}
       bitDisp: integer;                 {current bit disp}
       disp: longint;                    {current byte disp}
       done: boolean;                    {for loop termination}
@@ -2827,16 +2923,14 @@ var
          tfl: identPtr;                 {for traversing field list}
       
       begin {AddField}
-      if variable^.name^ <> '~anonymous' then begin
-         tfl := fl;                     {(check for dups)}
-         while tfl <> nil do begin
-            if tfl^.name^ = variable^.name^ then begin
-               Error(42);
-               goto 1;
-               end; {if}
-            tfl := tfl^.next;
-            end; {while}
-         end; {if}
+      tfl := fl;                        {(check for dups)}
+      while tfl <> nil do begin
+         if tfl^.name^ = variable^.name^ then begin
+            Error(42);
+            goto 1;
+            end; {if}
+         tfl := tfl^.next;
+         end; {while}
 1:    variable^.next := fl;
       if anonMember <> nil then begin
          variable^.anonMemberField := true;
@@ -2878,7 +2972,10 @@ var
                   and ((structsy in fieldDeclSpecifiers.declarationModifiers)
                      or (unionsy in fieldDeclSpecifiers.declarationModifiers))
                   then begin
-                  variable := NewSymbol(@'~anonymous', tPtr, ident,
+                  anonName := pointer(Malloc(sizeof(anonNameString)));
+                  anonName^ := concat('~anon', cnvis(anonNumber));
+                  anonNumber := anonNumber+1;
+                  variable := NewSymbol(anonName, tPtr, ident,
                      fieldListSpace, defined, false);
                   anonMember := true;
                   TermHeader;           {cannot record anon member in .sym file}
@@ -4314,7 +4411,7 @@ case statementList^.kind of
             NextToken;
             suppressMacroExpansions := lSuppressMacroExpansions;
             nToken := token;
-            PutBackToken(nToken, false);
+            PutBackToken(nToken, false, false);
             token := lToken;
             if nToken.kind <> colonch then
                DoDeclaration(false)
@@ -4369,39 +4466,29 @@ procedure AutoInit {variable: identPtr; line: longint;
 {       isCompoundLiteral - initializing a compound literal?    }
 
 var
-   count: integer;                      {initializer counter}
    iPtr: initializerPtr;                {pointer to the next initializer}
    codeCount: longint;                  {number of initializer expressions}
    treeCount: integer;                  {current number of distinct trees}
    ldoDispose: boolean;                 {local copy of doDispose}
 
 
-   procedure Initialize (id: identPtr; disp: longint; itype: typePtr);
+   procedure InitializeOneElement;
 
-   { initialize a variable                                      }
-   {                                                            }
-   { parameters:                                                }
-   {    id - pointer to the identifier                          }
-   {    disp - disp past the identifier to initialize           }
-   {    itype - type of the variable to initialize              }
+   { initialize (part of) a variable using the initializer iPtr }
    {                                                            }
    { variables:                                                 }
+   {    variable - the variable to initialize                   }
    {    count - number of times to re-use the initializer       }
-   {    ip - pointer to the initializer record to use           }
+   {    iPtr - pointer to the initializer record to use         }
 
-   label 1,2;
+   label 1,2,3,4;
 
    var
+      count: integer;                   {initializer counter}
+      disp: longint;                    {displacement to initialize at}
       elements: longint;                {# array elements}
-      fp: identPtr;                     {for tracing field lists}
+      itype: typePtr;                   {the type being initialized}
       size: integer;                    {fill size}
-      union: boolean;                   {are we doing a union?}
-      startDisp,endDisp: longint;       {disp at start/end of struct/union}
-
-                                        {bit field manipulation}
-                                        {----------------------}
-      bitcount: integer;                {# if bits so far}
-      bitsize,bitdisp: integer;         {defines size, location of a bit field}
 
                                         {assignment conversion}
                                         {---------------------}
@@ -4415,36 +4502,11 @@ var
       { Load the address of the operand                         }
 
       begin {LoadAddress}
-      if id^.storage = stackFrame then
-         Gen2(pc_lda, id^.lln, ord(disp))
+      if variable^.storage = stackFrame then
+         Gen2(pc_lda, variable^.lln, ord(disp))
       else
          Error(57);
       end; {LoadAddress}
-
-
-      function ZeroFill (elements: longint; itype: typePtr;
-                         count: integer; iPtr: initializerPtr): boolean;
-
-      { See if an array can be zero filled			}
-      {								}
-      { parameters:						}
-      {    elements - elements in the array			}
-      {    itype - type of each array element			}
-      {    count - remaining initializer repetitions		}
-      {    iPtr - initializer record				}
-
-      begin {ZeroFill}
-      ZeroFill := false;
-      if not iPtr^.isConstant then
-         if itype^.kind in [scalarType,enumType] then
-            if count >= elements then
-               with iPtr^.itree^ do
-                  if token.kind = intconst then
-                     if token.ival = 0 then
-                                        {don't call ~ZERO for very small arrays}
-                        if elements * itype^.size > 10 then
-                           ZeroFill := true;
-      end; {ZeroFill}
 
 
       procedure AddOperation;
@@ -4468,7 +4530,10 @@ var
       end; {AddOperation}
       
 
-   begin {Initialize}
+   begin {InitializeOneElement}
+   disp := iPtr^.disp;
+   count := iPtr^.count;
+3: itype := iPtr^.iType;
    while itype^.kind = definedType do
       itype := itype^.dType;
    case itype^.kind of
@@ -4496,6 +4561,27 @@ var
                else
                   isConstant := false;
                end; {else}
+        
+         if isConstant then             
+            if val = 0 then
+               if count > 1 then
+                  if itype^.size = 1 then begin
+                                        {call ~ZERO for > 50 zero bytes}
+                     if count > 50 then begin
+                        Gen0t(pc_stk, cgULong);
+                        Gen1t(pc_ldc, count, cgWord);
+                        Gen0t(pc_stk, cgWord);
+                        Gen0t(pc_bno, cgWord);
+                        Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
+                        if isCompoundLiteral then
+                           AddOperation;
+                        goto 4;
+                        end {if}
+                     else begin         {zero-initialize two bytes at a time}
+                        itype := shortPtr;
+                        count := count - 1;
+                        end; {else}
+                     end; {if}
 
 {        if isConstant then
             if tree^.token.class = intConstant then
@@ -4554,136 +4640,40 @@ var
                   Gen0t(pc_stk, cgULong);
                   Gen1t(pc_ldc, ord(elements), cgWord);
                   Gen0t(pc_stk, cgWord);
-                  Gen0t(pc_bno, cgULong);
+                  Gen0t(pc_bno, cgWord);
                   Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
                   if isCompoundLiteral then
                      AddOperation;
                   end; {if}
-               iPtr := iPtr^.next;
-               goto 1;
                end; {if}
-         itype := itype^.atype;
-         if ZeroFill(elements, itype, count, iPtr) then begin
-            if itype^.kind = enumType then
-               size := cgWordSize
-            else
-               size := TypeSize(itype^.baseType);
-            size := size * long(elements).lsw;
-            LoadAddress;
-            Gen0t(pc_stk, cgULong);
-            Gen1t(pc_ldc, size, cgWord);
-            Gen0t(pc_stk, cgWord);
-            Gen0t(pc_bno, cgULong);
-            Gen1tName(pc_cup, -1, cgVoid, @'~ZERO');
-            if isCompoundLiteral then
-               AddOperation;
-            disp := disp + size;
-            count := count - long(elements).lsw;
-            if count = 0 then begin
-               iPtr := iPtr^.next;
-               if iPtr <> nil then
-                  count := iPtr^.count;
-               end; {if}
-            end {if}
-         else begin
-            while elements <> 0 do begin
-               Initialize(id, disp, itype);
-               if itype^.kind in [scalarType,pointerType,enumType] then begin
-                  count := count-1;
-                  if count = 0 then begin
-                     iPtr := iPtr^.next;
-                     if iPtr <> nil then
-                        count := iPtr^.count;
-                     end; {if}
-                  end; {if}
-               disp := disp+itype^.size;
-               elements := elements-1;
-               end; {while}
-            end; {else}
 1:          end;
 
       structType,unionType: begin
-         startDisp := disp;
-         endDisp := disp + itype^.size;
-         if iPtr^.isStructOrUnion then begin
-            LoadAddress;                {load the destination address}
-            GenerateCode(iptr^.iTree);  {load the struct address}
+         LoadAddress;                   {load the destination address}
+         GenerateCode(iptr^.iTree);     {load the struct address}
                                         {do the assignment}
-            AssignmentConversion(itype, expressionType, isConstant, val,
-               true, false);
-            with expressionType^ do
-               Gen2(pc_mov, long(size).msw, long(size).lsw);
-            Gen0t(pc_pop, UsualUnaryConversions);
-            if isCompoundLiteral then
-               AddOperation;
-            end {if}
-         else begin
-            union := itype^.kind = unionType;
-            fp := itype^.fieldList;
-            while fp <> nil do begin
-               itype := fp^.itype;
-               disp := startDisp + fp^.disp;
-               bitdisp := fp^.bitdisp;
-               bitsize := fp^.bitsize;
-{              writeln('Initialize:    disp = ',    disp:3, '; fp^.   Disp = ', fp^.disp:3, 'itype^.size = ', itype^.size:1); {debug}
-{              writeln('            bitDisp = ', bitDisp:3, '; fp^.bitDisp = ', fp^.bitDisp:3); {debug}
-{              writeln('            bitSize = ', bitSize:3, '; fp^.bitSize = ', fp^.bitSize:3); {debug}
-               Initialize(id, disp, itype);
-               if bitsize = 0 then begin
-                  if bitcount <> 0 then begin
-                     bitcount := 0;
-                     end {if}
-                  else if fp^.bitSize <> 0 then begin
-                     bitcount := 8;
-                     while (fp <> nil) and (bitcount > 0) do begin
-                        bitcount := bitcount - fp^.bitSize;
-                        if bitcount > 0 then
-                           if fp^.next <> nil then
-                              if fp^.next^.bitSize <> 0 then
-                                 fp := fp^.next
-                              else
-                                 bitcount := 0;
-                        end; {while}
-                     bitcount := 0;
-                     end; {else if}
-                  end {if}
-               else if fp^.bitSize = 0 then begin
-                  bitsize := 0;
-                  end {else if}
-               else begin
-                  bitcount := bitsize + bitdisp;
-                  end; {else}
-               if itype^.kind in [scalarType,pointerType,enumType] then begin
-                  count := count-1;
-                  if count = 0 then begin
-                     iPtr := iPtr^.next;
-                     if iPtr <> nil then begin
-                        count := iPtr^.count;
-                        bitsize := iPtr^.bitsize;
-                        bitdisp := iPtr^.bitdisp;
-                        end; {if}
-                     end; {if}
-                  end; {if}
-               if union then
-                  fp := nil
-               else begin
-                  fp := fp^.next;
-                  while (fp <> nil) and fp^.anonMemberField do
-                     fp := fp^.next;
-                  end; {else}
-               end; {while}
-            end; {else}
-         disp := endDisp;
-         end;
+         AssignmentConversion(itype, expressionType, isConstant, val,
+            true, false);
+         with expressionType^ do
+            Gen2(pc_mov, long(size).msw, long(size).lsw);
+         Gen0t(pc_pop, UsualUnaryConversions);
+         if isCompoundLiteral then
+            AddOperation;
+         end; {if}
 
       otherwise: Error(57);
       end; {case}
-   end; {Initialize}
+   if count <> 1 then begin
+      count := count - 1;
+      disp := disp + itype^.size;
+      goto 3;
+      end; {if}
+4:
+   end; {InitializeOneElement}
 
 
 begin {AutoInit}
 iPtr := variable^.iPtr;
-count := iPtr^.count;
 if isCompoundLiteral then begin
    treeCount := 0;
    codeCount := 0;
@@ -4697,7 +4687,10 @@ if variable^.class <> staticsy then begin
          if (statementList <> nil) and not statementList^.doingDeclaration then
             if lineNumber <> 0 then
                RecordLineNumber(line);
-   Initialize(variable, 0, variable^.itype);
+   while iPtr <> nil do begin
+      InitializeOneElement;
+      iPtr := iPtr^.next;
+      end; {while}
    end; {if}
 if isCompoundLiteral then begin
    while treeCount > 1 do begin
@@ -4753,9 +4746,8 @@ iPtr := pointer(GCalloc(sizeof(initializerRecord)));
 iPtr^.count := 1;
 {iPtr^.bitdisp := 0;}
 {iPtr^.bitsize := 0;}
-{iPtr^.isStructOrUnion := false;}
 iPtr^.isConstant := true;
-iPtr^.itype := cgString;
+iPtr^.basetype := cgString;
 iPtr^.sval := sval;
 id^.iPtr := iPtr;
 
@@ -4822,6 +4814,7 @@ doingForLoopClause1 := false;           {not doing a for loop}
 fIsNoreturn := false;                   {not doing a noreturn function}
 compoundLiteralNumber := 1;             {no compound literals yet}
 compoundLiteralToAllocate := nil;       {no compound literals needing space yet}
+anonNumber := 0;                        {no anonymous structs/unions yet}
 
                                         {init syntactic classes of tokens}
                                         {See C17 section 6.7 ff.}

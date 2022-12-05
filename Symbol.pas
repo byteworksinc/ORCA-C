@@ -295,6 +295,14 @@ function StringType(prefix: charStrPrefixEnum): typePtr;
 
 implementation
 
+type
+                                        {From CGC.pas}
+   realrec = record                     {used to convert from real to in-SANE}
+      itsReal: extended;
+      inSANE: packed array[1..10] of byte;
+      inCOMP: packed array[1..8] of byte;
+      end;
+
 var
    staticNum: packed array[1..6] of char; {static variable number}
 
@@ -324,6 +332,17 @@ function UsualUnaryConversions: baseTypeEnum; extern;
 {                                                               }
 { outputs:                                                      }
 {       expressionType - set to result type                     }
+
+
+{- Imported from CGC.pas ---------------------------------------}
+
+procedure CnvSC (rec: realrec); extern;
+
+{ convert a real number to SANE comp format                     }
+{                                                               }
+{ parameters:                                                   }
+{       rec - record containing the value to convert; also      }
+{               has space for the result                        }
 
 {---------------------------------------------------------------}
 
@@ -395,6 +414,16 @@ procedure Purge; extern;
 procedure ClearTable (table: symbolTable); extern;
 
 { clear the symbol table to all zeros                           }
+
+procedure SaveBF (addr: ptr; bitdisp, bitsize: integer; val: longint); extern;
+
+{ save a value to a bit-field                                   }
+{                                                               }
+{ parameters:                                                   }
+{       addr - address to copy to                               }
+{       bitdisp - displacement past the address                 }
+{       bitsize - number of bits                                }
+{       val - value to copy                                     }
 
 {---------------------------------------------------------------}
 
@@ -663,6 +692,218 @@ procedure DoGlobals;
 { declare the ~globals and ~arrays segments                     }
 
 
+   procedure StaticInit (variable: identPtr);
+
+   { statically initialize a variable                           }
+
+   type
+                                        {record of pointer initializers}
+      relocPtr = ^relocationRecord;
+      relocationRecord = record
+         next: relocPtr;                {next record}
+         initializer: initializerPtr;   {the initializer}
+         disp: longint;                 {disp in overall data structure}
+         end;
+
+                                        {pointers to each type}
+      bytePtr = ^byte;
+      wordPtr = ^integer;
+      longPtr = ^longint;
+      quadPtr = ^longlong;
+      realPtr = ^real;
+      doublePtr = ^double;
+      extendedPtr = ^extended;
+
+   var
+      buffPtr: ptr;                     {pointer to data buffer}
+      count: integer;                   {# of duplicate records}
+      disp: longint;                    {disp into buffer (for output)}
+      endDisp: longint;                 {ending disp for current chunk}
+      i: integer;                       {loop counter}
+      ip: initializerPtr;               {used to trace initializer lists}
+      lastReloc, nextReloc: relocPtr;   {for reversing relocs list}
+      realVal: realRec;                 {used for extended-to-comp conversion}
+      relocs: relocPtr;                 {list of records needing relocation}
+      
+                                        {pointers used to write data}
+      bp: bytePtr;
+      wp: wordPtr;
+      lp: longPtr;
+      qp: quadPtr;
+      rp: realPtr;
+      dp: doublePtr;
+      ep: extendedPtr;
+
+
+      procedure UpdateRelocs;
+
+      { update relocation records to account for an initializer }
+
+      var
+         disp: longint;                 {disp of current initializer}
+         done: boolean;                 {done with loop?}
+         endDisp: longint;              {disp at end of current initializer}
+         last: ^relocPtr;               {the pointer referring to rp}
+         rp: relocPtr;                  {reloc record being processed}
+
+      begin {UpdateRelocs}
+      disp := ip^.disp;
+      if ip^.bitsize <> 0 then begin
+         endDisp := disp + (ip^.bitdisp + ip^.bitsize + 7) div 8;
+         disp := disp + ip^.bitdisp div 8;
+         end {if}
+      else if ip^.basetype = cgString then
+         endDisp := disp + ip^.sVal^.length
+      else
+         endDisp := disp + TypeSize(ip^.baseType);
+      last := @relocs;
+      rp := relocs;
+      done := false;
+      while (rp <> nil) and not done do begin
+         if rp^.disp + cgPointerSize <= disp then begin
+            {initializer is entirely after this reloc: no conflicts}
+            done := true;
+            end {if}
+         else if endDisp <= rp^.disp then begin
+            {initializer is entirely before this reloc}
+            last := @rp^.next;
+            rp := rp^.next;
+            end {else if}
+         else begin
+            {conflict: remove the conflicting reloc record}
+            last^ := rp^.next;
+            lp := pointer(ord4(buffPtr) + rp^.disp);
+            lp^ := 0;
+            dispose(rp);
+            rp := last^;
+            end; {else}
+         end; {while}
+      if ip^.basetype = ccPointer then begin
+         new(rp);
+         rp^.next := last^;
+         last^ := rp;
+         rp^.disp := ip^.disp;
+         rp^.initializer := ip;
+         end; {if}
+      end; {UpdateRelocs}
+   
+   begin {StaticInit}
+                                        {allocate buffer}
+                                        {(+3 for possible bitfield overhang)}
+   buffPtr := GLongMalloc(variable^.itype^.size+3);
+   
+   relocs := nil;                       {evaluate initializers}
+   ip := variable^.iPtr;
+   while ip <> nil do begin
+      count := 0;
+      while count < ip^.count do begin
+         UpdateRelocs;
+         if ip^.bitsize <> 0 then begin
+            bp := pointer(ord4(buffPtr) + ip^.disp + count);
+            SaveBF(bp, ip^.bitdisp, ip^.bitsize, ip^.iVal);
+            end {if}
+         else
+            case ip^.basetype of
+               cgByte,cgUByte: begin
+                  bp := pointer(ord4(buffPtr) + ip^.disp + count);
+                  bp^ := ord(ip^.iVal) & $ff;
+                  end;
+
+               cgWord,cgUWord: begin
+                  wp := pointer(ord4(buffPtr) + ip^.disp + count);
+                  wp^ := ord(ip^.iVal);
+                  end;
+
+               cgLong,cgULong: begin
+                  lp := pointer(ord4(buffPtr) + ip^.disp + count);
+                  lp^ := ip^.iVal;
+                  end;
+            
+               cgQuad,cgUQuad: begin
+                  qp := pointer(ord4(buffPtr) + ip^.disp + count);
+                  qp^ := ip^.qVal;
+                  end;
+
+               cgReal: begin
+                  rp := pointer(ord4(buffPtr) + ip^.disp + count);
+                  rp^ := ip^.rVal;
+                  end;
+
+               cgDouble: begin
+                  dp := pointer(ord4(buffPtr) + ip^.disp + count);
+                  dp^ := ip^.rVal;
+                  end;
+
+               cgExtended: begin
+                  ep := pointer(ord4(buffPtr) + ip^.disp + count);
+                  ep^ := ip^.rVal;
+                  end;
+
+               cgComp: begin
+                  realVal.itsReal := ip^.rVal;
+                  CnvSC(realVal);
+                  for i := 1 to 8 do begin
+                     bp := pointer(ord4(buffPtr) + ip^.disp + count + i-1);
+                     bp^ := realVal.inCOMP[i];
+                     end; {for}
+                  end;
+     
+               cgString: begin
+                  for i := 1 to ip^.sVal^.length do begin
+                     bp := pointer(ord4(buffPtr) + ip^.disp + count + i-1);
+                     bp^ := ord(ip^.sVal^.str[i]);
+                     end; {for}
+                  end;
+     
+               ccPointer: ;             {handled by UpdateRelocs}
+         
+               cgVoid: Error(57);
+               end; {case}
+         count := count + 1;            {assumes count > 1 only for bytes}
+         end; {while}
+      ip := ip^.next;
+      end; {while}
+                        
+   lastReloc := nil;                    {reverse the relocs list}
+   while relocs <> nil do begin
+      nextReloc := relocs^.next;
+      relocs^.next := lastReloc;
+      lastReloc := relocs;
+      relocs := nextReloc;
+      end; {while}
+   relocs := lastReloc;
+
+   disp := 0;                           {generate the initialization data}
+   while disp < variable^.itype^.size do begin
+      if relocs = nil then
+         endDisp := variable^.itype^.size
+      else
+         endDisp := relocs^.disp;
+      if disp <> endDisp then begin
+         GenBS(dc_cns, pointer(ord4(buffPtr) + disp), endDisp - disp);
+         disp := endDisp;
+         end; {if}
+      if relocs <> nil then begin
+         code^.optype := ccPointer;
+         code^.r := ord(relocs^.initializer^.pPlus);
+         code^.q := 1;
+         code^.pVal := relocs^.initializer^.pVal;
+         if relocs^.initializer^.isName then begin
+            code^.lab := relocs^.initializer^.pName;
+            code^.pstr := nil;
+            end {if}
+         else
+            code^.pstr := relocs^.initializer^.pstr;
+         Gen0(dc_cns);
+         lastReloc := relocs;
+         relocs := relocs^.next;
+         dispose(lastReloc);
+         disp := disp + cgPointerSize;
+         end; {if}
+      end; {while}
+   end; {StaticInit}
+
+
    procedure GenArrays;
 
    { define global arrays                                       }
@@ -697,38 +938,7 @@ procedure DoGlobals;
                   end; {if}
                if sp^.state = initialized then begin
                   Gen2Name(dc_glb, 0, ord(sp^.storage = private), sp^.name);
-                  ip := sp^.iPtr;
-                  while ip <> nil do begin
-                     case ip^.itype of
-                        cgByte,cgUByte,cgWord,cgUWord: begin
-                           lval := ip^.ival;
-                           Gen2t(dc_cns, long(lval).lsw, ip^.count, ip^.itype);
-                           end;
-                        cgLong,cgULong:
-                           GenL1(dc_cns, ip^.ival, ip^.count);
-                        cgQuad,cgUQuad:
-                           GenQ1(dc_cns, ip^.qval, ip^.count);
-                        cgReal,cgDouble,cgComp,cgExtended:
-                           GenR1t(dc_cns, ip^.rval, ip^.count, ip^.itype);
-                        cgString:
-                           GenS(dc_cns, ip^.sval);
-                        ccPointer: begin
-                           code^.optype := ccPointer;
-                           code^.r := ord(ip^.pPlus);
-                           code^.q := ip^.count;
-                           code^.pVal := ip^.pVal;
-                           if ip^.isName then begin
-                              code^.lab := ip^.pName;
-                              code^.pstr := nil;
-                              end {if}
-                           else
-                              code^.pstr := ip^.pstr;
-                           Gen0(dc_cns);
-                           end;
-                        otherwise: Error(57);
-                        end; {case}
-                     ip := ip^.next;
-                     end; {while}
+                  StaticInit(sp);
                   end {if}
                else begin
                   size := sp^.itype^.size;
@@ -790,17 +1000,17 @@ procedure DoGlobals;
                if sp^.state = initialized then begin
                   Gen2Name(dc_glb, 0, ord(sp^.storage = private), sp^.name);
                   ip := sp^.iPtr;
-                  case ip^.itype of
+                  case ip^.basetype of
                      cgByte,cgUByte,cgWord,cgUWord: begin
                         lval := ip^.ival;
-                        Gen2t(dc_cns, long(lval).lsw, 1, ip^.itype);
+                        Gen2t(dc_cns, long(lval).lsw, 1, ip^.basetype);
                         end;
                      cgLong,cgULong:
                         GenL1(dc_cns, ip^.ival, 1);
                      cgQuad,cgUQuad:
                         GenQ1(dc_cns, ip^.qval, 1);
                      cgReal,cgDouble,cgComp,cgExtended:
-                        GenR1t(dc_cns, ip^.rval, 1, ip^.itype);
+                        GenR1t(dc_cns, ip^.rval, 1, ip^.basetype);
                      cgString:
                         GenS(dc_cns, ip^.sval);
                      ccPointer: begin
@@ -1287,7 +1497,7 @@ var
       if ip = nil then ip := defaultStruct^.fieldList;
 
       while ip <> nil do begin
-         if ip^.name^ <> '~anonymous' then
+         if ip^.name^[1] <> '~' then
             GenSymbol(ip, none);
          ip := ip^.next;
          end; {while}

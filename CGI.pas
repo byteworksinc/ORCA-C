@@ -279,7 +279,11 @@ type
          cgDouble,
          cgComp,
          cgExtended     : (rval: extended);
-         cgString       : (str: longStringPtr);
+         cgString       : (
+            case isByteSeq: boolean of
+               false    : (str: longStringPtr);
+               true     : (data: ptr; len: longint);
+            );
          cgVoid,
          ccPointer      : (pval: longint; pstr: longStringPtr);
       end;
@@ -572,6 +576,16 @@ procedure GenS (fop: pcodes; str: longstringPtr);
 { parameters:                                                   }
 {       fop - operation code                                    }
 {       str - pointer to string                                 }
+
+
+procedure GenBS (fop: pcodes; data: ptr; len: longint);
+
+{ generate an instruction that uses a byte sequence operand     }
+{                                                               }
+{ parameters:                                                   }
+{       fop - operation code                                    }
+{       data - pointer to data                                  }
+{       data - length of data                                   }
 
 
 procedure GenL1 (fop: pcodes; lval: longint; fp1: integer);
@@ -1228,6 +1242,30 @@ if codeGeneration then begin
    Gen0(fop);
    end; {if}
 end; {GenS}
+
+
+procedure GenBS {fop: pcodes; data: ptr; len: longint};
+
+{ generate an instruction that uses a byte sequence operand     }
+{                                                               }
+{ parameters:                                                   }
+{       fop - operation code                                    }
+{       data - pointer to data                                  }
+{       len - length of data                                    }
+
+var
+   lcode: icptr;                        {local copy of code}
+
+begin {GenBS}
+if codeGeneration then begin
+   lcode := code;
+   lcode^.optype := cgString;
+   lcode^.isByteSeq := true;
+   lcode^.data := data;
+   lcode^.len := len;
+   Gen0(fop);
+   end; {if}
+end; {GenBS}
 
 
 procedure GenL1 {fop: pcodes; lval: longint; fp1: integer};

@@ -321,14 +321,17 @@ type
    initializerPtr = ^initializerRecord; {initializers}
    initializerRecord = record
       next: initializerPtr;             {next record in the chain}
-      count: integer;                   {# of duplicate records}
+      disp: longint;                    {disp within overall object being initialized}
+      count: integer;                   {# of duplicate records (>1 for bytes only)}
       bitdisp: integer;                 {disp in byte (field lists only)}
       bitsize: integer;                 {width in bits; 0 for byte sizes}
-      isStructOrUnion: boolean;         {is this a struct or union initializer?}
       case isConstant: boolean of       {is this a constant initializer?}
-         false: (iTree: tokenPtr);
+         false: (
+            iType: typePtr;             {type being initialized}
+            iTree: tokenPtr;            {initializer expression}
+            );
          true : (                       {Note: qVal.lo must overlap iVal}
-            case itype: baseTypeEnum of
+            case basetype: baseTypeEnum of
                cgByte,
                cgUByte,
                cgWord,

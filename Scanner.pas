@@ -49,6 +49,7 @@ type
       next: tokenListRecordPtr;         {next element in list}
       token: tokenType;                 {token}
       expandEnabled: boolean;           {can this token be macro expanded?}
+      suppressPrint: boolean;           {suppress printing with #pragma expand?}
       tokenStart,tokenEnd: ptr;         {token start/end markers}
       end;
    macroRecordPtr = ^macroRecord;
@@ -153,13 +154,15 @@ procedure NextToken;
 { Read the next token from the file.                            }
 
 
-procedure PutBackToken (var token: tokenType; expandEnabled: boolean);
+procedure PutBackToken (var token: tokenType; expandEnabled: boolean;
+   suppressPrint: boolean);
 
 { place a token into the token stream                           }
 {                                                               }
 { parameters:                                                   }
 {       token - token to put back into the token stream         }
 {       expandEnabled - can macro expansion be performed?       }
+{       suppressPrint - suppress printing with #pragma expand?  }
 
 
 procedure TermScanner;
@@ -510,13 +513,15 @@ macroFound := mPtr;
 end; {IsDefined}
 
 
-procedure PutBackToken {var token: tokenType; expandEnabled: boolean};
+procedure PutBackToken {var token: tokenType; expandEnabled: boolean;
+   suppressPrint: boolean};
 
 { place a token into the token stream                           }
 {                                                               }
 { parameters:                                                   }
 {       token - token to put back into the token stream         }
 {       expandEnabled - can macro expansion be performed?       }
+{       suppressPrint - suppress printing with #pragma expand?  }
 
 var
    tPtr: tokenListRecordPtr;            {work pointer}
@@ -527,6 +532,7 @@ tPtr^.next := tokenList;
 tokenList := tPtr;
 tPtr^.token := token;
 tPtr^.expandEnabled := expandEnabled;
+tPtr^.suppressPrint := suppressPrint;
 tPtr^.tokenStart := tokenStart;
 tPtr^.tokenEnd := tokenEnd;
 end; {PutBackToken}
@@ -777,6 +783,8 @@ if list or (numErr <> 0) then begin
         179: msg := @'_Pragma requires one string literal argument';
         180: msg := @'decimal digit sequence expected';
         181: msg := @'''main'' may not have any function specifiers';
+        182: msg := @'''='' expected';
+        183: msg := @'array index out of bounds';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);
@@ -1626,7 +1634,7 @@ else
       end; {for}
 token.sval^.str[len+1] := chr(0);
 token.sval^.length := len+1;
-PutBackToken(token, true);
+PutBackToken(token, true, false);
 end; {BuildStringToken}
 
 
@@ -1915,7 +1923,7 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
          Error(14);
       if token.kind <> rparench then begin  {insist on a closing ')'}
          if not gettingFileName then        {put back the source stream token}
-            PutBackToken(token, true);
+            PutBackToken(token, true, false);
          Error(12);
          end; {if}
       preprocessing := lPreprocessing;
@@ -1923,7 +1931,7 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
    else begin
       Error(13);
       if not gettingFileName then       {put back the source stream token}
-         PutBackToken(token, true);
+         PutBackToken(token, true, false);
       end; {else}
    end; {if}
 if macro^.readOnly then begin           {handle special macros}
@@ -2038,7 +2046,7 @@ if macro^.readOnly then begin           {handle special macros}
 
       end; {case}
    if macro^.algorithm <> 8 then        {if not _Pragma}
-      PutBackToken(token, true);
+      PutBackToken(token, true, false);
    end {if}
 else begin
 
@@ -2126,11 +2134,11 @@ else begin
                         if expandEnabled then
                            if tcPtr^.token.name^ = macro^.name^ then
                               expandEnabled := false;
-                        PutBackToken(tcPtr^.token, expandEnabled);
+                        PutBackToken(tcPtr^.token, expandEnabled, false);
                         end; {else}
                      end {if}
                   else
-                     PutBackToken(tcPtr^.token, true);
+                     PutBackToken(tcPtr^.token, true, false);
                   tcPtr := tcPtr^.next;
                   end; {while}
                end; {else}
@@ -2145,7 +2153,7 @@ else begin
                expandEnabled := false;
          tokenStart := tlPtr^.tokenStart;
          tokenEnd := tlPtr^.tokenEnd;
-         PutBackToken(tlPtr^.token, expandEnabled);
+         PutBackToken(tlPtr^.token, expandEnabled, false);
          end; {else}
       lastPtr := tlPtr;
       tlPtr := tlPtr^.next;
@@ -3436,7 +3444,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      end; {if}
                   if token.name^ <> 'STDC' then begin
                      {Allow macro expansion, other than for STDC   }
-                     PutBackToken(token, true);
+                     PutBackToken(token, true, false);
                      NextToken;
                      end; {if}
                   if token.name^ = 'keep' then
@@ -4901,6 +4909,7 @@ var
    tPtr: tokenListRecordPtr;            {for removing tokens from putback buffer}
    tToken: tokenType;                   {for merging tokens}
    sPtr,tsPtr: gstringPtr;              {for forming string constants}
+   suppressPrint: boolean;              {suppress printing the token?}
    lLastWasReturn: boolean;             {local copy of lastWasReturn}
    codePoint: longint;                  {Unicode character value}
    chFromUCN: integer;                  {character given by UCN (converted)}
@@ -5164,6 +5173,7 @@ if tokenList <> nil then begin          {get a token put back by a macro}
    tokenList := tPtr^.next;
    expandEnabled := tPtr^.expandEnabled;
    tokenExpandEnabled := expandEnabled;
+   suppressPrint := tPtr^.suppressPrint;
    token := tPtr^.token;
    tokenStart := tPtr^.tokenStart;
    tokenEnd := tPtr^.tokenEnd;
@@ -5224,7 +5234,9 @@ if tokenList <> nil then begin          {get a token put back by a macro}
       expandMacros := lExpandMacros;
       end; {if}
    goto 2;
-   end; {if}
+   end {if}
+else
+   suppressPrint := false;
 5:                                      {skip white space}
 while charKinds[ord(ch)] in [illegal,ch_white,ch_eol,ch_pound] do begin
    if charKinds[ord(ch)] = ch_pound then begin
@@ -5738,7 +5750,7 @@ if (token.kind = stringconst) and not mergingStrings  {handle adjacent strings}
          done := false;
          end {if}
       else begin
-         PutBackToken(token, tokenExpandEnabled);
+         PutBackToken(token, tokenExpandEnabled, false);
          done := true;
          end; {else}
       token := tToken;
@@ -5753,8 +5765,10 @@ if doingPPExpression then begin
    if token.kind = typedef then
       token.kind := ident;
    end; {if}
-if printMacroExpansions and not suppressMacroExpansions then
-   PrintToken(token);                   {print the token stream}
+if printMacroExpansions then
+   if not suppressMacroExpansions then
+      if not suppressPrint then
+         PrintToken(token);             {print the token stream}
 if token.kind = otherch then
    if not (skipping or preprocessing or suppressMacroExpansions)
       or doingPPExpression then

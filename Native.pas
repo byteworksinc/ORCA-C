@@ -361,6 +361,7 @@ type
    rkind = (k1,k2,k3,k4);               {cnv record types}
 
 var
+   bp: ^byte;                           {byte pointer}
    ch: char;                            {temp storage for string constants}
    cns: realRec;                        {for converting reals to bytes}
    cnv: record                          {for converting double, real to bytes}
@@ -672,9 +673,20 @@ case mode of
                                      CnOut(cns.inSANE[j]);
                                   end;
             cgString            : begin
-                                  sptr := icptr(name)^.str;
-                                  for j := 1 to sptr^.length do
-                                     CnOut(ord(sPtr^.str[j]));
+                                  if not icptr(name)^.isByteSeq then begin
+                                     sptr := icptr(name)^.str;
+                                     for j := 1 to sptr^.length do
+                                        CnOut(ord(sPtr^.str[j]));
+                                     end {if}
+                                  else begin
+                                     lval := 0;
+                                     while lval < icptr(name)^.len do begin
+                                        bp := pointer(
+                                           ord4(icptr(name)^.data) + lval);
+                                        CnOut(bp^);
+                                        lval := lval + 1;
+                                        end;
+                                     end; {else}
                                   end;
             ccPointer           : begin
                                   if icptr(name)^.lab <> nil then begin

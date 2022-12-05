@@ -85,6 +85,16 @@ int main(void) {
         
         if (s.a || !s.b)
                 goto Fail;
+        
+        _Bool b1 = 123;
+        _Bool b2 = -123.5;
+        _Bool b3 = 0.0;
+        static _Bool b4 = 0x100000000;
+        static _Bool b5 = 0.0001;
+        static _Bool b6 = -0.0;
+        
+        if (b1 != 1 || b2 != 1 || b3 != 0 || b4 != 1 || b5 != 1 || b6 != 0)
+                goto Fail;
 
         printf ("Passed Conformance Test c99bool\n");
         return 0;
