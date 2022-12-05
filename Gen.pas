@@ -2048,9 +2048,17 @@ var
    lab1 := GenLabel;
    with op^ do begin
       if opcode = pc_ldo then begin
-         GenNative(m_cmp_abs, absolute, q, lab, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
-         GenNative(m_cpx_abs, absolute, q+2, lab, 0);
+         if smallMemoryModel then begin
+            GenNative(m_cmp_abs, absolute, q, lab, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenNative(m_cpx_abs, absolute, q+2, lab, 0);
+            end {if}
+         else begin
+            GenNative(m_cmp_long, longabsolute, q, lab, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenImplied(m_txa);
+            GenNative(m_cmp_long, longabsolute, q+2, lab, 0);
+            end; {else}
          end {if}
       else begin
          disp := LabelToDisp(r) + q;	

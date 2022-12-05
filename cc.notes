@@ -2013,6 +2013,8 @@ int foo(int[42]);
 
 223. Expressions of floating-point type could not be used in initializers for integer variables with static storage duration.  This should be allowed, with a conversion performed as in the case of assignment.
 
+224. Comparisons against four-byte values in global structures, unions, or arrays might not work correctly when using the large memory model.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
