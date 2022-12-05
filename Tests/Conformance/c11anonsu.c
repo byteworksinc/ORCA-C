@@ -55,6 +55,22 @@ int main(void) {
         if (s2p->d != 123.5)
                 goto Fail;
 
+        struct S s3 = {.b = 10, 20, .a=30};
+
+        if (s3.a != 30)
+                goto Fail;
+        if (s3.b != 10)
+                goto Fail;
+        if (s3.c != 20)
+                goto Fail;
+
+        struct S s4 = {.a=30, 10, 20.5, .d = 123.5};
+
+        if (s4.a != 30)
+                goto Fail;
+        if (s4.d != 123.5)
+                goto Fail;
+
         if (sizeof(struct S) != sizeof(struct T))
                 goto Fail;
         
