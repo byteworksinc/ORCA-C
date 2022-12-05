@@ -275,6 +275,7 @@ var
    ispstring: boolean;                  {is the current string a p-string?}
    saveNumber: boolean;                 {save the characters in a number?}
    skipping: boolean;                   {skipping tokens?}
+   stdcVersionStr: string[8];           {string form of __STDC_VERSION__}
    timeStr: longStringPtr;              {macro time string}
    tokenColumn: 0..maxint;              {column number at start of this token}
    tokenLine: 0..maxint4;               {line number at start of this token}
@@ -2031,6 +2032,16 @@ if macro^.readOnly then begin           {handle special macros}
             tokenStart := @oneStr[1];
             tokenEnd := pointer(ord4(tokenStart)+1);
             end {else}
+         end;
+
+      9: begin                          {__STDC_VERSION__}
+         token.kind := longconst;
+         token.class := longconstant;
+         token.lval := 201710;
+         token.numString := @stdcVersionStr;
+         stdcVersionStr := '201710L';
+         tokenStart := @stdcVersionStr[1];
+         tokenEnd := pointer(ord4(tokenStart)+length(stdcVersionStr));
          end;
 
       8: begin                          {_Pragma pseudo-macro}
@@ -4622,6 +4633,16 @@ mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
 mp^.algorithm := 7;
+bp := pointer(ord4(macros) + hash(mp^.name));
+mp^.next := bp^;
+bp^ := mp;
+new(mp);                                {__STDC_VERSION__}
+mp^.name := @'__STDC_VERSION__';
+mp^.parameters := -1;
+mp^.tokens := nil;
+mp^.readOnly := true;
+mp^.saved := true;
+mp^.algorithm := 9;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;

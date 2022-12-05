@@ -489,13 +489,15 @@ These behave the same as the existing tokens [, ], {, }, #, and ## (respectively
 
 16. (C99) Any or all of the arguments to a function-like macro can now be empty.  (This happened to work previously in some cases but not others.)
 
-17. (C99 and C11) Several new predefined macros have been added:
+17. (C99, C11, and C17) Several new predefined macros have been added:
 
 __STDC_HOSTED__ normally expands to the integer constant 1, indicating that ORCA/C is a hosted implementation of the C language (where the full standard library is available and the program starts by executing the main function).  However, it will expand to 0 if one of the pragmas for special types of programs with different entry points has been used.
 
 __STDC_NO_ATOMICS__, __STDC_NO_COMPLEX__, __STDC_NO_THREADS__, and __STDC_NO_VLA__ all expand to the integer constant 1.  These indicate that ORCA/C does not implement certain C language features that are optional under the C11 and later standards (atomics, complex numbers, threads, and variable length arrays).
 
 __STDC_UTF_16__ and __STDC_UTF_32__ expand to the integer constant 1.  These indicate that the char16_t and char32_t types (discussed below) use UTF-16 and UTF-32 encodings.
+
+__STDC_VERSION__ expands to the constant 201710L, indicating that ORCA/C supports the C17 language standard.  ORCA/C now supports all the major language features required by C17, although there are still some missing library functions and a few other small deviations from the standard.
 
 18. (C99) The _Bool type is now supported.  This is a boolean type that can hold the values 0 or 1.  When a value of another type is converted to _Bool, the result is 0 if the value compares equal to 0, or 1 otherwise.
 
