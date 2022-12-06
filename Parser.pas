@@ -4621,15 +4621,10 @@ var
                else
                   size := size-1;
                if size <> 0 then begin
-                  GenLdcLong(size);
-                  Gen0t(pc_stk, cgULong);
-                  GenS(pc_lca, iPtr^.iTree^.token.sval);
-                  Gen0t(pc_stk, cgULong);
-                  Gen0t(pc_bno, cgULong);
                   LoadAddress;
-                  Gen0t(pc_stk, cgULong);
-                  Gen0t(pc_bno, cgULong);
-                  Gen1tName(pc_cup, 0, cgVoid, @'memcpy');
+                  GenS(pc_lca, iPtr^.iTree^.token.sval);
+                  Gen2(pc_mov, 0, size);
+                  Gen0t(pc_pop, cgULong);
                   if isCompoundLiteral then
                      AddOperation;
                   end; {if}
