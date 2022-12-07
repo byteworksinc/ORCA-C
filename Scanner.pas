@@ -714,7 +714,7 @@ if list or (numErr <> 0) then begin
         109: msg := @'illegal math operation in a constant expression';
         110: msg := @'lint: unknown pragma';
        {111: msg := @'the & operator cannot be applied to arrays';}
-        112: msg := @'segment buffer overflow';
+       {112: msg := @'segment buffer overflow';}
         113: msg := @'all parameters must have a name';
         114: msg := @'a function call was made to a non-function';
         115: msg := @'illegal bit field declaration';
@@ -786,6 +786,7 @@ if list or (numErr <> 0) then begin
         181: msg := @'''main'' may not have any function specifiers';
         182: msg := @'''='' expected';
         183: msg := @'array index out of bounds';
+        184: msg := @'segment exceeds bank size';
          otherwise: Error(57);
          end; {case}
        writeln(msg^);

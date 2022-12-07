@@ -138,9 +138,8 @@ procedure Purge;
 implementation
 
 const
-					{NOTE: OutByte and Outword assume }
-                                        { buffSize is 128K                }
-   buffSize = 131072;                   {size of the obj buffer}
+   initialBuffSize = $10000;            {initial size of the obj buffer}
+                                        {NOTE: must be a power of two >= 64K}
    maxCBuffLen  = 191;                  {length of the constant buffer}
    OBJ = $B1;                           {object file type}
 
@@ -218,6 +217,7 @@ var
    objLen: longint;                     {# bytes used in obj buffer}
    objHandle: handle;                   {handle of the obj buffer}
    objPtr: ptr;                         {points to first byte in current segment}
+   minusBuffSize: longint;              {size of obj buffer, negated}
 
    spoolRefnum: integer;		{reference number for open file}
 
@@ -275,7 +275,7 @@ var
       
    begin {InitSpoolFile}
    if memoryCompile then		{make sure this is a disk-based compile}
-      TermError(11);
+      TermError(3);
    dsRec.pCount := 1;			{destroy any old file}
    dsRec.pathname := @objFile.theString;
    DestroyGS(dsRec);
@@ -316,6 +316,32 @@ if len <> 0 then begin
    objPtr := sPtr;
    end; {if}                      
 end; {PurgeObjBuffer}
+
+
+procedure MakeSpaceInObjBuffer;
+
+{ Make space in the object buffer (at least two bytes) by       }
+{ purging or expanding it.                                      }
+
+var
+   segOffset: longint;                  {offset into buffer of current segment}
+
+begin {MakeSpaceInObjBuffer}
+segOffset := ord4(objPtr) - ord4(objHandle^);
+
+if (segOffset >= 2) and not memoryCompile then
+   PurgeObjBuffer
+else begin
+   {resize the buffer}
+   minusBuffSize := minusBuffSize * 2;
+   HUnLock(objHandle);
+   SetHandleSize(-minusBuffSize, objHandle);
+   if ToolError <> 0 then
+      TermError(5);
+   HLock(objHandle);
+   objPtr := ptr(ord4(objHandle^) + segOffset);
+   end; {if}
+end; {MakeSpaceInObjBuffer}
 
 
 {---------------------------------------------------------------}
@@ -437,8 +463,7 @@ longPtr := pointer(objPtr);             {set the block count}
 longPtr^ := segDisp;
 objLen := objLen + segDisp;             {update the length of the obj file}
 objPtr := pointer(ord4(objHandle^)+objLen); {set objPtr}
-if objLen = buffSize then
-   PurgeObjBuffer;
+segDisp := 0;
 currentSegment := defaultSegment;       {revert to default segment name}
 end; {CloseSeg}
 
@@ -555,12 +580,13 @@ if memoryCompile then begin
    end; {if}
 
 {allocate memory for an initial buffer}
-objHandle := pointer(NewHandle(buffSize, userID, $8000, nil));
+objHandle := pointer(NewHandle(initialBuffSize, userID, $8000, nil));
 
 {set up the buffer variables}
 if ToolError = 0 then begin
    objLen := 0;
    objPtr := objHandle^;
+   minusBuffSize := -initialBuffSize;
    end {if}
 else
    TermError(5);

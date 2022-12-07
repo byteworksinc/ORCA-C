@@ -1481,9 +1481,9 @@ Out(0);                                 {end the segment}
 segDisp := 8;                           {update header}
 Out2(long(pc).lsw);
 Out2(long(pc).msw);
-if pc > $0000FFFF then
+if pc > $00010000 then
    if currentSegment <> '~ARRAYS   ' then
-      Error(112);
+      Error(184);
 blkcnt := blkcnt-4;                     {purge the segment to disk}
 segDisp := blkcnt;
 CloseSeg;

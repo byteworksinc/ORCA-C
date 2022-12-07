@@ -144,23 +144,18 @@ Out      start CodeGen
 *
 OutByte  private CodeGen
 
-         lda   objLen                   if objLen+segDisp = buffSize then
+         lda   objLen                   if objLen+segDisp >= buffSize then
          clc
          adc   segDisp
          lda   objLen+2
          adc   segDisp+2
-         and   #$FFFE
          beq   lb2
-         phx                               PurgeObjBuffer;
-         jsl   PurgeObjBuffer
+         and   minusBuffSize+2
+         beq   lb2
+         phx                               MakeSpaceInObjBuffer;
+         jsl   MakeSpaceInObjBuffer
          plx
-         lda   objLen                      check for segment overflow
          clc
-         adc   segDisp
-         lda   objLen+2
-         adc   segDisp+2
-         and   #$FFFE
-         bne   lb2a
 lb2      anop                           carry must be clear
          lda   objPtr+2                 p := pointer(ord4(objPtr)+segDisp);
          adc   segDisp+2
@@ -183,13 +178,6 @@ lb2      anop                           carry must be clear
          adc   #4
          tcs
          rts
-
-lb2a     lda   #$8000                   handle a segment overflow
-         sta   segDisp
-         stz   segDisp+2
-         ph2   #112
-         jsl   Error
-         rts
          end
 
 ****************************************************************
@@ -203,25 +191,20 @@ lb2a     lda   #$8000                   handle a segment overflow
 *
 OutWord  private CodeGen
 
-         lda   objLen                   if objLen+segDisp+1 = buffSize then
+         lda   objLen                   if objLen+segDisp+1 >= buffSize then
          sec
          adc   segDisp
          lda   objLen+2
          adc   segDisp+2
-         and   #$FFFE
          beq   lb2
-         phx                               PurgeObjBuffer;
-         jsl   PurgeObjBuffer
+         and   minusBuffSize+2
+         beq   lb2
+         phx                               MakeSpaceInObjBuffer;
+         jsl   MakeSpaceInObjBuffer
          plx
-         lda   objLen                      check for segment overflow
-         sec
-         adc   segDisp
-         lda   objLen+2
-         adc   segDisp+2
-         and   #$FFFE
-         bne   lb3
-lb2      anop                          carry must be clear
-         lda   objPtr+2                p := pointer(ord4(objPtr)+segDisp);
+         clc
+lb2      anop                           carry must be clear
+         lda   objPtr+2                 p := pointer(ord4(objPtr)+segDisp);
          adc   segDisp+2
          pha
          lda   objPtr
@@ -239,12 +222,5 @@ lb2      anop                          carry must be clear
          clc
          adc   #4
          tcs
-         rts
-
-lb3      ph2   #112                     flag segment overflow error
-         jsl   Error
-         lda   #$8000
-         sta   segDisp
-         stz   segDisp+2
          rts
          end
