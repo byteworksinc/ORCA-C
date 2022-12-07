@@ -217,9 +217,8 @@ var
 
    objLen: longint;                     {# bytes used in obj buffer}
    objHandle: handle;                   {handle of the obj buffer}
-   objPtr: ptr;                         {pointer to the next spot in the obj buffer}
+   objPtr: ptr;                         {points to first byte in current segment}
 
-   segStart: ptr;			{points to first byte in current segment}
    spoolRefnum: integer;		{reference number for open file}
 
 {---------------------------------------------------------------}
@@ -303,7 +302,7 @@ begin {PurgeObjBuffer}
 if spoolRefnum = 0 then			{make sure the spool file exists}
    InitSpoolFile;
 sPtr := objHandle^;			{determine size of completed segments}
-len := ord4(segStart) - ord4(sPtr);
+len := ord4(objPtr) - ord4(sPtr);
 if len <> 0 then begin
    wrRec.pcount := 4;			{write completed segments}
    wrRec.refnum := spoolRefnum;
@@ -313,9 +312,8 @@ if len <> 0 then begin
    if ToolError <> 0 then		{check for write errors}
       TermError(9);
    objLen := 0;				{adjust file pointers}
-   BlockMove(segStart, sPtr, segDisp);
+   BlockMove(objPtr, sPtr, segDisp);
    objPtr := sPtr;
-   segStart := sPtr;
    end; {if}                      
 end; {PurgeObjBuffer}
 
@@ -439,7 +437,6 @@ longPtr := pointer(objPtr);             {set the block count}
 longPtr^ := segDisp;
 objLen := objLen + segDisp;             {update the length of the obj file}
 objPtr := pointer(ord4(objHandle^)+objLen); {set objPtr}
-segStart := objPtr;
 if objLen = buffSize then
    PurgeObjBuffer;
 currentSegment := defaultSegment;       {revert to default segment name}
@@ -526,7 +523,6 @@ procedure OpenSeg;
 
 begin {OpenSeg}
 segDisp := 0;
-segStart := objPtr;
 end; {OpenSeg}
 
 
