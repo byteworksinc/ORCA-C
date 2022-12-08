@@ -940,6 +940,14 @@ wordHash start                          reserved word hash table
          dc    i'shortsy,typedefsy,unionsy,voidsy,whilesy,succwhilesy'
          end
 
+stdcVersion start                       __STDC_VERSION__ values
+
+         dc    i4'199409'               c95
+         dc    i4'199901'               c99
+         dc    i4'201112'               c11
+         dc    i4'201710'               c17
+         end
+
 macRomanToUCS start
          dc    i2'$00C4, $00C5, $00C7, $00C9, $00D1, $00D6, $00DC, $00E1'
          dc    i2'$00E0, $00E2, $00E4, $00E3, $00E5, $00E7, $00E9, $00E8'

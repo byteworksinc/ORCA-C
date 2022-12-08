@@ -2038,9 +2038,9 @@ if macro^.readOnly then begin           {handle special macros}
       9: begin                          {__STDC_VERSION__}
          token.kind := longconst;
          token.class := longconstant;
-         token.lval := 201710;
+         token.lval := stdcVersion[cStd];
          token.numString := @stdcVersionStr;
-         stdcVersionStr := '201710L';
+         stdcVersionStr := concat(cnvis(token.lval),'L');
          tokenStart := @stdcVersionStr[1];
          tokenEnd := pointer(ord4(tokenStart)+length(stdcVersionStr));
          end;
@@ -3692,11 +3692,12 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                   goto 2;
                   end; {if}
             'w':
-               if token.name^ = 'warning' then begin
-                  if tskipping then goto 2;
-                  DoError(false);
-                  goto 2;
-                  end; {if}
+               if token.name^ = 'warning' then
+                  if (cStd >= c23) or not strictMode then begin
+                     if tskipping then goto 2;
+                     DoError(false);
+                     goto 2;
+                     end; {if}
             otherwise: Error(57);
             end; {case}
          end;
@@ -3797,7 +3798,7 @@ procedure DoNumber {scanWork: boolean};
 {             after sequence                                  }
 {     workString - string to take numbers from                }
 
-label 1;
+label 1,2;
 
 var
    c2: char;                            {next character to process}
@@ -3916,17 +3917,23 @@ else begin
    if c2 in ['x','X','b','B'] then      {detect hex numbers}
       if stringIndex = 1 then
          if numString[1] = '0' then begin
-            stringIndex := 2;
             c2 := chr(ord(c2) & $5f);
+            if c2 = 'X' then
+               isHex := true
+            else {if c2 = 'B' then}
+               if (cStd >= c23) or not strictMode then
+                  isBin := true
+               else
+                  goto 2;
+            stringIndex := 2;
             numString[2] := c2;
-            if c2 = 'X' then isHex := true;
-            if c2 = 'B' then isBin := true;
             NextChar;
             GetDigits;
             if not isHex or not (c2 in ['.','p','P']) then
                goto 1;
             end; {if}
    end;
+2:
 if c2 = '.' then begin                  {handle a decimal}
    stringIndex := stringIndex+1;
    numString[stringIndex] := '.';
@@ -4241,6 +4248,7 @@ var
    lch: char;                           {next command line character}
    cp: ptr;                             {character pointer}
    i: 0..hashSize;                      {loop variable}
+   stdName: stringPtr;                  {selected C standard}
    tPtr: tokenListRecordPtr;            {for building macros from command line}
 
    mp: macroRecordPtr;                  {for building the predefined macros}
@@ -4477,6 +4485,8 @@ pragmaKeepFile := nil;                  {no #pragma keep file so far}
 doingFakeFile := false;                 {not doing a fake file}
 doingDigitSequence := false;            {not expecting a digit sequence}
 preprocessing := false;                 {not preprocessing}
+cStd := c17;                            {default to C17}
+strictMode := false;                    {...with extensions}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
@@ -4637,16 +4647,6 @@ mp^.algorithm := 7;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
-new(mp);                                {__STDC_VERSION__}
-mp^.name := @'__STDC_VERSION__';
-mp^.parameters := -1;
-mp^.tokens := nil;
-mp^.readOnly := true;
-mp^.saved := true;
-mp^.algorithm := 9;
-bp := pointer(ord4(macros) + hash(mp^.name));
-mp^.next := bp^;
-bp^ := mp;
 new(mp);                                {_Pragma pseudo-macro}
 mp^.name := @'_Pragma';
 mp^.parameters := 1;
@@ -4762,7 +4762,7 @@ repeat
             end {if}
          else
             FlagErrorAndSkip;
-         end {if}
+         end {else if}
       else if lch in ['p','P'] then begin
          NextCh;                        {get the filename}
          if lch = '"' then begin
@@ -4775,8 +4775,42 @@ repeat
             end {if}
          else
             FlagErrorAndSkip;
-         end {if}
-      else                              {not -d, -i, -p: flag the error}
+         end {else if}
+      else if lch in ['s','S'] then begin
+         NextCh;
+         stdName := GetWord;
+         if (stdName^ = 'c89compat') or (stdName^ = 'c90compat') then begin
+            cStd := c89;
+            strictMode := false;
+            end {if}
+         else if (stdName^ = 'c94compat') or (stdName^ = 'c95compat') then begin
+            cStd := c95;
+            strictMode := false;
+            end {else if}
+         else if (stdName^ = 'c99compat') then begin
+            cStd := c99;
+            strictMode := false;
+            end {else if}
+         else if (stdName^ = 'c11compat') then begin
+            cStd := c11;
+            strictMode := false;
+            end {else if}
+         else if (stdName^ = 'c11') then begin
+            cStd := c11;
+            strictMode := true;
+            end {else if}
+         else if (stdName^ = 'c17compat') or (stdName^ = 'c18compat') then begin
+            cStd := c17;
+            strictMode := false;
+            end {else if}
+         else if (stdName^ = 'c17') or (stdName^ = 'c18') then begin
+            cStd := c17;
+            strictMode := true;
+            end {else if}
+         else
+            FlagErrorAndSkip;
+         end {else if}
+      else                              {not -d, -i, -p, -s: flag the error}
          FlagErrorAndSkip;
       end {if}
    else if lch <> chr(0) then begin
@@ -4787,6 +4821,42 @@ until lch = chr(0);                     {if more characters, loop}
 if numErr <> 0 then
    WriteLine;
 doingCommandLine := false;
+
+{Standard-dependent configuration}
+if cStd >= c95 then begin
+   new(mp);                             {add __STDC_VERSION__ macro}
+   mp^.name := @'__STDC_VERSION__';
+   mp^.parameters := -1;
+   mp^.tokens := nil;
+   mp^.readOnly := true;
+   mp^.saved := true;
+   mp^.algorithm := 9;
+   bp := pointer(ord4(macros) + hash(mp^.name));
+   mp^.next := bp^;
+   bp^ := mp;
+   end; {if}
+if cStd < c99 then begin
+   allowSlashSlashComments := false;
+   allowMixedDeclarations := false;
+   c99Scope := false;
+   end; {if}
+if strictMode then begin
+   extendedKeywords := false;
+   extendedParameters := false;
+   looseTypeChecks := false;
+   if cStd >= c99 then
+      lint := lint | lintC99Syntax;
+   new(mp);                             {add __KeepNamespacePure__ macro}
+   mp^.name := @'__KeepNamespacePure__';
+   mp^.parameters := -1;
+   mp^.tokens := nil;
+   mp^.readOnly := false;
+   mp^.saved := true;
+   mp^.algorithm := 0;
+   bp := pointer(ord4(macros) + hash(mp^.name));
+   mp^.next := bp^;
+   bp^ := mp;
+   end; {if}
 end; {InitScanner}
 
 

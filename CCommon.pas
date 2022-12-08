@@ -142,6 +142,9 @@ type
        end;
    gsosOutStringPtr = ^gsosOutString;
    
+   { C language standards }
+   cStandardEnum = (c89,c95,c99,c11,c17,c23);
+   
    { The base types include two main categories.  The values starting    }
    { with cg are defined in the code generator, and may be passed to the }
    { code generator for resolution.  The cc types are used internally in }
@@ -486,6 +489,7 @@ var
    bofPtr: ptr;                         {pointer to the start of sourceFile}
    chPtr: ptr;                          {pointer to the next character in the file}
    changedSourceFile: boolean;          {source file changed in function?}
+   cStd: cStandardEnum;                 {selected C standard}
    debugSourceFileGS: gsosOutString;    {debug source file name}
                                         {debugType is also in SCANNER.ASM}
    debugType: (stop,break,autogo);      {line number debug types}
@@ -510,6 +514,7 @@ var
    partialFileGS: gsosOutString;        {partial compile list}
    pragmaKeepFile: gsosOutStringPtr;    {filename specified in #pragma keep}
    sourceFileGS: gsosOutString;         {presumed source file name}
+   strictMode: boolean;                 {strictly follow standard, without extensions?}
    tempList: tempPtr;                   {list of temp work variables}
    longlong0: longlong;                 {the value 0 as a longlong}
    longlong1: longlong;                 {the value 1 as a longlong}

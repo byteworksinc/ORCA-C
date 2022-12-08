@@ -823,7 +823,8 @@ currentSegment := '          ';         {start with the blank segment}
 defaultSegment := '          ';
 smallMemoryModel := true;               {small memory model}
 dataBank := false;                      {don't save/restore data bank}
-strictVararg := not cLineOptimize;      {save/restore caller's stack around vararg}
+strictVararg :=                         {save/restore caller's stack around vararg}
+   (not cLineOptimize) or strictMode;
 saveStack := not cLineOptimize;         {save/restore caller's stack reg}
 checkStack := false;                    {don't check stack for stack errors}
 stackSize := 0;				{default to the launcher's stack size}

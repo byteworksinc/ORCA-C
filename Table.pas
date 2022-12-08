@@ -22,6 +22,7 @@ var
    charSym: array[minChar..maxChar] of tokenEnum; {symbols for single char symbols}
    reservedWords: array[_Alignassy..whilesy] of string[14]; {reserved word strings}
    wordHash: array[0..25] of tokenEnum; {for hashing reserved words}
+   stdcVersion: array[c95..c17] of longint; {__STDC_VERSION__ values}
 
                                         {from ASM.PAS}
                                         {------------}
