@@ -7210,17 +7210,19 @@ procedure GenTree {op: icptr};
    { Generate code for a pc_shl, pc_shr or pc_usr		}
 
    var
-      i,op1,op2,num: integer;		{temp variables}
+      i,op1,op2,op3,num: integer;	{temp variables}
 
    begin {GenShlShrUsr}
    {get the standard native operations}
    if op^.opcode = pc_shl then begin
       op1 := m_asl_a;
       op2 := m_lsr_a;
+      op3 := m_ror_a;
       end {if}
    else begin
       op1 := m_lsr_a;
       op2 := m_asl_a;
+      op3 := m_rol_a;
       end; {else}
 
    {take short cuts if they are legal}
@@ -7229,18 +7231,29 @@ procedure GenTree {op: icptr};
       if (num > 16) or (num < -16) then
 	 GenNative(m_lda_imm, immediate, 0, nil, 0)
       else if num > 0 then begin
-	 GenTree(op^.left);
-         if num >= 8 then begin
-            GenImplied(m_xba);
-            if op1 = m_lsr_a then
-               i := $00FF
+         GenTree(op^.left);
+         if num in [13..15] then begin
+            for i := 1 to 17-num do
+               GenImplied(op3);
+            if op^.opcode = pc_shl then
+               i := $ffff << num
             else
-               i := $FF00;
+               i := $7fff >> (num-1);
             GenNative(m_and_imm, immediate, i, nil, 0);
-            num := num-8;
-            end; {if}
-	 for i := 1 to num do
-            GenImplied(op1);
+            end {if}
+         else begin
+            if num >= 8 then begin
+               GenImplied(m_xba);
+               if op1 = m_lsr_a then
+                  i := $00FF
+               else
+                  i := $FF00;
+               GenNative(m_and_imm, immediate, i, nil, 0);
+               num := num-8;
+               end; {if}
+            for i := 1 to num do
+               GenImplied(op1);
+            end; {else}
 	 end {else if}
       else if num < 0 then begin
 	 GenTree(op^.left);
