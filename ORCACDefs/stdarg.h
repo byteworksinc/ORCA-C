@@ -31,7 +31,7 @@ typedef char *__va_list[2];
 
 typedef __va_list va_list;
 #define va_end(ap) __record_va_info(ap)
-#define va_start(ap,LastFixedParm) ((void) ((ap)[0] = (char *) (&LastFixedParm + 1), (ap)[1] = (char *)&__orcac_va_info))
+#define va_start(ap,LastFixedParm) ((void) ((ap)[0] = (char *)__orcac_va_info[1], (ap)[1] = (char *)&__orcac_va_info))
 #define va_arg(ap,type) _Generic(*(type *)0, \
         double: (type)((long double *)((ap)[0] += sizeof(long double)))[-1], \
         default: ((type *)((ap)[0] += sizeof(type)))[-1])
