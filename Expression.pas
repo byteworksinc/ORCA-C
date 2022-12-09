@@ -3251,6 +3251,7 @@ var
       fntype: typePtr;                  {temp function type}
       ftree: tokenPtr;                  {function address tree}
       ftype: typePtr;                   {function type}
+      hasVarargs: boolean;              {varargs call with 1+ varargs passed?}
       i: integer;                       {loop variable}
       indirect: boolean;                {is this an indirect call?}
       ldoDispose: boolean;              {local copy of doDispose}
@@ -3332,8 +3333,11 @@ var
             tp := tp^.right;
             end; {while}
          tp := parms;
-         if (pCount > 0) or ((pCount <> 0) and not ftype^.varargs) then
-            Error(85);
+         if pCount <> 0 then
+            if ftype^.varargs and (pcount < 0) then
+               hasVarargs := true
+            else
+               Error(85);
          end; {if}
 
         tp := parms;
@@ -3402,6 +3406,7 @@ var
    begin {FunctionCall}
    {find the type of the function}
    indirect := true;                    {assume an indirect call}
+   hasVarargs := false;                 {assume no variable arguments}
    ftree := tree^.left;                 {get the function tree}
    if ftree^.token.kind = ident then    {check for direct calls}
       if ftree^.id^.itype^.kind = functionType then begin
@@ -3438,7 +3443,7 @@ var
             fntype := expressionType;
             GenerateCode(ftree);
             expressionType := fntype;
-            Gen1t(pc_cui, ord(fType^.varargs and strictVararg),
+            Gen1t(pc_cui, ord(hasVarargs and strictVararg),
                UsualUnaryConversions);
             end {if}
 	 else begin
@@ -3450,10 +3455,10 @@ var
         	  if fName^[i] in ['a'..'z'] then
                      fName^[i] := chr(ord(fName^[i]) & $5F);
                end; {if}
-            Gen1tName(pc_cup, ord(fType^.varargs and strictVararg),
+            Gen1tName(pc_cup, ord(hasVarargs and strictVararg),
                UsualUnaryConversions, fname);
             end; {else}
-         if fType^.varargs then
+         if hasVarargs then
             hasVarargsCall := true;
 	 end {if}
       else
