@@ -1659,6 +1659,7 @@ var
       tildech,                          {~}
       excch,                            {!}
       uminus,                           {unary -}
+      uplus,                            {unary +}
       uand,                             {unary &}
       uasterisk: begin                  {unary *}
          op^.left := Pop;
@@ -1810,6 +1811,7 @@ var
                      ekind := intconst;
                      end;
                   uminus      : op1 := -op1;                    {unary -}
+                  uplus       : ;                               {unary +}
                   uasterisk   : Error(79);                      {unary *}
                   otherwise: Error(57);
                   end; {case}
@@ -1852,6 +1854,7 @@ var
                      if llop1.lo = 0 then
                         llop1.hi := llop1.hi + 1;
                      end;
+                  uplus       : ;                               {unary +}
                   uasterisk   : Error(79);                      {unary *}
                   otherwise: Error(57);
                   end; {case}
@@ -1879,6 +1882,11 @@ var
                      op^.token.class := realConstant;
                      op^.token.kind := ekind;
                      op^.token.rval := -rop1;
+                     end;
+                  uplus       : begin                        {unary +}
+                     op^.token.class := realConstant;
+                     op^.token.kind := ekind;
+                     op^.token.rval := rop1;
                      end;
                   excch       : begin                        {!}
                      op^.token.class := intConstant;
@@ -2278,10 +2286,7 @@ if token.kind in startExpression then begin
                   asteriskch: token.kind := uasterisk;
                   minusch   : token.kind := uminus;
                   andch     : token.kind := uand;
-                  plusch    : begin
-                              NextToken;
-                              goto 2;
-                              end;
+                  plusch    : token.kind := uplus;
                   otherwise : Error(57);
                   end; {case}
          if icp[token.kind] = notAnOperation then
@@ -2305,7 +2310,7 @@ if token.kind in startExpression then begin
                   end; {if}
             if token.kind in         {make sure we get what we want}
                [plusplusop,minusminusop,sizeofsy,_Alignofsy,tildech,excch,
-                uasterisk,uminus,uand] then begin
+                uasterisk,uminus,uplus,uand] then begin
                if not expectingTerm then begin
                   Error(38);
                   Skip;
@@ -4484,6 +4489,19 @@ case tree^.token.kind of
             error(66);
          end; {case}
       end; {case uminus}
+
+   uplus: begin                         {unary +}
+      GenerateCode(tree^.left);
+      if expressionType^.kind <> scalarType then
+         error(66)
+      else case UsualUnaryConversions of
+         cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad,
+         cgReal,cgDouble,cgComp,cgExtended:
+            ;
+         otherwise:
+            error(66);
+         end; {case}
+      end; {case uplus}
 
    tildech: begin                       {~}
       GenerateCode(tree^.left);

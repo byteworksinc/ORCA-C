@@ -311,7 +311,8 @@ charSym  start                          single character symbols
          enum  (bareqop,poundpoundop,dotdotdotsy)
          enum  (eolsy,eofsy)            control characters
          enum  (typedef)                user types
-         enum  (uminus,uand,uasterisk)  converted operations
+!                                       converted operations
+         enum  (uminus,uplus,uand,uasterisk)
          enum  (parameteroper,castoper,opplusplus,opminusminus,compoundliteral)
          enum  (macroParm)              macro language
 
@@ -470,6 +471,7 @@ icp      start                          in-coming priority for expression
          dc    i1'200'                  eofsy
          dc    i1'200'                  typedef
          dc    i1'16'                   uminus
+         dc    i1'16'                   uplus
          dc    i1'16'                   uand
          dc    i1'16'                   uasterisk
          dc    i1'200'                  parameteroper
@@ -647,6 +649,7 @@ isp      start                          in stack priority for expression
          dc    i1'0'                    eofsy
          dc    i1'0'                    typedef
          dc    i1'16'                   uminus
+         dc    i1'16'                   uplus
          dc    i1'16'                   uand
          dc    i1'16'                   uasterisk
          dc    i1'0'                    parameteroper

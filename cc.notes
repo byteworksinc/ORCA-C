@@ -2049,6 +2049,8 @@ int foo(int[42]);
 
 225. According to the C99 and later standards, a line continuation with \ should let a // comment continue to the next line.  ORCA/C now behaves accordingly.
 
+226. The unary + operator should apply the integer promotions to its operand, e.g. promoting char to int.  This can affect the value of sizeof(+expression).
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

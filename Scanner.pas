@@ -1060,7 +1060,9 @@ case token.kind of
 
    uminus:           write('-');
 
-   uand:             write('+');
+   uplus:            write('+');
+
+   uand:             write('&');
 
    uasterisk:        write('*');
 

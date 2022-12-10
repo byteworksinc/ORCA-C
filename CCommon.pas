@@ -202,7 +202,8 @@ type
                otherch,                 {other non-whitespace char (pp-token)}
                eolsy,eofsy,             {control characters}
                typedef,                 {user types}
-               uminus,uand,uasterisk,   {converted operations}
+                                        {converted operations}
+               uminus,uplus,uand,uasterisk,
                parameteroper,castoper,opplusplus,opminusminus,compoundliteral,
                macroParm);              {macro language}
 
