@@ -2318,11 +2318,17 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
 
       { set up the data bank register                           }
 
+      var
+         lisJSL: boolean;               {saved copy of isJSL}
+
       begin {SetDataBank}
+      lisJSL := isJSL;
+      isJSL := false;
       CnOut(m_pea);
       RefName(@'~GLOBALS', 0, 2, -8);
       CnOut(m_plb);
       CnOut(m_plb);
+      isJSL := lisJSL;
       end; {SetDataBank}
 
 
@@ -2331,6 +2337,12 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
    fname2.theString.theString := concat(fname1.theString.theString, '.root');
    fname2.theString.size := length(fname2.theString.theString);
    OpenObj(fname2);
+
+   {force this to be a static segment}
+   if (segmentKind & $8000) <> 0 then begin
+      currentSegment := '          ';
+      segmentKind := 0;
+      end; {if}
 
    {write the header}
    InitNative;
@@ -2353,6 +2365,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       CnOut(0);
 
       {glue code for calling open routine}
+      isJSL := true;
       CnOut(m_phb);
       SetDataBank;
       CnOut(m_jsl);
@@ -2393,6 +2406,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       RefName(initName, 0, 3, 0);
       CnOut(m_plb);
       CnOut(m_rtl);
+      isJSL := false;
       end
 
    {classic desk accessory initialization}
@@ -2410,6 +2424,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       RefName(lab, menuLen + dispToCDAClose, 4, 0);
 
       {glue code for calling open routine}
+      isJSL := true;
       CnOut(m_pea);
       CnOut2(1);
       CnOut(m_jsl);
@@ -2436,6 +2451,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       RefName(@'~DAID', 0, 3, 0);
       CnOut(m_plb);
       CnOut(m_rtl);
+      isJSL := false;
       end
 
    {control panel device initialization}
@@ -2493,6 +2509,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
    else begin
 
       {write the initial JSL}
+      isJSL := true;
       CnOut(m_jsl);
       if rtl then
          RefName(@'~_BWSTARTUP4', 0, 3, 0)
@@ -2515,6 +2532,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
          RefName(@'~C_SHUTDOWN2', 0, 3, 0)
       else
          RefName(@'~C_SHUTDOWN', 0, 3, 0);
+      isJSL := false;
       end;
 
    {finish the current segment}
@@ -2529,6 +2547,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
    begin {SetStack}
    if stackSize <> 0 then begin
       currentSegment := '~_STACK   ';	{write the header}
+      segmentKind := 0;
       Header(@'~_STACK', $4012, 0);
       Out($F1);				{write the DS record to reserve space}
       Out2(stackSize);

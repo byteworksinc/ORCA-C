@@ -3701,6 +3701,7 @@ var
          end {if}
       else
          segmentKind := 0;
+      defaultSegmentKind := segmentKind;
       Match(semicolonch,22);
       end {if}
    else begin

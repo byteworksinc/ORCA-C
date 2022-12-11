@@ -933,6 +933,7 @@ procedure DoGlobals;
                      currentSegment := '          '
                   else
                      currentSegment := '~ARRAYS   ';
+                  segmentKind := 0;     {this segment is not dynamic!}
                   Gen2Name(dc_str, $4000, 1, @'~ARRAYS');
                   didOne := true;
                   end; {if}
@@ -1046,14 +1047,12 @@ begin {DoGlobals}
 {if printSymbols then                 {debug}
 {   PrintTable(globalTable);          {debug}
 
-{these segments are not dynamic!}
-segmentKind := 0;
-
 {declare the ~globals segment, which holds non-array data types}
 if smallMemoryModel then
    currentSegment := '          '
 else
    currentSegment := '~GLOBALS  ';
+segmentKind := 0;                       {this segment is not dynamic!}
 Gen2Name(dc_str, $4000, 0, @'~GLOBALS');
 GenGlobals;
 Gen0(dc_enp);

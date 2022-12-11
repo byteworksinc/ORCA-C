@@ -340,6 +340,7 @@ var
    commonSubexpression: boolean;        {do common subexpression removal?}
    currentSegment,defaultSegment: segNameType; {current & default seg names}
    segmentKind: integer;                {kind field of segment (ored with start/data)}
+   defaultSegmentKind: integer;         {default segment kind}
    debugFlag: boolean;                  {generate debugger calls?}
    debugStrFlag: boolean;               {gsbug/niftylist debug names?}
    dataBank: boolean;                   {save, restore data bank?}
@@ -820,6 +821,8 @@ isXCMD := false;
 codeGeneration := false;                {code generation is not turned on yet}
 currentSegment := '          ';         {start with the blank segment}
 defaultSegment := '          ';
+segmentKind := 0;                       {default to static code segments}
+defaultSegmentKind := 0;
 smallMemoryModel := true;               {small memory model}
 dataBank := false;                      {don't save/restore data bank}
 strictVararg :=                         {save/restore caller's stack around vararg}

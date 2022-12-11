@@ -464,7 +464,8 @@ longPtr^ := segDisp;
 objLen := objLen + segDisp;             {update the length of the obj file}
 objPtr := pointer(ord4(objHandle^)+objLen); {set objPtr}
 segDisp := 0;
-currentSegment := defaultSegment;       {revert to default segment name}
+currentSegment := defaultSegment;       {revert to default segment name & kind}
+segmentKind := defaultSegmentKind;
 end; {CloseSeg}
 
 

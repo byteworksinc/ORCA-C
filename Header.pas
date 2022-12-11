@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 36;                 {version number of .sym file format}
+   symFileVersion = 37;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -887,6 +887,7 @@ procedure EndInclude {chPtr: ptr};
                         WriteByte(currentSegment[i]);
                         end; {for}
                      WriteWord(segmentKind);
+                     WriteWord(defaultSegmentKind);
                      end;
 
                   p_unix: WriteByte(ord(unix_1));
@@ -1563,6 +1564,7 @@ var
                currentSegment[i] := chr(ReadByte);
                end; {for}
             segmentKind := ReadWord;
+            defaultSegmentKind := ReadWord;
             end;
 
          p_unix: unix_1 := boolean(ReadByte);

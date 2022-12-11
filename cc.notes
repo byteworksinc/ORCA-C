@@ -2055,6 +2055,8 @@ int foo(int[42]);
 
 227. If an unsigned 16-bit value was divided by a constant 1000 or larger, and the result was assigned to two different variables (e.g. a = b = c/1000), incorrect code would be generated when using native code peephole optimization.  (This was a regression introduced in ORCA/C 2.2.0 B6.)
 
+228. If a segment directive specifying a dynamic segment was used before the first function in the main source file, an invalid .root file would be generated, causing the resulting program to crash.  (Note that having your program's main function in a dynamic segment serves little purpose and will cause an unrecoverable error if there is not enough free memory to load it.  Also, CDevs, XCMDs, and NBAs cannot use dynamic segments.)
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
