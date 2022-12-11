@@ -1779,7 +1779,35 @@ var
                      operand := operand+1;
                      Remove(ns+1);
                      end; {if}
-                              
+
+         m_ldx_dir:
+            if npeep[ns+1].opcode = m_txs then  {optimize stack repair code}
+               if npeep[ns+2].opcode = m_tsx then begin
+                  if npeep[ns+3].opcode = m_stx_dir then
+                     if npeep[ns+3].operand = npeep[ns].operand then begin
+                        Remove(ns+2);
+                        Remove(ns+2);
+                        end; {if}
+                  end {if}
+               else if npeep[ns+2].opcode in
+                  [m_sta_dir,m_sta_abs,m_sta_long,m_sta_indl,m_tyx] then begin
+                  if (npeep[ns+2].opcode <> m_sta_dir)
+                     or (npeep[ns+2].operand <> npeep[ns].operand) then
+                     if npeep[ns+3].opcode = m_tsx then
+                        if npeep[ns+4].opcode = m_stx_dir then
+                           if npeep[ns+4].operand = npeep[ns].operand then begin
+                              Remove(ns+3);
+                              Remove(ns+3);
+                              if npeep[ns+2].opcode = m_tyx then
+                                 Remove(ns+2);
+                              end; {if}
+                  end {else if}
+               else if npeep[ns+2].opcode = m_tsc then begin
+                  npeep[ns].opcode := m_lda_dir;
+                  npeep[ns+1].opcode := m_tcs;
+                  Remove(ns+2);
+                  end; {else if}
+
          m_pei_dir:
             if npeep[ns+1].opcode = m_pla then begin
                opcode := m_lda_dir;
@@ -1953,6 +1981,26 @@ var
             else if npeep[ns+1].opcode in [m_pea,m_stz_dir,m_stz_abs] then
                if npeep[ns+2].opcode = m_tdc then
                   Remove(ns+2);
+
+         m_tcs:
+            if npeep[ns+1].opcode = m_tsx then
+               if npeep[ns+2].opcode = m_stx_dir then begin
+                  npeep[ns+2].opcode := m_sta_dir;
+                  Remove(ns+1);
+                  end; {if}
+
+         m_tsx:
+            if npeep[ns+1].opcode = m_stx_dir then
+               if npeep[ns+2].opcode = m_pei_dir then
+                  if npeep[ns+3].opcode = m_tsx then
+                     if npeep[ns+4].opcode = m_stx_dir then
+                        if npeep[ns+1].operand = npeep[ns+2].operand then
+                           if npeep[ns+1].operand = npeep[ns+4].operand then
+                              begin
+                              npeep[ns+1].opcode := m_phx;
+                              npeep[ns+1].mode := implied;
+                              Remove(ns+2);
+                              end; {if}
 
          otherwise: ;
 
