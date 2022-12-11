@@ -1561,7 +1561,7 @@ var
             [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvs,m_jml,
              m_jmp_indX,m_jsl,m_lda_abs,m_lda_absx,m_lda_dir,m_lda_dirx,
              m_lda_imm,m_lda_indl,m_lda_indly,m_lda_long,m_lda_longx,m_lda_s,
-             m_mvn,m_pla,m_rtl,m_rts,m_tdc,m_txa,m_tya,m_tsc,d_end,d_bmov,
+             m_pla,m_rtl,m_rts,m_tdc,m_txa,m_tya,m_tsc,d_end,d_bmov,
              d_add,d_pin,d_wrd,d_sym,d_cns] then begin
             ASafe := true;
             goto 1;
@@ -1890,12 +1890,16 @@ var
 
          m_tya:
             if npeep[ns+1].opcode = m_sta_dir then begin
-               npeep[ns+1].opcode := m_sty_dir;
-               Remove(ns);
+               if ASafe(ns+2) then begin
+                  npeep[ns+1].opcode := m_sty_dir;
+                  Remove(ns);
+                  end; {if}
                end {if}
             else if npeep[ns+1].opcode = m_sta_abs then begin
-               npeep[ns+1].opcode := m_sty_abs;
-               Remove(ns);
+               if ASafe(ns+2) then begin
+                  npeep[ns+1].opcode := m_sty_abs;
+                  Remove(ns);
+                  end; {if}
                end; {else if}
 
          m_tyx:
