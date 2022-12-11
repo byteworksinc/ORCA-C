@@ -3542,8 +3542,6 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      loopOptimizations := odd(val >> 5);
                      strictVararg := not odd(val >> 6);
                      fastMath := odd(val >> 7);
-                     if saveStack then
-                        npeepHole := false;
                      if token.kind <> eolsy then
                         Error(11);
                      end {else if}

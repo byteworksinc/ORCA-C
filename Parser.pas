@@ -4035,7 +4035,6 @@ if isFunction then begin
          end; {if}
       Gen2Name(dc_str, segType, 0, fName);
       doingMain := variable^.name^ = 'main';
-      hasVarargsCall := false;
       firstCompoundStatement := true;
       Gen0 (dc_pin);
       if not isAsm then

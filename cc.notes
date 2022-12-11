@@ -1460,7 +1460,9 @@ Contrary to all common sense, the ANSI standard says this statement is legal IF 
 
 Beginning with ORCA/C 2.1, this statement will work.  Note that in keeping with the ANSI standard, this call and others like it only work if the function is properly defined with a prototyped variable argument parameter list.
 
-There are two undesirable side effects, though.  First, all function calls to a variable argument function are surrounded by extra stack repair code, even if you set optimization bit 3.  (This bit turns off stack repair code.)  This increases code size and slows a program down.  Sometimes these changes are noticeable, or even dramatic.  Second, native code peephole optimization is always disabled when stack repair code is in use, so you loose another optimization if you do not use this one.
+There is an undesirable side effect, though.  All function calls to a variable argument function are surrounded by extra stack repair code, even if you set optimization bit 3.  (This bit turns off stack repair code.)  This increases code size and slows a program down.  Sometimes these changes are noticeable, or even dramatic.
+
+Prior to ORCA/C 2.2.0 B7, native code peephole optimization was always disabled when stack repair code was in use, so you would also lose another optimization if you did not use this one.  As of ORCA/C 2.2.0 B7, this is no longer the case: native code peephole optimization can be used without disabling stack repair code.
 
 Turning this optimization on means ORCA/C is no longer strictly in compliance with the ANSI standard.  For strict compliance, you should leave stack repair code on for variable argument functions.  You can add any or all of the other optimizations and remain ANSI compliant, so this pragma will work with all ANSI C programs:
 
