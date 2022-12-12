@@ -2456,29 +2456,35 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
 
    {control panel device initialization}
    else if isCDev then begin
-      CnOut(m_pea);
-      CnOut2(1);
+      CnOut(m_phb);                     {save data bank}
+      SetDataBank;                      {set data bank}
+      CnOut(m_plx);                     {get RTL address & original data bank}
+      CnOut(m_ply);
+      CnOut(m_lda_s); CnOut(3);         {move CDev parameters}
+      CnOut(m_pha);
+      CnOut(m_lda_s); CnOut(3);
+      CnOut(m_pha);
+      CnOut(m_lda_s); CnOut(9);
+      CnOut(m_sta_s); CnOut(5);
+      CnOut(m_lda_s); CnOut(11);
+      CnOut(m_sta_s); CnOut(7);
+      CnOut(m_lda_s); CnOut(13);
+      CnOut(m_sta_s); CnOut(9);
+      CnOut(m_sta_s); CnOut(15);        {store message in result space}
+      CnOut(m_lda_long);                {store original user ID in result space}
+      RefName(@'~USER_ID',0,3,0);
+      CnOut(m_sta_s); CnOut(17);
+      CnOut(m_txa);                     {save RTL address & original data bank}
+      CnOut(m_sta_s); CnOut(11);
+      CnOut(m_tya);
+      CnOut(m_sta_s); CnOut(13);
+      CnOut(m_pea); CnOut2(1);          {get user ID}
       CnOut(m_jsl);
       RefName(@'~DAID', 0, 3, 0);
-      CnOut(m_phb);
-      SetDataBank;
-      CnOut(m_pla);
-      CnOut(m_sta_s); CnOut(13);
-      CnOut(m_pla);
-      CnOut(m_sta_s); CnOut(13);
-      CnOut(m_jsl);
+      CnOut(m_jsl);                     {call CDev main routine}
       RefName(openName,0,3,0);
-      CnOut(m_tay);
-      CnOut(m_lda_s); CnOut(3);
-      CnOut(m_pha);
-      CnOut(m_lda_s); CnOut(3);
-      CnOut(m_pha);
-      CnOut(m_txa);
-      CnOut(m_sta_s); CnOut(7);
-      CnOut(m_tya);
-      CnOut(m_sta_s); CnOut(5);
-      CnOut(m_plb);
-      CnOut(m_rtl);
+      CnOut(m_jml);                     {clean up and return to caller}
+      RefName(@'~CDEVCLEANUP', 0, 3, 0);
       end
 
    {NBA initialization}
