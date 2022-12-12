@@ -2533,12 +2533,12 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
          RefName(@'~C_STARTUP', 0, 3, 0);
       CnOut(m_jsl);
       RefName(@'main', 0, 3, 0);
-      CnOut(m_jsl);
+      isJSL := false;
+      CnOut(m_jml);
       if rtl then
          RefName(@'~C_SHUTDOWN2', 0, 3, 0)
       else
          RefName(@'~C_SHUTDOWN', 0, 3, 0);
-      isJSL := false;
       end;
 
    {finish the current segment}
