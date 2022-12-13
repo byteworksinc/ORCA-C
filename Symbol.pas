@@ -449,20 +449,21 @@ for i := 0 to hashSize do begin
    while sp <> nil do begin
       if sp^.storage = private then
          if sp^.itype^.kind = functionType then
-            if sp^.state <> defined then begin
-               numErrors := numErrors+1;
-               new(msg);
-               msg^ := concat('The static function ', sp^.name^,
-                  ' was not defined.');
-               writeln('*** ', msg^);
-               if terminalErrors then begin
-                  if enterEditor then
-                     ExitToEditor(msg, ord4(firstPtr)-ord4(bofPtr))
-                  else
-                     TermError(0);
+            if sp^.state <> defined then
+               if sp^.used then begin
+                  numErrors := numErrors+1;
+                  new(msg);
+                  msg^ := concat('The static function ', sp^.name^,
+                     ' was used but never defined.');
+                  writeln('*** ', msg^);
+                  if terminalErrors then begin
+                     if enterEditor then
+                        ExitToEditor(msg, ord4(firstPtr)-ord4(bofPtr))
+                     else
+                        TermError(0);
+                     end; {if}
+                  liDCBGS.merrf := 16;
                   end; {if}
-               liDCBGS.merrf := 16;
-               end; {if}
       sp := sp^.next;
       end; {while}
    end; {for}

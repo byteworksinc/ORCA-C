@@ -2063,6 +2063,8 @@ int foo(int[42]);
 
 229. Each time a CDev written with ORCA/C was opened and closed, it would leak a user ID.  If it was opened and closed many times, the system could run out of user IDs of the appropriate type, potentially causing problems.  To avoid this, new cleanup code has been added that runs when a CDev is closed.  To ensure this code gets run, CDevs written with ORCA/C should always set the wantClose flag so that they receive CloseCDEV messages, even if they do not otherwise need them.
 
+230. It should be allowed to declare a static function that is never defined, provided that the function is also never used in an expression.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
