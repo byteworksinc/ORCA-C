@@ -4115,6 +4115,7 @@ if isFunction then begin
             lp := NewSymbol(@'__orcac_va_info', vaInfoPtr, autosy,
                variableSpace, declared, false);
             lp^.lln := GetLocalLabel;
+            lp^.used := true;
             Gen2(dc_loc, lp^.lln, ord(vaInfoPtr^.size));
             Gen2(pc_lda, lastParameterLLN, lastParameterSize);
             Gen2t(pc_cop, lp^.lln, 0, cgULong);

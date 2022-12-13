@@ -986,6 +986,7 @@ var
       stack^.token.class := longlongConstant;
       stack^.token.kind := longlongconst;
       stack^.token.qval := longlong0;
+      id := nil;
       end {if}
 
    {if the id is not declared, create a function returning integer}
@@ -1022,6 +1023,9 @@ var
       stack^.token.kind := intconst;
       stack^.token.ival := id^.itype^.eval;
       end; {else if}
+
+   if id <> nil then
+      id^.used := true;
    stack^.id := id;                     {save the identifier}
    ComplexTerm;                         {handle subscripts, selection, etc.}
    1:

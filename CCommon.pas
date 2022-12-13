@@ -93,6 +93,7 @@ const
    lintOverflow         = $0020;        {check for overflows}
    lintC99Syntax        = $0040;        {check for syntax that C99 disallows}
    lintReturn           = $0080;        {flag issues with how functions return}
+   lintUnused           = $0100;        {check for unused variables}
 
                                         {bit masks for GetLInfo flags}
                                         {----------------------------}
@@ -375,6 +376,7 @@ type
      iPtr: initializerPtr;              {pointer to the first initializer}
      isForwardDeclared: boolean;        {does this var use a forward declared type?}
      class: tokenEnum;                  {storage class}
+     used: boolean;                     {is this identifier used?}
      case storage: storageType of
         stackFrame: (lln: integer;      {local label #}
                      clnext: identPtr); {next compound literal}

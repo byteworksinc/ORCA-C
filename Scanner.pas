@@ -114,6 +114,18 @@ procedure Error (err: integer);
 { err - error number                                            }
 
 
+procedure ErrorWithExtraString (err:integer; extraStr: stringPtr);
+
+{ flag an error, with an extra string to be attached to it      }
+{                                                               }
+{ err - error number                                            }
+{ extraStr - extra string to include in error message           }
+{                                                               }
+{ Note:                                                         }
+{       extraStr must point to a pString allocated with new.    }
+{       This call transfers ownership of it.                    }
+
+
 {procedure Error2 (loc, err: integer); {debug}
 
 { flag an error                                                 }
@@ -190,13 +202,14 @@ const
                                         {----}
    defaultName  = '13:ORCACDefs:Defaults.h'; {default include file name}
    maxErr       = 10;                   {max errors on one line}
-   maxLint      = 170;                  {maximum lint error code}
+   maxLint      = 185;                  {maximum lint error code}
 
 type
    errorType = record                   {record of a single error}
       num: integer;                     {error number}
       line: longint;                    {line number}
       col: integer;                     {column number}
+      extraStr: stringPtr;              {extra text to include in message}
       end;
 
                                         {file inclusion}
@@ -787,8 +800,13 @@ if list or (numErr <> 0) then begin
         182: msg := @'''='' expected';
         183: msg := @'array index out of bounds';
         184: msg := @'segment exceeds bank size';
+        185: msg := @'lint: unused variable: ';
          otherwise: Error(57);
          end; {case}
+       if extraStr <> nil then begin
+          extraStr^ := concat(msg^,extraStr^);
+          msg := extraStr;
+          end; {if}
        writeln(msg^);
        if terminalErrors and (numErrors <> 0)
           and (lintIsError or not (num in lintErrors)) then begin
@@ -803,6 +821,8 @@ if list or (numErr <> 0) then begin
           else
              TermError(0);
           end; {if}
+       if extraStr <> nil then
+          dispose(extraStr);
        end; {with}
 					{handle pauses}
    if ((numErr <> 0) and wait) or KeyPress then begin
@@ -3767,10 +3787,29 @@ else begin
 with errors[numErr] do begin            {record the position of the error}
    line := tokenLine;
    col := tokenColumn;
+   extraStr := nil;
    end; {with}
 if numErrors <> 0 then
    codeGeneration := false;		{inhibit code generation}
 end; {Error}
+
+
+procedure ErrorWithExtraString {err:integer; extraStr: stringPtr};
+
+{ flag an error, with an extra string to be attached to it      }
+{                                                               }
+{ err - error number                                            }
+{ extraStr - extra string to include in error message           }
+{                                                               }
+{ Note:                                                         }
+{       extraStr must point to a pString allocated with new.    }
+{       This call transfers ownership of it.                    }
+
+begin {ErrorWithExtraString}
+Error(err);
+if errors[numErr].num <> 4 then
+   errors[numErr].extraStr := extraStr;
+end; {ErrorWithExtraString}
 
 
 {procedure Error2 {loc, err: integer} {debug}
@@ -4490,7 +4529,8 @@ strictMode := false;                    {...with extensions}
 
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
-lintErrors := [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155,170];
+lintErrors :=
+   [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155,170,185];
 
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';

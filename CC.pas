@@ -140,6 +140,8 @@ DoGlobals;                              {create the ~GLOBALS and ~ARRAYS segment
 {shut down the compiler}
 TermHeader;				{make sure the compiled header file is closed}
 CheckStaticFunctions;                   {check for undefined functions}
+if (lint & lintUnused) <> 0 then        {check for unused static vars}
+   CheckUnused(globalTable);
 ffDCBGS.action := 7;			{purge the source file}
 ffDCBGS.pcount := 14;
 ffDCBGS.pathName := @includeFileGS.theString;

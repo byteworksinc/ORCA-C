@@ -100,6 +100,11 @@ procedure CheckStaticFunctions;
 { check for undefined functions                                 }
 
 
+procedure CheckUnused (tPtr: symbolTablePtr);
+
+{ check for unused variables in symbol table                    }
+
+
 function CompTypes (t1, t2: typePtr): boolean;
 
 { Determine if the two types are compatible                     }
@@ -2339,6 +2344,7 @@ if needSymbol then begin
    {p^.isForwardDeclared := false;}     {assume no forward declarations are used}
    p^.name := name;                     {record the name}
    {p^.next := nil;}
+   {p^.used := false;}                  {unused for now}
    if space <> fieldListSpace then      {insert the symbol in the hash bucket}
       begin
       if itype = nil then
@@ -2389,6 +2395,47 @@ useGlobalPool := lUseGlobalPool;        {restore the useGlobalPool variable}
 end; {NewSymbol}
 
 
+procedure CheckUnused {tPtr: symbolTablePtr};
+
+{ check for unused variables in symbol table                    }
+
+var
+   i: integer;                          {loop variable}
+   ip: identPtr;                        {current symbol}
+   nameStr: stringPtr;
+
+begin {CheckUnused}
+for i := 0 to hashSize do begin         {loop over all hash buckets}
+   ip := tPtr^.buckets[i];              {trace through non-static symbols}
+   while ip <> nil do begin
+      if not ip^.used then
+         if ip^.itype <> nil then
+            if not (ip^.itype^.kind in [functionType,enumConst]) then
+               if ip^.storage in [stackFrame,private] then
+                  if not (ip^.name^[1] in ['~','@']) then begin
+                     new(nameStr);
+                     nameStr^ := ip^.name^;
+                     ErrorWithExtraString(185, nameStr);
+                     end; {if}
+      ip := ip^.next;
+      end; {while}
+   ip := globalTable^.buckets[i];       {trace through static symbols}
+   while ip <> nil do begin
+      if not ip^.used then
+         if ip^.itype <> nil then
+            if not (ip^.itype^.kind in [functionType,enumConst]) then
+               if ip^.storage = private then
+                  if copy(ip^.name^,1,5) = tPtr^.staticNum then begin
+                     new(nameStr);
+                     nameStr^ := copy(ip^.name^, 6, maxint);
+                     ErrorWithExtraString(185, nameStr);
+                     end; {if}
+      ip := ip^.next;
+      end; {while}
+   end; {for}
+end; {CheckUnused}
+
+
 procedure PopTable;
 
 { Pop a symbol table (remove definitions local to a block)      }
@@ -2400,6 +2447,8 @@ begin {PopTable}
 tPtr := table;
 {if printSymbols then                 {debug}
 {   PrintTable(tPtr);                 {debug}
+if (lint & lintUnused) <> 0 then
+   CheckUnused(tPtr);
 if tPtr^.next <> nil then begin
    table := table^.next;
    dispose(tPtr);

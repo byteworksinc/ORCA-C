@@ -1810,6 +1810,7 @@ var
       sp^.isForwardDeclared := boolean(ReadByte);
       sp^.class := tokenEnum(ReadByte);
       sp^.storage := storageType(ReadByte);
+      sp^.used := false;
       if sp^.storage = none then
          sp^.anonMemberField := false
       else if sp^.storage = external then

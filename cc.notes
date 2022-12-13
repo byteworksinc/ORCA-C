@@ -757,6 +757,10 @@ ORCA/C can now detect several elements of C syntax that were allowed in C89 but 
 
 If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects some situations where a function with a non-void return type may return an unpredictable value, either by executing a return statement with no value or by executing to the end of the function with no return statement.  (The former case is also detected by #pragma lint bit 6.)  It also detects some situations where a _Noreturn function could return.  Note that these checks only detect some cases of these problems, not all of them.  Also, they may report a potential problem in some situations where the code at the end of a function is not actually reachable.
 
+* Checking for unused variables:
+
+If #pragma lint bit 8 (a value of 256) is set, ORCA/C checks for variables that are declared but never subsequently used.  This covers local variables in functions, as well as file-scope static variables.
+
 
 #pragma extensions
 ------------------
