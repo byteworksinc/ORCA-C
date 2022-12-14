@@ -224,6 +224,7 @@ var
             size := longAddress;
          end {if}
       else begin
+         id^.used := true;
          operand.symbolPtr := id;
          if id^.storage in [stackFrame,parameter] then begin
             code^.slab := id^.lln;
