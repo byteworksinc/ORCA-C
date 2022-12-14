@@ -77,9 +77,10 @@ type
       {NOTE: the array of buckets must come first in the record!}
       buckets: array[0..hashSize2] of identPtr; {hash buckets}
       next: symbolTablePtr;             {next symbol table}
-      staticNum: packed array[1..6] of char; {staticNum at start of table}
       isEmpty: boolean;                 {is the pool empty (nothing in buckets)?}
-      noStatics: boolean;               {no statics using this staticNum?}
+      case noStatics: boolean of        {no statics/staticNum for this table?}
+         false: (staticNum: packed array[1..6] of char); {staticNum for this table}
+         true: ();
       end;
 
 var
@@ -1216,7 +1217,7 @@ while sPtr <> nil do begin
       end; {while}
 
    {rescan for a static variable}
-   if staticAllowed then begin
+   if staticAllowed and not sPtr^.noStatics then begin
       if np = nil then begin            {form the static name}
          if length(name^) < 251 then begin
             new(np);
@@ -2314,7 +2315,31 @@ var
    np: stringPtr;                       {for forming static name}
    p: identPtr;                         {work pointer}
    tk: tokenType;                       {fake token; for FindSymbol}
+
+
+   procedure AllocateStaticNum;
    
+   { Allocate a staticNum value for the current table.          }
+   
+   var
+   done: boolean;                       {loop termination}
+      i: integer;                       {loop index}
+   
+   begin {AllocateStaticNum}
+   i := 5;                              {increment the static var number}
+   repeat
+      staticNum[i] := succ(staticNum[i]);
+      done := staticNum[i] <> succ('9');
+      if not done then begin
+         staticNum[i] := '0';
+         i := i-1;
+         done := i = 1;
+         end; {if}
+   until done;
+   table^.staticNum := staticNum;       {record the static symbol table number}
+   end; {AllocateStaticNum}
+
+
    procedure UnInline;
 
    { Generate a non-inline definition for a function previously }
@@ -2343,6 +2368,7 @@ var
    Gen0(pc_nat);
    Gen0(dc_enp);
    end; {UnInline}
+
 
 begin {NewSymbol}
 needSymbol := true;                     {assume we need a symbol}
@@ -2405,20 +2431,24 @@ if space <> fieldListSpace then begin   {are we defining a function?}
                   end; {if}
          end; {if}
    end; {if}
-if class = staticsy then                {statics go in the global symbol table}
-   if not isFunction then
-      if globalTable <> table then begin
-         isGlobal := true;              {note that we will use the global table}
-         useGlobalPool := true;
-         np := pointer(GMalloc(length(name^)+6)); {form static name}
-         np^[0] := chr(5+length(name^));
-         for i := 1 to 5 do
-            np^[i] := table^.staticNum[i];
-         for i := 1 to length(name^) do
-            np^[i+5] := name^[i];
-         name := np;
-         end; {if}
 if needSymbol then begin
+   if class = staticsy then             {statics go in the global symbol table}
+      if not isFunction then
+         if globalTable <> table then begin
+            isGlobal := true;           {note that we will use the global table}
+            useGlobalPool := true;
+            if table^.noStatics then begin
+               table^.noStatics := false;
+               AllocateStaticNum;
+               end; {if}
+            np := pointer(GMalloc(length(name^)+6)); {form static name}
+            np^[0] := chr(5+length(name^));
+            for i := 1 to 5 do
+               np^[i] := table^.staticNum[i];
+            for i := 1 to length(name^) do
+               np^[i+5] := name^[i];
+            name := np;
+            end; {if}
    p := pointer(Calloc(sizeof(identRecord))); {get space for the record}
    {p^.iPtr := nil;}                    {no initializers, yet}
    {p^.saved := 0;}			{not saved}
@@ -2433,10 +2463,8 @@ if needSymbol then begin
          hashPtr := pointer(ord4(table)+Hash(name));
          table^.isEmpty := false;
          end {if}
-      else begin
+      else
          hashPtr := pointer(ord4(globalTable)+Hash(name));
-         table^.noStatics := false;
-         end; {else}
       if space = tagSpace then
          hashPtr := pointer(ord4(hashPtr) + 4*(hashSize+1));
       p^.next := hashPtr^;
@@ -2513,21 +2541,9 @@ procedure PushTable;
 { Create a new symbol table, pushing the old one                }
 
 var
-   done: boolean;                       {loop termination}
-   i: integer;                          {loop index}
    tPtr: symbolTablePtr;                {work pointer}
 
 begin {PushTable}
-i := 5;                                 {increment the static var number}
-repeat
-   staticNum[i] := succ(staticNum[i]);
-   done := staticNum[i] <> succ('9');
-   if not done then begin
-      staticNum[i] := '0';
-      i := i-1;
-      done := i = 1;
-      end; {if}
-until done;
 if tablePool <> nil then begin          {use existing empty table if available}
    tPtr := tablePool;
    tablePool := tPtr^.next;
@@ -2540,7 +2556,6 @@ else begin
    end; {else}
 tPtr^.next := table;
 table := tPtr;
-tPtr^.staticNum := staticNum;           {record the static symbol table number}
 tPtr^.noStatics := true;
 end; {PushTable}
 
