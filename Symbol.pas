@@ -75,6 +75,7 @@ type
       buckets: array[0..hashSize2] of identPtr; {hash buckets}
       next: symbolTablePtr;             {next symbol table}
       staticNum: packed array[1..6] of char; {staticNum at start of table}
+      isEmpty: boolean;                 {is the pool empty (nothing in buckets)?}
       end;
 
 var
@@ -310,6 +311,9 @@ type
 
 var
    staticNum: packed array[1..6] of char; {static variable number}
+   tablePool: symbolTablePtr;           {pool of reusable empty symbol tables}
+   tablePoolSize: 0..maxint;            {number of tables in pool}
+   tablePoolMaxSize: 0..maxint;         {max number of tables in pool}
 
 {- Imported from expression.pas --------------------------------}
 
@@ -413,6 +417,10 @@ procedure LabelSearch (lab: integer; len, shift, disp: integer); extern;
 procedure Purge; extern;
 
 { write any constant bytes to the output buffer                 }
+
+{- Imported from IIGS Memory Manager ---------------------------}
+
+function MaxBlock: longint; tool ($02, $1C);
 
 {---------------------------------------------------------------}
 
@@ -696,6 +704,22 @@ end; {StrictCompTypes}
 procedure DoGlobals;
 
 { declare the ~globals and ~arrays segments                     }
+
+
+   procedure FreeTablePool;
+   
+   { free the symbol table pool                                 }
+   
+   var
+      tPtr: symbolTablePtr;
+   
+   begin {FreeTablePool}
+   while tablePool <> nil do begin
+      tPtr := tablePool;
+      tablePool := tPtr^.next;
+      dispose(tPtr);
+      end;   
+   end; {FreeTablePool}
 
 
    procedure StaticInit (variable: identPtr);
@@ -1052,6 +1076,8 @@ begin {DoGlobals}
 {print the global symbol table}
 {if printSymbols then                 {debug}
 {   PrintTable(globalTable);          {debug}
+
+FreeTablePool;                          {dispose of unneeded symbol tables}
 
 {declare the ~globals segment, which holds non-array data types}
 if smallMemoryModel then
@@ -1677,8 +1703,12 @@ var
 begin {InitSymbol}
 staticNum := '~0000';                   {no functions processed}
 table := nil;                           {initialize the global symbol table}
+tablePool := nil;                       {table pool is initially empty}
+tablePoolSize := 0;
+tablePoolMaxSize := ord(MaxBlock div 150000); {limit size of pool based on RAM}
 PushTable;
 globalTable := table;
+globalTable^.isEmpty := false;          {global table is never treated as empty}
 functionTable := nil;
                                         {declare base types}
 new(sCharPtr);                          {signed char}
@@ -2348,12 +2378,13 @@ if needSymbol then begin
    {p^.used := false;}                  {unused for now}
    if space <> fieldListSpace then      {insert the symbol in the hash bucket}
       begin
-      if itype = nil then
-         hashPtr := pointer(ord4(table)+Hash(name))
-      else if isGlobal then
-         hashPtr := pointer(ord4(globalTable)+Hash(name))
-      else
+      if (itype = nil) or not isGlobal then begin
          hashPtr := pointer(ord4(table)+Hash(name));
+         table^.isEmpty := false;
+         end {if}
+      else begin
+         hashPtr := pointer(ord4(globalTable)+Hash(name));
+         end; {else}
       if space = tagSpace then
          hashPtr := pointer(ord4(hashPtr) + 4*(hashSize+1));
       p^.next := hashPtr^;
@@ -2452,7 +2483,13 @@ if (lint & lintUnused) <> 0 then
    CheckUnused(tPtr);
 if tPtr^.next <> nil then begin
    table := table^.next;
-   dispose(tPtr);
+   if not tPtr^.isEmpty or (tablePoolSize = tablePoolMaxSize) then
+      dispose(tPtr)
+   else begin
+      tPtr^.next := tablePool;
+      tablePool := tPtr;
+      tablePoolSize := tablePoolSize + 1;
+      end; {else}
    end; {if}
 end; {PopTable}
 
@@ -2480,8 +2517,16 @@ repeat
       done := i = 1;
       end; {if}
 until done;
-new(tPtr);                              {create a new symbol table}
-ClearTable(tPtr^);
+if tablePool <> nil then begin          {use existing empty table if available}
+   tPtr := tablePool;
+   tablePool := tPtr^.next;
+   tablePoolSize := tablePoolSize - 1;
+   end {if}
+else begin
+   new(tPtr);                           {...or create a new symbol table}
+   ClearTable(tPtr^);
+   tPtr^.isEmpty := true;
+   end; {else}
 tPtr^.next := table;
 table := tPtr;
 tPtr^.staticNum := staticNum;           {record the static symbol table number}

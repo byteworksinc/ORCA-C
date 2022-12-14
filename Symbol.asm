@@ -9,11 +9,12 @@
 ****************************************************************
 *
 ClearTable private cc
-tableSize equ  7026                     sizeof(symbolTable)
+hashSize2 equ  1753                     # hash buckets * 2 - 1
+sizeofBuckets equ 4*(hashSize2+1)       sizeof(symbolTable.buckets)
 
          subroutine (4:table),0
 
-         ldy   #tableSize-2
+         ldy   #sizeofBuckets-2
          lda   #0
 lb1      sta   [table],Y
          dey

@@ -74,6 +74,7 @@ interface
 const
                                         {hashsize appears in CCOMMON.ASM}
    hashSize      = 876;                 {# hash buckets - 1}
+                                        {NOTE: hashsize2 is used in Symbol.asm}
    hashSize2     = 1753;                {# hash buckets * 2 - 1}
    maxLine       = 255;                 {max length of a line}
    maxPath	 = 255;			{max length of a path name}
