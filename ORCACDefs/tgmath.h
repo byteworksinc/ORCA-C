@@ -47,6 +47,8 @@
 #define cos(x)          __tg_x(cos,(x))
 #define cosh(x)         __tg_x(cosh,(x))
 #define copysign(x,y)   __tg_real_x_y(copysign,(x),(y))
+#define erf(x)          __tg_real_x(erf,(x))
+#define erfc(x)         __tg_real_x(erfc,(x))
 #define exp(x)          __tg_x(exp,(x))
 #define exp2(x)         __tg_real_x(exp2,(x))
 #define expm1(x)        __tg_real_x(expm1,(x))

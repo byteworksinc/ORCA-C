@@ -1168,6 +1168,20 @@ long double copysignl(long double x, long double y);
 These functions return a value with the magnitude of x and the sign of y.  If x is a NaN, they return a NaN with the same NaN code but with the sign bit of y.
 
 #include <math.h>
+double      erf(double x);
+float       erff(float x);
+long double erfl(long double x);
+
+These functions compute the error function of x.
+
+#include <math.h>
+double      erfc(double x);
+float       erfcf(float x);
+long double erfcl(long double x);
+
+These functions compute the complementary error function of x.  Mathematically, erfc(x) equals 1 - erf(x).  However, calling the erfc function rather than computing 1 - erf(x) can give a more precise result when erf(x) is close to 1.
+
+#include <math.h>
 double      exp2(double x);
 float       exp2f(float x);
 long double exp2l(long double x);

@@ -333,6 +333,29 @@ int main(void) {
         expect_exact(sqrt(+INFINITY), +INFINITY);
         expect_domain_error(sqrt(-1.0));
         expect_approx(sqrt(100.0), 10.0);
+
+        expect_exact(erf(+0.0), +0.0);
+        expect_exact(erff(-0.0), -0.0);
+        expect_exact(erf(+INFINITY), +1.0);
+        expect_exact(erfl(-INFINITY), -1.0);
+        expect_approx(erfl(-4.20L), -9.999999971445058e-01L);
+        expect_approx(erfl(-3.00L), -9.999779095030014e-01L);
+        expect_approx(erfl(-0.01L), -1.128341555584948e-02L);
+        expect_approx(erfl(0.30L), 3.286267594591276e-01L);
+        expect_approx(erfl(1.20L), 9.103139782296354e-01L);
+        expect_approx(erfl(4.01L), 9.999999858030606e-01L);
+        expect_approx(erfl(1e-4900L), 1.128379167095513e-4900L);
+        
+        expect_exact(erfc(-INFINITY), 2.0);
+        expect_exact(erfcf(+INFINITY), +0.0);
+        expect_exact(erfcl(+0.0), 1.0);
+        expect_approx(erfcl(-4.45L), 1.999999999689114e+00L);
+        expect_approx(erfcl(-2.50L), 1.999593047982555e+00L);
+        expect_approx(erfcl(-0.40L), 1.428392355046668e+00L);
+        expect_approx(erfcl(0.10L), 8.875370839817150e-01L);
+        expect_approx(erfcl(0.95L), 1.791091927267220e-01L);
+        expect_approx(erfcl(9.99L), 2.553157649309533e-45L);
+        expect_approx(erfcl(105.0L), 4.300838032791244e-4791L);
         
         expect_exact(ceil(+0.0), +0.0);
         expect_exact(ceilf(-0.0), -0.0);
