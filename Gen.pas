@@ -6975,29 +6975,37 @@ procedure GenTree {op: icptr};
       size: integer;			{localSize + parameterSize}
       lab1: integer;			{label}
       valuePushed: boolean;             {return value pushed on stack?}
+      evaluateAtEnd: boolean;           {evaluate return val right before rtl?}
 
    begin {GenRetRev}
    size := localSize + parameterSize;
+   evaluateAtEnd := false;
 
    {calculate return value, if necessary}
    if op^.opcode = pc_rev then begin
-      valuePushed := namePushed or debugFlag or profileFlag
-         or ((parameterSize <> 0) and (size > 253));
-      if valuePushed then
-         gLong.preference := onStack
-      else
-         gLong.preference := A_X;
-      GenTree(op^.left);
-      if op^.optype in [cgByte,cgUByte,cgWord,cgUWord] then begin
-         if valuePushed then
-            GenImplied(m_pha)
-         else
-            GenImplied(m_tay);
+      if op^.left^.opcode in [pc_ldc,pc_lca,pc_lao,pc_lad] then begin
+         evaluateAtEnd := true;
+         valuePushed := false;
          end {if}
-      else {if op^.optype in [cgLong,cgULong] then} begin
-         valuePushed := gLong.where = onStack;
-         if not valuePushed then
-            GenImplied(m_tay);
+      else begin
+         valuePushed := namePushed or debugFlag or profileFlag
+            or ((parameterSize <> 0) and (size > 253));
+         if valuePushed then
+            gLong.preference := onStack
+         else
+            gLong.preference := A_X;
+         GenTree(op^.left);
+         if op^.optype in [cgByte,cgUByte,cgWord,cgUWord] then begin
+            if valuePushed then
+               GenImplied(m_pha)
+            else
+               GenImplied(m_tay);
+            end {if}
+         else {if op^.optype in [cgLong,cgULong] then} begin
+            valuePushed := gLong.where = onStack;
+            if not valuePushed then
+               GenImplied(m_tay);
+            end; {else}
          end; {else}
       end;
    
@@ -7048,8 +7056,9 @@ procedure GenTree {op: icptr};
          if op^.optype in [cgLong,cgULong] then
             GenImplied(m_plx);
          end {if}
-      else if size = 2 then
-         GenImplied(m_tya);
+      else if not evaluateAtEnd then
+         if size = 2 then
+            GenImplied(m_tya);
       end {if}
    else
       case op^.optype of                {load the value to return}
@@ -7121,14 +7130,24 @@ procedure GenTree {op: icptr};
    {put return value in correct place}
    case op^.optype of
       cgByte,cgUByte,cgWord,cgUWord: begin
-         if size <> 2 then
+         if evaluateAtEnd then
+            GenTree(op^.left)
+         else if size <> 2 then
             GenImplied(m_tya);
          if toolParms then        {save value on stack for tools}
             GenNative(m_sta_s, direct, returnSize+1, nil, 0);
          end;
 
       cgLong,cgULong,cgReal,cgDouble,cgComp,cgExtended: begin
-         if size <> 2 then
+         if evaluateAtEnd then begin
+            gLong.preference := A_X;
+            GenTree(op^.left);
+            if gLong.where = onStack then begin
+               GenImplied(m_pla);
+               GenImplied(m_plx);
+               end; {if}
+            end {if}
+         else if size <> 2 then
             GenImplied(m_tya);
          if toolParms then begin  {save value on stack for tools}
             GenNative(m_sta_s, direct, returnSize+1, nil, 0);
