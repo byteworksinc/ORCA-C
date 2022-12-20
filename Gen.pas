@@ -6967,15 +6967,40 @@ procedure GenTree {op: icptr};
    end; {GenRealBinOp}
 
 
-   procedure GenRet (op: icptr);
+   procedure GenRetRev (op: icptr);
 
-   { Generate code for a pc_ret					}
+   { Generate code for a pc_ret	or pc_rev			}
 
    var
       size: integer;			{localSize + parameterSize}
       lab1: integer;			{label}
+      valuePushed: boolean;             {return value pushed on stack?}
 
-   begin {GenRet}
+   begin {GenRetRev}
+   size := localSize + parameterSize;
+
+   {calculate return value, if necessary}
+   if op^.opcode = pc_rev then begin
+      valuePushed := namePushed or debugFlag or profileFlag
+         or ((parameterSize <> 0) and (size > 253));
+      if valuePushed then
+         gLong.preference := onStack
+      else
+         gLong.preference := A_X;
+      GenTree(op^.left);
+      if op^.optype in [cgByte,cgUByte,cgWord,cgUWord] then begin
+         if valuePushed then
+            GenImplied(m_pha)
+         else
+            GenImplied(m_tay);
+         end {if}
+      else {if op^.optype in [cgLong,cgULong] then} begin
+         valuePushed := gLong.where = onStack;
+         if not valuePushed then
+            GenImplied(m_tay);
+         end; {else}
+      end;
+   
    {pop the name record}
    if namePushed then
       GenCall(2);
@@ -6984,8 +7009,7 @@ procedure GenTree {op: icptr};
    if debugFlag or profileFlag then
       GenNative(m_cop, immediate, 4, nil, 0);
 
-   {if anything needs to be removed from the stack, move the return val}
-   size := localSize + parameterSize;
+   {if anything needs to be removed from the stack, move the return address}
    if parameterSize <> 0 then begin
       if localSize > 253 then begin
          GenNative(m_ldx_imm, immediate, localSize+1, nil, 0);
@@ -7014,54 +7038,66 @@ procedure GenTree {op: icptr};
             end; {else}
          end; {else}
       end; {if}
-
-   {load the value to return}
-   case op^.optype of
-
-      cgVoid: ;
-
-      cgByte,cgUByte: begin
-         GenNative(m_lda_dir, direct, funLoc, nil, 0);
-         GenNative(m_and_imm, immediate, $00FF, nil, 0);         
-         if op^.optype = cgByte then begin
-            GenNative(m_bit_imm, immediate, $0080, nil, 0);
-            lab1 := GenLabel;
-            GenNative(m_beq, relative, lab1, nil, 0);
-            GenNative(m_ora_imm, immediate, $FF00, nil, 0);
-            GenLab(lab1);
-            end; {if}
-         if size <> 2 then
-            GenImplied(m_tay);
-         end;
-
-      cgWord,cgUWord:
+   
+   if op^.opcode = pc_rev then begin
+      if valuePushed then begin
          if size = 2 then
-            GenNative(m_lda_dir, direct, funLoc, nil, 0)
+            GenImplied(m_pla)
          else
+            GenImplied(m_ply);
+         if op^.optype in [cgLong,cgULong] then
+            GenImplied(m_plx);
+         end {if}
+      else if size = 2 then
+         GenImplied(m_tya);
+      end {if}
+   else
+      case op^.optype of                {load the value to return}
+
+         cgVoid: ;
+
+         cgByte,cgUByte: begin
+            GenNative(m_lda_dir, direct, funLoc, nil, 0);
+            GenNative(m_and_imm, immediate, $00FF, nil, 0);         
+            if op^.optype = cgByte then begin
+               GenNative(m_bit_imm, immediate, $0080, nil, 0);
+               lab1 := GenLabel;
+               GenNative(m_beq, relative, lab1, nil, 0);
+               GenNative(m_ora_imm, immediate, $FF00, nil, 0);
+               GenLab(lab1);
+               end; {if}
+            if size <> 2 then
+               GenImplied(m_tay);
+            end;
+
+         cgWord,cgUWord:
+            if size = 2 then
+               GenNative(m_lda_dir, direct, funLoc, nil, 0)
+            else
+               GenNative(m_ldy_dir, direct, funLoc, nil, 0);
+
+         cgReal:
+            GenCall(3);
+
+         cgDouble:
+            GenCall(4);
+
+         cgComp:
+            GenCall(64);
+
+         cgExtended:
+            GenCall(65);
+
+         cgLong,cgULong: begin
+            GenNative(m_ldx_dir, direct, funLoc+2, nil, 0);
             GenNative(m_ldy_dir, direct, funLoc, nil, 0);
+            end;
 
-      cgReal:
-         GenCall(3);
+         cgQuad,cgUQuad: ;                 {return value was already written}
 
-      cgDouble:
-         GenCall(4);
-
-      cgComp:
-         GenCall(64);
-
-      cgExtended:
-         GenCall(65);
-
-      cgLong,cgULong: begin
-         GenNative(m_ldx_dir, direct, funLoc+2, nil, 0);
-         GenNative(m_ldy_dir, direct, funLoc, nil, 0);
-         end;
-
-      cgQuad,cgUQuad: ;                 {return value was already written}
-
-      otherwise:
-         Error(cge1);
-      end; {case}
+         otherwise:
+            Error(cge1);
+         end; {case}
 
    {restore data bank reg}
    if dataBank then begin
@@ -7092,7 +7128,8 @@ procedure GenTree {op: icptr};
          end;
 
       cgLong,cgULong,cgReal,cgDouble,cgComp,cgExtended: begin
-         GenImplied(m_tya);
+         if size <> 2 then
+            GenImplied(m_tya);
          if toolParms then begin  {save value on stack for tools}
             GenNative(m_sta_s, direct, returnSize+1, nil, 0);
             GenImplied(m_txa);
@@ -7108,7 +7145,7 @@ procedure GenTree {op: icptr};
 
    {return to the caller}
    GenImplied(m_rtl);
-   end; {GenRet}
+   end; {GenRetRev}
 
 
    procedure GenSbfCbf (op: icptr);
@@ -7472,7 +7509,7 @@ case op^.opcode of
    pc_pop: GenPop(op);                
    pc_psh: GenPsh(op);
    pc_rbo: GenRbo(op);
-   pc_ret: GenRet(op);
+   pc_ret,pc_rev: GenRetRev(op);
    pc_sbf,pc_cbf: GenSbfCbf(op);
    pc_sbi: GenSbi(op);
    pc_shl,pc_shr,pc_usr: GenShlShrUsr(op);

@@ -5534,6 +5534,15 @@ case code^.opcode of
       Push(code);
       end;
 
+   pc_rev:
+      begin
+      code^.left := Pop;
+      if (lint & lintReturn) <> 0 then
+         if fIsNoreturn or ((code^.optype <> cgVoid) and not doingMain) then
+            CheckReturn;
+      Push(code);
+      end;
+
    pc_cnn:
       begin
       code^.opcode := pc_cnv;

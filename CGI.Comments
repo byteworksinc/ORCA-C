@@ -795,6 +795,17 @@
 {  into the stack frame.                                        }
 {                                                               }
 {                                                               }
+{  pc_rev - return a value from a subroutine                    }
+{                                                               }
+{  Gen0t(pc_rev, type)                                          }
+{                                                               }
+{  This pcode is used to return from a function.  The type is   }
+{  the type of the function, and is used to tell the code       }
+{  generator what type of value to return.  It may be cgByte,   }
+{  cgUByte, cgWord, cgUWord, cgLong, or cgULong.  The value     }
+{  to return is removed from the evaluation stack.              }
+{                                                               }
+{                                                               }
 {  pc_cui - call user procedure, indirect                       }
 {                                                               }
 {  Gen1t(pc_cui, repair, ftype)					}

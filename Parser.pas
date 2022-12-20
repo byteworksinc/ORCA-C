@@ -197,6 +197,8 @@ var
    compoundLiteralToAllocate: identPtr; {compound literal that needs space allocated}
    vaInfoLLN: integer;                  {label number of internal va info (0 for none)}
    declaredTagOrEnumConst: boolean;     {was a tag or enum const declared?}
+   returnCount: integer;                {number of return statements}
+   skipReturn: boolean;                 {skip the ordinary return at end of function?}
 
                                         {parameter processing variables}
                                         {------------------------------}
@@ -358,41 +360,43 @@ stPtr := statementList;                 {pop the statement record}
 statementList := stPtr^.next;
 doingFunction := statementList <> nil;  {see if we're done with the function}
 if not doingFunction then begin         {if so, finish it off}
-   if doingMain then begin              {executing to the end of main returns 0}
-      if fType^.kind = scalarType then begin
-         if fType^.baseType in [cgByte,cgUByte,cgWord,cgUWord] then begin
-            Gen1t(pc_ldc, 0, fType^.baseType);
-            Gen2t(pc_str, 0, 0, fType^.baseType);
+   if not skipReturn then begin
+      if doingMain then begin           {executing to the end of main returns 0}
+         if fType^.kind = scalarType then begin
+            if fType^.baseType in [cgByte,cgUByte,cgWord,cgUWord] then begin
+               Gen1t(pc_ldc, 0, fType^.baseType);
+               Gen2t(pc_str, 0, 0, fType^.baseType);
+               end {if}
+            else if fType^.baseType in [cgLong,cgULong] then begin
+               GenLdcLong(0);
+               Gen2t(pc_str, 0, 0, fType^.baseType);
+               end; {else if}
             end {if}
-         else if fType^.baseType in [cgLong,cgULong] then begin
-            GenLdcLong(0);
-            Gen2t(pc_str, 0, 0, fType^.baseType);
+         else if fType^.kind = enumType then begin
+            Gen1t(pc_ldc, 0, cgWord);
+            Gen2t(pc_str, 0, 0, cgWord);
             end; {else if}
-         end {if}
-      else if fType^.kind = enumType then begin
-         Gen1t(pc_ldc, 0, cgWord);
-         Gen2t(pc_str, 0, 0, cgWord);
-         end; {else if}
+         end; {if}
+      Gen1(dc_lab, returnLabel);
+      if vaInfoLLN <> 0 then begin      {clean up variable args, if any}
+         Gen2(pc_lda, vaInfoLLN, 0);
+         Gen0t(pc_stk, cgULong);
+         Gen1tName(pc_cup, -1, cgVoid, @'__va_end');
+         end; {if}
+      with fType^ do                    {generate the pc_ret instruction}
+         case kind of
+            scalarType  : Gen0t(pc_ret, baseType);
+            arrayType   : ;
+            structType  ,
+            unionType   ,
+            pointerType : Gen0t(pc_ret, cgULong);
+            functionType: ;
+            enumConst   : ;
+            enumType    : Gen0t(pc_ret, cgWord);
+            definedType : ;
+            otherwise: Error(57);
+            end; {case}
       end; {if}
-   Gen1(dc_lab, returnLabel);
-   if vaInfoLLN <> 0 then begin         {clean up variable args, if any}
-      Gen2(pc_lda, vaInfoLLN, 0);
-      Gen0t(pc_stk, cgULong);
-      Gen1tName(pc_cup, -1, cgVoid, @'__va_end');
-      end; {if}
-   with fType^ do                       {generate the pc_ret instruction}
-      case kind of
-         scalarType  : Gen0t(pc_ret, baseType);
-         arrayType   : ;
-         structType  ,
-         unionType   ,
-         pointerType : Gen0t(pc_ret, cgULong);
-         functionType: ;
-         enumConst   : ;
-         enumType    : Gen0t(pc_ret, cgWord);
-         definedType : ;
-         otherwise: Error(57);
-         end; {case}
    Gen0 (dc_enp);                       {finish the segment}
    CheckGotoList;                       {make sure all labels are declared}
    while tempList <> nil do begin       {dump the local labels}
@@ -849,9 +853,20 @@ var
       Expression(normalExpression, [semicolonch]);
       AssignmentConversion(fType, expressionType, lastWasConst, lastConst,
          true, false);
+      Match(semicolonch, 22);           {insist on a closing ';'}
       case fType^.kind of
          scalarType:    if fType^.baseType in [cgQuad,cgUQuad] then
                            Gen0t(pc_sto, fType^.baseType)
+                        else if (returnCount = 0)
+                           and (token.kind = rbracech)
+                           and (statementList^.next = nil)
+                           and (vaInfoLLN = 0) 
+                           and (fType^.baseType in
+                              [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
+                           then begin
+                           Gen0t(pc_rev, fType^.baseType);
+                           skipReturn := true;
+                           end {else if}
                         else
                            Gen2t(pc_str, 0, 0, fType^.baseType);
          enumType:      Gen2t(pc_str, 0, 0, cgWord);
@@ -868,9 +883,11 @@ var
       if (fType^.kind <> scalarType) or (fType^.baseType <> cgVoid) then
          if ((lint & lintC99Syntax) <> 0) or ((lint & lintReturn) <> 0) then
             Error(152);
+      Match(semicolonch, 22);           {insist on a closing ';'}
       end; {else}
-   Gen1(pc_ujp, returnLabel);           {branch to the exit point}
-   Match(semicolonch, 22);              {insist on a closing ';'}
+   if not skipReturn then
+      Gen1(pc_ujp, returnLabel);        {branch to the exit point}
+   returnCount := returnCount + 1;
    end; {ReturnStatement}
 
 
@@ -4087,6 +4104,8 @@ if isFunction then begin
          end; {while}
       gotoList := nil;                  {initialize the label list}
       fenvAccessInFunction := fenvAccess;
+      skipReturn := false;
+      returnCount := 0;
       if isAsm then begin
          AsmFunction(variable);         {handle assembly language functions}
          PopTable;

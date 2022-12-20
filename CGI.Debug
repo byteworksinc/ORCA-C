@@ -133,6 +133,7 @@ opt[pc_slq] := 'slq';
 opt[pc_sqr] := 'sqr';
 opt[pc_wsr] := 'wsr';
 opt[pc_rbo] := 'rbo';
+opt[pc_rev] := 'rev';
 end; {InitWriteCode}
 
 
@@ -287,7 +288,7 @@ with code^ do
          write('  ', q:1, ':', r:1, ':', s:1);
 
       pc_equ,pc_neq,pc_geq,pc_leq,pc_grt,pc_les,pc_pop,pc_ret,pc_bno,
-      pc_cpi,pc_sto,pc_tri,pc_stk,pc_idl,pc_iil,pc_ili,pc_ild:
+      pc_cpi,pc_sto,pc_tri,pc_stk,pc_idl,pc_iil,pc_ili,pc_ild,pc_rev:
          WriteType(optype);
 
       pc_cnv,pc_cnn: begin
