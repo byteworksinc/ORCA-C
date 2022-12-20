@@ -199,6 +199,7 @@ var
    declaredTagOrEnumConst: boolean;     {was a tag or enum const declared?}
    returnCount: integer;                {number of return statements}
    skipReturn: boolean;                 {skip the ordinary return at end of function?}
+   structReturnVar: identPtr;           {static variable to hold a struct/union return value}
 
                                         {parameter processing variables}
                                         {------------------------------}
@@ -388,7 +389,10 @@ if not doingFunction then begin         {if so, finish it off}
             scalarType  : Gen0t(pc_ret, baseType);
             arrayType   : ;
             structType  ,
-            unionType   ,
+            unionType   : begin
+                          Gen1Name(pc_lao, 0, structReturnVar^.name);
+                          Gen0t(pc_rev, cgULong);
+                          end;
             pointerType : Gen0t(pc_ret, cgULong);
             functionType: ;
             enumConst   : ;
@@ -829,7 +833,6 @@ var
    var
       id: identPtr;                     {structure id}
       size: longint;                    {size of the struct/union}
-      tk: tokenType;                    {structure name token}
 
 
       procedure ReturnValue (tp: baseTypeEnum);
@@ -859,12 +862,7 @@ var
    if token.kind <> semicolonch then    {if present, evaluate the return value}
       begin
       if fType^.kind in [structType,unionType] then begin
-         tk.kind := ident;
-         tk.class := identifier;
-         tk.name := @'@struct';
-         tk.symbolPtr := nil;
-         id := FindSymbol(tk, variableSpace, false, true);
-         Gen1Name(pc_lao, 0, id^.name);
+         Gen1Name(pc_lao, 0, structReturnVar^.name);
          size := fType^.size;
          end {if}
       else if fType^.kind = scalarType then
@@ -3629,7 +3627,6 @@ var
    fnType: typePtr;                     {function type}
    segType: integer;                    {segment type}
    tp: typePtr;                         {for tracing type lists}
-   tk: tokenType;                       {work token}
    startLine: longint;                  {line where this declaration starts}
    declSpecifiers: declSpecifiersRecord; {type & specifiers for the declaration}
 
@@ -4122,17 +4119,9 @@ if isFunction then begin
          end {if}
       else begin
                                         {set up struct/union area}
-         if variable^.itype^.ftype^.kind in [structType,unionType] then begin
-            lp := NewSymbol(@'@struct', variable^.itype^.ftype, staticsy,
-               variablespace, declared, false);
-            tk.kind := ident;
-            tk.class := identifier;
-            tk.name := @'@struct';
-            tk.symbolPtr := nil;
-            lp := FindSymbol(tk, variableSpace, false, true);
-            Gen1Name(pc_lao, 0, lp^.name);
-            Gen2t(pc_str, 0, 0, cgULong);
-            end; {if}
+         if variable^.itype^.ftype^.kind in [structType,unionType] then
+            structReturnVar := NewSymbol(@'@struct', variable^.itype^.ftype,
+               staticsy, variablespace, declared, false);
 					{generate parameter labels}
          if fnType^.overrideKR then
             GenParameters(nil)
