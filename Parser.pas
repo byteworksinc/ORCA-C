@@ -831,6 +831,26 @@ var
       size: longint;                    {size of the struct/union}
       tk: tokenType;                    {structure name token}
 
+
+      procedure ReturnValue (tp: baseTypeEnum);
+      
+      { generate code to return a value of specified type        }
+      
+      begin {ReturnValue}
+      if (returnCount = 0)
+         and (token.kind = rbracech)
+         and (statementList^.next = nil)
+         and (vaInfoLLN = 0) 
+         and (tp in [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
+         then begin
+         Gen0t(pc_rev, tp);
+         skipReturn := true;
+         end {if}
+      else
+         Gen2t(pc_str, 0, 0, tp);
+      end; {ReturnValue}
+
+
    begin {ReturnStatement}
    if fIsNoreturn then
       if (lint & lintReturn) <> 0 then
@@ -857,20 +877,10 @@ var
       case fType^.kind of
          scalarType:    if fType^.baseType in [cgQuad,cgUQuad] then
                            Gen0t(pc_sto, fType^.baseType)
-                        else if (returnCount = 0)
-                           and (token.kind = rbracech)
-                           and (statementList^.next = nil)
-                           and (vaInfoLLN = 0) 
-                           and (fType^.baseType in
-                              [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
-                           then begin
-                           Gen0t(pc_rev, fType^.baseType);
-                           skipReturn := true;
-                           end {else if}
                         else
-                           Gen2t(pc_str, 0, 0, fType^.baseType);
-         enumType:      Gen2t(pc_str, 0, 0, cgWord);
-         pointerType:   Gen2t(pc_str, 0, 0, cgULong);
+                           ReturnValue(fType^.baseType);
+         enumType:      ReturnValue(cgWord);
+         pointerType:   ReturnValue(cgULong);
          structType,
          unionType:     begin
                         Gen2(pc_mov, long(size).msw, long(size).lsw);
