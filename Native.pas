@@ -1773,10 +1773,21 @@ var
                npeep[ns+2] := npeep[ns];
                Remove(ns);
                end {else if}
-            else if npeep[ns+1].opcode = m_xba then
+            else if npeep[ns+1].opcode = m_xba then begin
                if npeep[ns+2].opcode = m_and_imm then
                   if npeep[ns+2].operand = $00FF then begin
                      operand := operand+1;
+                     Remove(ns+1);
+                     end {if}
+               end {else if}
+            else if npeep[ns+1].opcode = m_tay then
+               if npeep[ns+2].opcode = m_lda_dir then begin
+                  opcode := m_ldy_dir;
+                  Remove(ns+1);
+                  end {if}
+               else if npeep[ns+2].opcode = m_pld then
+                  if npeep[ns+3].opcode = m_tsc then begin
+                     opcode := m_ldy_dir;
                      Remove(ns+1);
                      end; {if}
 
