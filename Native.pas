@@ -2013,6 +2013,8 @@ var
                               Remove(ns+2);
                               end; {if}
 
+         {extra explicit cases to ensure this case statement uses a jump table}
+         m_rtl,m_rts,m_jml,m_jsl,m_mvn,m_plp,m_pld,m_txs,
          otherwise: ;
 
          end; {case}
