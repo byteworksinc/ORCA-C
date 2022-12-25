@@ -356,6 +356,22 @@ int main(void) {
         expect_approx(erfcl(0.95L), 1.791091927267220e-01L);
         expect_approx(erfcl(9.99L), 2.553157649309533e-45L);
         expect_approx(erfcl(105.0L), 4.300838032791244e-4791L);
+
+        expect_pole_error(tgamma(+0.0), +INFINITY);
+        expect_pole_error(tgammaf(-0.0), -INFINITY);
+        expect_domain_error(tgammal(-2.0));
+        expect_domain_error(tgammal(-15.0));
+        expect_domain_error(tgammal(-1e4900));
+        expect_domain_error(tgammal(-INFINITY));
+        expect_exact(tgammal(+INFINITY),+INFINITY);
+        expect_approx(tgammal(1.0), 1.0);
+        expect_approx(tgammal(6.0), 120.0);
+        expect_approx(tgammal(19.5), 2.77243229863337182e+16L);
+        expect_approx(tgammal(1755.0), 1.979261890105010e+4930L);
+        expect_approx(tgammal(1e-4932L), 1e4932L);
+        expect_approx(tgammal(-0.75), -4.83414654429587774L);
+        expect_approx(tgammal(-50.00001L), -3.2878204666630031e-60L);
+        expect_approx(tgammal(-1753.75L), 1.452754458037161e-4929L);
         
         expect_exact(ceil(+0.0), +0.0);
         expect_exact(ceilf(-0.0), -0.0);

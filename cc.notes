@@ -1323,6 +1323,13 @@ long double scalblnl(long double x, long n);
 These functions return x * FLT_RADIX^n, computed efficiently.  In ORCA/C, FLT_RADIX is 2.
 
 #include <math.h>
+double      tgamma(double x);
+float       tgammaf(float x);
+long double tgammal(long double x);
+
+These functions compute the gamma function of x.
+
+#include <math.h>
 double      trunc(double x);
 float       truncf(float x);
 long double truncl(long double x);

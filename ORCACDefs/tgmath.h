@@ -86,6 +86,7 @@
 #define sqrt(x)         __tg_x(sqrt,(x))
 #define tan(x)          __tg_x(tan,(x))
 #define tanh(x)         __tg_x(tanh,(x))
+#define tgamma(x)       __tg_real_x(tgamma,(x))
 #define trunc(x)        __tg_real_x(trunc,(x))
 
 #endif
