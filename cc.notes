@@ -1044,13 +1044,15 @@ The conversion specifiers are:
 %X - time (equivalent to "%T" in the "C" locale)
 %y - last two digits of the year (00-99)
 %Y - year (e.g. 1986)
-%z - time zone offset from UTC, if available (writes nothing in ORCA/C)
-%Z - time zone name or abbreviation, if available (writes nothing in ORCA/C)
+%z - time zone offset from UTC in hours and minutes (e.g. +0430), if available
+%Z - time zone name or abbreviation, if available
 %% - replaced by %
 
 Some conversion specifiers can also include an "E" or "O" modifier (e.g. "%Ec").  These might cause an alternate format to be used in certain locales, but in the "C" locale these modifiers are ignored.
 
 The %g, %G, and %V specifiers are based on the ISO 8601 week-based year, in which weeks begin on a Monday and week 01 of a year is the week that includes January 4.  According to this system, the first few days of some years are considered to be in week 52 or 53 of the previous year, and the last few days of some years are considered to be in week 01 of the next year.
+
+If the Time Tool Set by Geoff Weiss is installed and active, the %z and %Z specifiers will use it to obtain the time zone offset.  (In ORCA/C, the %Z specifier currently represents the time zone in the same numeric format as %z.)  If the Time Tool Set is not installed or has not been started, those specifiers will not produce any output.  For more information on using the Time Tool Set, see the discussion of gmtime() below.
 
 If strftime() is able to write the full formatted date/time string to s, it returns the total number of characters written, not including the terminating null.  If it is not able to do so because the full size exceeds maxsize, then it returns 0 and the contents of s are unspecified.
 
@@ -1393,6 +1395,12 @@ float       strtof(const char * restrict str, char ** restrict ptr);
 long double strtold(const char * restrict str, char ** restrict ptr);
 
 As currently implemented in ORCA/C, strtof and strtold behave identically to strtod, all giving values with the precision and range of long double.
+
+20. If the Time Tool Set by Geoff Weiss is installed and active, then the gmtime() function will use it to determine the difference between the system's local time and UTC, and the structure produced will reflect the UTC time.  If the Time Tool Set is not installed or has not been started, then gmtime() will assume that the system's local time is equal to UTC, as it did previously.
+
+Note that the ORCA/C run-time libraries will not start up the Time Tool Set.  If you want library functions to use it, your program will need to include code to load it and start it up before you make any library calls that would use it, and then to shut it down and unload it before the program exits.  See the Time Tool Set website for more information and downloads:
+
+https://timetool.gwlink.net
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 

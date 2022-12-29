@@ -67,6 +67,24 @@ int main(void) {
         if (strftime(buf, 1, "%A", &tm) != 0)
                 goto Fail;
 
+        len = strftime(buf, sizeof(buf), "%z", &tm);
+        if (len != 0) {
+                if (len != 5)
+                        goto Fail;
+                if (buf[0] != '-' && buf[0] != '+')
+                        goto Fail;
+                if (buf[1] < '0' || buf[1] > '2')
+                        goto Fail;
+                if (buf[2] < '0' || buf[2] > '9')
+                        goto Fail;
+                if (buf[3] < '0' || buf[3] > '5')
+                        goto Fail;
+                if (buf[4] < '0' || buf[4] > '9')
+                        goto Fail;
+        }
+
+        strftime(buf, sizeof(buf), "%Z", &tm); /* format can vary */
+        
         printf ("Passed Conformance Test c99strftim\n");
         return 0;
 
