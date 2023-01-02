@@ -2094,6 +2094,10 @@ int foo(int[42]);
 
 230. It should be allowed to declare a static function that is never defined, provided that the function is also never used in an expression.
 
+231. Several <time.h> functions would not work properly for dates in 2036, 2037, or later.  Now they work for dates up to 20 Dec 2105.  (In the case of the time() function, this relies on the ReadTimeHex tool call to return the correct date, which it may not do in 2040 or later when using current system software.)
+
+232. The mktime() function should accept a struct tm in which one or more of the time components are outside their normal ranges.  In such cases, it should calculate the time correctly and change the structure to represent the specified time, but with all its components in the normal ranges.  It was never changing the out-of-range time components, and in some cases would also calculate the time incorrectly.  Now it works as specified.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
