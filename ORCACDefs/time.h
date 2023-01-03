@@ -53,6 +53,8 @@ clock_t         __clocks_per_sec(void);
 typedef unsigned long size_t;
 #endif
 
+extern int      __useTimeTool;
+
 char           *asctime(const struct tm *);
 clock_t         clock(void);
 char           *ctime(const time_t *);
