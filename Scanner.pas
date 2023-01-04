@@ -202,7 +202,7 @@ const
                                         {----}
    defaultName  = '13:ORCACDefs:Defaults.h'; {default include file name}
    maxErr       = 10;                   {max errors on one line}
-   maxLint      = 185;                  {maximum lint error code}
+   maxLint      = 186;                  {maximum lint error code}
 
 type
    errorType = record                   {record of a single error}
@@ -801,6 +801,7 @@ if list or (numErr <> 0) then begin
         183: msg := @'array index out of bounds';
         184: msg := @'segment exceeds bank size';
         185: msg := @'lint: unused variable: ';
+        186: msg := @'lint: implicit conversion changes value of constant';
          otherwise: Error(57);
          end; {case}
        if extraStr <> nil then begin
@@ -4530,7 +4531,7 @@ strictMode := false;                    {...with extensions}
                                         {error codes for lint messages}
                                         {if changed, also change maxLint}
 lintErrors :=
-   [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155,170,185];
+   [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155,170,185,186];
 
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';

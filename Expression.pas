@@ -610,6 +610,41 @@ var
    baseType1,baseType2: baseTypeEnum;   {temp variables (for speed)}
    kind1,kind2: typeKind;               {temp variables (for speed)}
 
+
+   procedure CheckConstantRange(t1: typePtr; value: longint);
+   
+   { Check for situations where an implicit conversion will     }
+   { change the value of a constant.                            }
+   {                                                            }
+   { Note: This currently only addresses conversions to 8-bit   }
+   {    or 16-bit integer types, and intentionally does not     }
+   {    distinguish between signed and unsigned types.          }
+   
+   var
+      min,max: longint;                 {min/max allowed values}
+   
+   begin {CheckConstantRange}
+   if t1^.cType = ctBool then begin
+      min := 0;
+      max := 1;
+      end {if}
+   else if t1^.baseType in [cgByte,cgUByte] then begin
+      min := -128;
+      max := 255;
+      end {else if}
+   else if t1^.baseType in [cgWord,cgUWord] then begin
+      min := -32768;
+      max := 65536;
+      end {else if}
+   else begin
+      min := -maxint4-1;
+      max := maxint4;
+      end; {else}
+   if (value < min) or (value > max) then
+      Error(186);
+   end; {CheckConstantRange}
+
+
 begin {AssignmentConversion}
 kind1 := t1^.kind;
 kind2 := t2^.kind;
@@ -630,6 +665,9 @@ else if kind2 in
    case kind1 of
 
       scalarType: begin
+         if ((lint & lintConstantRange) <> 0) then
+            if isConstant then
+               CheckConstantRange(t1, value);
          baseType1 := t1^.baseType;
          if baseType1 in [cgReal,cgDouble,cgComp] then
             baseType1 := cgExtended;
@@ -701,6 +739,9 @@ else if kind2 in
 
       enumType: begin
          if kind2 = scalarType then begin
+            if ((lint & lintConstantRange) <> 0) then
+               if isConstant then
+                  CheckConstantRange(intPtr, value);
             baseType2 := t2^.baseType;
             if baseType2 in [cgString,cgVoid] then
                Error(47)

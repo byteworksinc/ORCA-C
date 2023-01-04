@@ -95,6 +95,7 @@ const
    lintC99Syntax        = $0040;        {check for syntax that C99 disallows}
    lintReturn           = $0080;        {flag issues with how functions return}
    lintUnused           = $0100;        {check for unused variables}
+   lintConstantRange    = $0200;        {check for out-of-range constants}
 
                                         {bit masks for GetLInfo flags}
                                         {----------------------------}
