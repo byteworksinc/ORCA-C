@@ -128,7 +128,9 @@ long int        ftell(FILE *);
 size_t          fwrite(const void *, size_t, size_t, FILE *);
 int             getc(FILE *);
 int             getchar(void);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ < 201112L
 char           *gets(char *);
+#endif
 void            perror(const char *);
 int             printf(const char *, ...);
 int             putc(int, FILE *);
