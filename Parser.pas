@@ -1718,6 +1718,9 @@ while typeStack <> nil do begin         {reverse the type stack}
    tPtr := tPtr2;
    end; {while}
 
+if pascalsy in declSpecifiers.declarationModifiers then
+   tptr := MakePascalType(tptr);
+
 if doingParameters then                 {adjust array parameters to pointers}
    if tPtr^.kind = arrayType then
       tPtr := MakePointerTo(tPtr^.aType);
@@ -1770,18 +1773,6 @@ else if doingParameters then
 
 if tPtr^.kind = functionType then begin {declare the identifier}
    if variable <> nil then begin
-      if pascalsy in declSpecifiers.declarationModifiers then begin
-         {reverse the parameter list}
-         p2 := tptr^.parameterList;
-         p1 := nil;
-         while p2 <> nil do begin
-            p3 := p2;
-            p2 := p2^.next;
-            p3^.next := p1;
-            p1 := p3;
-            end; {while}
-         tPtr^.parameterList := p1;
-         end; {if}
       t1 := variable^.itype;
       if (t1^.kind = functionType) and CompTypes(t1, tPtr) then begin
          if t1^.prototyped and tPtr^.prototyped then begin
@@ -1823,23 +1814,9 @@ if tPtr^.kind = functionType then begin {declare the identifier}
             Error(47)
          else
             Error(42);
-1:
-      if pascalsy in declSpecifiers.declarationModifiers then begin
-         {reverse the parameter list}
-         p2 := tptr^.parameterList;
-         p1 := nil;
-         while p2 <> nil do begin
-            p3 := p2;
-            p2 := p2^.next;
-            p3^.next := p1;
-            p1 := p3;
-            end; {while}
-         tPtr^.parameterList := p1;
-         end; {if}
-      end; {if}
-   end; {if}
-if tPtr^.kind = functionType then
+1:    end; {if}
    state := declared;
+   end; {if}
 if madeFunctionTable then begin
    lTable := table;
    table := table^.next;
@@ -3615,7 +3592,6 @@ var
    isAsm: boolean;                      {has the asm modifier been used?}
    isInline: boolean;                   {has the inline specifier been used?}
    isNoreturn: boolean;                 {has the _Noreturn specifier been used?}
-   isPascal: boolean;                   {has the pascal modifier been used?}
    alignmentSpecified: boolean;         {was an alignment explicitly specified?}
    lDoingParameters: boolean;           {local copy of doingParameters}
    lInhibitHeader: boolean;             {local copy of inhibitHeader}
@@ -3843,7 +3819,6 @@ lUseGlobalPool := useGlobalPool;
 declarationSpecifierFound := token.kind in declarationSpecifiersElement;
 declaredTagOrEnumConst := false;
 DeclarationSpecifiers(declSpecifiers, declarationSpecifiersElement, 176);
-isPascal := pascalsy in declSpecifiers.declarationModifiers;
 isAsm := asmsy in declSpecifiers.declarationModifiers;
 isInline := inlinesy in declSpecifiers.declarationModifiers;
 isNoreturn := _Noreturnsy in declSpecifiers.declarationModifiers;
@@ -3904,19 +3879,6 @@ if isFunction then begin
       Error(142);
    if _Thread_localsy in declSpecifiers.declarationModifiers then
       Error(178);
-   if isPascal then begin		{reverse prototyped parameters}
-      p1 := fnType^.parameterList;
-      if p1 <> nil then begin
-         p2 := nil;
-         while p1 <> nil do begin
-            p3 := p1;
-            p1 := p1^.next;
-            p3^.next := p2;
-            p2 := p3;
-            end; {while}
-         fnType^.parameterList := p2;
-         end; {if}
-      end; {if}
 
    {handle functions in the parameter list}
    if doingPrototypes then
@@ -3924,7 +3886,6 @@ if isFunction then begin
 
    {external or forward declaration}
    else if token.kind in [commach,semicolonch,inlinesy] then begin
-      fnType^.isPascal := isPascal;     {note if we have pascal parms}
       if token.kind = inlinesy then     {handle tool declarations}
          with fnType^ do begin
             NextToken;
@@ -3972,7 +3933,6 @@ if isFunction then begin
 
    {cannot imbed functions...}
    else if doingFunction then begin
-      isPascal := false;
       Error(28);
       while token.kind <> eofsy do
          NextToken;
@@ -3990,7 +3950,6 @@ if isFunction then begin
       fIsNoreturn := isNoreturn;        {record if function is _Noreturn}
       variable^.state := defined;       {note that the function is defined}
       pfunc := variable;                {set the identifier for parm checks}
-      fnType^.isPascal := isPascal;     {note if we have pascal parms}
       doingFunction := true;            {read the parameter list}
       doingParameters := true;
                                         {declare the parameters}
@@ -4156,8 +4115,6 @@ else {if not isFunction then} begin
    if alignmentSpecified then
       if declSpecifiers.storageClass in [typedefsy,registersy] then
          Error(142);
-   if isPascal then
-      variable^.itype := MakePascalType(variable^.itype);
    if isInline then
       Error(119);
    if isNoreturn then
