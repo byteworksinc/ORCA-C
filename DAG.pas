@@ -5499,7 +5499,7 @@ case code^.opcode of
    pc_bnt, pc_bnl, pc_cnv, pc_dec, pc_inc, pc_ind, pc_lbf, pc_lbu,
    pc_ngi, pc_ngl, pc_ngr, pc_not, pc_stk, pc_cop, pc_cpo, pc_tl1,
    pc_sro, pc_str, pc_fjp, pc_tjp, pc_xjp, pc_cup, pc_pop, pc_iil,
-   pc_ili, pc_idl, pc_ild, pc_bnq, pc_ngq, pc_rbo:
+   pc_ili, pc_idl, pc_ild, pc_bnq, pc_ngq, pc_rbo, pc_rev:
       begin
       code^.left := Pop;
       Push(code);
@@ -5528,15 +5528,6 @@ case code^.opcode of
 
    pc_ret:
       begin
-      if (lint & lintReturn) <> 0 then
-         if fIsNoreturn or ((code^.optype <> cgVoid) and not doingMain) then
-            CheckReturn;
-      Push(code);
-      end;
-
-   pc_rev:
-      begin
-      code^.left := Pop;
       if (lint & lintReturn) <> 0 then
          if fIsNoreturn or ((code^.optype <> cgVoid) and not doingMain) then
             CheckReturn;
