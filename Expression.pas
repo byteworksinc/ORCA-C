@@ -2887,6 +2887,23 @@ var
    ldoDispose: boolean;                 {local copy of doDispose}
 
 
+   procedure CheckForIncompleteStructType;
+   
+   { Check if expressionType is an incomplete struct/union type. }
+   
+   var
+      tp: typePtr;                      {the type}
+   
+   begin
+   tp := expressionType;
+   while tp^.kind = definedType do
+      tp := tp^.dType;
+   if tp^.kind in [structType,unionType] then
+      if tp^.size = 0 then
+         Error(187);
+   end;
+
+
    function ExpressionKind (tree: tokenPtr): typeKind;
 
    { returns the type of an expression                           }
@@ -3516,6 +3533,7 @@ var
             ftype^.dispatcher);
       expressionType := ftype^.fType;
       lastWasConst := false;
+      CheckForIncompleteStructType;
       end; {else}
    end; {FunctionCall}      
 
@@ -3676,6 +3694,7 @@ case tree^.token.kind of
             LoadAddress(tree);                             
             if expressionType^.kind = pointerType then
                expressionType := expressionType^.ptype;
+            CheckForIncompleteStructType;
             end;
 
          enumConst: begin
@@ -4645,7 +4664,9 @@ case tree^.token.kind of
             ((lType^.kind in [functionType,arrayType,structType,unionType])
             or ((lType^.kind = definedType) and  {handle const struct/union}
                 (lType^.dType^.kind in [structType,unionType]))) then
-            Error(79);
+            Error(79)
+         else
+            CheckForIncompleteStructType;
          end {if}
       else
          Error(79);

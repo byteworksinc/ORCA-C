@@ -802,6 +802,7 @@ if list or (numErr <> 0) then begin
         184: msg := @'segment exceeds bank size';
         185: msg := @'lint: unused variable: ';
         186: msg := @'lint: implicit conversion changes value of constant';
+        187: msg := @'expression has incomplete struct or union type';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
