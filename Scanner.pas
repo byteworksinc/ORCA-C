@@ -672,7 +672,7 @@ if list or (numErr <> 0) then begin
          54: msg := @'bit fields must be less than 32 bits wide';
          55: msg := @'a value cannot be zero bits wide';
         {56: msg := @'bit fields in unions are not supported by ORCA/C';}
-         57: msg := @'compiler error';
+         57,otherwise: msg := @'compiler error';
          58: msg := @'implementation restriction: too many local labels';
          59: msg := @'file name expected';
          60: msg := @'implementation restriction: string space exhausted';
@@ -802,7 +802,6 @@ if list or (numErr <> 0) then begin
         184: msg := @'segment exceeds bank size';
         185: msg := @'lint: unused variable: ';
         186: msg := @'lint: implicit conversion changes value of constant';
-         otherwise: Error(57);
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
