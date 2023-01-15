@@ -5668,7 +5668,6 @@ procedure GenTree {op: icptr};
          GenImplied(m_ply);
          GenNative(m_sty_dir, direct, stackLoc, nil, 0);
          end; {if}
-      GenImplied(m_tay);
       end {if}
    else if (saveStack and (op^.q >= 0)) or (op^.q > 0) then begin
       stackSaveDepth := stackSaveDepth - 1;
