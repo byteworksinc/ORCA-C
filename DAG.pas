@@ -430,26 +430,6 @@ while not (op^.next^.opcode in [dc_lab, dc_enp, dc_cns, dc_glb,
 end; {RemoveDeadCode}
 
 
-function NoFunctions (op: icptr): boolean;
-
-{ are there any function calls?					}
-{								}
-{ parameters:							}
-{    op - operation tree to search				}
-{								}
-{ returns: True if there are no pc_cup or pc_cui operations	}
-{    in the tree, else false.					}
-
-begin {NoFunctions}
-if op = nil then
-   NoFunctions := true
-else if op^.opcode in [pc_cup,pc_cui,pc_tl1] then
-   NoFunctions := false
-else
-   NoFunctions := NoFunctions(op^.left) or NoFunctions(op^.right);
-end; {NoFunctions}
-
-
 function OneBit (val: longint): boolean;
 
 { See if there is exactly one bit set in val			}
