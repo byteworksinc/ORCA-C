@@ -277,9 +277,18 @@
 #define sbAlertCaution 0x0054
 #define sbScreenBlanking 0x0060
 #define sbScreenUnblanking 0x0061
+#define sbBeginningLongOperation 0x0070
 #define sbYouHaveMail 0x0100
 #define sbErrorWindowBase 0x0E00 /* uses $0Exx */
 #define sbErrorWindowOther 0x0EFF
+#define sbFileTransferred 0x0F80
+#define sbRealtimeMessage 0x0F81
+#define sbConnectedToService 0x1000
+#define sbDisconnectedFromService 0x1001
+#define sbEnteredRealtimeChat 0x1002
+#define sbLeftRealtimeChat 0x1003
+#define sbFeatureEnabled 0x1010
+#define sbFeatureDisabled 0x1011
 
 /* StringToText constants */
 #define fAllowMouseText 0x8000
