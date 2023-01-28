@@ -66,6 +66,7 @@
 #define tmControlMenu 0x00040000L
 #define tmMultiClick 0x00080000L
 #define tmIdleEvents 0x00100000L
+#define tmNoGetNextEvent 0x00200000L
 
 /* TaskMaster Codes */
 #define wNoHit 0x0000                   /* retained for back compatibility */

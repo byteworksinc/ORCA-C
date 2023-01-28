@@ -53,6 +53,7 @@
 #define resConverter 0x0800
 #define resMemAttr 0xC31C               /* Flags passed to the NewHandle Memory Manager call */
 #define systemMap 0x0001
+#define fileReadWrite 0x0001
 #define mapChanged 0x0002
 #define romMap 0x0004
 #define resNameOffset 0x10000           /* type holding names */

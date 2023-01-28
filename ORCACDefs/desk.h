@@ -33,6 +33,7 @@
 #define clearAction 0x0009
 #define sysClickAction 0x000A
 #define optionalCloseAction 0x000B
+#define reOpenAction 0x000C
 
 /* SystemEdit Codes */
 #define undoEdit 0x0001
