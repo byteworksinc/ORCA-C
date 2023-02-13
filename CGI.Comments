@@ -196,6 +196,15 @@
 {  a SIZE bit value.  Extra bits are dropped.                   }
 {                                                               }
 {                                                               }
+{  pc_ckp - check for null pointer                              }
+{                                                               }
+{  Gen0(pc_ckp)                                                 }
+{  Gen0(pc_ckn)                                                 }
+{                                                               }
+{  Make sure a pointer value is not null.  The pc_ckp form      }
+{  checks the value at tos; pc_ckn checks the value at tos-1.   }
+{                                                               }
+{                                                               }
 {  pc_cop - copy to a local variable                            }
 {                                                               }
 {  Gen2t(pc_cop, label, disp, type)                            	}

@@ -2811,6 +2811,8 @@ procedure ChangePointer (op: pcodes; size: longint; tp: baseTypeEnum);
 begin {ChangePointer}
 if size = 0 then
    Error(122);
+if checkNullPointers then
+   Gen0(pc_ckn);
 case tp of
    cgByte,cgUByte,cgWord,cgUWord: begin
       if (size = long(size).lsw) and (op = pc_adl)
@@ -2937,7 +2939,7 @@ var
    end; {ExpressionKind}
 
 
-   procedure LoadAddress (tree: tokenPtr);
+   procedure LoadAddress (tree: tokenPtr; nullCheck: boolean);
 
    { load the address of an l-value                              }
    {                                                             }
@@ -2994,7 +2996,7 @@ var
       {evaluate a compound literal and load its address}
       AutoInit(tree^.id, 0, true);
       tree^.token.kind := ident;
-      LoadAddress(tree);
+      LoadAddress(tree, false);
       tree^.token.kind := compoundliteral;
       Gen0t(pc_bno, cgULong);
       end {if}
@@ -3002,6 +3004,8 @@ var
 
       {load the address of the item pointed to by the pointer}
       GenerateCode(tree^.left);
+      if nullCheck then
+         Gen0(pc_ckp);
       isBitField := false;
       if not (expressionType^.kind in [pointerType,arrayType,functionType]) then
          Error(79);
@@ -3009,7 +3013,7 @@ var
    else if tree^.token.kind = dotch then begin
 
       {load the address of a field of a record}
-      LoadAddress(tree^.left);
+      LoadAddress(tree^.left, nullCheck);
       eType := expressionType;
       if eType^.kind in [arrayType,pointerType] then begin
          if eType^.kind = arrayType then
@@ -3032,15 +3036,18 @@ var
    else if tree^.token.kind = castoper then begin
 
       {load the address of a field of a record}
-      LoadAddress(tree^.left);
+      LoadAddress(tree^.left, nullCheck);
       expressionType := tree^.castType;
       if expressionType^.kind <> arrayType then
          expressionType := MakePointerTo(expressionType);
       end {else if}
 
    else if ExpressionKind(tree) in [arrayType,pointerType,structType,unionType]
-      then
-      GenerateCode(tree)
+      then begin
+      GenerateCode(tree);
+      if nullCheck then
+         Gen0(pc_ckp);
+      end {else if}
    else begin
       expressionType := intPtr;         {set default type in case of error}
       if doDispose then                 {prevent spurious errors}
@@ -3123,6 +3130,8 @@ var
                end; {case}
 
          pointerType,arrayType: begin
+            if checkNullPointers then
+               Gen0(pc_ckp);
             GenldcLong(expressionType^.pType^.size);
             if inc then
                Gen0(pc_adl)
@@ -3201,10 +3210,12 @@ var
             lSize := iType^.pType^.size;
             if lSize = 0 then
                Error(122);
-            if long(lSize).msw <> 0 then begin
+            if (long(lSize).msw <> 0) or checkNullPointers then begin
 
-               {handle inc/dec of >64K}
+               {handle inc/dec of >64K or with null pointer check}
                LoadScalar(tree^.id);
+               if checkNullPointers then
+                  Gen0(pc_ckp);
                GenLdcLong(lSize);
                if pc_l in [pc_lli,pc_lil] then
                   Gen0(pc_adl)
@@ -3242,7 +3253,7 @@ var
    else begin
 
       {do an indirect ++ or --}
-      LoadAddress(tree);                {get the address to save to}
+      LoadAddress(tree, checkNullPointers);     {get the address to save to}
       if expressionType^.kind = arrayType then
          expressionType := expressionType^.aType
       else if expressionType^.kind = pointerType then
@@ -3508,7 +3519,9 @@ var
       if (ftype^.toolNum = 0) and (ftype^.dispatcher = 0) then begin
 	 if indirect then begin
             fntype := expressionType;
-            GenerateCode(ftree);
+            GenerateCode(ftree);            
+            if checkNullPointers then
+               Gen0(pc_ckp);
             expressionType := fntype;
             Gen1t(pc_cui, ord(hasVarargs and strictVararg),
                UsualUnaryConversions);
@@ -3683,15 +3696,15 @@ case tree^.token.kind of
 
 
          arrayType: begin
-            LoadAddress(tree);                             
+            LoadAddress(tree, false);                             
             expressionType := expressionType^.ptype;
             end;
 
          functionType:
-            LoadAddress(tree);                             
+            LoadAddress(tree, false);                             
 
          structType, unionType: begin
-            LoadAddress(tree);                             
+            LoadAddress(tree, false);                             
             if expressionType^.kind = pointerType then
                expressionType := expressionType^.ptype;
             CheckForIncompleteStructType;
@@ -3817,7 +3830,7 @@ case tree^.token.kind of
                end; {with}
             end {if}
          else begin
-            LoadAddress(tree^.left);
+            LoadAddress(tree^.left, checkNullPointers);
             lType := expressionType;
             lisBitField := isBitField;
             lbitDisp := bitDisp;
@@ -3874,7 +3887,7 @@ case tree^.token.kind of
          end {if}
       else begin
          doingScalar := false;
-         LoadAddress(tree^.left);
+         LoadAddress(tree^.left, checkNullPointers);
          lisBitField := isBitField;
          lbitDisp := bitDisp;
          lbitSize := bitSize;
@@ -4388,6 +4401,10 @@ case tree^.token.kind of
                             {NOTE: assumes aType & pType overlap in typeRecord}
             else if not CompTypes(lType^.aType, expressionType^.aType) then
                Error(47);
+            if checkNullPointers then begin
+               Gen0(pc_ckn);
+               Gen0(pc_ckp);
+               end; {if}
             Gen0(pc_sbl);
             if size <> 1 then begin
                GenLdcLong(size);
@@ -4629,7 +4646,7 @@ case tree^.token.kind of
       if not (tree^.left^.token.kind in 
          [ident,compoundliteral,stringconst,uasterisk]) then
          L_Value(tree^.left);
-      LoadAddress(tree^.left);
+      LoadAddress(tree^.left, false);
       if tree^.left^.token.kind = stringconst then begin
          {build pointer-to-array type for address of string constant}
          tType := pointer(Malloc(sizeof(typeRecord)));
@@ -4653,6 +4670,9 @@ case tree^.token.kind of
             lType := lType^.pType;
          expressionType := lType;
          isVolatile := tqVolatile in lType^.qualifiers;
+         if checkNullPointers then
+            if lType^.kind <> functionType then
+               Gen0(pc_ckp);
          if lType^.kind = scalarType then
             if lType^.baseType = cgVoid then
                Gen2(pc_cnv, cgULong, cgVoid)
@@ -4673,7 +4693,7 @@ case tree^.token.kind of
       end; {case uasterisk}
 
    dotch: begin                         {.}
-      LoadAddress(tree^.left);
+      LoadAddress(tree^.left, checkNullPointers);
       lType := expressionType;
       if lType^.kind in [arrayType,pointerType,structType,unionType] then begin
          if lType^.kind = arrayType then

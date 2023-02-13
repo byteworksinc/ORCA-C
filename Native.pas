@@ -2274,6 +2274,7 @@ case callNum of
    95: sp := @'~REALFIX';
    96: sp := @'~DOUBLEFIX';
    97: sp := @'~COMPFIX';
+   98: sp := @'~CHECKPTRC';
    otherwise:
       Error(cge1);
    end; {case}

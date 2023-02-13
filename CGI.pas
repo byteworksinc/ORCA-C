@@ -254,7 +254,8 @@ type
        pc_gli,pc_gdl,pc_gld,pc_cpi,pc_tri,pc_lbu,pc_lbf,pc_sbf,pc_cbf,dc_cns,
        dc_prm,pc_nat,pc_bno,pc_nop,pc_psh,pc_ili,pc_iil,pc_ild,pc_idl,
        pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,pc_mpq,pc_umq,pc_dvq,
-       pc_udq,pc_mdq,pc_uqm,pc_slq,pc_sqr,pc_wsr,pc_rbo,pc_fix,pc_rev);
+       pc_udq,pc_mdq,pc_uqm,pc_slq,pc_sqr,pc_wsr,pc_rbo,pc_fix,pc_rev,pc_ckp,
+       pc_ckn);
 
                                         {intermediate code}
                                         {-----------------}
@@ -333,6 +334,7 @@ var
                                         {quality or characteristics of }
                                         {code                          }
                                         {------------------------------}
+   checkNullPointers: boolean;          {check for null pointer dereferences?}
    checkStack: boolean;                 {check stack for stack errors?}
    cLineOptimize: boolean;		{+o flag set?}
    code: icptr;                         {current intermediate code record}
@@ -843,6 +845,7 @@ profileFlag := false;                   {don't generate profiling code}
 debugFlag := false;                     {don't generate debug code}
 debugStrFlag := false;                  {don't generate gsbug debug strings}
 traceBack := false;                     {don't generate traceback code}
+checkNullPointers := false;             {don't check null pointers}
 volatile := false;			{no volatile qualifiers found}
 
 registers := cLineOptimize;             {don't do register optimizations}

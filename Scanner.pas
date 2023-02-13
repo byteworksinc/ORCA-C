@@ -3491,6 +3491,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     4 - generate profiles                   }
                      {     8 - generate traceback code             }
                      {    16 - check for stack errors              }
+                     {    32 - check for null pointer dereferences }
                      { 32768 - generate inline function names      }
 		     FlagPragmas(p_debug);
                      NumericDirective;
@@ -3503,6 +3504,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      profileFlag := odd(val >> 2);
                      traceBack   := odd(val >> 3);
                      checkStack  := odd(val >> 4);
+                     checkNullPointers := odd(val >> 5);
                      debugStrFlag := odd(val >> 15);
                      profileFlag := profileFlag or debugFlag;
                      if token.kind <> eolsy then

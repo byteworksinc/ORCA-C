@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 37;                 {version number of .sym file format}
+   symFileVersion = 38;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -827,6 +827,7 @@ procedure EndInclude {chPtr: ptr};
                         | (ord(profileFlag) << 2)
                         | (ord(traceBack) << 3)
                         | (ord(checkStack) << 4)
+                        | (ord(checkNullPointers) << 5)
                         | (ord(debugStrFlag) << 15));
 
                   p_lint: begin
@@ -1496,6 +1497,7 @@ var
             profileFlag := odd(val >> 2);
             traceback := odd(val >> 3);
             checkStack := odd(val >> 4);
+            checkNullPointers := odd(val >> 5);
             debugStrFlag := odd(val >> 15);
             end;
 

@@ -16,8 +16,8 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2023
 
             5.	Certain errors that were previously ignored are now detected.
 
-            6.	New option added to generate inline function names for use with
-              	assembly-level debugging tools.  See "Inline Function Names."
+            6.	Two new #pragma debug bits are defined.  See "Additions to
+              	#pragma debug."
 
             7.	Some new headers specified by recent C standards are added.
               	See "New Headers."
@@ -185,7 +185,7 @@ ORCA/C now supports several standard pragmas of the form "#pragma STDC ...", as 
 
 p. 256
 
-The #pragma debug directive supports a new bit. If bit 15 is set, ORCA/C generates inline function names for use with assembly-level debugging tools.  See "Inline Function Names," below.
+The #pragma debug directive supports two new bits.  If bit 5 is set, ORCA/C generates code to check for illegal use of null pointers.  If bit 15 is set, ORCA/C generates inline function names for use with assembly-level debugging tools.  See "Additions to #pragma debug," below.
 
 p. 257
 
@@ -700,14 +700,20 @@ Note that _Generic expressions always use the stricter type compatibility rules 
 (Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
 
 
-Inline Function Names
----------------------
+Additions to #pragma debug
+--------------------------
 
-ORCA/C now supports recording the names of functions using the inline name format documented in Apple IIGS Technical Note #103.  This allows assembly-level debugging tools such as GSBug and Nifty List to display the names of functions in an ORCA/C program while debugging it.  To enable generation of inline function names, set #pragma debug bit 15 (a value of 0x8000).
+Two new debugging features can now be enabled with #pragma debug:
 
-Note that inline function names are unrelated to the other types of debug code that ORCA/C can generate.  In particular, inline function names are not needed for source-level debugging using the desktop development environment or other compatible source-level debuggers, although it is possible to enable both types of debugging information at the same time.
+* Checking for illegal use of null pointers:
 
-(Kelvin Sherlock)
+Setting #pragma debug bit 5 (a value of 32) turns on checking for illegal use of null pointers.  If this bit is set, ORCA/C will detect when your program would dereference a null pointer or when it would do pointer arithmetic on a null pointer.  A "Subrange exceeded" error will be reported in these cases.
+
+* Inline function names:
+
+Setting #pragma debug bit 15 (a value of 0x8000) causes ORCA/C to record the names of functions using the inline name format documented in Apple IIGS Technical Note #103.  This allows assembly-level debugging tools such as GSBug and Nifty List to display the names of functions in an ORCA/C program while debugging it.  Note that inline function names are unrelated to the other types of debug code that ORCA/C can generate.  In particular, inline function names are not needed for source-level debugging using the desktop development environment or other compatible source-level debuggers, although it is possible to enable both types of debugging information at the same time.
+
+(Stephen Heumann, Kelvin Sherlock)
 
 
 Enhancements to #pragma lint

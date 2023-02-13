@@ -502,7 +502,7 @@ var
       [pc_mov,pc_cbf,pc_cop,pc_cpi,pc_cpo,pc_gil,pc_gli,pc_gdl,
        pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,pc_lil,pc_lli,pc_ldl,
        pc_lld,pc_sbf,pc_sro,pc_sto,pc_str,pc_cui,pc_cup,pc_tl1,
-       pc_fix] then
+       pc_fix,pc_ckp] then
       SideEffects := true
    else if op^.opcode = pc_ldc then
       SideEffects := false
@@ -2817,7 +2817,7 @@ case op^.opcode of
    pc_cnn, pc_cnv:                                        
       TypeOf := baseTypeEnum(op^.q & $000F);
 
-   pc_stk:
+   pc_stk, pc_ckp:
       TypeOf := TypeOf(op^.left);
 
    pc_bno:
@@ -5479,7 +5479,7 @@ case code^.opcode of
    pc_bnt, pc_bnl, pc_cnv, pc_dec, pc_inc, pc_ind, pc_lbf, pc_lbu,
    pc_ngi, pc_ngl, pc_ngr, pc_not, pc_stk, pc_cop, pc_cpo, pc_tl1,
    pc_sro, pc_str, pc_fjp, pc_tjp, pc_xjp, pc_cup, pc_pop, pc_iil,
-   pc_ili, pc_idl, pc_ild, pc_bnq, pc_ngq, pc_rbo, pc_rev:
+   pc_ili, pc_idl, pc_ild, pc_bnq, pc_ngq, pc_rbo, pc_rev, pc_ckp:
       begin
       code^.left := Pop;
       Push(code);
@@ -5512,6 +5512,15 @@ case code^.opcode of
          if fIsNoreturn or ((code^.optype <> cgVoid) and not doingMain) then
             CheckReturn;
       Push(code);
+      end;
+
+   pc_ckn:
+      begin
+      code^.opcode := pc_ckp;
+      temp := Pop;
+      code^.left := Pop;
+      Push(code);
+      Push(temp);
       end;
 
    pc_cnn:

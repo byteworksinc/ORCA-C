@@ -999,6 +999,24 @@ else {if op^.opcode = pc_sbq then} begin
 end; {GenAdqSbq}
 
 
+procedure GenCkp (op: icptr);
+
+{ generate code for pc_ckp				        }
+{								}
+{ parameters:							}
+{    op - pc_ckp operation				        }
+
+begin {GenCkp}
+if op^.left^.opcode in [pc_lda,pc_lad,pc_lca,pc_lao] then
+   GenTree(op^.left)
+else begin
+   gLong.preference := onStack;
+   GenTree(op^.left);
+   GenCall(98);
+   end; {else}
+end; {GenCkp}
+
+
 procedure GenCmp (op: icptr; rOpcode: pcodes; lb: integer);
 
 { generate code for pc_les, pc_leq, pc_grt or pc_geq		}
@@ -7494,6 +7512,7 @@ case op^.opcode of
    pc_bnq,pc_ngq: GenUnaryQuad(op);
    pc_bno: GenBno(op);
    pc_bnt,pc_ngi,pc_not: GenBntNgiNot(op);
+   pc_ckp: GenCkp(op);
    pc_cnv: GenCnv(op);
    pc_cui: GenCui(op);
    pc_cup: GenCup(op);

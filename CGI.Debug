@@ -134,6 +134,8 @@ opt[pc_sqr] := 'sqr';
 opt[pc_wsr] := 'wsr';
 opt[pc_rbo] := 'rbo';
 opt[pc_rev] := 'rev';
+opt[pc_ckp] := 'ckp';
+opt[pc_ckn] := 'ckn';
 end; {InitWriteCode}
 
 
@@ -281,7 +283,7 @@ with code^ do
       pc_bnt,pc_blx,pc_bnl,pc_ngi,pc_ngl,pc_ngr,pc_ixa,pc_mdl,
       pc_udi,pc_udl,pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,
       pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm,pc_slq,pc_sqr,pc_wsr,
-      pc_rbo,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr: ;
+      pc_rbo,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr,pc_ckp,pc_ckn: ;
 
 
       dc_prm:
