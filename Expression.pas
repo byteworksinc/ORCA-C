@@ -3397,8 +3397,11 @@ var
       fmt := fmt_none;
       fp := nil;
 
-      if ((lint & lintPrintf) <> 0) and fType^.varargs and not indirect then
-        fmt := FormatClassify(ftree^.id^.name^);
+      if (lint & lintPrintf) <> 0 then
+         if fType^.varargs then
+            if not indirect then
+               if ftree^.id^.storage <> private then
+                  fmt := FormatClassify(ftree^.id^.name^);
 
       while parameters <> nil do begin  {count the prototypes}
          pCount := pCount+1;
