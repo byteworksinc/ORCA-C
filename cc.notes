@@ -2132,6 +2132,12 @@ int foo(int[42]);
 
 232. The mktime() function should accept a struct tm in which one or more of the time components are outside their normal ranges.  In such cases, it should calculate the time correctly and change the structure to represent the specified time, but with all its components in the normal ranges.  It was never changing the out-of-range time components, and in some cases would also calculate the time incorrectly.  Now it works as specified.
 
+233. The qsort() function would not work correctly if the size of the elements to be sorted was too large.  This generally affected uses with element sizes greater than 65535 bytes, but in some obscure situations there could also be problems with smaller element sizes.
+
+234. When using the large memory model, the qsort() function might call the comparison function with the data bank set incorrectly, potentially causing memory corruption or other incorrect behavior.
+
+235. With certain inputs, the qsort() function could cause a stack overflow due to excessive recursion, potentially leading to crashes or other problems.  Now its stack usage is limited to less than 600 bytes (usually significantly less), excluding whatever stack space may be used by the comparison function.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
