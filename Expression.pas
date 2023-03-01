@@ -2872,6 +2872,7 @@ var
    doingScalar: boolean;                {temp; for assignment operators}
    et: baseTypeEnum;                    {temp storage for a base type}
    i: integer;                          {loop variable}
+   isConst: boolean;                    {is this a constant?}
    isNullPtrConst: boolean;             {is this a null pointer constant?}
    isVolatile: boolean;                 {is this a volatile op?}
    lType: typePtr;                      {type of operands}
@@ -3548,7 +3549,6 @@ var
 	 GenTool(pc_tl1, ftype^.toolNum, long(ftype^.ftype^.size).lsw,
             ftype^.dispatcher);
       expressionType := ftype^.fType;
-      lastWasConst := false;
       CheckForIncompleteStructType;
       end; {else}
    end; {FunctionCall}      
@@ -3674,7 +3674,7 @@ var
 
 
 begin {GenerateCode}
-lastwasconst := false;
+isConst := false;
 isNullPtrConst := false;
 case tree^.token.kind of
 
@@ -3737,7 +3737,7 @@ case tree^.token.kind of
 
    intConst,uintConst,ushortConst,charConst,scharConst,ucharConst: begin
       Gen1t(pc_ldc, tree^.token.ival, cgWord);
-      lastwasconst := true;
+      isConst := true;
       lastconst := tree^.token.ival;
       isNullPtrConst := tree^.token.ival = 0;
       if tree^.token.kind = intConst then
@@ -3760,7 +3760,7 @@ case tree^.token.kind of
          expressionType := longPtr
       else
          expressionType := ulongPtr;
-      lastwasconst := true;
+      isConst := true;
       lastconst := tree^.token.lval;
       isNullPtrConst := tree^.token.lval = 0;
       end; {case longConst}
@@ -3772,7 +3772,7 @@ case tree^.token.kind of
       else
          expressionType := ulonglongPtr;
       if (tree^.token.qval.hi = 0) and (tree^.token.qval.lo >= 0) then begin
-         lastwasconst := true;
+         isConst := true;
          lastconst := tree^.token.qval.lo;
          end; {if}
       isNullPtrConst := (tree^.token.qval.hi = 0) and (tree^.token.qval.lo = 0);
@@ -4814,6 +4814,7 @@ case tree^.token.kind of
 if doDispose then
    dispose(tree);
 lastWasNullPtrConst := isNullPtrConst;
+lastWasConst := isConst;
 end; {GenerateCode}
 
 
