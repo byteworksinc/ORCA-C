@@ -3346,9 +3346,7 @@ var
       {    fType - function type                                }
 
       var
-         kind: typeKind;                {for expression kinds}
          ldoDispose: boolean;           {local copy of doDispose}
-         lnumErrors: integer;		{number of errors before type check}
          numParms: integer;             {# of parameters generated}
          parameters: parameterPtr;      {next prototyped parameter}
          pCount: integer;               {# of parameters prototyped}
@@ -3430,25 +3428,20 @@ var
       doDispose := false;
       while tp <> nil do begin
          if tp^.middle <> nil then begin
-            lnumErrors := numErrors;
-            kind := ExpressionKind(tp^.middle);
-            if numErrors = lnumErrors then
-               if kind in [structType,unionType] then begin
-        	  GenerateCode(tp^.middle);
-        	  if expressionType^.size & $FFFF8000 <> 0 then
-                     Error(61);
-        	  Gen1t(pc_ldc, long(expressionType^.size).lsw, cgWord);
-        	  Gen0(pc_psh);
-        	  end {else if}
-               else
-        	  GenerateCode(tp^.middle);
+            GenerateCode(tp^.middle);
+            if expressionType^.kind in [structType,unionType] then begin
+               if expressionType^.size & $FFFF8000 <> 0 then
+                  Error(61);
+               Gen1t(pc_ldc, long(expressionType^.size).lsw, cgWord);
+               Gen0(pc_psh);
+               end; {if}
             if fmt <> fmt_none then begin
-                new(tfp);
-                tfp^.next := fp;
-                tfp^.tk := tp^.middle;
-                tfp^.ty := expressionType;
-                fp := tfp;
-            end;
+               new(tfp);
+               tfp^.next := fp;
+               tfp^.tk := tp^.middle;
+               tfp^.ty := expressionType;
+               fp := tfp;
+               end; {if}
             if prototype then begin
                if pCount = 0 then begin
                   if parameters <> nil then begin
