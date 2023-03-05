@@ -271,6 +271,10 @@ The unary conversion rules have been modified to convert values of type char or 
 
 In the binary conversions, if either operand has a floating-point type, the semantic type is the largest floating-point type of either operand.  However, floating-point operations are always evaluated with the range and precision of the SANE extended format.
 
+p. 333,334
+
+If assembly code attempts to access a local variable using direct page addressing when its location is more than 255 bytes from the start of the direct page, ORCA/C will now detect and report this error ("local variable used in asm statement is out of range for addressing mode").
+
 p. 337
 
 The ORCA/C compiler is intended as a faithful implementation of ANSI C with some extensions, but there have always been some library functions from ANSI C that were missing in ORCA/C.  Chapter 19 should start with a summary of these omissions.

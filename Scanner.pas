@@ -803,6 +803,7 @@ if list or (numErr <> 0) then begin
         185: msg := @'lint: unused variable: ';
         186: msg := @'lint: implicit conversion changes value of constant';
         187: msg := @'expression has incomplete struct or union type';
+        188: msg := @'local variable used in asm statement is out of range for addressing mode';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);

@@ -33,6 +33,7 @@ const
    cge1                 =       57;     {compiler error}
    cge2                 =       58;     {implementation restriction: too many local labels}
    cge3                 =       60;     {implementation restriction: string space exhausted}
+   cge4                 =      188;     {local variable out of range for DP addressing}
    
                                         {65816 native code generation}
                                         {----------------------------}

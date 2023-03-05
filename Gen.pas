@@ -6776,8 +6776,12 @@ procedure GenTree {op: icptr};
    opcode := op^.s;
    if opcode < 256 then
       opcode := opcode | asmFlag;
-   if op^.slab <> 0 then
+   if op^.slab <> 0 then begin
       val := val+LabelToDisp(op^.slab);
+      if mode = direct then
+         if (val > 255) or (val < 0) then
+            Error(cge4);
+      end; {if}
    if mode in [relative,longrelative] then
       GenNative(opcode, mode, op^.llab, op^.lab, op^.q)
    else if (mode = longabsolute) and (op^.llab <> 0) then
