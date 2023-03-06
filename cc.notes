@@ -2144,6 +2144,8 @@ int foo(int[42]);
 
 236. If a typedef name was used immediately after the end of an inner scope where the same name was used as a variable name or struct/union/enum tag, it might not be properly recognized as a typedef name, leading to spurious errors.
 
+237. If the same identifier was used for both a variable or function name and a struct/union/enum tag, it might not be possible to take the address of the variable or function within the initializer for a static variable.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

@@ -2011,7 +2011,7 @@ var
             end; {else}
          end {else if}
       else if tree^.token.kind = ident then begin
-         ip := FindSymbol(tree^.token, allSpaces, false, true);
+         ip := FindSymbol(tree^.token, variableSpace, false, true);
          if ip = nil then begin
             Error(31);
             errorFound := true;
@@ -2231,7 +2231,7 @@ var
             if kind = ident then begin
 
                {handle names of functions or static arrays}
-               ip := FindSymbol(tree^.token, allSpaces, false, true);
+               ip := FindSymbol(tree^.token, variableSpace, false, true);
                if ip = nil then begin
                   Error(31);
                   errorFound := true;
@@ -2267,7 +2267,7 @@ var
                iPtr^.pPlus := true;
                iPtr^.isName := true;
                if tree^.token.kind = ident then begin
-                  ip := FindSymbol(tree^.token, allSpaces, false, true);
+                  ip := FindSymbol(tree^.token, variableSpace, false, true);
                   if ip = nil then begin
                      Error(31);
                      errorFound := true;
