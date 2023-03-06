@@ -2522,7 +2522,14 @@ if (lint & lintUnused) <> 0 then
    CheckUnused(tPtr);
 if tPtr^.next <> nil then begin
    table := table^.next;
-   if not tPtr^.isEmpty or (tablePoolSize = tablePoolMaxSize) then
+   if not tPtr^.isEmpty then begin
+      dispose(tPtr);
+      if token.kind = ident then
+         if FindSymbol(token,variableSpace,false,false) <> nil then
+            if token.symbolPtr^.class = typedefsy then
+               token.kind := typedef;
+      end {if}
+   else if (tablePoolSize = tablePoolMaxSize) then
       dispose(tPtr)
    else begin
       tPtr^.next := tablePool;
