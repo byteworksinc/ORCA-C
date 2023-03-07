@@ -395,7 +395,7 @@ var
       pc := pc+1;
       end {if}
    else if (flags & localLab) <> 0 then
-      LabelSearch(long(name).lsw, 1, ord(odd(flags div shift16))*16, operand)
+      LabelSearch(long(name).lsw, 1, ord((flags & shift16) <> 0)*16, operand)
    else if (flags & shift16) <> 0 then
       RefName(name, operand, 1, -16)
    else
@@ -427,7 +427,7 @@ var
    else if (flags & shift8) <> 0 then
       RefName(name, operand, 2, -8)
    else if (flags & localLab) <> 0 then
-      LabelSearch(long(name).lsw, 2, ord(odd(flags div shift16))*16, operand)
+      LabelSearch(long(name).lsw, 2, ord((flags & shift16) <> 0)*16, operand)
    else if (flags & shift16) <> 0 then
       RefName(name, operand, 2, -16)
    else if name = nil then
@@ -509,12 +509,12 @@ case mode of
          else if opcode in [m_rep,m_sep,m_cop] then begin
             GenImmediate1;
             if opcode = m_rep then begin
-               if odd(operand div 32) then longA := true;
-               if odd(operand div 16) then longI := true;
+               if (operand & 32) <> 0 then longA := true;
+               if (operand & 16) <> 0 then longI := true;
                end {if}
             else if opcode = m_sep then begin
-               if odd(operand div 32) then longA := false;
-               if odd(operand div 16) then longI := false;
+               if (operand & 32) <> 0 then longA := false;
+               if (operand & 16) <> 0 then longI := false;
                end; {else}
             end {else}
          else
@@ -529,14 +529,14 @@ case mode of
       CnOut(opcode);
       isJSL := (opcode & ~asmFlag) = m_jsl;     {allow for dynamic segs}
       if name = nil then
-         if odd(flags div toolcall) then begin
+         if (flags & toolcall) <> 0 then begin
             CnOut2(0);
             CnOut(225);
             end {if}
          else
             LabelSearch(operand, 3, 0, 0)
       else
-         if odd(flags div toolcall) then begin
+         if (flags & toolcall) <> 0 then begin
             CnOut2(long(name).lsw);
             CnOut(long(name).msw);
             end {if}
