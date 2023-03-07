@@ -1162,10 +1162,9 @@ function FindSymbol {var tk: tokenType; class: spaceType; oneLevel: boolean;
 {       A pointer to the symbol table entry is returned.  If    }
 {       there is no entry, nil is returned.                     }
 
-label 1;
+label 1,2;
 
 var
-   doTagSpace: boolean;                 {do we still need to do the tags?}
    hashDisp: longint;                   {disp into the hash table}
    i: integer;                          {loop variable}
    iHandle: ^identPtr;                  {pointer to start of hash bucket}
@@ -1180,23 +1179,16 @@ begin {FindSymbol}
 staticAllowed := staticAllowed and (staticNum <> '~0000');
 name := tk.name;                        {use a local variable}
 hashDisp := Hash(name);                 {get the disp into the symbol table}
-sPtr := table;                          {initialize the address of the sym. tbl}
-FindSymbol := nil;                      {assume we won't find it}
 np := nil;                              {no string buffer, yet}
 
 {check for the variable}
+2:
+sPtr := table;                          {initialize the address of the sym. tbl}
 while sPtr <> nil do begin
    iHandle := pointer(hashDisp+ord4(sPtr));
    if class = tagSpace then
       iHandle := pointer(ord4(iHandle) + (hashSize+1)*4);
-   doTagSpace := class = allSpaces;
    iPtr := iHandle^;
-   if iPtr = nil then
-      if doTagSpace then begin
-         iHandle := pointer(ord4(iHandle) + (hashSize+1)*4);
-         iPtr := iHandle^;
-         doTagSpace := false;
-         end; {if}
 
    {scan the hash bucket for a global or auto variable}
    while iPtr <> nil do begin
@@ -1208,12 +1200,6 @@ while sPtr <> nil do begin
          goto 1;
          end; {if}
       iPtr := iPtr^.next;
-      if iPtr = nil then
-         if doTagSpace then begin
-            iHandle := pointer(ord4(iHandle) + (hashSize+1)*4);
-            iPtr := iHandle^;
-            doTagSpace := false;
-            end; {if}
       end; {while}
 
    {rescan for a static variable}
@@ -1255,6 +1241,13 @@ while sPtr <> nil do begin
    else
       sPtr := sPtr^.next;
    end; {while}
+
+{we only get here if a symbol was not found}
+if class = allSpaces then begin
+   class := tagSpace;
+   goto 2;
+   end; {if}
+FindSymbol := nil;
 
 1:
 if np <> nil then

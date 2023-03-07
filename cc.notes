@@ -2146,6 +2146,8 @@ int foo(int[42]);
 
 237. If the same identifier was used for both a variable or function name and a struct/union/enum tag, it might not be possible to take the address of the variable or function within the initializer for a static variable.
 
+238. If a typedef name declared in an outer scope was used within an inner scope where the same name was declared as a struct/union/enum tag, it would not be properly recognized as a typedef name, leading to spurious errors.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

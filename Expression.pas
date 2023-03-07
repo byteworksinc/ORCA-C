@@ -2176,7 +2176,7 @@ begin {ExpressionTree}
 opStack := nil;
 stack := nil;
 if token.kind = typedef then            {handle typedefs that are hidden}
-   if FindSymbol(token,allSpaces,false,true) <> nil then
+   if FindSymbol(token,variableSpace,false,true) <> nil then
       if token.symbolPtr^.class <> typedefsy then
          token.kind := ident;
 if token.kind in startExpression then begin

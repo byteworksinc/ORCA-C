@@ -5316,12 +5316,6 @@ if tokenList <> nil then begin          {get a token put back by a macro}
    dispose(tPtr);
    if token.kind = typedef then         {allow for typedefs in a macro}
       token.kind := ident;
-{ dead code
-   if token.kind = ident then
-      if FindSymbol(token,allSpaces,false,false) <> nil then
-         if token.symbolPtr^.class = typedefsy then
-            token.kind := typedef;
-}
 4:
    while (token.kind = stringconst)
       and (tokenList <> nil)
