@@ -44,37 +44,43 @@ lb1      lda   [fromPtr],Y
 Hash     start cc
 hashSize equ   876                      # hash buckets - 1
 
-sum      equ   0                        hash
+disp     equ   0                        disp into hash table
 length   equ   2                        length of string
 
          subroutine (4:sPtr),4
 
-         stz   sum                      default to bucket 0
          lda   [sPtr]                   set the length of the string
+         tax
          and   #$00FF
          sta   length
          ldy   #1                       start with char 1
-         lda   [sPtr]                   if 1st char is '~', start with char 6
+         txa                            if 1st char is '~', start with char 6
          and   #$FF00
          cmp   #'~'*256
-         bne   lb1
+         bne   lb0
          ldy   #6
 
-lb1      lda   [sPtr],Y                 get the value to add in
-         and   #$3F3F
-         cpy   length                   if there is only 1 char left then
-         bne   lb2
-         and   #$00FF                     and out the high byte
-lb2      clc                            add it to the sum
-         adc   sum
-         sta   sum
-         iny                            next char
+lb0      lda   #0                       initial value is 0
+         bra   lb2                      while there are at least 2 chars left
+lb1      asl   a                          rotate sum left one bit
+         adc   [sPtr],Y                   add in next two bytes
+         iny                              advance two chars
          iny
-         cpy   length
-         ble   lb1
-         mod2  sum,#hashSize+1          return disp
-         asl   sum
-         asl   sum
+lb2      cpy   length
+         blt   lb1
+         bne   lb3                      if there is 1 char left then
+         asl   a                          rotate sum left one bit
+         sta   disp
+         lda   [sPtr],Y
+         and   #$00FF                     and out the high byte
+         adc   disp                       add last byte to the sum
+         sec
+lb3      sbc   #hashSize+1              disp := (sum mod (hashSize+1)) << 2
+         bcs   lb3
+         adc   #hashSize+1
+         asl   a
+         asl   a
+         sta   disp
 
-         return 2:sum
+         return 2:disp                  return disp
          end
