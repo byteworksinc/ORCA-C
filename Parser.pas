@@ -3702,7 +3702,9 @@ var
       else
          segmentKind := 0;
       defaultSegmentKind := segmentKind;
+      inhibitHeader := lInhibitHeader;
       Match(semicolonch,22);
+      inhibitHeader := true;
       end {if}
    else begin
       Error(83);
