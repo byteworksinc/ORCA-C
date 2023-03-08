@@ -253,6 +253,7 @@ type
       status:                           {what are we doing?}
          (processing,skippingToEndif,skippingToElse);
       elseFound: boolean;               {has an #else been found?}
+      theFile: filePtr;                 {file containing the #if}
       end;
 
    onOffEnum = (on,off,default);        {on-off values in standard pragmas}
@@ -1155,6 +1156,24 @@ function OpenFile (doInclude, default: boolean): boolean; forward;
 procedure PreProcess; forward;
 
 { Handle preprocessor commands                                  }
+
+
+procedure CheckConditionals;
+
+{ Check that preprocessor conditionals were balanced at the end }
+{ of an include file.                                           }
+
+var
+   ip: ifPtr;
+
+begin {CheckConditionals}
+while (ifList <> nil) and (ifList^.theFile = fileList) do begin
+   Error(21);
+   ip := ifList;
+   ifList := ifList^.next;
+   dispose(ip);
+   end; {while}
+end; {CheckConditionals}
 
 
 function FindMacro (name: stringPtr): macroRecordPtr;
@@ -2653,6 +2672,7 @@ var
    else
       ip^.status := processing;
    ip^.elseFound := false;              {no else has been found...}
+   ip^.theFile := fileList;             {record the file containing the #if}
    tSkipping := ip^.status <> processing; {decide if we should be skipping}
    end; {ProcessIf}
 
@@ -2991,7 +3011,7 @@ var
 
    begin {DoElif}
    ip := ifList;
-   if ip <> nil then begin
+   if (ip <> nil) and (ip^.theFile = fileList) then begin
                                         {decide if we should be skipping}
       tSkipping := ip^.status <> skippingToElse;
       if tSkipping then
@@ -3018,10 +3038,7 @@ var
    { #else                                                       }
  
    begin {DoElse}
-   NextToken;                            {skip the command name}
-   if token.kind <> eolsy then           {check for extra stuff on the line}
-      Error(11);
-   if ifList <> nil then begin
+   if (ifList <> nil) and (ifList^.theFile = fileList) then begin
       if ifList^.elseFound then         {check for multiple elses}
          Error(19)
       else
@@ -3035,6 +3052,9 @@ var
       end
    else
       Error(20);
+   NextToken;                            {skip the command name}
+   if token.kind <> eolsy then           {check for extra stuff on the line}
+      Error(11);
    end; {DoElse}
 
 
@@ -3046,7 +3066,7 @@ var
       ip: ifPtr;                        {used to create a new if record}
  
    begin {DoEndif}
-   if ifList <> nil then begin
+   if (ifList <> nil) and (ifList^.theFile = fileList) then begin
       ip := ifList;                     {remove the top if record from the list}
       ifList := ip^.next;
       dispose(ip);

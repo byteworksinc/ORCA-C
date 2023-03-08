@@ -506,6 +506,8 @@ lab1     anop
          beq   la2
 la1      brl   lb5
 la2      anop
+!       CheckConditionals;
+         jsl   CheckConditionals
 !    if not lastWasReturn then begin
 !       lastWasReturn := true;
 !       needWriteLine := true;
