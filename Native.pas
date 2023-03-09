@@ -1781,7 +1781,7 @@ var
                      end {if}
                end {else if}
             else if npeep[ns+1].opcode = m_tay then
-               if npeep[ns+2].opcode = m_lda_dir then begin
+               if npeep[ns+2].opcode in [m_lda_dir,m_lda_indly,m_pla] then begin
                   opcode := m_ldy_dir;
                   Remove(ns+1);
                   end {if}
@@ -1952,7 +1952,8 @@ var
                Remove(ns);
                Remove(ns);
                end {if}
-            else if npeep[ns+1].opcode in [m_ldx_abs,m_ldx_dir] then
+            else if npeep[ns+1].opcode in
+               [m_ldx_abs,m_ldx_dir,m_ldy_imm,m_ldy_dir] then
                if npeep[ns+2].opcode = m_pla then begin
                   Remove(ns+2);
                   Remove(ns);
