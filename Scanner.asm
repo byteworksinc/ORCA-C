@@ -506,8 +506,6 @@ lab1     anop
          beq   la2
 la1      brl   lb5
 la2      anop
-!       CheckConditionals;
-         jsl   CheckConditionals
 !    if not lastWasReturn then begin
 !       lastWasReturn := true;
 !       needWriteLine := true;
@@ -522,8 +520,10 @@ la2      anop
          lda   #eolChar
          sta   ch
          brl   le2
+!    CheckConditionals;
+la3      jsl   CheckConditionals
 !    ch := chr(eofChar);
-la3      stz   ch
+         stz   ch
 
 !    if needWriteLine then begin        {do eol processing}
 !       WriteLine;
