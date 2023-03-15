@@ -1051,6 +1051,28 @@ var
    op^.right := nd;
    end; {Switch}
 
+
+   procedure ReverseConditional;
+   
+   { Change tjp to an equivalent fjp, or vice versa.            }
+   {                                                            }
+   { Note: assumes opcode is pc_geq or pc_grt.                  }
+   
+   begin {ReverseConditional}
+   if rOpcode in [pc_tjp,pc_fjp] then begin
+      if op^.opcode = pc_geq then
+         op^.opcode := pc_grt
+      else
+         op^.opcode := pc_geq;
+      if rOpcode = pc_tjp then
+         rOpcode := pc_fjp
+      else
+         rOpcode := pc_tjp;
+      Switch;
+      end; {if}
+   end; {ReverseConditional}
+
+
 begin {GenCmp}
 {To reduct the number of possibilities that must be handled, pc_les  }
 {and pc_leq compares are reduced to their equivalent pc_grt and      }
@@ -1068,17 +1090,7 @@ else if op^.opcode = pc_leq then begin
 {for a tjp or fjp with a constant left operand.                   }
 if op^.optype in [cgByte,cgUByte,cgWord,cgUWord] then
    if op^.left^.opcode = pc_ldc then
-      if rOpcode in [pc_tjp,pc_fjp] then begin
-         if op^.opcode = pc_geq then
-            op^.opcode := pc_grt
-         else
-            op^.opcode := pc_geq;
-         if rOpcode = pc_tjp then
-            rOpcode := pc_fjp
-         else
-            rOpcode := pc_tjp;
-         Switch;
-         end; {if}
+      ReverseConditional;
 
 {Short cuts are available for single-word operands where the      }
 {right operand is a constant.                                     }
@@ -1222,6 +1234,9 @@ else
    case op^.optype of
 
       cgByte,cgUByte,cgWord,cgUWord: begin
+         if ((op^.opcode = pc_grt) and (Complex(op^.left) <= Complex(op^.right)))
+            or (Complex(op^.right) and not Complex(op^.left)) then
+            ReverseConditional;
          if Complex(op^.right) then begin
             GenTree(op^.right);
             if Complex(op^.left) then begin

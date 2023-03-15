@@ -1670,7 +1670,10 @@ var
                         opcode := m_bcs
                      else
                         opcode := m_bmi;
-                     end; {else if m_bra}
+                     end {else if m_bra}
+                  else if npeep[ns+3].opcode in [m_bra,m_brl] then
+                     if Short(ns,npeep[ns+3].operand) then
+                        operand := npeep[ns+3].operand;
 
          m_brl:
             if Short(ns,operand) then begin
