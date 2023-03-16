@@ -2148,6 +2148,8 @@ int foo(int[42]);
 
 238. If a typedef name declared in an outer scope was used within an inner scope where the same name was declared as a struct/union/enum tag, it would not be properly recognized as a typedef name, leading to spurious errors.
 
+239. If a listing was produced using the +L option when a Defaults.h file was present, an extra blank first line would be listed (in ORCA/C 2.1) or the first line of the source file would be listed twice (in ORCA/C 2.2 betas).
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.

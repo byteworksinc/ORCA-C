@@ -2525,7 +2525,8 @@ if gotName then begin			{read the file name from the line}
    OpenFile := true;			{we opened it}
    if doInclude and progress then	{note our progress}
       writeln('Including ', workString);
-   WriteLine;				{write the source line}
+   if not default then			{write the source line}
+      WriteLine;
    wroteLine := false;
    lineNumber := lineNumber+1;
    firstPtr := pointer(ord4(chPtr)+2);
