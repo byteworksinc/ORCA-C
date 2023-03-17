@@ -320,34 +320,6 @@ var
    tablePoolSize: 0..maxint;            {number of tables in pool}
    tablePoolMaxSize: 0..maxint;         {max number of tables in pool}
 
-{- Imported from expression.pas --------------------------------}
-
-procedure GenerateCode (tree: tokenPtr); extern;
-
-{ generate code from a fully formed expression tree             }
-{                                                               }
-{ parameters:                                                   }
-{     tree - top of the expression tree to generate code from   }
-{                                                               }
-{ variables:                                                    }
-{     expressionType - result type of the expression            }
-
-
-function UsualUnaryConversions: baseTypeEnum; extern;
-
-{ performs the usual unary conversions                          }
-{                                                               }
-{ inputs:                                                       }
-{       expressionType - type of the operand                    }
-{                                                               }
-{ result:                                                       }
-{       The base type of the operation to perform is returned.  }
-{       Any conversion code necessary has been generated.       }
-{                                                               }
-{ outputs:                                                      }
-{       expressionType - set to result type                     }
-
-
 {- Imported from CGC.pas ---------------------------------------}
 
 procedure CnvSC (rec: realrec); extern;
