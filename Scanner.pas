@@ -766,7 +766,7 @@ if list or (numErr <> 0) then begin
         147: msg := @'lint: not all parameters were declared with a type';
         148: msg := @'all parameters must have a complete type';
         149: msg := @'invalid universal character name for use in an identifier';
-        150: msg := @'designated initializers are not supported by ORCA/C';
+       {150: msg := @'designated initializers are not supported by ORCA/C';}
         151: msg := @'lint: type specifier missing';
         152: msg := @'lint: return with no value in non-void function';
         153: msg := @'lint: return statement in function declared _Noreturn';
