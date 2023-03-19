@@ -1682,7 +1682,8 @@ var
                didOne := true;
                end; {if}
 
-         m_bvs:
+         {disabled because current codegen does not produce this sequence}
+         {m_bvs:
             if npeep[ns+2].opcode = d_lab then
                if npeep[ns+2].operand = operand then
                   if npeep[ns+1].opcode = m_bmi then
@@ -2610,9 +2611,9 @@ xRegister.condition := regUnknown;
 yRegister.condition := regUnknown;
 lastRegOpcode := 0; {BRK}
 nnextspot := 1;
-nleadOpcodes := [m_asl_a,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_brl,m_bvs,m_bcc,
+nleadOpcodes := [m_asl_a,m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_brl,{m_bvs,}
    m_dec_abs,m_lda_abs,m_lda_dir,m_lda_imm,m_ldx_imm,m_sta_abs,m_sta_dir,
-   m_pha,m_plb,m_plx,m_tax,m_tya,m_tyx,m_phy,m_pei_dir,m_ldy_imm,m_rep,
+   m_pha,m_plb,{m_plx,}m_tax,m_tya,m_tyx,m_phy,m_pei_dir,m_ldy_imm,m_rep,
    m_ora_dir,m_ora_abs,m_and_imm,m_pea,m_tcd];
 nstopOpcodes := [d_end,d_pin];
 
