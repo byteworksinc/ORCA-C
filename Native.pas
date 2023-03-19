@@ -849,7 +849,7 @@ case p_opcode of
    m_plx:
       xRegister.condition := regUnknown;
 
-   m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvs,
+   m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvc,m_bvs,
    m_pha,m_phb,m_phd,m_php,m_phx,m_phy,m_pei_dir,m_tcs:
       goto 3;
    
@@ -1558,7 +1558,7 @@ var
       for i := ns to nnextSpot-1 do begin
          opcode := npeep[i].opcode;
          if opcode in
-            [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvs,m_jml,
+            [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bra,m_brl,m_bvc,m_bvs,m_jml,
              m_jmp_indX,m_jsl,m_lda_abs,m_lda_absx,m_lda_dir,m_lda_dirx,
              m_lda_imm,m_lda_indl,m_lda_indly,m_lda_long,m_lda_longx,m_lda_s,
              m_pla,m_rtl,m_rts,m_tdc,m_txa,m_tya,m_tsc,d_end,d_bmov,
@@ -1881,14 +1881,14 @@ var
                if operand = npeep[ns+1].operand then
                   if name = npeep[ns+1].name then
                      if not (npeep[ns+2].opcode in
-                        [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvs]) then
+                        [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvc,m_bvs]) then
                         Remove(ns+1);
 
          m_sta_dir:
             if npeep[ns+1].opcode = m_lda_dir then
                if operand = npeep[ns+1].operand then
                   if not (npeep[ns+2].opcode in
-                     [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvs]) then
+                     [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvc,m_bvs]) then
                      Remove(ns+1);
 
          m_plb:
@@ -1913,7 +1913,7 @@ var
                end {if}
             else if npeep[ns+1].opcode = m_txa then begin
                if not (npeep[ns+2].opcode in
-                  [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvs]) then begin
+                  [m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_bvc,m_bvs]) then begin
                   Remove(ns);
                   Remove(ns);
                   end; {if}

@@ -71,6 +71,7 @@ const
    m_bpl                  =    $10;
    m_bra                  =    $80;
    m_brl                  =    $82;
+   m_bvc                  =    $50;
    m_bvs                  =    $70;
    m_clc                  =    $18;
    m_cmp_abs              =    $CD;

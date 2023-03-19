@@ -1212,10 +1212,10 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
       GenNative(m_ldx_imm, immediate, 1, nil, 0);
       GenImplied(m_sec);
       GenNative(m_sbc_imm, immediate, num, nil, 0);
-      GenNative(m_bvs, relative, lab1, nil, 0);
-      GenNative(m_eor_imm, immediate, $8000, nil, 0);
+      GenNative(m_bvc, relative, lab1, nil, 0);
+      GenImplied(m_ror_a);
       GenLab(lab1);
-      GenNative(m_bmi, relative, lab2, nil, 0);
+      GenNative(m_bpl, relative, lab2, nil, 0);
       GenImplied(m_dex);
       GenLab(lab2);
       GenImplied(m_txa);
@@ -1279,10 +1279,10 @@ else
                end; {if}
             if op^.optype in [cgByte,cgWord] then begin
                lab1 := GenLabel;
-               GenNative(m_bvs, relative, lab1, nil, 0);
-               GenNative(m_eor_imm, immediate, $8000, nil, 0);
+               GenNative(m_bvc, relative, lab1, nil, 0);
+               GenImplied(m_ror_a);
                GenLab(lab1);
-               GenNative(m_bmi, relative, lab2, nil, 0);
+               GenNative(m_bpl, relative, lab2, nil, 0);
                end {if}
             else
                GenNative(m_bcs, relative, lab2, nil, 0);
@@ -1299,10 +1299,10 @@ else
                end; {if}
             if op^.optype in [cgByte,cgWord] then begin
                lab1 := GenLabel;
-               GenNative(m_bvs, relative, lab1, nil, 0);
-               GenNative(m_eor_imm, immediate, $8000, nil, 0);
+               GenNative(m_bvc, relative, lab1, nil, 0);
+               GenImplied(m_ror_a);
                GenLab(lab1);
-               GenNative(m_bpl, relative, lab2, nil, 0);
+               GenNative(m_bmi, relative, lab2, nil, 0);
                end {if}
             else
                GenNative(m_bcc, relative, lab2, nil, 0);
@@ -1319,10 +1319,10 @@ else
                end; {if}
             if op^.optype in [cgByte,cgWord] then begin
                lab1 := GenLabel;
-               GenNative(m_bvs, relative, lab1, nil, 0);
-               GenNative(m_eor_imm, immediate, $8000, nil, 0);
+               GenNative(m_bvc, relative, lab1, nil, 0);
+               GenImplied(m_ror_a);
                GenLab(lab1);
-               GenNative(m_bmi, relative, lab2, nil, 0);
+               GenNative(m_bpl, relative, lab2, nil, 0);
                end {if}
             else
                GenNative(m_bcs, relative, lab2, nil, 0);
