@@ -1204,7 +1204,7 @@ type
 var
    done: boolean;			{for loop termination test}
    typeDispList: typeDispPtr;		{type displacement/pointer table}
-   includeFileName: gsosInStringPtr;	{name of include file}
+   includesPtr: ptr;			{ptr to includes section from sym file}
    i: 1..maxint;			{loop/index variable}
 
 
@@ -1305,7 +1305,6 @@ var
    while len > 0 do begin
       giRec.pCount := 7;
       giRec.pathname := pointer(ReadLongString);
-      includeFileName := giRec.pathname; {save name to print later}
       len := len - (giRec.pathname^.size + 18);
       GetFileInfoGS(giRec);
       if ToolError = 0 then begin
@@ -1321,6 +1320,34 @@ var
       end; {while}
    DatesMatch := match;
    end; {DatesMatch}
+
+
+   procedure PrintIncludes;
+
+   { Print "Including ..." lines for the headers		}
+
+   type
+      longptr = ^longint;
+
+   var
+      dataPtr: ptr;                     {pointer to data from sym file}
+      endPtr: ptr;                      {pointer to end of includes section}
+      i: 1..maxint;			{loop/index variable}
+      includeNamePtr: gsosInStringPtr;  {pointer to an include file name}
+
+   begin {PrintIncludes}
+   dataPtr := includesPtr;
+   endPtr := pointer(ord4(dataPtr) + longptr(dataPtr)^ + 4);
+   dataPtr := pointer(ord4(dataPtr) + 4);
+   while dataPtr <> endPtr do begin
+      includeNamePtr := gsosInStringPtr(dataPtr);
+      write('Including ');
+      for i := 1 to includeNamePtr^.size do
+         write(includeNamePtr^.theString[i]);
+      writeln;
+      dataPtr := pointer(ord4(dataPtr) + includeNamePtr^.size + 18);
+      end; {while}
+   end; {PrintIncludes}
 
 
    procedure ReadMacroTable;
@@ -1980,14 +2007,11 @@ if not ignoreSymbols then begin
             PurgeSymbols;
 	 typeDispList := nil;
 	 while not done do begin
+            includesPtr := symPtr;
             if DatesMatch then begin
                if SourceMatches then begin
-                  if progress then begin
-                     write('Including ');
-                     for i := 1 to includeFileName^.size do
-                        write(includeFileName^.theString[i]);
-                     writeln;
-                     end; {if}
+                  if progress then
+                     PrintIncludes;
         	  ReadMacroTable;
         	  ReadSymbolTable;
         	  ReadPragmas;

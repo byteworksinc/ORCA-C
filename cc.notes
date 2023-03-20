@@ -2150,6 +2150,8 @@ int foo(int[42]);
 
 239. If a listing was produced using the +L option when a Defaults.h file was present, an extra blank first line would be listed (in ORCA/C 2.1) or the first line of the source file would be listed twice (in ORCA/C 2.2 betas).
 
+240. If a .sym file was in use, ORCA/C might not print "Including ..." messages for certain header files.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
