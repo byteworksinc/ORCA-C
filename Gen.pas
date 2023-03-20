@@ -3394,7 +3394,7 @@ var
 
 
 begin {GenIxa}
-if smallMemoryModel then begin
+if smallMemoryModel or (op^.left^.opcode = pc_lda) then begin
    lLong := gLong;
    gLong.preference := inPointer+localAddress+globalLabel;
    GenTree(op^.left);
@@ -3599,7 +3599,7 @@ if smallMemoryModel then begin
       otherwise:
          Error(cge1);
       end; {case}
-   end {if smallMemoryModel}
+   end {if smallMemoryModel or (op^.left^.opcode = pc_lda)}
 else begin
    gLong.preference := onStack;
    GenTree(op^.left);
