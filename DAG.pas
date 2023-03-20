@@ -488,9 +488,6 @@ var
    { parameters:						}
    {    op - tree to check					}
 
-   var
-      result: boolean;		{temp result}
-
    begin {SideEffects}
    if op = nil then begin
       if volatile then
@@ -520,7 +517,6 @@ var
    {    newOpcode - opcode to use if the jump sense is reversed	}
 
    var
-      done: boolean;			{optimization done test}
       topcode: pcodes;			{temp opcode}
 
    begin {JumpOptimizations}

@@ -704,9 +704,6 @@ var
    { See if the intermediate code is simple; i.e., can be       }
    { reached by direct page or absolute addressing.             }
 
-   var
-      load: icptr;			{left opcode}
-
    begin {Simple}
    Simple := false;
    if icode^.opcode = pc_ldc then
@@ -2592,7 +2589,6 @@ procedure GenIilIliIdlIld (op: icptr);
 { Generate code for a pc_iil, pc_ili, pc_idl or pc_ild		}
 
 var
-   i: integer;                          {index variable}
    lab1: integer;                       {label}
    lSkipLoad: boolean;			{copy of skipLoad}
    opcode: pcodes;			{op^.opcode}
@@ -6460,7 +6456,6 @@ procedure GenTree {op: icptr};
 
    var
       lab1,lab2: integer;		{label}
-      nd: icptr;			{temp node pointer}
       opc: pcodes;                      {operation code}
 
 
@@ -7265,9 +7260,6 @@ procedure GenTree {op: icptr};
 
    { Generate code for a pc_stk					}
 
-   var
-      lab1: integer;			{branch point}
-
    begin {GenStk}
    if op^.left^.opcode = pc_psh then begin
       if (op^.left^.right^.opcode = pc_ldc) and
@@ -7390,7 +7382,6 @@ procedure GenTree {op: icptr};
 
    var
       lLong: longType;                     {used to reserve gLong}
-      tp: baseTypeEnum;                    {operand type}
 
    begin {GenTl1}
    if op^.r in [2,4] then begin
@@ -7408,14 +7399,10 @@ procedure GenTree {op: icptr};
    else
       GenNative(m_sta_long, longAbs, 0, @'~TOOLERROR', 0);
    if op^.r in [2,4] then begin
-      if op^.r = 2 then begin
-         GenImplied(m_pla);
-         tp := cgWord;
-         end {if}
-      else begin
+      if op^.r = 2 then
+         GenImplied(m_pla)
+      else
          gLong.where := onStack;
-         tp := cgLong;
-         end; {else}
       end; {if}
    end; {GenTl1}
 
@@ -7453,7 +7440,7 @@ procedure GenTree {op: icptr};
    { Generate code for a pc_xjp					}
 
    var
-      lab1,lab2: integer;
+      lab1: integer;
       q: integer;
 
    begin {GenXjp}

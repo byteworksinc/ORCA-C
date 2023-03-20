@@ -511,8 +511,6 @@ label 1;
 var
    el1,el2: longint;                    {array sizes}
    kind1,kind2: typeKind;               {temp variables (for speed)}
-   p1, p2: parameterPtr;                {for tracing parameter lists}
-   pt1,pt2: typePtr;                    {pointer types}
 
 begin {CompTypes}
 CompTypes := false;                     {assume the types are not compatible}
@@ -1141,7 +1139,6 @@ var
    i: integer;                          {loop variable}
    iHandle: ^identPtr;                  {pointer to start of hash bucket}
    iPtr: identPtr;                      {pointer to the current symbol}
-   match: boolean;                      {for comparing substrings}
    name: stringPtr;                     {name to search for}
    np: stringPtr;                       {for searching for static variables}
    sPtr: symbolTablePtr;                {^ to current symbol table}

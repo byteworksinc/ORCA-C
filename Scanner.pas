@@ -1582,7 +1582,6 @@ var
    cp: longstringPtr;                   {pointer to work string}
    i: integer;                          {loop variable}
    len,len1: integer;                   {length of strings}
-   lt: tokenType;                       {local copy of token}
    elementType: typePtr;                {string element type}
 
 begin {MergeStrings}

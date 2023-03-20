@@ -312,7 +312,7 @@ procedure UpDate (lab: integer; labelValue: longint);
 {       labelValue - displacement in seg where label is located }
 
 var
-   next,temp: labelptr;                 {work pointers}
+   next: labelptr;                      {work pointer}
 
 begin {UpDate}
 if labeltab[lab].defined then
@@ -334,7 +334,6 @@ else begin
          Out2(long(labelvalue).lsw);
          Out2(long(labelvalue).msw);
          blkcnt := blkcnt-4;
-         temp := next;
          next := next^.next;
          end; {while}
       segdisp := blkcnt;

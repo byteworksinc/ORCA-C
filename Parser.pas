@@ -692,7 +692,6 @@ var
    var
       errorFound: boolean;              {did we find an error?}
       forLoop, continueLab, breakLab: integer; {branch points}
-      lType: typePtr;                   {type of "left" expression}
       parencount: integer;              {number of unmatched '(' chars}
       stPtr: statementPtr;              {work pointer}
       tl,tk: tokenStackPtr;             {for forming expression list}
@@ -770,7 +769,6 @@ var
  
    var
       lab: integer;                     {branch label}
-      lType: typePtr;                   {type of "left" expression}
       stPtr: statementPtr;              {work pointer}
  
    begin {IfStatement}
@@ -831,7 +829,6 @@ var
    { handle a return statement                                   }
 
    var
-      id: identPtr;                     {structure id}
       size: longint;                    {size of the struct/union}
 
 
@@ -968,7 +965,6 @@ var
    { handle a while statement                                    }
 
    var
-      lType: typePtr;                   {type of "left" expression}
       stPtr: statementPtr;              {work pointer}
       top, endl: integer;               {branch points}
 
@@ -1049,7 +1045,6 @@ procedure EndDoStatement;
 { finish off a do statement                                     }
 
 var
-   lType: typePtr;                      {type of "left" expression}
    stPtr: statementPtr;                 {work pointer}
 
 begin {EndDoStatement}
