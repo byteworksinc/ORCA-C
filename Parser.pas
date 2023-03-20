@@ -3942,7 +3942,7 @@ if isFunction then begin
 
    {local declaration}
    else begin
-      if not first then
+      if (not first) or (declSpecifiers.storageClass = typedefsy) then
          Error(22);
       if variable^.state = defined then
          Error(42);
