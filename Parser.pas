@@ -2014,6 +2014,10 @@ var
             iPtr^.pName := @'?';
             end {if}
          else begin
+            if ip^.storage in [stackFrame,parameter] then begin
+               Error(41);
+               errorFound := true;
+               end; {if}
             Subscript := ip^.itype;
             iPtr^.pName := ip^.name;
             end; {else}
