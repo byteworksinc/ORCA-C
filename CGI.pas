@@ -86,6 +86,7 @@ const
    m_cpx_abs              =    236;
    m_cpx_dir              =    228;
    m_cpx_imm              =    224;
+   m_cpy_imm              =    $C0;
    m_dea                  =     58;
    m_dec_abs              =    206;
    m_dec_absX             =    $DE;

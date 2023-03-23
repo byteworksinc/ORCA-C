@@ -3340,8 +3340,9 @@ procedure GenIxa (op: icptr);
 { Generate code for a pc_ixa					}
 
 var
-   lab1: integer;			{branch label}
+   lab1,lab2: integer;			{branch labels}
    lLong: longType;			{type of address}
+   signed: boolean;			{doing signed addition?}
    zero: boolean;			{is the index 0?}
 
 
@@ -3394,8 +3395,8 @@ var
 
 
 begin {GenIxa}
+lLong := gLong;
 if smallMemoryModel or (op^.left^.opcode = pc_lda) then begin
-   lLong := gLong;
    gLong.preference := inPointer+localAddress+globalLabel;
    GenTree(op^.left);
    case gLong.where of
@@ -3601,31 +3602,61 @@ if smallMemoryModel or (op^.left^.opcode = pc_lda) then begin
       end; {case}
    end {if smallMemoryModel or (op^.left^.opcode = pc_lda)}
 else begin
-   gLong.preference := onStack;
-   GenTree(op^.left);
-   GenTree(op^.right);
-   if IndexCanBeNegative then begin
-      lab1 := GenLabel;
-      GenNative(m_ldx_imm, immediate, $0000, nil, 0);
-      GenImplied(m_tay);
-      GenNative(m_bpl, relative, lab1, nil, 0);
-      GenImplied(m_dex);
-      GenLab(lab1);
-      GenImplied(m_phx);
-      GenImplied(m_pha);
-      end {else if}
+   signed := IndexCanBeNegative;
+   if (not signed)
+      and ((globalLabel & lLong.preference) <> 0)
+      and (op^.left^.opcode = pc_lao) 
+      then begin
+      if Complex(op^.right) then begin
+         GenTree(op^.right);
+         GenImplied(m_tax);
+         end {if}
+      else
+         LoadX(op^.right);
+      gLong.where := globalLabel;
+      gLong.fixedDisp := false;
+      gLong.disp := op^.left^.q;
+      gLong.lab := op^.left^.lab;
+      end {if}
    else begin
-      GenNative(m_pea, immediate, 0, nil, 0);
-      GenImplied(m_pha);
+      if op^.left^.opcode = pc_lao then begin
+         GenTree(op^.right);
+         if signed then
+            GenImplied(m_tay);
+         GenImplied(m_clc);
+         GenNative(m_adc_imm, immediate, op^.left^.q, op^.left^.lab, 0);
+         GenNative(m_ldx_imm, immediate, op^.left^.q, op^.left^.lab, shift16);
+         end {if}
+      else begin
+         gLong.preference := onStack;
+         GenTree(op^.left);
+         GenTree(op^.right);
+         if signed then
+            GenImplied(m_tay);
+         GenImplied(m_clc);
+         GenNative(m_adc_s, direct, 1, nil, 0);
+         GenImplied(m_plx);
+         GenImplied(m_plx);
+         end; {else}
+      lab1 := GenLabel;
+      GenNative(m_bcc, relative, lab1, nil, 0);
+      GenImplied(m_inx);
+      GenLab(lab1);
+      if signed then begin
+         GenNative(m_cpy_imm, immediate, $0000, nil, 0);
+         lab2 := GenLabel;
+         GenNative(m_bpl, relative, lab2, nil, 0);
+         GenImplied(m_dex);
+         GenLab(lab2);
+         end; {if}
+      if (A_X & lLong.preference) <> 0 then
+         gLong.where := A_X
+      else begin
+         GenImplied(m_phx);
+         GenImplied(m_pha);
+         gLong.where := onStack;
+         end; {else}
       end; {else}
-   GenImplied(m_clc);
-   GenImplied(m_pla);
-   GenNative(m_adc_s, direct, 3, nil, 0);
-   GenNative(m_sta_s, direct, 3, nil, 0);
-   GenImplied(m_pla);
-   GenNative(m_adc_s, direct, 3, nil, 0);
-   GenNative(m_sta_s, direct, 3, nil, 0);
-   gLong.where := onStack;
    end; {else}
 end; {GenIxa}
 

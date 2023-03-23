@@ -854,7 +854,7 @@ case p_opcode of
    
    m_bra,m_brl,m_clc,m_cmp_abs,m_cmp_dir,m_cmp_imm,m_cmp_s,m_cmp_indl,
    m_cmp_indly,m_cpx_imm,m_jml,m_jmp_indX,m_plb,m_rtl,m_rts,m_sec,d_add,d_pin,
-   m_cpx_abs,m_cpx_dir,m_cmp_dirx,m_plp,m_cop,d_wrd:    ;
+   m_cpx_abs,m_cpx_dir,m_cpy_imm,m_cmp_dirx,m_plp,m_cop,d_wrd:    ;
 
    m_pea: begin
       if aRegister.condition = regImmediate then
