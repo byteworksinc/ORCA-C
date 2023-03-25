@@ -692,7 +692,6 @@ var
       adc_dir,inc_abs,adc_s: integer;
    disp: integer;			{direct page location}
    lab1: integer;                       {label number}
-   lLong: longType;                     {used to reserve gLong}
    nd: icptr;				{for swapping left/right children}
    opcode: pcodes;			{temp storage; for efficiency}
    simpleStore: boolean;                {is the store absolute or direct?}
@@ -722,7 +721,6 @@ begin {GenAdlSbl}
 if save <> nil then
    gLong.preference :=
       A_X+onStack+inPointer+localAddress+globalLabel+constant;
-lLong := gLong;
 
 {set up the master instructions}
 opcode := op^.opcode;
@@ -2021,7 +2019,6 @@ var
    lab1,lab2,lab3: integer;		{label numbers}
    bne: integer;			{instruction for a pc_equ bne branch}
    beq: integer;			{instruction for a pc_equ beq branch}
-   lLong: longType;			{local long value information}
    leftOp,rightOp: pcodes;		{opcode codes to left, right}
 
 
@@ -2269,7 +2266,6 @@ else
       cgLong,cgULong: begin
          gLong.preference := onStack;
          GenTree(op^.left);
-         lLong := gLong;
          gLong.preference := A_X;
          GenTree(op^.right);
          if gLong.where = onStack then begin
@@ -3937,7 +3933,6 @@ var
    opcode: pcodes;			{op^.opcode}
    optype: baseTypeEnum;		{op^.optype}
    q: integer;				{op^.q}
-   special: boolean;			{special save?}
 
 begin {GenSroCpo} 
 opcode := op^.opcode;
@@ -4693,7 +4688,6 @@ procedure GenStrCop (op: icptr);
 var
    disp: integer;			{store location}
    optype: baseTypeEnum;		{op^.optype}
-   special: boolean;			{use special processing?}
    zero: boolean;			{is the operand a constant zero?}
 
 begin {GenStrCop}    
