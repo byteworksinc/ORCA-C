@@ -2152,6 +2152,8 @@ int foo(int[42]);
 
 240. If a .sym file was in use, ORCA/C might not print "Including ..." messages for certain header files.
 
+241. When using the large memory model, functions registered with atexit() (or at_quick_exit(), in ORCA/C 2.2 betas) might be called with the data bank set incorrectly, potentially causing memory corruption or other incorrect behavior.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
