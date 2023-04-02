@@ -32,6 +32,16 @@
    long double: fn##l, \
    default: _Generic((y), long double: fn##l, default: fn))((x),(y),(other))
 
+#define __tg_real_x_y_z(fn,x,y,z) _Generic((x), \
+   float: _Generic((y), \
+      float: _Generic((z), float: fn##f, long double: fn##l, default: fn), \
+      long double: fn##l, \
+      default: _Generic((z), long double: fn##l, default: fn)), \
+   long double: fn##l, \
+   default: _Generic((y), \
+      long double: fn##l, \
+      default: _Generic((z), long double: fn##l, default: fn)))((x),(y),(z))
+
 #define __tg_x(fn,x) __tg_real_x(fn,(x))
 #define __tg_x_y(fn,x,y) __tg_real_x_y(fn,(x),(y))
 
@@ -54,6 +64,7 @@
 #define expm1(x)        __tg_real_x(expm1,(x))
 #define fabs(x)         __tg_real_x(fabs,(x))
 #define fdim(x,y)       __tg_real_x_y(fdim,(x),(y))
+#define fma(x,y,z)      __tg_real_x_y_z(fma,(x),(y),(z))
 #define fmax(x,y)       __tg_real_x_y(fmax,(x),(y))
 #define fmin(x,y)       __tg_real_x_y(fmin,(x),(y))
 #define floor(x)        __tg_real_x(floor,(x))

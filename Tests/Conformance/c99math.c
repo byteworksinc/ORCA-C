@@ -48,6 +48,14 @@ int main(void) {
                 goto Fail;                                      \
         } while (0)
 
+#define expect_underflow(op, val) do {                          \
+        feclearexcept(FE_ALL_EXCEPT);                           \
+        if ((op) != (val))                                      \
+                goto Fail;                                      \
+        if (!fetestexcept(FE_UNDERFLOW))                        \
+                goto Fail;                                      \
+        } while (0)
+
 #define expect_exact(op, val)                                   \
         if ((op) != (val))                                      \
                 goto Fail
@@ -361,7 +369,7 @@ int main(void) {
         expect_pole_error(tgammaf(-0.0), -INFINITY);
         expect_domain_error(tgammal(-2.0));
         expect_domain_error(tgammal(-15.0));
-        expect_domain_error(tgammal(-1e4900));
+        expect_domain_error(tgammal(-1e4900L));
         expect_domain_error(tgammal(-INFINITY));
         expect_exact(tgammal(+INFINITY),+INFINITY);
         expect_approx(tgammal(1.0), 1.0);
@@ -564,6 +572,37 @@ int main(void) {
         expect_exact(fminf(1.0, 1.5), 1.0);
         expect_exact(fminl(-50.0, NAN), -50.0);
         expect_exact(fminl(NAN, 1e30L), 1e30L);
+
+        expect_nan(fma(+INFINITY, +0.0, NAN));
+        expect_nan(fmaf(-0.0, -INFINITY, NAN));
+        expect_domain_error(fmal(-INFINITY, +0.0, 123.0));
+        expect_domain_error(fma(-0.0, +INFINITY, -INFINITY));
+        expect_domain_error(fmaf(1e-10, -INFINITY, +INFINITY));
+        expect_domain_error(fmal(+INFINITY, 1e-4950L, -INFINITY));
+        expect_exact(fma(2.0, 3.0, 5.0), 11.0);
+        expect_exact(fmal(2e50L, -3.0L, 5e50L), -1e50L);
+        expect_exact(fmaf(-2.0, -3.0, -7.5), -1.5);
+        expect_nan(fma(NAN, 1.23, 4.56));
+        expect_nan(fmaf(1.23, NAN, 4.56));
+        expect_nan(fmal(1.23, 4.56, NAN));
+        expect_exact(fmal(+INFINITY, LDBL_TRUE_MIN, -1e4932L), +INFINITY);
+        expect_overflow(fmal(1e4000L, 1e1000L, -1e4932L), +INFINITY);
+        expect_exact(fmal(LDBL_MAX, 1.0, LDBL_TRUE_MIN), LDBL_MAX);
+        expect_exact(fmal(-LDBL_MAX, 1.0, -LDBL_TRUE_MIN), -LDBL_MAX);
+        fesetround(FE_UPWARD);
+        expect_overflow(fmal(LDBL_MAX, 1.0, LDBL_TRUE_MIN), +INFINITY);
+        expect_exact(fmal(-LDBL_MAX, 1.0, -LDBL_TRUE_MIN), -LDBL_MAX);
+        fesetround(FE_DOWNWARD);
+        expect_exact(fmal(LDBL_MAX, 1.0, LDBL_TRUE_MIN), LDBL_MAX);
+        expect_overflow(fmal(-LDBL_MAX, 1.0, -LDBL_TRUE_MIN), -INFINITY);
+        fesetround(FE_TOWARDZERO);
+        expect_exact(fmal(LDBL_MAX, 1.0, LDBL_TRUE_MIN), LDBL_MAX);
+        expect_exact(fmal(-LDBL_MAX, 1.0, -LDBL_TRUE_MIN), -LDBL_MAX);
+        expect_underflow(fmal(-LDBL_TRUE_MIN, LDBL_TRUE_MIN, LDBL_TRUE_MIN), 0.0);
+        fesetenv(FE_DFL_ENV);
+        expect_exact(fmal(-LDBL_TRUE_MIN, LDBL_TRUE_MIN, LDBL_TRUE_MIN), LDBL_TRUE_MIN);
+        expect_underflow(fmal(-LDBL_TRUE_MIN, LDBL_TRUE_MIN, 0.0), -0.0);
+        expect_exact(fmal(LDBL_TRUE_MIN, 5.0, -LDBL_TRUE_MIN), LDBL_TRUE_MIN*4.0L);
 
         expect_exact(strtod("-1.25e+3x", &p), -1250.0); expect_exact(*p, 'x');
         expect_exact(strtold("-InFin", &p), -INFINITY); expect_exact(*p, 'i');

@@ -77,6 +77,138 @@ int main(void) {
         if (sizeof(nextafter(1LL, 20LL)) != sizeof(double))
                 goto Fail;
 
+        if (sizeof(fma(1.0F, 1.0F, 1.0F)) != sizeof(float))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0F, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0F, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0F, 1LL)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0, 1.0F)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0, 1LL)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0L, 1.0F)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0L, 1.0)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0L, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1.0L, 1LL)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1L, 1.0F)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1L, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1L, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0F, 1L, 1LL)) != sizeof(double))
+                goto Fail;
+
+        if (sizeof(fma(1.0, 1.0F, 1.0F)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0F, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0F, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0F, 1LL)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0, 1.0F)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0, 1LL)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0L, 1.0F)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0L, 1.0)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0L, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1.0L, 1LL)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1L, 1.0F)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1L, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1L, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0, 1L, 1LL)) != sizeof(double))
+                goto Fail;
+
+        if (sizeof(fma(1.0L, 1.0F, 1.0F)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0F, 1.0)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0F, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0F, 1LL)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0, 1.0F)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0, 1.0)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0, 1LL)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0L, 1.0F)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0L, 1.0)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0L, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1.0L, 1LL)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1L, 1.0F)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1L, 1.0)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1L, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1.0L, 1L, 1LL)) != sizeof(long double))
+                goto Fail;
+
+        if (sizeof(fma(1LL, 1.0F, 1.0F)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0F, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0F, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0F, 1LL)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0, 1.0F)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0, 1LL)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0L, 1.0F)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0L, 1.0)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0L, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1.0L, 1LL)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1L, 1.0F)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1L, 1.0)) != sizeof(double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1L, 1.0L)) != sizeof(long double))
+                goto Fail;
+        if (sizeof(fma(1LL, 1L, 1LL)) != sizeof(double))
+                goto Fail;
+
         printf ("Passed Conformance Test c99tgmath\n");
         return 0;
 

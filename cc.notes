@@ -1218,6 +1218,12 @@ long double fdiml(long double x, long double y);
 
 These functions return x - y if x > y, or +0.0 if x <= y.
 
+double      fma(double x, double y, double z);
+float       fmaf(float x, float y, float z);
+long double fmal(long double x, long double y, long double z);
+
+These functions compute (x * y) + z, rounded as one ternary operation.  That is, they behave as if the mathematical result is computed exactly and then rounded once to produce the return value.
+
 double      fmax(double x, double y);
 float       fmaxf(float x, float y);
 long double fmaxl(long double x, long double y);
