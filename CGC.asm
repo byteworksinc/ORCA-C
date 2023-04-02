@@ -9,25 +9,27 @@
 ****************************************************************
 *
 CnvSX    start cg
-rec      equ   4                        record containing values
+rec      equ   8                        record containing values
+extptr   equ   1                        pointer to rec_ext field of rec
 rec_real equ   0                        disp to real (extended) value
 rec_ext  equ   10                       disp to extended (SANE) value
 
-         tsc                            set up DP
+         pha                            set up DP
+         pha
+         tsc
          phd
          tcd
-         ph4   rec                      push addr of real number
-         clc                            push addr of SANE number
-         lda   rec
-         adc   #rec_ext
-         tax
-         lda   rec+2
-         adc   #0
-         pha
-         phx
-         fx2x                           convert TOS to extended
-         move4 0,4                      return
+         add4  rec,#rec_ext,extptr      copy the number
+         ldy   #8
+lp       lda   [rec],y
+         sta   [extptr],y
+         dey
+         dey
+         bpl   lp
+         move4 4,8                      return
          pld
+         pla
+         pla
          pla
          pla
          rtl

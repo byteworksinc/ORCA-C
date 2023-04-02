@@ -175,12 +175,6 @@
  sta 2+&op
  mend
  MACRO
-&LAB FX2X
-&LAB PEA $0010
- LDX #$090A
- JSL $E10000
- MEND
- MACRO
 &LAB FX2C
 &LAB PEA $0510
  LDX #$090A
@@ -434,4 +428,86 @@
  mexit
 .g
  mnote "Missing closing '}'",16
+ mend
+ macro
+&l add4 &m1,&m2,&m3
+ lclb &yistwo
+ lclc &c
+&l ~setm
+ aif c:&m3,.a
+&c amid "&m2",1,1
+ aif "&c"<>"#",.a
+&c amid "&m1",1,1
+ aif "&c"="{",.a
+ aif "&c"="[",.a
+&c amid "&m2",2,l:&m2-1
+ aif &c>=65536,.a
+ clc
+ ~lda &m1
+ ~op adc,&m2
+ ~sta &m1
+ bcc ~&SYSCNT
+ ~op.h inc,&m1
+~&SYSCNT anop
+ ago .c
+.a
+ aif c:&m3,.b
+ lclc &m3
+&m3 setc &m1
+.b
+ clc
+ ~lda &m1
+ ~op adc,&m2
+ ~sta &m3
+ ~lda.h &m1
+ ~op.h adc,&m2
+ ~sta.h &m3
+.c
+ ~restm
+ mend
+ macro
+&l ~op &opc,&op
+ lclc &c
+&c amid "&op",1,1
+ aif "&c"<>"{",.b
+&c amid "&op",l:&op,1
+ aif "&c"="}",.a
+ mnote "Missing closing '}'",2
+&op setc &op}
+.a
+&op amid "&op",2,l:&op-2
+&op setc (&op)
+.b
+&l &opc &op
+ mend
+ macro
+&l ~op.h &opc,&op
+&l anop
+ lclc &c
+&c amid "&op",1,1
+ aif "&c"="[",.b
+ aif "&c"<>"{",.d
+&c amid "&op",l:&op,1
+ aif "&c"="}",.a
+ mnote "Missing closing '}'",2
+&op setc &op}
+.a
+&op amid "&op",2,l:&op-2
+&op setc (&op)
+.b
+ aif &yistwo,.c
+&yistwo setb 1
+ ldy #2
+.c
+&op setc "&op,y"
+ &opc &op
+ mexit
+.d
+ aif "&c"<>"#",.e
+&op amid "&op",2,l:&op-1
+&op setc "#^&op"
+ &opc &op
+ mexit
+.e
+ &opc 2+&op
  mend
