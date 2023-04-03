@@ -6162,17 +6162,50 @@ procedure GenTree {op: icptr};
    { Generate code for a pc_ldc					}
 
    type
-      kind = (vint, vbyte);		{kinds of equivalenced data}
-
-   var   
-      i: integer;			{loop/index variable}
-      rec: realrec;			{conversion record}
-      switch: packed record		{used for type conversion}
-	 case rkind: kind of
-            vint: (i: integer);
-            vbyte: (b1, b2, b3, b4, b5, b6, b7, b8: byte);
+      kind = (vreal, vlonglong, vwords); {kinds of equivalenced data}
+      switchRec = packed record
+	 case kind of
+	    vreal: (theReal: extended);
+	    vlonglong: (theLonglong: longlong);
+	    vwords: (words: packed array[1..5] of integer);
 	 end;
-                 
+
+   var
+      switch: switchRec;                {used for type conversion}
+
+
+      procedure PushWords (switch: switchRec; count: integer);
+   
+      { Generate code to push words from the switch record      }
+      {                                                         }
+      { parameters                                              }
+      {     switch - the switch record                          }
+      {     count - number of words to push                     }
+   
+      var
+         val: integer;                     {word value to push}
+
+      begin {PushWords}
+      repeat
+         val := switch.words[count];
+         if (count >= 3)
+            and (switch.words[count-1] = val)
+            and (switch.words[count-2] = val)
+            then begin
+            GenNative(m_lda_imm, immediate, val, nil, 0);
+            repeat
+               GenImplied(m_pha);
+               count := count - 1;
+            until (count = 0) or (switch.words[count] <> val);
+            end {if}
+         else begin
+            GenNative(m_pea, immediate, val, nil, 0);
+            count := count - 1;
+            end; {else}
+      until count = 0;
+      end; {PushWords}
+
+
    begin {GenLdc}
    case op^.optype of
       cgByte: begin
@@ -6185,15 +6218,8 @@ procedure GenTree {op: icptr};
          GenNative(m_lda_imm, immediate, op^.q, nil, 0);
 
       cgReal, cgDouble, cgComp, cgExtended: begin
-         rec.itsReal := op^.rval;
-         CnvSX(rec);
-         i := 9;
-         while i >= 0 do begin
-            switch.b1 := rec.inSANE[i];
-            switch.b2 := rec.inSANE[i+1];
-            GenNative(m_pea, immediate, switch.i, nil, 0);
-            i := i-2;
-            end; {while}
+         switch.theReal := op^.rval;
+         PushWords(switch, 5);
          end;
 
       cgLong, cgULong:
@@ -6214,10 +6240,8 @@ procedure GenTree {op: icptr};
 
       cgQuad,cgUQuad: begin
          if gQuad.preference = onStack then begin
-            GenNative(m_pea, immediate, long(op^.qval.hi).msw, nil, 0);
-            GenNative(m_pea, immediate, long(op^.qval.hi).lsw, nil, 0);
-            GenNative(m_pea, immediate, long(op^.qval.lo).msw, nil, 0);
-            GenNative(m_pea, immediate, long(op^.qval.lo).lsw, nil, 0);
+            switch.theLonglong := op^.qval;
+            PushWords(switch, 4);
             end {if}
          else begin
             GenNative(m_lda_imm, immediate, long(op^.qval.hi).msw, nil, 0);
