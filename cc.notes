@@ -185,6 +185,8 @@ ORCA/C now supports several standard pragmas of the form "#pragma STDC ...", as 
 
 p. 256
 
+Checking the debug check box in the desktop development environment will not enable all the debugging features that are available through #pragma debug.  It is equivalent to setting #pragma debug bits 1 and 2 only.
+
 The #pragma debug directive supports two new bits.  If bit 5 is set, ORCA/C generates code to check for illegal use of null pointers.  If bit 15 is set, ORCA/C generates inline function names for use with assembly-level debugging tools.  See "Additions to #pragma debug," below.
 
 p. 257
