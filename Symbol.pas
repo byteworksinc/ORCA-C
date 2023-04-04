@@ -310,7 +310,6 @@ type
                                         {From CGC.pas}
    realrec = record                     {used to convert from real to in-SANE}
       itsReal: extended;
-      inSANE: packed array[1..10] of byte;
       inCOMP: packed array[1..8] of byte;
       end;
 

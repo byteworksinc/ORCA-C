@@ -31,9 +31,8 @@ uses CCommon, CGI;
 type
                                         {pcode code generation}
                                         {---------------------}
-   realrec = record                     {used to convert from real to in-SANE}
+   realrec = record                     {used to convert from real to comp}
       itsReal: extended;
-      inSANE: packed array[1..10] of byte;
       inCOMP: packed array[1..8] of byte;
       end;
 
@@ -52,15 +51,6 @@ var
 procedure CnvSC (rec: realrec); extern;
 
 { convert a real number to SANE comp format                     }
-{                                                               }
-{ parameters:                                                   }
-{       rec - record containing the value to convert; also      }
-{               has space for the result                        }
-
-
-procedure CnvSX (rec: realrec); extern;
-
-{ convert a real number to SANE extended format                 }
 {                                                               }
 { parameters:                                                   }
 {       rec - record containing the value to convert; also      }

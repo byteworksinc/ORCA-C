@@ -1,42 +1,6 @@
          mcopy cgc.macros
 ****************************************************************
 *
-*  CnvSX - Convert floating point to SANE extended
-*
-*  Inputs:
-*        rec - pointer to a record
-*
-****************************************************************
-*
-CnvSX    start cg
-rec      equ   8                        record containing values
-extptr   equ   1                        pointer to rec_ext field of rec
-rec_real equ   0                        disp to real (extended) value
-rec_ext  equ   10                       disp to extended (SANE) value
-
-         pha                            set up DP
-         pha
-         tsc
-         phd
-         tcd
-         add4  rec,#rec_ext,extptr      copy the number
-         ldy   #8
-lp       lda   [rec],y
-         sta   [extptr],y
-         dey
-         dey
-         bpl   lp
-         move4 4,8                      return
-         pld
-         pla
-         pla
-         pla
-         pla
-         rtl
-         end
-
-****************************************************************
-*
 *  CnvSC - Convert floating point to SANE comp
 *
 *  Inputs:
@@ -50,8 +14,7 @@ lp       lda   [rec],y
 CnvSC    start cg
 rec      equ   4                        record containing values
 rec_real equ   0                        disp to real (extended) value
-rec_ext  equ   10                       disp to extended (SANE) value
-rec_cmp  equ   20                       disp to comp (SANE) value
+rec_cmp  equ   10                       disp to comp (SANE) value
 
          tsc                            set up DP
          phd

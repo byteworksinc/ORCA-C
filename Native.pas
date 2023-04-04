@@ -357,7 +357,7 @@ procedure WriteNative (opcode: integer; mode: addressingMode; operand: integer;
 label 1;
 
 type
-   rkind = (k1,k2,k3,k4);               {cnv record types}
+   rkind = (k1,k2,k3,k4,k5);            {cnv record types}
 
 var
    bp: ^byte;                           {byte pointer}
@@ -368,7 +368,8 @@ var
          k1: (rval: real;);
          k2: (dval: double;);
          k3: (qval: longlong);
-         k4: (ival1,ival2,ival3,ival4: integer;);
+         k4: (eval: extended);
+         k5: (ival1,ival2,ival3,ival4,ival5: integer;);
       end;
    count: integer;                      {number of constants to repeat}
    i,j,k: integer;                      {loop variables}
@@ -666,10 +667,12 @@ case mode of
                                      CnOut(cns.inCOMP[j]);
                                   end;
             cgExtended          : begin
-                                  cns.itsReal := icptr(name)^.rval;
-                                  CnvSX(cns);
-                                  for j := 1 to 10 do
-                                     CnOut(cns.inSANE[j]);
+                                  cnv.eval := icptr(name)^.rval;
+                                  CnOut2(cnv.ival1);
+                                  CnOut2(cnv.ival2);
+                                  CnOut2(cnv.ival3);
+                                  CnOut2(cnv.ival4);
+                                  CnOut2(cnv.ival5);
                                   end;
             cgString            : begin
                                   if not icptr(name)^.isByteSeq then begin
