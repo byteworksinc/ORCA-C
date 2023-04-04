@@ -4307,7 +4307,6 @@ procedure InitScanner {start, end: ptr};
 { end - points one byte past the last character in the file     }
 
 var
-   chi: minChar..maxChar;               {loop variable}
    lch: char;                           {next command line character}
    cp: ptr;                             {character pointer}
    i: 0..hashSize;                      {loop variable}
@@ -4316,8 +4315,6 @@ var
 
    mp: macroRecordPtr;                  {for building the predefined macros}
    bp: ^macroRecordPtr;
-
-   timeString: packed array[1..20] of char; {time from misc. tools}
 
 
    procedure NextCh;
@@ -4931,7 +4928,6 @@ procedure CheckIdentifier;
 label 1;
 
 var
-   bPtr: ^macroRecordPtr;               {pointer to hash bucket}
    mPtr: macroRecordPtr;                {for checking list of macros}
    rword: tokenEnum;                    {loop variable}
    sp: stringPtr;                       {for saving identifier names}
