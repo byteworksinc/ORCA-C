@@ -808,7 +808,7 @@ Several editions of the C language standards have been published by ANSI and ISO
 
 The strict conformance modes cause ORCA/C to follow the specified standard as closely as possible.  The compatibility modes are generally compatible with code that follows the corresponding standard, but they also include ORCA/C extensions and features from earlier and later standards (excluding those likely to cause compatibility problems).
 
-The default language mode is currently c17compat.  ORCA/C now supports all the major language features required by C17, although there are still some missing library functions and a few other small deviations from the standard.
+The default language mode is currently c17compat.  ORCA/C now supports nearly all the features required by C17, apart from wide character and string support and a few library features related to floating-point numbers.
 
 If a non-default language mode is selected, it will affect the initial settings of various pragma flags, as described below.  However, these can still be changed by subsequent #pragma directives.
 

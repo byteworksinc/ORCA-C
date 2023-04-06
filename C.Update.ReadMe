@@ -1,6 +1,6 @@
-Welcome to ORCA/C 2.2.0 B6!  This is an update release containing
+Welcome to ORCA/C 2.2.0 B7!  This is an update release containing
 patches from community members (Stephen Heumann and Kelvin Sherlock),
-which fix bugs and add new features.  For details on these changes,
+which add new features and fix bugs.  For details on these changes,
 see the cc.notes file in the Release.Notes directory.
 
 This package is designed to be applied as an update to an existing
