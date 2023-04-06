@@ -489,11 +489,13 @@ if not tPtr^.isEmpty or not tPtr^.noStatics then
                   if not (ip^.itype^.kind in [functionType,enumConst]) then
                      if ip^.storage = private then
                         if copy(ip^.name^,1,staticNumLen) = tPtr^.staticNum then
-                           begin
-                           new(nameStr);
-                           nameStr^ := copy(ip^.name^, staticNumLen+1, maxint);
-                           ErrorWithExtraString(185, nameStr);
-                           end; {if}
+                           if not (ip^.name^[staticNumLen+1] in ['~','@']) then
+                              begin
+                              new(nameStr);
+                              nameStr^ :=
+                                 copy(ip^.name^, staticNumLen+1, maxint);
+                              ErrorWithExtraString(185, nameStr);
+                              end; {if}
             ip := ip^.next;
             end; {while}
          end; {if}
