@@ -4123,8 +4123,11 @@ else {if not isFunction then} begin
       Error(141);
    if token.kind = eqch then begin
       if declSpecifiers.storageClass = typedefsy then
-         Error(52);
-      if doingPrototypes then
+         Error(52)
+      else if declSpecifiers.storageClass = externsy then
+         if doingFunction then
+            Error(22);
+      if doingPrototypes or doingParameters then
          Error(88);
                                         {allocate copy of incomplete array type,}
       tp := variable^.itype;            {so it can be completed by Initializer}
