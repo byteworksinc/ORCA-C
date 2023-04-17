@@ -54,7 +54,7 @@ int main (void)
    if (i != 1)
        goto Fail3;
    string [41] = '\0';
-   if (strcmp (string, " +009.  -0001.23456E-18     9876543210  G"))
+   if (strcmp (string, " +009.  -1.23456E-18        9876543210  G"))
        goto Fail;
 
    rewind (stdout);
@@ -62,10 +62,10 @@ int main (void)
    if (i != 1)
        goto Fail3;
    string [41] = '\0';
-   if (strcmp (string, " +009.  -0001.23456E-18     9876543210  G"))
+   if (strcmp (string, " +009.  -1.23456E-18        9876543210  G"))
        goto Fail;
 
-   if (strcmp (sstring, " +009.  -0001.23456E-18     9876543210  G\n"))
+   if (strcmp (sstring, " +009.  -1.23456E-18        9876543210  G\n"))
        goto Fail;
 
 
