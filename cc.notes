@@ -2172,6 +2172,8 @@ int foo(int[42]);
 
 242. In the fprintf() family of functions, the '0' flag should be ignored if '-' was also specified.
 
+243. In the fprintf() family of functions, when a conversion specification like "%#.0o" is used with the value 0, it should print "0" (rather than nothing).
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
