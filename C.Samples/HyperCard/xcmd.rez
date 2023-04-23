@@ -1,0 +1,23 @@
+/*****************************************************************
+*
+*  HyperCard XCMD
+*
+*  This is the resource file for xcmd.cc.
+*
+*  By Mike Westerfield
+*
+*  Copyright 1993
+*  Byte Works, Inc.
+*
+*****************************************************************/
+
+#include "types.rez"
+
+read $801E(1, convert) "xcmd";
+
+resource rResName ($0001801E) {
+   1,
+   {
+      1, "Beep";
+      }
+   };

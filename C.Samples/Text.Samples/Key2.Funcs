@@ -1,0 +1,43 @@
+/*****************************************************************
+*
+*   This file contains the functions for KEY2.CC.  See that file
+*   for detailed comments.
+*
+*******************************************************************/
+
+#pragma keep "Funcs"
+
+/****************************************************************
+*
+* KeyPress - Check if a key has been pressed
+*
+****************************************************************/
+
+int KeyPress(void)
+
+{
+char *keyboard;
+
+keyboard = (char *) 0x00C000;
+return ((*keyboard) & 0x80) != 0;
+}
+
+
+/****************************************************************
+*
+* ReadChar - Returns the last character typed on the keyboard.
+*            Note:  Returns a character whether or not one has
+*                   been typed!
+*
+****************************************************************/
+
+char ReadChar(void)
+
+{
+char *keyboard, *strobe;
+
+keyboard = (char *) 0x00C000;
+strobe = (char *) 0x00C010;
+*strobe = 0;
+return *keyboard & 0x7F;
+}

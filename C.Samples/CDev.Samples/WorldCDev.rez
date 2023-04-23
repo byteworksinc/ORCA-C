@@ -1,0 +1,110 @@
+#include "types.rez"
+
+/* This is the required resource to tell the control panel about the CDev */
+resource rCDEVFlags (0x1) {
+   0x00C0,
+   1,
+   1,
+   1,
+   0,
+   {0, 0, 110, 200},
+   "Hello World",
+   "Mike Westerfield",
+   "1.0"
+   };
+
+/* Code resource; the executable part of the CDev */
+read rCDevCode (0x1,convert) "worldobj";
+
+/* This is the icon displayed by the control panel */
+resource rIcon (0x1) {
+   0x8000,				/* color icon */
+   20,					/* height in pixels */
+   28,					/* width in pixels */
+   $"FFFFFFFFFFF1111111FFFFFFFFFF"
+   $"FFFFFFFF111111111111FFFFFFFF"
+   $"FFFFFF1111118881111881FFFFFF"
+   $"FFFFF111888888888818811FFFFF"
+   $"FFFF11118888888888118111FFFF"
+   $"FFF1111111888888811111111FFF"
+   $"FFF1111111888888111111111FFF"
+   $"FF111111111881181111111111FF"
+   $"FF111111111181111111111111FF"
+   $"FF111111111181111111111111FF"
+   $"FF111111118888881111111111FF"
+   $"FF111111118888888111111111FF"
+   $"FFF1111111888888811111111FFF"
+   $"FFF1111111188888111111111FFF"
+   $"FFFF11111111888811111111FFFF"
+   $"FFFFF111111118811111111FFFFF"
+   $"FFFFFF1111111181111111FFFFFF"
+   $"FFFFFFFF111111111111FFFFFFFF"
+   $"FFFFFFFFFF11111111FFFFFFFFFF"
+   $"FFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+
+   $"00000000000FFFFFFF0000000000"
+   $"00000000FFFFFFFFFFFF00000000"
+   $"000000FFFFFFFFFFFFFFFF000000"
+   $"00000FFFFFFFFFFFFFFFFFF00000"
+   $"0000FFFFFFFFFFFFFFFFFFFF0000"
+   $"000FFFFFFFFFFFFFFFFFFFFFF000"
+   $"000FFFFFFFFFFFFFFFFFFFFFF000"
+   $"00FFFFFFFFFFFFFFFFFFFFFFFF00"
+   $"00FFFFFFFFFFFFFFFFFFFFFFFF00"
+   $"00FFFFFFFFFFFFFFFFFFFFFFFF00"
+   $"00FFFFFFFFFFFFFFFFFFFFFFFF00"
+   $"00FFFFFFFFFFFFFFFFFFFFFFFF00"
+   $"000FFFFFFFFFFFFFFFFFFFFFF000"
+   $"000FFFFFFFFFFFFFFFFFFFFFF000"
+   $"0000FFFFFFFFFFFFFFFFFFFF0000"
+   $"00000FFFFFFFFFFFFFFFFFF00000"
+   $"000000FFFFFFFFFFFFFFFF000000"
+   $"00000000FFFFFFFFFFFF00000000"
+   $"0000000000FFFFFFFF0000000000"
+   $"0000000000000000000000000000"
+   };
+
+/* The following resources define the various controls in the main display */
+resource rControlList (256) {
+   {
+      256,
+      };
+   };
+
+resource rControlTemplate (256) {
+   0x00000001,				/* control id */ 
+   {38,5,49,205},			/* control rectangle */
+   statTextControl {{			/* control type */
+      0x0000,				/* flags */
+      0x1002,				/* more flags */
+      0, 				/* ref con */
+      256,				/* text reference */
+      13 				/* text length */
+      }};
+   };
+resource rTextForLETextBox2 (256) {
+   "Hello, world."
+   };
+   
+/* The following resources define the controls for the help screen */
+resource rControlList (257) {
+   {
+      257,
+      };
+   };
+
+resource rControlTemplate (257) {
+   0x00000002,				/* control id */ 
+   {38,5,49,205},			/* control rectangle */
+   statTextControl {{			/* control type */
+      0x0000,				/* flags */
+      0x1002,				/* more flags */
+      0, 				/* ref con */
+      257,				/* text reference */
+      19 				/* text length */
+      }};
+   };
+resource rTextForLETextBox2 (257) {
+   "Put help info here."
+   };
+   

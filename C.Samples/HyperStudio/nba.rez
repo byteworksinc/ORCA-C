@@ -1,0 +1,23 @@
+/*****************************************************************
+*
+*  HyperStudio NBA
+*
+*  This is the resource file for nba.cc.
+*
+*  By Mike Westerfield
+*
+*  Copyright 1993
+*  Byte Works, Inc.
+*
+*****************************************************************/
+
+#include "types.rez"
+
+read $8017($7FF0, convert) "nba";
+
+resource rResName ($00018017) {
+   1,
+   {
+      $7FF0, "Beep";
+      }
+   };

@@ -1,0 +1,20 @@
+unset exit
+echo compile key2.cc
+compile key2.cc
+if {status} == 0
+   echo compile key2.funcs
+   compile key2.funcs
+   if {status} == 0
+      echo link key2.cc key2.funcs
+      link key2 funcs keep=Key2
+      if {status} == 0
+         key2
+      else
+         echo Unable to link key2.cc key2.funcs
+      end
+   else
+      echo Unable to compile key2.funcs
+   end
+else
+   echo Unable to compile key2.cc
+end
