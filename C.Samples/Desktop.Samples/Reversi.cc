@@ -1047,8 +1047,7 @@ printf ("%c%d ", (char) (move % 10 - 1 + 'A'), 9 - move / 10);
 ****************************************************************/
 void DrawMoves (void)
 {
-GrafPortPtr port, p2;			      /* graphics ports		      */
-CtlRecHndl  ctl; 			      /* for finding scroll bar	      */
+GrafPortPtr port;			      /* graphics port		      */
 Rect r;					      /* rectangle for drawing colors */
 int  i, n;				      /* index variables 	      */
 
@@ -1437,7 +1436,7 @@ if ((part > 4) && (part < 9)) {	    /* if the part is not the slide switch... */
 	       if ( ((Even(topMove) + movesInWindow + 1) / 2)  >
 		    (Even(movesMade) + 1) / 2 ) {
 		   topMove = Even (movesMade) - movesInWindow;
-		   if (! (topMove >> 16) & 0x0001)
+		   if (! (topMove >> 15) & 0x0001)
 		       topMove++;
 		   }
 	       }
@@ -1451,7 +1450,7 @@ if ((part > 4) && (part < 9)) {	    /* if the part is not the slide switch... */
 
 else if (part == 129) {			/* reposition based on new thumb loc. */
    topMove = GetCtlValue (vScrollHandle) * 2 / charHeight +1;
-   if (! (topMove >> 16) & 0x0001)
+   if (! (topMove >> 15) & 0x0001)
        topMove++;
    updateMoves = true;
    DrawMoves ();

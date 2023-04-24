@@ -38,6 +38,8 @@ int a, m, n, depth, maxdepth;
 int Ackermann (int m, int n)
 
 {
+int result;
+
 depth++;
 if (depth > maxdepth)
    maxdepth = depth;
@@ -45,8 +47,9 @@ if (m == 0)
    return (n + 1);
 if (n == 0)
    return (Ackermann (m-1, 1));
-return (Ackermann (m-1, Ackermann (m, n-1)));
+result = Ackermann (m-1, Ackermann (m, n-1));
 depth--;
+return result;
 }
 
 

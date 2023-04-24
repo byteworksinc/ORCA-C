@@ -23,7 +23,6 @@ int main (void)
 {
 float r, theta, rot;
 int color = 1;
-int stopFlag;
 Rect rect;
 
 GetPortRect(&rect);

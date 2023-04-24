@@ -32,7 +32,9 @@
 static void Fail (void)
 {
 char ch [8000];				/* this array is too large for */
-}					/* the default run-time stack  */
+					/* the default run-time stack  */
+(void)ch;				/* dummy use of ch to avoid lint msg */
+}
 
 
 /****************************************************************
