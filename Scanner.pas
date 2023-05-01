@@ -3493,7 +3493,9 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                   expandMacros := false;
                   NextToken;
                   expandMacros := true;
-                  if token.class <> identifier then begin
+                  if token.kind = floatsy then
+                     token.name := @'float'
+                  else if token.class <> identifier then begin
                      if (lint & lintPragmas) <> 0 then
                         Error(110);
                      goto 2;
