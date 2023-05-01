@@ -741,7 +741,7 @@ if list or (numErr <> 0) then begin
         122: msg := @'arithmetic is not allowed on a pointer to an incomplete or function type';
         123: msg := @'array element type may not be an incomplete or function type';
         124: msg := @'lint: invalid format string or arguments';
-        125: msg := @'lint: format string is not a string literal';
+       {125: msg := @'lint: format string is not a string literal';}
         126: msg := @'scope rules may not be changed within a function';
         127: msg := @'illegal storage class for declaration in for loop';
         128: msg := @'lint: integer overflow in expression';
@@ -756,7 +756,7 @@ if list or (numErr <> 0) then begin
         137: msg := @'atomic types are not supported by ORCA/C';
         138: msg := @'unsupported alignment';
        {139: msg := @'thread-local storage is not supported by ORCA/C';}
-        140: msg := @'unexpected token';
+       {140: msg := @'unexpected token';}
         141: msg := @'_Noreturn specifier is only allowed on functions';
         142: msg := @'_Alignas may not be used in this declaration or type name';
         143: msg := @'only object pointer types may be restrict-qualified';
