@@ -23,7 +23,7 @@ typedef unsigned long size_t;
 #endif
 
 #ifndef __KeepNamespacePure__
-   char        *c2pstr(char *);
+   char        *c2pstr(const char *);
 #endif
 void           *memchr(const void *, int, size_t);
 int             memcmp(const void *, const void *, size_t);
@@ -31,7 +31,7 @@ void           *memcpy(void *, const void *, size_t);
 void           *memmove(void *, const void *, size_t);
 void           *memset(void *, int, size_t);
 #ifndef __KeepNamespacePure__
-   char        *p2cstr(char *);
+   char        *p2cstr(const char *);
 #endif
 char           *strcat(char *, const char *);
 char           *strchr(const char *, int);
