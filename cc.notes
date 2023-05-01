@@ -317,10 +317,6 @@ p. 352
 
 If a dup() call is successful, it actually returns the new file ID (a non-negative integer).
 
-p. 355
-
-If an fcntl() call using F_DUPFD is successful, it actually returns the new file ID (a non-negative integer).
-
 p. 353
 
 All error numbers used by errno are defined in <errno.h>, not <math.h>.
@@ -330,6 +326,10 @@ The discussion of _exit() should note that the _exit() function is an extension 
 p. 354
 
 The discussion of abort() should note that it will call raise(SIGABRT) before exiting.  Accordingly, if a SIGABRT handler was previously registered via a call to signal(), it will be executed.
+
+p. 355
+
+If an fcntl() call using F_DUPFD is successful, it actually returns the new file ID (a non-negative integer).
 
 p. 356
 
@@ -545,7 +545,7 @@ The CX_LIMITED_RANGE pragma relates to complex arithmetic, which ORCA/C does not
       type-name ':' assignment-expression |
       default ':' assignment-expression
 
-The generic-assoc-list provides a list of associations of types with expressions (and optionally a default association).  If the type of the the initial expression is compatible with one of those in the generic-assoc-list, the generic selection expression evaluates to the expression specified in that association.  If there is no compatible type but there is a default association, the expression specified there is used.  It is an error if there is no suitable association.  Only the expression from the selected association is evaluated and becomes the value of the overall generic selection expression; the initial expression and all those in other associations are not evaluated.
+The generic-assoc-list provides a list of associations of types with expressions (and optionally a default association).  If the type of the initial expression is compatible with one of those in the generic-assoc-list, the generic selection expression evaluates to the expression specified in that association.  If there is no compatible type but there is a default association, the expression specified there is used.  It is an error if there is no suitable association.  Only the expression from the selected association is evaluated and becomes the value of the overall generic selection expression; the initial expression and all those in other associations are not evaluated.
 
 As an example, this expression evaluates to 2 because the type of 1+2 is int:
 
@@ -555,7 +555,7 @@ Generic selection expressions are primarily useful within macros, which can give
 
 23. (C11) Character constants and string literals may now have prefixes indicating they should use Unicode encodings.  The prefixes u8, u, and U indicate UTF-8, UTF-16, and UTF-32 encodings, respectively.  The u8 prefix may only be used on string literals.  The U and u prefixes may be used on string literals or character constants.  U- and u-prefixed character constants have the types char32_t and char16_t (as defined in <uchar.h>); U- and u-prefixed string literals are treated as arrays of those types.  For example, the string literal U"abc" designates an array with four members of type char32_t: the three letters encoded in UTF-32, plus a null terminator.
 
-24. (C99) Floating-point constants may now be expressed in a hexadecimal format.  These consist of a leading 0X or 0x, followed by a sequence of hexadecimal digits optionally containing a period, then P or p, then an exponent expressed as a sequence of decimal digits optionally preceded by + or -.  These designate the number given by the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent.  For example, the constant 0xF.8p-1 is equivalent to 7.75.  
+24. (C99) Floating-point constants may now be expressed in a hexadecimal format.  These consist of a leading 0X or 0x, followed by a sequence of hexadecimal digits optionally containing a period, then P or p, then an exponent expressed as a sequence of decimal digits optionally preceded by + or -.  These designate the number given by the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent.  For example, the constant 0xF.8p-1 is equivalent to 7.75.
 
 Note that the fprintf family of functions also support output in this hexadecimal floating-point format using the 'A' and 'a' conversion specifiers, described below.  However, the hexadecimal floating-point format is currently not supported as an input format for any library functions.
 
@@ -915,7 +915,7 @@ int vsnprintf(char * restrict s, size_t n, const char * restrict format,
 
 These are equivalent to sprintf and vsprintf, except that they take an additional argument giving the maximum number of characters to be written.  If n is 0, no characters are written.  Otherwise, at most n-1 characters are written based on the format string, followed by a terminating null character.  They return the number of characters (not including the terminating null character) that would have been written if there was no size limit.
 
-3.  (C99) The vscanf(), vfscanf(), anf vsscanf() functions have been added:
+3.  (C99) The vscanf(), vfscanf(), and vsscanf() functions have been added:
 
 #include <stdarg.h>
 #include <stdio.h>
