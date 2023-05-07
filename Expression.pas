@@ -1712,12 +1712,16 @@ var
          if op^.token.kind = sizeofsy then begin
             op^.token.kind := ulongConst;
             op^.token.class := longConstant;
-            if op^.left^.token.kind = stringConst then
+            kindLeft := op^.left^.token.kind;
+            if kindLeft = stringConst then
                op^.token.lval := op^.left^.token.sval^.length
             else begin
                lCodeGeneration := codeGeneration;
                codeGeneration := false;
                GenerateCode(op^.left);
+               if kindLeft = dotch then
+                  if isBitfield then
+                     Error(49);
                codeGeneration := lCodeGeneration and (numErrors = 0);
                op^.token.lval := expressionType^.size;
                with expressionType^ do
@@ -4690,6 +4694,7 @@ case tree^.token.kind of
 
    dotch: begin                         {.}
       LoadAddress(tree^.left, checkNullPointers);
+      isBitfield := false;
       lType := expressionType;
       if lType^.kind in [arrayType,pointerType,structType,unionType] then begin
          if lType^.kind = arrayType then
