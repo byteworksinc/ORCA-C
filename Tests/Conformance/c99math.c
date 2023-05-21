@@ -365,6 +365,34 @@ int main(void) {
         expect_approx(erfcl(9.99L), 2.553157649309533e-45L);
         expect_approx(erfcl(105.0L), 4.300838032791244e-4791L);
 
+        expect_exact(lgamma(1.0), +0.0);
+        expect_exact(lgammaf(2.0), -0.0);
+        expect_pole_error(lgammal(0.0), +INFINITY);
+        expect_pole_error(lgammal(-0.0), +INFINITY);
+        expect_pole_error(lgammal(-1.0), +INFINITY);
+        expect_pole_error(lgammal(-2.0), +INFINITY);
+        expect_pole_error(lgammal(-3.0), +INFINITY);
+        expect_pole_error(lgammal(-1e50), +INFINITY);
+        expect_pole_error(lgammal(-LDBL_MAX), +INFINITY);
+        expect_exact(lgamma(-INFINITY), +INFINITY);
+        expect_exact(lgammaf(+INFINITY), +INFINITY);
+        expect_approx(lgammal(1e-50L), 1.151292546497022842e+02L);
+        expect_approx(lgammal(0.5L), 5.723649429247000870e-01L);
+        expect_approx(lgammal(0.99L), 5.854806764709776173e-03L);
+        expect_approx(lgammal(1.00000000001L), -5.772156625868682203e-12L);
+        expect_approx(lgammal(1.25L), -9.827183642181316143e-02L);
+        expect_approx(lgammal(1.9999999999L), -4.227843352103923846e-11L);
+        expect_approx(lgammal(2.125L), 5.775985153034387160e-02L);
+        expect_approx(lgammal(3.5L), 1.200973602347074225e+00L);
+        expect_approx(lgammal(1200.75L), 7.310783651998328589e+03L);
+        expect_approx(lgammal(1e4928L), 1.134613933827465713e+4932L);
+        expect_approx(lgammal(-0.00000000001L), 2.532843602294027468e+01L);
+        expect_approx(lgammal(-0.99L), 4.609530213895523164e+00L);
+        expect_approx(lgammal(-1.5L), 8.600470153764810144e-01L);
+        expect_approx(lgammal(-2.000000953674316L), 1.316979555107021760e+01L);
+        expect_approx(lgammal(-5.75L), -4.624612415302172588e+00L);
+        expect_approx(lgammal(-1000000000000.5L), -2.663102111595595344e+13L);
+
         expect_pole_error(tgamma(+0.0), +INFINITY);
         expect_pole_error(tgammaf(-0.0), -INFINITY);
         expect_domain_error(tgammal(-2.0));

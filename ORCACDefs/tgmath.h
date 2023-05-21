@@ -73,6 +73,7 @@
 #define hypot(x,y)      __tg_real_x_y(hypot,(x),(y))
 #define ilogb(x)        __tg_real_x(ilogb,(x))
 #define ldexp(x,n)      __tg_real_x_other(ldexp,(x),(n))
+#define lgamma(x)       __tg_real_x(lgamma,(x))
 #define llrint(x)       __tg_real_x(llrint,(x))
 #define llround(x)      __tg_real_x(llround,(x))
 #define log(x)          __tg_x(log,(x))

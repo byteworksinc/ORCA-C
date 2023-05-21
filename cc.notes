@@ -1259,6 +1259,13 @@ int         ilogbl(long double x);
 These functions extract the binary exponent of x as an integer value, treating denormalized numbers as if they were normalized.  If x is 0, infinite, or NaN, they return the macro values FP_ILOGB0, INT_MAX, or FP_ILOGBNAN, respectively.
 
 #include <math.h>
+double      lgamma(double x);
+float       lgammaf(float x);
+long double lgammal(long double x);
+
+These functions compute the natural logarithm of the absolute value of the gamma function of x.
+
+#include <math.h>
 double      log1p(double x);
 float       log1pf(float x);
 long double log1pl(long double x);

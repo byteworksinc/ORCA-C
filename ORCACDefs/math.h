@@ -150,6 +150,9 @@ int             ilogbl(long double);
 double          ldexp(double, int);
 float           ldexpf(float, int);
 long double     ldexpl(long double, int);
+double          lgamma(double);
+float           lgammaf(float);
+long double     lgammal(long double);
 #if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
 long long       llrint(double);
 long long       llrintf(float);
