@@ -27,6 +27,7 @@
 {1} c99inline.c
 {1} c99desinit.c
 {1} c99printfa.c
+{1} c99strtold.c
 {1} c11generic.c
 {1} c11align.c
 {1} c11noret.c

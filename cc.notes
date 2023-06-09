@@ -557,7 +557,7 @@ Generic selection expressions are primarily useful within macros, which can give
 
 24. (C99) Floating-point constants may now be expressed in a hexadecimal format.  These consist of a leading 0X or 0x, followed by a sequence of hexadecimal digits optionally containing a period, then P or p, then an exponent expressed as a sequence of decimal digits optionally preceded by + or -.  These designate the number given by the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent.  For example, the constant 0xF.8p-1 is equivalent to 7.75.
 
-Note that the fprintf family of functions also support output in this hexadecimal floating-point format using the 'A' and 'a' conversion specifiers, described below.  However, the hexadecimal floating-point format is currently not supported as an input format for any library functions.
+Note that the fprintf family of functions also support output in this hexadecimal floating-point format using the 'A' and 'a' conversion specifiers, described below.  The strtod, strtold, and strtof functions can also accept numbers in this format as input.
 
 25. (C99) When a function parameter is declared with an array type, type qualifiers and/or the keyword "static" may be included within the angle brackets that designate the array type.  For example, a function may be defined as:
 
@@ -1423,14 +1423,6 @@ long double tanhl(long double x);
 
 These functions are equivalent to the existing un-suffixed versions, apart from their argument and return types.  In ORCA/C, most of them actually behave identically to the un-suffixed versions.  An exception is the modf family of functions, which differ in the type of the location in which the integer part of the value is stored.
 
-Similarly, there are float and long double analogs of the string conversion function strtod:
-
-#include <stdlib.h>
-float       strtof(const char * restrict str, char ** restrict ptr);
-long double strtold(const char * restrict str, char ** restrict ptr);
-
-As currently implemented in ORCA/C, strtof and strtold behave identically to strtod, all giving values with the precision and range of long double.
-
 20. Several <time.h> functions can now use the Time Tool Set by Geoff Weiss to determine the time zone.  This behavior is controlled by a new variable:
 
 #include <time.h>
@@ -1460,6 +1452,18 @@ This function sets the structure *ts to a representation of the current time bas
 The only time base supported by ORCA/C is TIME_UTC.  This gives the time in seconds and nanoseconds since an implementation-defined time known as the epoch.  In ORCA/C, the epoch is 13 Nov 1969 00:00:00.  If the __useTimeTool variable (described above) has been set to a non-zero value, timespec_get will use the Time Tool Set to determine the time zone offset from UTC and provide a representation of the current UTC time; otherwise, it provides the current local time, assuming it is equal to UTC.
 
 Although struct timespec can represent a time with nanosecond resolution, ORCA/C currently only reports the time with a resolution of one second, so ts->tv_nsec is always set to 0.
+
+22. (C99) The strtod function can now accept strings in a hexadecimal floating-point format, in addition to the normal decimal format.  The hexadecimal format consists of an optional leading + or - sign, then 0X or 0x, then a sequence of hexadecimal digits optionally containing a period, then an optional exponent part consisting of a P or p character followed by a decimal number optionally preceded by + or -.  A string in this format designates the number given by the sign (if present) and the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent (if it is present).  For example, "0xF.8p-1" designates the number 7.75.
+
+The strtod function also accepts the string "INFINITY" (without regard to case, and optionally preceded by + or -) to designate an infinity.  This is equivalent to the string "INF", which was already accepted in earlier versions of ORCA/C.
+
+Also, there are now float and long double analogs of the strtod function:
+
+#include <stdlib.h>
+float       strtof(const char * restrict str, char ** restrict ptr);
+long double strtold(const char * restrict str, char ** restrict ptr);
+
+As currently implemented in ORCA/C, strtof and strtold behave identically to strtod, all giving values with the precision and range of long double.
 
 -- Compiler changes introduced in C 2.1.0 -----------------------------------
 
@@ -2204,6 +2208,8 @@ int foo(int[42]);
 253. When using the g or G conversion specifiers in the fprintf() family of functions, too many or too few digits might be printed in some circumstances, or a trailing decimal point might be printed when it should not be.
 
 (Devin Reade)
+
+254. The strtod() function should be able to skip over line feed, form feed, carriage return, and vertical tab characters (as well as space and horizontal tab) as part of the whitespace that may precede the number.
 
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
