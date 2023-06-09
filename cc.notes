@@ -2181,6 +2181,30 @@ int foo(int[42]);
 
 243. In the fprintf() family of functions, when a conversion specification like "%#.0o" is used with the value 0, it should print "0" (rather than nothing).
 
+244. Calls to malloc(), calloc(), or realloc() with a requested allocation size of 2 GB or greater could sometimes return a non-null pointer.  Such calls should always fail and return NULL, since the IIGS does not have that much memory.
+
+245. Programs using #pragma rtl would not return the proper value if run from the shell.  (This did not affect the usual use of #pragma rtl for a PIF or TIF.)
+
+246. The difftime() function would return incorrect values if the two times were at least 2^31 seconds (about 68 years) apart.
+
+247. Floating-point conversions in the scanf() family of functions should scan to a long double if the L modifier is used, but this did not work properly.
+
+(Kelvin Sherlock)
+
+248. If the low-order 16 bits of the size passed realloc() were 0x0001, it would fail to deallocate the memory at the old address.  This might cause the system to run out of memory.
+
+249. In certain obscure circumstances, realloc() might access soft switches or slot I/O locations, which could cause strange behavior or crashes.
+
+250. When using the E conversion specifier in the fprintf() family of functions, INF or NAN values might not be printed correctly.  The output for them could have incorrect padding and/or extraneous characters at the end.
+
+251. When a conversion specification like %#.0E or %#.0e is used in the fprintf() family of functions, the printed number should include a decimal point.
+
+252. When using the g or G conversion specifiers in the fprintf() family of functions, slightly incorrect limits were used for determining whether to print the value in a decimal or exponential format.
+
+253. When using the g or G conversion specifiers in the fprintf() family of functions, too many or too few digits might be printed in some circumstances, or a trailing decimal point might be printed when it should not be.
+
+(Devin Reade)
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
