@@ -35,37 +35,37 @@ int main (void)
    /* Write formatted output as string to the output files and sstring. */
 
    i = fprintf (f1, " %0+*.*Le  %- 15E  %#0 .e  E\n", i1, i2, e1, d1, fl1);
-   if (i != 54)
+   if (i != 55)
        goto Fail;
 
    i = printf (" %0+*.*Le  %- 15E  %#0 .e  E\n", i1, i2, e1, d1, fl1);
-   if (i != 54)
+   if (i != 55)
        goto Fail;
 
    i = sprintf (sstring, " %0+*.*Le  %- 15E  %#0 .e  E\n", i1, i2, e1, d1, fl1);
-   if (i != 54)
+   if (i != 55)
        goto Fail;
 
 
    /* Check the string written. */
 
    rewind (f1);
-   i = fscanf (f1, "%53c", string);
+   i = fscanf (f1, "%54c", string);
    if (i != 1)
        goto Fail3;
-   string [53] = '\0';
-   if (strcmp (string, " +1.2345600000000000e-203  -4.700000E+00     5e+00  E"))
+   string [54] = '\0';
+   if (strcmp (string, " +1.2345600000000000e-203  -4.700000E+00     5.e+00  E"))
        goto Fail;
 
    rewind (stdout);
-   i = fscanf (stdout, "%53c", string);
+   i = fscanf (stdout, "%54c", string);
    if (i != 1)
        goto Fail3;
-   string [53] = '\0';
-   if (strcmp (string, " +1.2345600000000000e-203  -4.700000E+00     5e+00  E"))
+   string [54] = '\0';
+   if (strcmp (string, " +1.2345600000000000e-203  -4.700000E+00     5.e+00  E"))
        goto Fail;
 
-   if (strcmp (sstring, " +1.2345600000000000e-203  -4.700000E+00     5e+00  E\n"))
+   if (strcmp (sstring, " +1.2345600000000000e-203  -4.700000E+00     5.e+00  E\n"))
        goto Fail;
 
 

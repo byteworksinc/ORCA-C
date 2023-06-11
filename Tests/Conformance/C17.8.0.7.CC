@@ -14,7 +14,7 @@ int main (void)
    f = fopen ("3/tmp", "wb+");            /* open input file for test */
    if (f == NULL)
        goto Fail1;
-   fprintf(f, "23 -3.8E20  -   e-   +25e-  00002.00008e000049.9");
+   fprintf(f, "23 -3.8E20  -0   0e-0   +25e-0  00002.00008e000049.9");
    rewind(f);
 
    f1 = f2 = f3 = f4 = 1.0;
