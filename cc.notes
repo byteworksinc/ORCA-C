@@ -2211,6 +2211,18 @@ int foo(int[42]);
 
 254. The strtod() function should be able to skip over line feed, form feed, carriage return, and vertical tab characters (as well as space and horizontal tab) as part of the whitespace that may precede the number.
 
+255. The strtod() function should return 0 if the string is empty or is not in the expected format.
+
+(Dave Tribby)
+
+256. In the fscanf() family of functions, floating-point conversions like %f could match certain character sequences that were not in the proper format, e.g. because they contained no digits.
+
+257. In the fscanf() family of functions, an input failure caused by encountering EOF should cause any subsequent directives to be skipped and not executed, even if they are directives like %n that require no input.
+
+258. If scanf() was called with a format string that was empty or contained only %n directives, it might pause awaiting a line of input from the console.  It should not do this, because it should not try to read any characters for such calls.
+
+259. If an error was encountered when processing a floating-point conversion directive with assignment suppressed, the scanf() family of functions might not return the correct value.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
