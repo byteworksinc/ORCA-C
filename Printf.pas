@@ -52,7 +52,7 @@ const
    feature_ll = true;
    feature_s_long = false;
    feature_n_size = true;
-   feature_scanf_ld = false;
+   feature_scanf_ld = true;
 
 type
    length_modifier = (default, h, hh, l, ll, j, z, t, ld);
