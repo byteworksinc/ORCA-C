@@ -3148,7 +3148,7 @@ var
    else
       Error(18);
    if token.kind in [intconst,uintconst,ushortconst] then begin
-      floatSlot := $C080 | (token.ival << 4);
+      floatSlot := token.ival;
       NextToken;
       end {if}
    else

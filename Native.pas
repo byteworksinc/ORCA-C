@@ -2546,6 +2546,15 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       {set the data bank register}
       SetDataBank;
 
+      {set FPE slot, if using FPE}
+      if floatCard = 1 then
+         if floatSlot in [1..7] then begin
+            CnOut(m_pea);
+            CnOut2(floatSlot);
+            CnOut(m_jsl);
+            RefName(@'SETFPESLOT', 0, 3, 0);
+            end; {if}
+
       {write JSL to main entry point}
       CnOut(m_jsl);
       if rtl then

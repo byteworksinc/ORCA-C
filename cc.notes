@@ -58,6 +58,8 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2023
 
             19.	The code generated for certain operations has been improved.
 
+            20.	The slot parameter to #pragma float now sets the FPE slot.
+
 2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
 
 2.1.0       1.	Bugs squashed.  See bug notes, below.
@@ -196,6 +198,8 @@ The #pragma expand directive has been changed to use three-digit octal escape se
 If precompiled headers are being used, #pragma expand will not print the tokens for the portion of the code that has been precompiled and represented in the .sym file.  It will still print the tokens for the remainder of the code (including all functions).  If you want to see the tokens for all of the code, you can use the -I flag to make ORCA/C ignore the .sym file.
 
 p. 258
+
+The slot parameter to #pragma float is now used to set the FPE slot.  See "Changes to #pragma float," below.
 
 The #pragma ignore directive supports several new bits.
 
@@ -678,6 +682,12 @@ Floating-Point Optimizations
 ORCA/C can perform certain optimizations on floating-point computations based on properties that are true for real numbers but are not always true in the IEEE floating-point arithmetic system.  In particular, these optimizations can occasionally cause behavior that differs from the IEEE standard in regard to infinities, NaNs, or the sign of zero.  Historically, these optimizations were performed mainly as part of intermediate code peephole optimization and in some cases also as part of common subexpression elimination.
 
 A new #pragma optimize bit has now been introduced to control this behavior.  Setting bit 7 (a value of 128) allows floating-point math optimizations that may violate the IEEE standard.  It currently only has an effect if #pragma optimize bit 0 or bit 4 is also set.  If bit 7 is not set, these floating-point optimizations will not be performed.  This allows most aspects of intermediate code peephole optimization and common subexpression elimination to be used while preserving IEEE floating-point behavior.
+
+
+Changes to #pragma float
+------------------------
+
+If #pragma float is used to generate code for an FPE card, the slot number given in the pragma is now used to configure the FPE slot.  This removes the need to call setfpeslot() in the program's code, although that can still be done to override the setting in #pragma float.  If the specified slot number is not in the range 1-7, it will be ignored and setfpeslot() will still need to be used.  You must also call setfpeslot() if you wish to use the FPE in any of the special types of programs that can be created using other pragmas.
 
 
 Additions to #pragma ignore
