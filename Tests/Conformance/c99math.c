@@ -155,15 +155,13 @@ int main(void) {
         expect_exact(cosh(+INFINITY), +INFINITY);
         expect_exact(coshf(-INFINITY), +INFINITY);
         expect_overflow(coshl(LDBL_MAX), +INFINITY);
-        feclearexcept(FE_ALL_EXCEPT); // ORCA/C cosh bug workaround
         expect_approx(coshl(1.0), 1.543080634815243778546L);
-        feclearexcept(FE_ALL_EXCEPT); // ORCA/C cosh bug workaround
         expect_approx(coshl(-10.0), 11013.23292010332313939L);
         
         expect_exact(sinh(+0.0), +0.0);
         expect_exact(sinhf(-0.0), -0.0);
-        //expect_exact(sinh(+INFINITY), +INFINITY); // ORCA/C gives a NAN
-        //expect_exact(sinhf(-INFINITY), -INFINITY); // ORCA/C gives a NAN
+        expect_exact(sinh(+INFINITY), +INFINITY);
+        expect_exact(sinhf(-INFINITY), -INFINITY);
         expect_approx(sinhl(1.25), 1.601919080300825637951L);
         expect_approx(sinhl(-20.0), -242582597.704895138042L);
         
@@ -535,14 +533,14 @@ int main(void) {
         
         expect_exact(fmod(+0.0, 10.0), +0.0);
         expect_exact(fmodf(-0.0, 10.0), -0.0);
-        //expect_domain_error(fmodl(INFINITY, 10.0)); // no "invalid" in ORCA/C
+        expect_domain_error(fmodl(INFINITY, 10.0));
         expect_nan(fmodl(INFINITY, 10.0));
-        //expect_domain_error(fmod(1.0, 0.0)); // gives 1 in ORCA/C
+        expect_domain_error(fmod(1.0, 0.0));
         //expect_exact(fmodl(1.25, +INFINITY), 1.25); //gives NAN in ORCA/C
         expect_exact(fmodl(11.5, 3.0), 2.5);
         expect_exact(fmodl(-11.5, 3.0), -2.5);
-        //expect_exact(fmodl(11.5, -3.0), 2.5); // gives -0.5 in ORCA/C
-        //expect_exact(fmodl(-11.5, -3.0), -2.5); // gives -0.5 in ORCA/C
+        expect_exact(fmodl(11.5, -3.0), 2.5);
+        expect_exact(fmodl(-11.5, -3.0), -2.5);
 
         expect_exact(remainder(+0.0, 10.0), +0.0);
         expect_exact(remainderf(-0.0, 10.0), -0.0);
@@ -634,10 +632,10 @@ int main(void) {
 
         expect_exact(strtod("-1.25e+3x", &p), -1250.0); expect_exact(*p, 'x');
         expect_exact(strtold("-InFin", &p), -INFINITY); expect_exact(*p, 'i');
-        expect_exact(strtof("INFiniTy", &p), INFINITY); //expect_exact(*p, 0);
+        expect_exact(strtof("INFiniTy", &p), INFINITY); expect_exact(*p, 0);
         expect_nan(strtod("nAN", NULL));
         expect_nan(strtof("-naN(50)", NULL));
-        //expect_exact(strtold("0xa.8p+2", NULL), 42.0);
+        expect_exact(strtold("0xa.8p+2", NULL), 42.0);
 
         printf ("Passed Conformance Test c99math\n");
         return 0;

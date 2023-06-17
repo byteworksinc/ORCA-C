@@ -2223,6 +2223,20 @@ int foo(int[42]);
 
 259. If an error was encountered when processing a floating-point conversion directive with assignment suppressed, the scanf() family of functions might not return the correct value.
 
+260. When using the g or G conversion specifiers in the fprintf() family of functions, the number zero could sometimes be printed in an exponential format like "0e+00".  It should be printed in a non-exponential format like "0".
+
+261. Several <math.h> functions could set errno inappropriately, based on a previous floating-point math operation rather than the current operation.
+
+262. If a domain or range error had occurred in any previous floating-point operation, sinh() and cosh() calls might return the wrong values.
+
+(William K. Watts, Jr.)
+
+263. The sqrt() function would set errno to ERANGE if its argument was negative.  This is a domain error, so it should set errno to EDOM in this case.
+
+(William K. Watts, Jr.)
+
+264. The fmod() function could return the wrong value when the second argument was negative.
+
 -- Bugs from C 2.1.0 that have been fixed -----------------------------------
 
 1.  In some situations, fread() reread the first 1K or so of the file.
