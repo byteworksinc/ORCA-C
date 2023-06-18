@@ -565,6 +565,12 @@ var
             false: (rval: real);
 	 end;
 
+      cnvdbl: record			{for stuffing a double in a quad space}
+         case boolean of
+            true:  (qval: longlong);
+            false: (rval: double);
+         end;
+
    begin {RealStoreOptimizations}
    if opl^.opcode = pc_cnv then
       if baseTypeEnum(opl^.q & $000F) = op^.optype then
@@ -630,6 +636,19 @@ var
          if opl^.optype = cgReal then begin
             opl^.optype := cgLong;
             op^.optype := cgLong;
+            end; {if}
+      end {if}
+   else if op^.optype = cgDouble then begin
+      if opl^.opcode = pc_ldc then begin
+         cnvdbl.rval := opl^.rval;
+         opl^.qval := cnvdbl.qval;
+         opl^.optype := cgQuad;
+         op^.optype := cgQuad;
+         end {if}
+      else if opl^.opcode in [pc_ind,pc_ldo,pc_lod] then
+         if opl^.optype = cgDouble then begin
+            opl^.optype := cgQuad;
+            op^.optype := cgQuad;
             end; {if}
       end; {if}
    end; {RealStoreOptimizations}
