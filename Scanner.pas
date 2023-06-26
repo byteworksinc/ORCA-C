@@ -3151,6 +3151,8 @@ var
       floatSlot := token.ival;
       NextToken;
       end {if}
+   else if token.kind = eolsy then
+      floatSlot := 0
    else
       Error(18);
    end; {DoFloat}

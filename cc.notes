@@ -687,7 +687,9 @@ A new #pragma optimize bit has now been introduced to control this behavior.  Se
 Changes to #pragma float
 ------------------------
 
-If #pragma float is used to generate code for an FPE card, the slot number given in the pragma is now used to configure the FPE slot.  This removes the need to call setfpeslot() in the program's code, although that can still be done to override the setting in #pragma float.  If the specified slot number is not in the range 1-7, it will be ignored and setfpeslot() will still need to be used.  You must also call setfpeslot() if you wish to use the FPE in any of the special types of programs that can be created using other pragmas.
+The second numeric parameter to #pragma float is now optional.  If it is provided, it specifies the slot number of the FPE card.  If it is not provided or is not in the range 1-7, the FPE card is auto-detected instead.  With these changes, it is generally no longer necessary to call setfpeslot() in programs that use the FPE card.
+
+If you use #pragma float in any of the special types of programs that can be created using other pragmas, the slot parameter will be ignored and the FPE will not be auto-detected.  In those cases, the program will still need to call setfpeslot() to set the slot number before doing any floating-point operations.
 
 
 Additions to #pragma ignore
