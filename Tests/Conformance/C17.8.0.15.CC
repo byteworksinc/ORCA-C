@@ -5,7 +5,7 @@
 
 int main (void)
   {
-   char  sstr [] = " 23 -3.8E20  -   e-   +25e-  00002.00008e000049.9 ";
+   char  sstr [] = " 23 -3.8E20  -0   0e-9   +25e-0  00002.00008e000049.9 ";
    float f1, f2, f3, f4;
    double d1, d2, d3;
    int i;
@@ -15,6 +15,7 @@ int main (void)
    d1 = d2 = d3 = 1.0;
    i  = sscanf (&sstr[0], "%*07f %e %E %lg %30lG %17lf%e", &f2, &f3, &d1, &d2,
                 &d3, &f4);
+printf("%d\n", i);
    if (i != 6)
        goto Fail;
    if ((fabs(f1 - 1.0) > 0.00001) ||
