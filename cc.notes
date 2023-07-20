@@ -1,10 +1,12 @@
-ORCA/C 2.2.0 B8
+ORCA/C 2.2.0
 Copyright 1997, Byte Works Inc.
 Updated by Stephen Heumann and Kelvin Sherlock, 2017-2023
 
+These release notes document the changes between ORCA/C 2.0 and ORCA/C 2.2.0.  They are intended mainly for users familiar with earlier versions of ORCA/C.  New users should simply refer to the ORCA/C 2.2 manual, which has been fully updated to document the new features and other changes in ORCA/C 2.2.0.
+
 -- Change List --------------------------------------------------------------
 
-2.2.0 B8    1.	Bugs squashed.  See bug notes, below.
+2.2.0       1.	Bugs squashed.  See bug notes, below.
 
             2.	New language features added (mainly features from C99 and C11).
               	See "New Language Features," below.
@@ -84,7 +86,9 @@ Updated by Stephen Heumann and Kelvin Sherlock, 2017-2023
 
 2.0.1       1.	Bugs squashed.  See bug notes, below.
 
--- Manual Errata ------------------------------------------------------------
+-- Manual Errata in the ORCA/C 2.0 Manual -----------------------------------
+
+(These errata have been corrected in the ORCA/C 2.2 manual.)
 
 p. 40
 
@@ -199,7 +203,7 @@ If precompiled headers are being used, #pragma expand will not print the tokens 
 
 p. 258
 
-The slot parameter to #pragma float is now used to set the FPE slot.  See "Changes to #pragma float," below.
+The slot parameter to #pragma float is now optional, and if present is used to set the FPE slot.  See "Changes to #pragma float," below.
 
 The #pragma ignore directive supports several new bits.
 
@@ -2191,7 +2195,7 @@ int foo(int[42]);
 
 241. When using the large memory model, functions registered with atexit() (or at_quick_exit(), in ORCA/C 2.2 betas) might be called with the data bank set incorrectly, potentially causing memory corruption or other incorrect behavior.
 
-(Bug fixes below here were added in ORCA/C 2.2.0 B8.)
+(Bug fixes below here were added in the final release of ORCA/C 2.2.0.)
 
 242. In the fprintf() family of functions, the '0' flag should be ignored if '-' was also specified.
 
