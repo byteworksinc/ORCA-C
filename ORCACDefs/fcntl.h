@@ -35,6 +35,6 @@ int             fcntl(int, int, ...);
 long            lseek(int, long, int);
 int             open(const char *, int, ...);
 int             read(int, void *, unsigned);
-int             write(int, void *, unsigned);
+int             write(int, const void *, unsigned);
 
 #endif

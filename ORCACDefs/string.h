@@ -46,12 +46,12 @@ int             strncmp(const char *, const char *, size_t);
 char           *strncpy(char *, const char *, size_t);
 char           *strpbrk(const char *, const char *);
 #ifndef __KeepNamespacePure__
-   int          strpos(char *, char);
+   int          strpos(const char *, char);
 #endif
 char           *strrchr(const char *, int);
 #ifndef __KeepNamespacePure__
-   char        *strrpbrk(char *, char *);
-   int          strrpos(char *, char);
+   char        *strrpbrk(const char *, const char *);
+   int          strrpos(const char *, char);
 #endif
 size_t          strspn(const char *, const char *);
 char           *strstr(const char *, const char *);
