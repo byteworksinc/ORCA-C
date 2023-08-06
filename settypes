@@ -1,20 +1,61 @@
-filetype = src
-change =.rez rez
-change =.pas pascal
-change =.Comments pascal
-change =.Debug pascal
-change =.Print pascal
-change =.asm asm65816
-change =.macros asm65816
-change make= exec
-change linkit= linker
-change smake exec
-change count exec
-change backup exec
-change settypes exec
-filetype =.notes txt
-filetype =.md txt
+filetype -p =.rez= src; change -p =.rez= rez
+filetype -p =.pas src; change -p =.pas pascal
+filetype CGI.Comments src; change CGI.Comments pascal
+filetype CGI.Debug src; change -p CGI.Debug pascal
+filetype Scanner.debug src; change -p Scanner.debug pascal
+filetype Symbol.Print src; change Symbol.Print pascal
+filetype -p =.asm src; change -p =.asm asm65816
+filetype -p =.macros src; change -p =.macros asm65816
+filetype -p make= src; change -p make= exec
+filetype -p linkit= src; change -p linkit= linker
+filetype smake src; change smake exec
+filetype count src; change count exec
+filetype backup src; change backup exec
+filetype settypes src; change settypes exec
+filetype cc.notes txt
+filetype -p =.md txt
 filetype LICENSE txt
+filetype C.Read.Me txt
+filetype C.Update.ReadMe txt
+filetype Tech.Support txt
+filetype Manual.docx $00
+filetype obj:README.txt txt
+filetype -p ORCACDefs:=.h src; change -p ORCACDefs:=.h cc
+filetype -p C.Samples:Benchmarks:=.cc src; change -p C.Samples:Benchmarks:=.cc cc
+filetype -p C.Samples:CDA.Samples:=.cc src; change -p C.Samples:CDA.Samples:=.cc cc
+filetype -p C.Samples:CDev.Samples:=.cc src; change -p C.Samples:CDev.Samples:=.cc cc
+filetype -p C.Samples:CDev.Samples:=.rez src; change -p C.Samples:CDev.Samples:=.rez rez
+filetype -p C.Samples:CDev.Samples:=.make src; change -p C.Samples:CDev.Samples:=.make exec
+filetype -p C.Samples:Desktop.Samples:=.cc src; change -p C.Samples:Desktop.Samples:=.cc cc
+filetype -p C.Samples:Graphic.Samples:=.cc src; change -p C.Samples:Graphic.Samples:=.cc cc
+filetype -p C.Samples:HyperCard:=.cc src; change -p C.Samples:HyperCard:=.cc cc
+filetype -p C.Samples:HyperCard:=.rez src; change -p C.Samples:HyperCard:=.rez rez
+filetype -p C.Samples:HyperCard:=.make src; change -p C.Samples:HyperCard:=.make exec
+filetype -p C.Samples:HyperStudio:=.cc src; change -p C.Samples:HyperStudio:=.cc cc
+filetype -p C.Samples:HyperStudio:=.rez src; change -p C.Samples:HyperStudio:=.rez rez
+filetype -p C.Samples:HyperStudio:=.make src; change -p C.Samples:HyperStudio:=.make exec
+filetype -p C.Samples:Text.Samples:=.cc src; change -p C.Samples:Text.Samples:=.cc cc
+filetype -p C.Samples:Text.Samples:=.h src; change -p C.Samples:Text.Samples:=.h cc
+filetype C.Samples:Text.Samples:Key2.Funcs src; change C.Samples:Text.Samples:Key2.Funcs cc
+filetype -p C.Samples:Text.Samples:=.asm src; change -p C.Samples:Text.Samples:=.asm asm65816
+filetype -p C.Samples:Text.Samples:=.Build src; change -p C.Samples:Text.Samples:=.Build exec
+filetype -p Tests:Conformance:=.c src; change -p Tests:Conformance:=.c cc
+filetype -p Tests:Conformance:=.CC src; change -p Tests:Conformance:=.CC cc
+filetype -p Tests:Conformance:DOIT= src; change -p Tests:Conformance:DOIT= exec
+filetype -p Tests:Conformance:TEST= src; change -p Tests:Conformance:TEST= exec
+filetype -p Tests:Deviance:=.CC src; change -p Tests:Deviance:=.CC cc
+filetype Tests:Deviance:D3401.DATA src; change Tests:Deviance:D3401.DATA cc
+filetype Tests:Deviance:DOIT src; change Tests:Deviance:DOIT exec
+filetype Tests:Deviance:RUN.DEVIANCE src; change Tests:Deviance:RUN.DEVIANCE exec
+filetype -p Tests:Deviance:TEST= src; change -p Tests:Deviance:TEST= exec
+filetype -p Tests:Spec.Conform:=.CC src; change -p Tests:Spec.Conform:=.CC cc
+filetype -p Tests:Spec.Conform:=.H src; change -p Tests:Spec.Conform:=.H cc
+filetype -p Tests:Spec.Conform:SPC3402= src; change -p Tests:Spec.Conform:SPC3402= cc
+filetype -p Tests:Spec.Conform:=FILE= src; change -p Tests:Spec.Conform:=FILE= cc
+filetype -p Tests:Spec.Conform:=.EXEC src; change -p Tests:Spec.Conform:=.EXEC exec
+filetype -p Tests:Spec.Deviance:=.CC src; change -p Tests:Spec.Deviance:=.CC cc
+filetype Tests:Spec.Deviance:DOIT src; change Tests:Spec.Deviance:DOIT exec
+filetype Tests:Spec.Deviance:TEST src; change Tests:Spec.Deviance:TEST exec
 
 * Install udl and uncomment this to also convert to CR line endings.
 * udl -g =

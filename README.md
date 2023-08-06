@@ -49,4 +49,4 @@ Alternatively, you can keep the LF line endings in your working copy of the Git 
 
 [udl]: http://ftp.gno.org/pub/apple2/gs.specific/gno/file.convert/udl.114.shk
 
-In addition to converting the line endings, you will also have to set the files to the appropriate file types before building ORCA/C on a IIGS. The included `settypes` script (for use under the ORCA shell) does this for the sources to the ORCA/C compiler itself, although it does not currently cover the test cases and headers.
+In addition to converting the line endings, you will also have to set the files to the appropriate file types before building ORCA/C on a IIGS. The included `settypes` script (for use under the ORCA shell) can be used to do this.
