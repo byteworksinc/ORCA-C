@@ -2786,8 +2786,12 @@ var
       ple: stringListPtr;               {pointer to the last element in parameterList}
       pnum: integer;                    {for counting parameters}
       tPtr,tk1,tk2: tokenListRecordPtr; {pointer to a token}
+      luseGlobalPool: boolean;          {local copy of useGlobalPool}
 
    begin {DoDefine}
+
+   lUseGlobalPool := useGlobalPool;
+   useGlobalPool := true;               {use global memory for defines}
    expandMacros := false;               {block expansions}
    saveNumber := true;                  {save characters in numeric tokens}
    parameterList := nil;                {no parameters yet}
@@ -2999,6 +3003,7 @@ var
       dispose(np);
       end; {while}
    saveNumber := false;                 {stop saving numeric strings}
+   useGlobalPool := lUseGlobalPool;
    end; {DoDefine}
 
 
