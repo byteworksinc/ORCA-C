@@ -14,13 +14,25 @@
 #ifndef __GSBUG__
 #define __GSBUG__
 
-#define dgiProgramCounter 0  /* for DebugGetInfo */
+/* Error Codes */
+#define debugUnImpErr 0xFF01
+#define debugBadSelErr 0xFF02
+#define debugDupBreakErr 0xFF03
+#define debugBreakNotSetErr 0xFF04
+#define debugTableFullErr 0xFF05
+#define debugTableEmptyErr 0xFF06
+#define debugBreaksInErr 0xFF07
 
-extern pascal Word DebugVersion() inline(0x04FF,dispatcher);
-extern pascal Word DebugStatus() inline(0x06FF,dispatcher);
-extern pascal void DebugStr() inline(0x09FF,dispatcher);
-extern pascal void SetMileStone() inline(0x0AFF,dispatcher);
-extern pascal void DebugSetHook() inline(0x0BFF,dispatcher);
-extern pascal LongWord DebugGetInfo() inline(0x0CFF,dispatcher);
+#define dgiProgramCounter 0  /* for DebugGetInfo */
+#define dgiOAEscEntry 1  /* for DebugGetInfo */
+
+extern pascal Word DebugVersion(void) inline(0x04FF,dispatcher);
+extern pascal Word DebugStatus(void) inline(0x06FF,dispatcher);
+extern pascal void DebugStr(Pointer) inline(0x09FF,dispatcher);
+extern pascal void SetMileStone(Pointer) inline(0x0AFF,dispatcher);
+extern pascal void DebugSetHook(Pointer) inline(0x0BFF,dispatcher);
+extern pascal LongWord DebugGetInfo(Word) inline(0x0CFF,dispatcher);
+extern pascal void DebugControl(LongWord, LongWord, Word, Word) inline(0x0DFF,dispatcher);
+extern pascal LongWord DebugQuery(LongWord, Word, Word) inline(0x0EFF,dispatcher);
 
 #endif
