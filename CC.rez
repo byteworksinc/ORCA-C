@@ -4,12 +4,12 @@ resource rVersion(1) {
    {
       2,				/* Major revision */
       2,				/* Minor revision */
-      0,				/* Bug version */
-      release,				/* Release stage */
-      0,				/* Non-final release # */
+      1,				/* Bug version */
+      development,			/* Release stage */
+      1,				/* Non-final release # */
       },
    verUS,				/* Region code */
    "ORCA/C",				/* Short version number */
    "Copyright 1997, Byte Works, Inc.\n"	/* Long version number */
-   "Updated 2023"
+   "Updated 2024"
    };
