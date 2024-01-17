@@ -24,15 +24,12 @@
 #define debugBreaksInErr 0xFF07
 
 #define dgiProgramCounter 0  /* for DebugGetInfo */
-#define dgiOAEscEntry 1  /* for DebugGetInfo */
 
 extern pascal Word DebugVersion(void) inline(0x04FF,dispatcher);
 extern pascal Word DebugStatus(void) inline(0x06FF,dispatcher);
 extern pascal void DebugStr(Pointer) inline(0x09FF,dispatcher);
 extern pascal void SetMileStone(Pointer) inline(0x0AFF,dispatcher);
-extern pascal void DebugSetHook(Pointer) inline(0x0BFF,dispatcher);
+extern pascal void DebugSetHook(VoidProcPtr) inline(0x0BFF,dispatcher);
 extern pascal LongWord DebugGetInfo(Word) inline(0x0CFF,dispatcher);
-extern pascal void DebugControl(LongWord, LongWord, Word, Word) inline(0x0DFF,dispatcher);
-extern pascal LongWord DebugQuery(LongWord, Word, Word) inline(0x0EFF,dispatcher);
 
 #endif
