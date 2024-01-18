@@ -126,7 +126,7 @@
 #define invalidFSTop 0x0065             /* invalid FST operation */
 #define fstCaution 0x0066               /* FST handled call, but result is weird */
 #define devNameErr 0x0067               /* device exists with same name as replacement name */
-#define defListFull 0x0068              /* device list is full */
+#define devListFull 0x0068              /* device list is full */
 #define supListFull 0x0069              /* supervisor list is full */
 #define fstError 0x006a                 /* generic FST error */
 #define resExistsErr 0x0070             /* cannot expand file, resource already exists */
