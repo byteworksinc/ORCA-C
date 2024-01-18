@@ -17,11 +17,6 @@
 /* Error Codes */
 #define debugUnImpErr 0xFF01
 #define debugBadSelErr 0xFF02
-#define debugDupBreakErr 0xFF03
-#define debugBreakNotSetErr 0xFF04
-#define debugTableFullErr 0xFF05
-#define debugTableEmptyErr 0xFF06
-#define debugBreaksInErr 0xFF07
 
 #define dgiProgramCounter 0  /* for DebugGetInfo */
 
