@@ -1596,6 +1596,8 @@ If you use #pragma debug 0x0010 to enable stack check debug code, the compiler w
 
 3.  In <gsos.h>, the error code devListFull was misspelled as defListFull.
 
+4.  A compile error is no longer reported for code that divides an integer constant by zero (e.g. 1/0).  Such code will produce undefined behavior if it is executed, but since the compiler cannot always determine whether the code will be executed at run time, this is no longer treated as an error that prevents compilation.  If #pragma lint bit 5 is set, a lint message about the division by zero will still be produced.  An error will also still be reported for division by zero in constant expressions that need to be evaluated at compile time.  
+
 -- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
 
 1.  There were various bugs that could cause incorrect code to be generated in certain cases.  Some of these were specific to certain optimization passes, alone or in combination.

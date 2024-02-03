@@ -1414,7 +1414,11 @@ var
                                    op1 := op1 * op2;
                   slashch     : begin                                   {/}
                                 if op2 = 0 then begin
-                                   Error(109);
+                                   if not (kind in [normalExpression,
+                                      autoInitializerExpression]) then
+                                      Error(109)
+                                   else if ((lint & lintOverflow) <> 0) then
+                                      Error(129);
                                    op2 := 1;
                                    end; {if}
                                 if unsigned then
@@ -1424,7 +1428,11 @@ var
                                 end;
                   percentch   : begin                                   {%}
                                 if op2 = 0 then begin
-                                   Error(109);
+                                   if not (kind in [normalExpression,
+                                      autoInitializerExpression]) then
+                                      Error(109)
+                                   else if ((lint & lintOverflow) <> 0) then
+                                      Error(129);
                                    op2 := 1;
                                    end; {if}
                                 if unsigned then
@@ -1570,7 +1578,11 @@ var
                   asteriskch  : umul64(llop1, llop2);                   {*}
                   slashch     : begin                                   {/}
                                 if (llop2.lo = 0) and (llop2.hi = 0) then begin
-                                   Error(109);
+                                   if not (kind in [normalExpression,
+                                      autoInitializerExpression]) then
+                                      Error(109)
+                                   else if ((lint & lintOverflow) <> 0) then
+                                      Error(129);
                                    llop2 := longlong1;
                                    end; {if}
                                 if unsigned then
@@ -1580,7 +1592,11 @@ var
                                 end;
                   percentch   : begin                                   {%}
                                 if (llop2.lo = 0) and (llop2.hi = 0) then begin
-                                   Error(109);
+                                   if not (kind in [normalExpression,
+                                      autoInitializerExpression]) then
+                                      Error(109)
+                                   else if ((lint & lintOverflow) <> 0) then
+                                      Error(129);
                                    llop2 := longlong1;
                                    end; {if}
                                 if unsigned then
