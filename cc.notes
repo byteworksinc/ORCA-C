@@ -1,10 +1,12 @@
-ORCA/C 2.2.0
+ORCA/C 2.2.1
 Copyright 1997, Byte Works Inc.
-Updated by Stephen Heumann and Kelvin Sherlock, 2017-2023
+Updated by Stephen Heumann and Kelvin Sherlock, 2017-2024
 
-These release notes document the changes between ORCA/C 2.0 and ORCA/C 2.2.0.  They are intended mainly for users familiar with earlier versions of ORCA/C.  New users should simply refer to the ORCA/C 2.2 manual, which has been fully updated to document the new features and other changes in ORCA/C 2.2.0.
+These release notes document the changes between ORCA/C 2.0 and ORCA/C 2.2.1.  They are intended mainly for users familiar with earlier versions of ORCA/C.  New users should refer to the ORCA/C 2.2 manual, which has been fully updated to document the new features and other changes in ORCA/C 2.2.
 
 -- Change List --------------------------------------------------------------
+
+2.2.1       1.	Bugs squashed.  See bug notes, below.
 
 2.2.0       1.	Bugs squashed.  See bug notes, below.
 
@@ -1581,6 +1583,18 @@ Turning this optimization on means ORCA/C is no longer strictly in compliance wi
    #pragma optimize 0x003F
 
 If you use #pragma debug 0x0010 to enable stack check debug code, the compiler will still flag variable argument functions that do not consume all arguments as a run-time error, even though ANSI C does allow them.
+
+-- Bugs from C 2.2.0 that have been fixed in C 2.2.1 ------------------------
+
+1.  If there was a #define directive immediately after the opening brace of a function body, and the macro defined there was used after the end of that function or was used in the initializer for a static variable, incorrect code might be generated or spurious errors might be reported.
+
+(Kelvin Sherlock)
+
+2.  In <gsbug.h>, the declarations of the pseudo tool calls provided by GSBug did not include prototypes.  Now they do.
+
+(Kelvin Sherlock)
+
+3.  In <gsos.h>, the error code devListFull was misspelled as defListFull.
 
 -- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
 
