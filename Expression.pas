@@ -3314,8 +3314,10 @@ var
          else
             Gen2t(pc_ind, ord(tqVolatile in expressionType^.qualifiers), 0, tp);
          if pc_l in [pc_lli,pc_lld] then
-            if expressionType^.cType in [ctBool,ctFloat,ctDouble,ctLongDouble,
-               ctComp] then begin
+            if (expressionType^.kind = scalarType) and
+               (expressionType^.cType in
+                  [ctBool,ctFloat,ctDouble,ctLongDouble,ctComp])
+               then begin
                t1 := GetTemp(ord(expressionType^.size));
                Gen2t(pc_cop, t1, 0, expressionType^.baseType);
                end; {if}
@@ -3326,8 +3328,10 @@ var
             Gen0t(pc_cpi, tp);
          Gen0t(pc_bno, tp);
          if pc_l in [pc_lli,pc_lld] then {correct the value for postfix ops}
-            if expressionType^.cType in [ctBool,ctFloat,ctDouble,ctLongDouble,
-               ctComp] then begin
+            if (expressionType^.kind = scalarType) and
+               (expressionType^.cType in
+                  [ctBool,ctFloat,ctDouble,ctLongDouble,ctComp])
+               then begin
                Gen0t(pc_pop, expressionType^.baseType);
                Gen2t(pc_lod, t1, 0, expressionType^.baseType);
                Gen0t(pc_bno, expressionType^.baseType);
