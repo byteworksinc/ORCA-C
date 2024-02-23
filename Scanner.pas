@@ -1882,6 +1882,8 @@ procedure Expand (macro: macroRecordPtr);
 { Globals:                                                      }
 {       macroList - scanner putback buffer                      }
 
+label 1;
+
 type
    parameterPtr = ^parameterRecord;
    parameterRecord = record             {parameter list element}
@@ -2160,8 +2162,10 @@ else begin
                tcPtr := pptr^.tokens;
                if tcPtr = nil then begin
                   if tlPtr^.next <> nil then
-                     if tlPtr^.next^.token.kind = poundpoundop then
-                        tlPtr^.next := tlPtr^.next^.next;                  
+                     if tlPtr^.next^.token.kind = poundpoundop then begin
+                        tlPtr := tlPtr^.next;
+                        goto 1;
+                        end; {if}
                   if lastPtr <> nil then
                      if lastPtr^.token.kind = poundpoundop then
                         if tokenList <> nil then
@@ -2213,7 +2217,7 @@ else begin
          tokenEnd := tlPtr^.tokenEnd;
          PutBackToken(tlPtr^.token, expandEnabled, false);
          end; {else}
-      lastPtr := tlPtr;
+1:    lastPtr := tlPtr;
       tlPtr := tlPtr^.next;
       end; {while}
    end; {else}

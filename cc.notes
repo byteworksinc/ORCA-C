@@ -1614,6 +1614,8 @@ If you use #pragma debug 0x0010 to enable stack check debug code, the compiler w
 
 12. If a numeric token formed using a ## preprocessor operator was an operand for another ## preprocessor operator, the resulting token would be incorrect.
 
+13. If an empty argument was passed for a macro parameter that was used as an operand of the ## preprocessing operator, the result would likely be incorrect, and subsequent uses of the same macro also might not be expanded correctly.
+
 -- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
 
 1.  There were various bugs that could cause incorrect code to be generated in certain cases.  Some of these were specific to certain optimization passes, alone or in combination.
