@@ -1596,9 +1596,21 @@ If you use #pragma debug 0x0010 to enable stack check debug code, the compiler w
 
 3.  In <gsos.h>, the error code devListFull was misspelled as defListFull.
 
-4.  A compile error is no longer reported for code that divides an integer constant by zero (e.g. 1/0).  Such code will produce undefined behavior if it is executed, but since the compiler cannot always determine whether the code will be executed at run time, this is no longer treated as an error that prevents compilation.  If #pragma lint bit 5 is set, a lint message about the division by zero will still be produced.  An error will also still be reported for division by zero in constant expressions that need to be evaluated at compile time.  
+4.  Code that divides an integer constant by zero (e.g. 1/0) will no longer always produce an error.  Such code will produce undefined behavior if it is executed, but since the compiler cannot always determine whether the code will be executed at run time, this is no longer treated as an error that prevents compilation.  If #pragma lint bit 5 is set, a lint message about the division by zero will still be produced.  An error will also still be reported for division by zero in constant expressions that need to be evaluated at compile time.  
 
 5.  In some obscure circumstances, ORCA/C might behave incorrectly when the postfix ++ or -- operators were used on an expression of pointer type.  This would typically result in "compiler error" messages, but could potentially also cause incorrect code to be generated without any errors being reported.
+
+6.  If the first string passed to strcat() or strncat() crossed a bank boundary, those functions would generally behave incorrectly and corrupt memory.
+
+7.  In certain situations where the third argument to strncat() was 0x8000 or greater, it could behave incorrectly.
+
+8.  If strncmp() was called with a third argument of 0x1000000 or greater, it could sometimes incorrectly return 0.  (Note that such size values exceed the address space of the 65816, so under ORCA/C they effectively impose no limit on the number of characters to be compared.  The behavior of strncmp() should therefore be the same as strcmp() in these cases.)
+
+9.  If an error was encountered when trying to write out buffered data in fclose(), the stream would not actually be closed, and the buffer allocated for it would not be freed.  Now the stream will be closed (disassociated from the file) and the buffer will be freed even if an error is encountered.
+
+10. If an error was encountered when trying to write out buffered data to a file when exiting the program, it could hang and never actually quit.
+
+11. If fclose() was called on a file created by tmpfile() at a time when there was very little free memory available, it could corrupt memory and cause a crash.  (This will no longer happen, but the file still may not be deleted if there is insufficient memory available when fclose() is called.)
 
 -- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
 
