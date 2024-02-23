@@ -1311,6 +1311,7 @@ var
    class1,class2: tokenClass;           {token classes}
    i: integer;                          {loop variable}
    kind1,kind2: tokenEnum;              {token kinds}
+   lsaveNumber: boolean;                {local copy of saveNumber}
    lt: tokenType;                       {local copy of token}
    str1,str2: stringPtr;                {identifier strings}
 
@@ -1379,7 +1380,10 @@ else if class1 in numericConstants then begin
       end; {else}
    workString := concat(tk1.numString^, str2^);
    lt := token;
+   lsaveNumber := saveNumber;
+   saveNumber := true;
    DoNumber(true);
+   saveNumber := lsaveNumber;
    tk1 := token;
    token := lt;
    goto 1;
