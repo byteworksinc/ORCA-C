@@ -34,7 +34,7 @@ second string argument!"))
        goto Fail;
 
    strcpy(s1, "this is the first string argument");
-   strcpy(s1, strncat (s1, s2, -5));
+   strcpy(s1, strncat (s1, s2, 0));
    if (strcmp (s1, "this is the first string argument"))
        goto Fail;
 

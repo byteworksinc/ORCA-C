@@ -29,7 +29,7 @@ int main (void)
    if (i != 0)
        goto Fail;
 
-   i = strncmp (s1, s2, -90L);         /* should just return 0 */
+   i = strncmp (s1, s2, 0L);           /* should just return 0 */
    if (i != 0)
        goto Fail;
 
