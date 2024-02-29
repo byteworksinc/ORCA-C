@@ -1,25 +1,25 @@
-This is an update package that can be used to update ORCA/C 2.1.0 to
-ORCA/C 2.2.0.  You must have an existing copy of ORCA/C 2.1.0 in order
-to use this update.  If you do not already have a copy, you can get it
-as part of Opus ][: The Software, a collection of Byte Works software
-which is sold by Juiced.GS:
+This is an update package that can be used to update ORCA/C 2.1.0 or
+2.2.0 to ORCA/C 2.2.1.  You must have an existing copy of ORCA/C 2.1.0
+or 2.2.0 in order to use this update.  If you do not already have a
+copy, you can get it as part of Opus ][: The Software, a collection of
+Byte Works software which is sold by Juiced.GS:
 https://juiced.gs/store/opus-ii-software/
 
 This update must be applied to an existing ORCA installation containing
-ORCA/C 2.1.0 or an ORCA/C 2.2.0 beta (including the one provided on
-Opus ][: The Software).  To apply the update, you just need to copy
-the files from this distribution into the corresponding locations in
-your ORCA installation, replacing any older versions.
+ORCA/C 2.1.0 or ORCA/C 2.2.0 (including the one provided on Opus ][:
+The Software).  To apply the update, you just need to copy the files
+from this distribution into the corresponding locations in your ORCA
+installation, replacing any older versions.
 
 If you received this update as a SHK file, you can simply extract the
-the files from it directly on top of your ORCA installation.
+files from it directly on top of your ORCA installation.
 
 If you received this update as a disk image, you can apply the update
 by copying the files into place using the Finder, or by running the
 following command within the root directory of your ORCA installation
 using the text-based ORCA shell:
 
-COPY -C :ORCAC.220:=
+COPY -C :ORCAC.221:=
 
 In addition to the ORCA shell environment, this update can also be
 used under other environments that are compatible with ORCA/C, such as
