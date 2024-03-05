@@ -3617,11 +3617,17 @@ else begin
    else begin
       if op^.left^.opcode = pc_lao then begin
          GenTree(op^.right);
-         if signed then
-            GenImplied(m_tay);
+         GenNative(m_ldx_imm, immediate, op^.left^.q, op^.left^.lab, shift16);
+         if signed then begin
+            GenImpliedForFlags(m_tay);
+            lab2 := GenLabel;
+            GenNative(m_bpl, relative, lab2, nil, 0);
+            GenImplied(m_dex);
+            GenLab(lab2);
+            signed := false;
+            end; {if}
          GenImplied(m_clc);
          GenNative(m_adc_imm, immediate, op^.left^.q, op^.left^.lab, 0);
-         GenNative(m_ldx_imm, immediate, op^.left^.q, op^.left^.lab, shift16);
          end {if}
       else begin
          gLong.preference := onStack;
