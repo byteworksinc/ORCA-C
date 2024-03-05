@@ -618,7 +618,7 @@ function NeedsCondition (opcode: pcodes): boolean;
 
 begin {NeedsCondition}
 NeedsCondition := opcode in
-   [pc_and,pc_ior,pc_cui,pc_cup,pc_lor,pc_lnd,pc_ldl,pc_lil,pc_lld,
+   [pc_and,pc_ior,pc_cui,pc_cup,pc_ldl,pc_lil,pc_lld,
     pc_lli,pc_gil,pc_gli,pc_gdl,pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,
     pc_cop,pc_cpo,pc_cpi,pc_dvi,pc_mpi,pc_adi,pc_sbi,pc_mod,pc_bno,
     pc_udi,pc_uim,pc_umi,pc_cnv,pc_rbo,pc_shl,pc_shr,pc_usr,pc_lbf,
@@ -5499,10 +5499,11 @@ procedure GenTree {op: icptr};
       lab1: integer;
       operandIsBoolean: boolean;
 
-   begin {GenntNgiNot}
+   begin {GenBntNgiNot}
    if op^.opcode = pc_not then
       operandIsBoolean := op^.left^.opcode in 
-         [pc_and,pc_ior,pc_neq,pc_equ,pc_geq,pc_leq,pc_les,pc_grt,pc_not];
+         [pc_and,pc_ior,pc_lnd,pc_lor,pc_not,pc_neq,pc_equ,pc_geq,pc_leq,
+          pc_les,pc_grt];
    GenTree(op^.left);
    case op^.opcode of
       pc_bnt:
@@ -6510,49 +6511,50 @@ procedure GenTree {op: icptr};
    { Generate code for a pc_lor or pc_lnd			}
 
    var
-      lab1,lab2: integer;		{label}
-      opc: pcodes;                      {operation code}
-
-
-      procedure DoOra;
-
-      { do some common oring operations to reduce space         }
-
-      begin {DoOra}
-      if gLong.where = onStack then begin
-	 GenImplied(m_pla);
-	 GenNative(m_sta_dir, direct, dworkLoc, nil, 0);
-	 GenImplied(m_pla);
-	 end {if}
-      else
-	 GenNative(m_stx_dir, direct, dworkLoc, nil, 0);
-      GenNative(m_ora_dir, direct, dworkLoc, nil, 0);
-      end; {DoOra}
-
+      lab1,lab2,lab3,lab4: integer;	{labels}
 
    begin {GenLorLnd}
-   opc := op^.opcode;
    lab1 := GenLabel;
+   lab3 := GenLabel;
+   lab4 := GenLabel;
+
    gLong.preference := A_X;
    GenTree(op^.left);
-   DoOra;
-
-   lab2 := GenLabel;
-   if opc = pc_lnd then
-      GenNative(m_bne, relative, lab2, nil, 0)
+   if glong.where = A_X then
+      GenImpliedForFlags(m_tay)
    else begin
-      GenNative(m_beq, relative, lab2, nil, 0);
-      GenNative(m_lda_imm, immediate, 1, nil, 0);
+      GenImplied(m_plx);
+      GenImplied(m_pla);
       end; {else}
-   GenNative(m_brl, longrelative, lab1, nil, 0);
-   GenLab(lab2);
+   GenNative(m_bne, relative, lab1, nil, 0);
+   GenImplied(m_txa);
+   if op^.opcode = pc_lor then begin
+      lab2 := GenLabel;
+      GenNative(m_beq, relative, lab2, nil, 0);
+      GenLab(lab1);
+      GenNative(m_brl, longrelative, lab3, nil, 0);
+      GenLab(lab2);
+      end {if}
+   else begin
+      GenNative(m_bne, relative, lab1, nil, 0);
+      GenNative(m_brl, longrelative, lab4, nil, 0);
+      GenLab(lab1);
+      end; {if}
 
    gLong.preference := A_X;
    GenTree(op^.right);
-   DoOra;
-   GenNative(m_beq, relative, lab1, nil, 0);
+   if glong.where = A_X then
+      GenImpliedForFlags(m_tay)
+   else begin
+      GenImplied(m_plx);
+      GenImplied(m_pla);
+      end; {else}
+   GenNative(m_bne, relative, lab3, nil, 0);
+   GenImplied(m_txa);
+   GenNative(m_beq, relative, lab4, nil, 0);
+   GenLab(lab3);
    GenNative(m_lda_imm, immediate, 1, nil, 0);
-   GenLab(lab1);
+   GenLab(lab4);
    end; {GenLorLnd}
 
 
@@ -7729,7 +7731,7 @@ var
       localSize := localSize + size;
       end {else if}
    else if opcode in
-      [pc_les,pc_leq,pc_grt,pc_geq,pc_sto,pc_cpi,pc_ind,pc_lor,pc_lnd,
+      [pc_les,pc_leq,pc_grt,pc_geq,pc_sto,pc_cpi,pc_ind,
        pc_ili,pc_iil,pc_idl,pc_ild,pc_ixa]
       then begin
       if dworkLoc = 0 then begin
