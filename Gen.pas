@@ -3696,7 +3696,7 @@ var
       GenNative(m_inc_dirx, direct, 2, nil, 0);
       GenLab(lab1);
       end {if}
-   else {if op in [pc_gdl,pc_gld] then} begin
+   else {if op in [pc_ldl,pc_lld] then} begin
       lab1 := GenLabel;
       if p = 1 then begin
 	 GenNative(m_lda_dirx, direct, 0, nil, 0);
