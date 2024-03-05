@@ -1637,7 +1637,7 @@ var
                      end; {if}
 
          m_bcs,m_beq,m_bne,m_bmi,m_bpl,m_bcc:
-            if npeep[ns+2].opcode = d_lab then
+            if npeep[ns+2].opcode = d_lab then begin
                if npeep[ns+2].operand = operand then
                   if npeep[ns+1].opcode = m_brl then begin
                      if Short(ns,npeep[ns+1].operand) then begin
@@ -1676,6 +1676,12 @@ var
                   else if npeep[ns+3].opcode in [m_bra,m_brl] then
                      if Short(ns,npeep[ns+3].operand) then
                         operand := npeep[ns+3].operand;
+               end {if}
+            else if npeep[ns+3].opcode = d_lab then
+               if npeep[ns+3].operand = operand then
+                  if npeep[ns+4].opcode in [m_bra,m_brl] then
+                     if Short(ns,npeep[ns+4].operand) then
+                        operand := npeep[ns+4].operand;
 
          m_brl:
             if Short(ns,operand) then begin
