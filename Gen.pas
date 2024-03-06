@@ -1121,7 +1121,7 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
                end; {if}
             GenNative(m_bpl, relative, lab1, nil, 0);
             if num <> 0 then
-               GenLab(lab2);
+               GenLabUsedOnce(lab2);
             GenNative(m_brl, longrelative, lb, nil, 0);
             GenLab(lab1);
             end {if (num >= 0) and (num < 3)}
@@ -1134,7 +1134,7 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
             GenNative(m_cmp_imm, immediate, num, nil, 0);
             GenNative(m_bcs, relative, lab2, nil, 0);
             if num > 0 then begin
-               GenLab(lab1);
+               GenLabUsedOnce(lab1);
                GenNative(m_brl, longrelative, lb, nil, 0);
                GenLab(lab2);
                end {if}
@@ -1184,7 +1184,7 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
                GenLab(lab1);
                end {if}
             else begin
-               GenLab(lab1);
+               GenLabUsedOnce(lab1);
                GenNative(m_brl, longrelative, lb, nil, 0);
                GenLab(lab2);
                end; {else}
@@ -1282,7 +1282,7 @@ else
             else
                GenNative(m_bcs, relative, lab2, nil, 0);
             if op^.opcode = pc_grt then
-               GenLab(lab3);
+               GenLabUsedOnce(lab3);
             GenNative(m_brl, longrelative, lb, nil, 0);
             GenLab(lab2);
             end {if}
@@ -6531,7 +6531,7 @@ procedure GenTree {op: icptr};
    if op^.opcode = pc_lor then begin
       lab2 := GenLabel;
       GenNative(m_beq, relative, lab2, nil, 0);
-      GenLab(lab1);
+      GenLabUsedOnce(lab1);
       GenNative(m_brl, longrelative, lab3, nil, 0);
       GenLab(lab2);
       end {if}

@@ -48,6 +48,7 @@ const
    forFlags               =    256;     {instruction used for effect on flags only}
    subtract1              =    512;     {subtract 1 from address operand}
    shiftLeft8             =   1024;     {shift operand left 8 bits}
+   labelUsedOnce          =   2048;     {only one branch targets this label}
 
    m_adc_abs              =    $6D;     {op code #s for 65816 instructions}
    m_adc_dir              =    $65;

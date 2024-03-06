@@ -110,6 +110,14 @@ procedure GenLab (lnum: integer);
 {       lnum - label number                                     }
 
 
+procedure GenLabUsedOnce (lnum: integer);
+
+{ generate a label that is only targeted by one branch          }
+{                                                               }
+{ parameters:                                                   }
+{       lnum - label number                                     }
+
+
 procedure InitFile (keepName: gsosOutStringPtr; keepFlag: integer; partial: boolean);
 
 { Set up the object file					}
@@ -1674,14 +1682,20 @@ var
                         opcode := m_bmi;
                      end {else if m_bra}
                   else if npeep[ns+3].opcode in [m_bra,m_brl] then
-                     if Short(ns,npeep[ns+3].operand) then
+                     if Short(ns,npeep[ns+3].operand) then begin
                         operand := npeep[ns+3].operand;
+                        if (npeep[ns+2].flags & labelUsedOnce) <> 0 then
+                           Remove(ns+2);
+                        end; {if}
                end {if}
             else if npeep[ns+3].opcode = d_lab then
                if npeep[ns+3].operand = operand then
                   if npeep[ns+4].opcode in [m_bra,m_brl] then
-                     if Short(ns,npeep[ns+4].operand) then
+                     if Short(ns,npeep[ns+4].operand) then begin
                         operand := npeep[ns+4].operand;
+                        if (npeep[ns+3].flags & labelUsedOnce) <> 0 then
+                           Remove(ns+3);
+                        end; {if}
 
          m_brl:
             if Short(ns,operand) then begin
@@ -2305,6 +2319,18 @@ procedure GenLab {lnum: integer};
 begin {GenLab}
 GenNative(d_lab, gnrlabel, lnum, nil, 0);
 end; {GenLab}
+
+
+procedure GenLabUsedOnce {lnum: integer};
+
+{ generate a label that is only targeted by one branch          }
+{                                                               }
+{ parameters:                                                   }
+{       lnum - label number                                     }
+
+begin {GenLabUsedOnce}
+GenNative(d_lab, gnrlabel, lnum, nil, labelUsedOnce);
+end; {GenLabUsedOnce}
 
 
 procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: boolean};
