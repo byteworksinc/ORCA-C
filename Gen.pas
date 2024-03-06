@@ -5514,16 +5514,17 @@ procedure GenTree {op: icptr};
 	 GenImplied(m_ina);
 	 end; {case pc_ngi}
 
-      pc_not: begin
+      pc_not:
          if not operandIsBoolean then begin
             lab1 := GenLabel;
             GenImpliedForFlags(m_tax);
             GenNative(m_beq, relative, lab1, nil, 0);
-            GenNative(m_lda_imm, immediate, 1, nil, 0);
+            GenNative(m_lda_imm, immediate, $ffff, nil, 0);
             GenLab(lab1);
-            end; {if}
-	 GenNative(m_eor_imm, immediate, 1, nil, 0);
-	 end; {if}
+            GenImplied(m_ina);
+            end {if}
+         else
+            GenNative(m_eor_imm, immediate, 1, nil, 0);
       end; {case}
    end; {GenBntNgiNot}
 
