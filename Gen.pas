@@ -2135,10 +2135,14 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
    num := op^.right^.q;
    lab1 := GenLabel;
    if opcode in [pc_fjp,pc_tjp] then begin
-      if num <> 0 then
-         GenNative(m_cmp_imm, immediate, num, nil, 0)
-      else if NeedsCondition(leftOp) then
-         GenImpliedForFlags(m_tay);
+      if num = 0 then begin
+         if NeedsCondition(leftOp) then
+            GenImpliedForFlags(m_tay);
+         end {if}
+      else if num = 1 then
+         GenImplied(m_dea)
+      else
+         GenNative(m_cmp_imm, immediate, num, nil, 0);
       if opcode = pc_fjp then
          GenNative(beq, relative, lab1, nil, 0)
       else
@@ -2147,12 +2151,20 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
       GenLab(lab1);
       end {if}
    else begin
-      GenNative(m_ldx_imm, immediate, 0, nil, 0);
-      GenNative(m_cmp_imm, immediate, num, nil, 0);
-      GenNative(bne, relative, lab1, nil, 0);
-      GenImplied(m_inx);
-      GenLab(lab1);
-      GenImplied(m_txa);
+      if num <> 0 then
+         GenNative(m_eor_imm, immediate, num, nil, 0)
+      else if NeedsCondition(leftOp) then
+         GenImpliedForFlags(m_tax);
+      GenNative(m_beq, relative, lab1, nil, 0);
+      if op^.opcode = pc_equ then begin
+         GenNative(m_lda_imm, immediate, $ffff, nil, 0);
+         GenLab(lab1);
+         GenImplied(m_ina);
+         end {if}
+      else begin
+         GenNative(m_lda_imm, immediate, 1, nil, 0);
+         GenLab(lab1);
+         end; {else} 
       end; {else}
    end {if}
 else if (op^.optype in [cgLong,cgULong]) and (leftOp in [pc_ldo,pc_lod])
@@ -2167,24 +2179,20 @@ else if (op^.optype in [cgLong,cgULong]) and (leftOp in [pc_ldo,pc_lod])
       GenNative(m_brl, longrelative, lb, nil, 0);
       GenLab(lab1);
       end {if}
-   else if op^.opcode = pc_equ then begin
-      lab1 := GenLabel;
-      lab2 := GenLabel;
-      DoOr(op^.left);
-      GenNative(bne, relative, lab1, nil, 0);
-      GenNative(m_lda_imm, immediate, 1, nil, 0);
-      GenNative(m_bra, relative, lab2, nil, 0);
-      GenLab(lab1);
-      GenNative(m_lda_imm, immediate, 0, nil, 0);
-      GenLab(lab2);
-      end {else if}
-   else {if op^.opcode = pc_neq then} begin
+   else begin
       lab1 := GenLabel;
       DoOr(op^.left);
       GenNative(m_beq, relative, lab1, nil, 0);
-      GenNative(m_lda_imm, immediate, 1, nil, 0);
-      GenLab(lab1);
-      end; {else if}
+      if op^.opcode = pc_equ then begin
+         GenNative(m_lda_imm, immediate, $ffff, nil, 0);
+         GenLab(lab1);
+         GenImplied(m_ina);
+         end {if}
+      else begin
+         GenNative(m_lda_imm, immediate, 1, nil, 0);
+         GenLab(lab1);
+         end; {else}
+      end; {else}
    end {else if}
 else if (op^.optype in [cgLong,cgULong]) and (rightOp in [pc_ldo,pc_lod]) then begin
    gLong.preference := A_X;
@@ -2229,8 +2237,7 @@ else
          if Complex(op^.right) or (not (opcode in [pc_fjp,pc_tjp])) then begin
             GenImplied(m_pha);
             GenTree(op^.right);
-            GenImplied(m_sec);
-            GenNative(m_sbc_s, direct, 1, nil, 0);
+            GenNative(m_eor_s, direct, 1, nil, 0);
             GenImplied(m_plx);
             GenImplied(m_tax);
             if opcode in [pc_fjp,pc_tjp] then begin
@@ -2245,10 +2252,15 @@ else
             else begin
                lab1 := GenLabel;
                GenNative(m_beq, relative, lab1, nil, 0);
-               GenNative(m_lda_imm, immediate, 1, nil, 0);
-               GenLab(lab1);
-               if op^.opcode = pc_equ then
-                  GenNative(m_eor_imm, immediate, 1, nil, 0);
+               if op^.opcode = pc_equ then begin
+                  GenNative(m_lda_imm, immediate, $ffff, nil, 0);
+                  GenLab(lab1);
+                  GenImplied(m_ina);
+                  end {if}
+               else begin
+                  GenNative(m_lda_imm, immediate, 1, nil, 0);
+                  GenLab(lab1);
+                  end; {else}
                end; {else}
             end {if}
          else begin
@@ -2392,10 +2404,15 @@ else
          else begin
             lab3 := GenLabel;
             GenNative(m_beq, relative, lab3, nil, 0);
-            GenNative(m_lda_imm, immediate, 1, nil, 0);
-            GenLab(lab3);
-            if op^.opcode = pc_equ then
-               GenNative(m_eor_imm, immediate, 1, nil, 0);
+            if op^.opcode = pc_equ then begin
+               GenNative(m_lda_imm, immediate, $ffff, nil, 0);
+               GenLab(lab3);
+               GenImplied(m_ina);
+               end {if}
+            else begin
+               GenNative(m_lda_imm, immediate, 1, nil, 0);
+               GenLab(lab3);
+               end; {else}
             end; {else}
          end; {case optype of cgQuad,cgUQuad}
 
