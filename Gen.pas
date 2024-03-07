@@ -1069,7 +1069,7 @@ var
 
 
 begin {GenCmp}
-{To reduct the number of possibilities that must be handled, pc_les  }
+{To reduce the number of possibilities that must be handled, pc_les  }
 {and pc_leq compares are reduced to their equivalent pc_grt and      }
 {pc_geq instructions.                                                }
 if op^.opcode = pc_les then begin
@@ -1113,15 +1113,16 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
          if NeedsCondition(op^.left^.opcode) then
             GenImpliedForFlags(m_tax);
          if (num >= 0) and (num < 3) then begin
-            if num <> 0 then begin
+            if num = 0 then
+               GenNative(m_bpl, relative, lab1, nil, 0)
+            else begin
                lab2 := GenLabel;
                GenNative(m_bmi, relative, lab2, nil, 0);
-               for i := 1 to num do
-                  GenImplied(m_dea);
-               end; {if}
-            GenNative(m_bpl, relative, lab1, nil, 0);
-            if num <> 0 then
+               if num = 2 then
+                  GenImplied(m_lsr_a);
+               GenNative(m_bne, relative, lab1, nil, 0);
                GenLabUsedOnce(lab2);
+               end; {else}
             GenNative(m_brl, longrelative, lb, nil, 0);
             GenLab(lab1);
             end {if (num >= 0) and (num < 3)}
@@ -1147,8 +1148,17 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
          end {if}
       else {if optype in [cgUByte,cgUWord] then} begin
          if num <> 0 then begin
-            GenNative(m_cmp_imm, immediate, num, nil, 0);
-            GenNative(m_bcs, relative, lab1, nil, 0);
+            if num in [1,2] then begin
+               if num = 1 then
+                  GenImpliedForFlags(m_tax)
+               else
+                  GenImplied(m_lsr_a);
+               GenNative(m_bne, relative, lab1, nil, 0);
+               end {if}
+            else begin
+               GenNative(m_cmp_imm, immediate, num, nil, 0);
+               GenNative(m_bcs, relative, lab1, nil, 0);
+               end; {else}
             GenNative(m_brl, longrelative, lb, nil, 0);
             GenLab(lab1);
             end; {if}
@@ -1163,9 +1173,9 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
          if (num >= 0) and (num < 3) then begin
             GenNative(m_bmi, relative, lab1, nil, 0);
             if num > 0 then begin
-               for i := 1 to num do
-                  GenImplied(m_dea);
-               GenNative(m_bmi, relative, lab1, nil, 0);
+               if num = 2 then
+                  GenImplied(m_lsr_a);
+               GenNative(m_beq, relative, lab1, nil, 0);
                end; {if}
             GenNative(m_brl, longrelative, lb, nil, 0);
             GenLab(lab1);
@@ -1192,8 +1202,17 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
          end {if}
       else {if optype in [cgUByte,cgUWord] then} begin
          if num <> 0 then begin
-            GenNative(m_cmp_imm, immediate, num, nil, 0);
-            GenNative(m_bcc, relative, lab1, nil, 0);
+            if num in [1,2] then begin
+               if num = 1 then
+                  GenImpliedForFlags(m_tax)
+               else
+                  GenImplied(m_lsr_a);
+               GenNative(m_beq, relative, lab1, nil, 0);
+               end {if}
+            else begin
+               GenNative(m_cmp_imm, immediate, num, nil, 0);
+               GenNative(m_bcc, relative, lab1, nil, 0);
+               end; {else}
             end; {if}
          GenNative(m_brl, longrelative, lb, nil, 0);
          if num <> 0 then
