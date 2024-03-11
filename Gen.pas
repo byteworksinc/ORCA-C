@@ -1068,6 +1068,20 @@ var
    end; {ReverseConditional}
 
 
+   function SimpleLongOp(op: icptr): boolean;
+   
+   { Is op an operation on cg(U)Long that can be done using the }
+   { addressing modes of CPX?                                   }
+   
+   begin {SimpleLongOp}
+   SimpleLongOp :=
+      (op^.opcode = pc_ldc)
+      or (op^.opcode = pc_lao)
+      or ((op^.opcode = pc_lod) and (LabelToDisp(op^.r) + op^.q <= 253))
+      or ((op^.opcode = pc_ldo) and smallMemoryModel);
+   end; {SimpleLongOp}
+
+
 begin {GenCmp}
 {To reduce the number of possibilities that must be handled, pc_les  }
 {and pc_leq compares are reduced to their equivalent pc_grt and      }
@@ -1349,50 +1363,134 @@ else
          end; {case optype of cgByte,cgUByte,cgWord,cgUWord}
 
       cgULong: begin
-         gLong.preference := onStack;
-         GenTree(op^.right);
-         gLong.preference := A_X;
-         GenTree(op^.left);
-         if gLong.where = onStack then begin
-            GenImplied(m_ply);
-            GenImplied(m_pla);
+         lab1 := GenLabel;
+         lab2 := GenLabel;
+         simple := false;
+         if SimpleLongOp(op^.right) then
+            simple := true
+         else if rOpcode in [pc_fjp,pc_tjp] then
+            if SimpleLongOp(op^.left) then begin
+               ReverseConditional;
+               simple := true;
+               end; {if}
+         if simple then begin
+            if op^.opcode = pc_grt then begin
+               if SimpleLongOp(op^.left) then
+                  ReverseConditional;
+               if op^.opcode = pc_grt then
+                  if op^.right^.opcode = pc_ldc then
+                     if op^.right^.lval <> $ffffffff then begin
+                        op^.right^.lval := op^.right^.lval + 1;
+                        op^.opcode := pc_geq;
+                        end; {if}
+               end; {if}
+            gLong.preference := A_X;
+            GenTree(op^.left);
+            if gLong.where = onStack then begin
+               GenImplied(m_pla);
+               GenImplied(m_plx);
+               end; {if}
+            if op^.opcode = pc_grt then
+               if not (rOpcode in [pc_fjp,pc_tjp]) then
+                  GenNative(m_ldy_imm, immediate, 0, nil, 0);
+            with op^.right^ do
+               case opcode of
+                  pc_ldc: 
+                     GenNative(m_cpx_imm, immediate, long(lval).msw, nil, 0);
+                  pc_lao:
+                     GenNative(m_cpx_imm, immediate, q, lab, shift16);
+                  pc_lod:
+                     GenNative(m_cpx_dir, direct, LabelToDisp(r)+q+2, nil, 0);
+                  pc_ldo:
+                     GenNative(m_cpx_abs, absolute, q+2, lab, 0);
+                  end; {case}
+            GenNative(m_bne, relative, lab1, nil, 0);
+            with op^.right^ do
+               case opcode of
+                  pc_ldc: 
+                     GenNative(m_cmp_imm, immediate, long(lval).lsw, nil, 0);
+                  pc_lao:
+                     GenNative(m_cmp_imm, immediate, q, lab, 0);
+                  pc_lod:
+                     GenNative(m_cmp_dir, direct, LabelToDisp(r)+q, nil, 0);
+                  pc_ldo:
+                     GenNative(m_cmp_abs, absolute, q, lab, 0);
+                  end; {case}
+            GenLab(lab1);
+            if rOpcode = pc_fjp then begin
+               if op^.opcode = pc_grt then begin
+                  lab3 := GenLabel;
+                  GenNative(m_beq, relative, lab3, nil, 0);
+                  end; {if}
+               GenNative(m_bcs, relative, lab2, nil, 0);
+               if op^.opcode = pc_grt then
+                  GenLabUsedOnce(lab3);
+               GenNative(m_brl, longrelative, lb, nil, 0);
+               GenLab(lab2);
+               end {if}
+            else if rOpcode = pc_tjp then begin
+               if op^.opcode = pc_grt then
+                  GenNative(m_beq, relative, lab2, nil, 0);
+               GenNative(m_bcc, relative, lab2, nil, 0);
+               GenNative(m_brl, longrelative, lb, nil, 0);
+               GenLab(lab2);
+               end {else if}
+            else if op^.opcode = pc_geq then begin
+               GenNative(m_lda_imm, immediate, 0, nil, 0);
+               GenImplied(m_rol_a);
+               end {else if}
+            else {if op^.opcode = pc_grt then} begin
+               GenNative(m_beq, relative, lab2, nil, 0);
+               GenNative(m_bcc, relative, lab2, nil, 0);
+               GenImplied(m_iny);
+               GenLab(lab2);
+               GenImplied(m_tya);
+               end; {else}
             end {if}
          else begin
-            GenImplied(m_tay);
+            gLong.preference := onStack;
+            GenTree(op^.right);
+            gLong.preference := A_X;
+            GenTree(op^.left);
+            if gLong.where = onStack then begin
+               GenImplied(m_ply);
+               GenImplied(m_pla);
+               end {if}
+            else begin
+               GenImplied(m_tay);
+               GenImplied(m_txa);
+               end; {else}
+            GenNative(m_ldx_imm, immediate, 1, nil, 0);
+            GenNative(m_cmp_s, direct, 3, nil, 0);
+            GenNative(m_bne, relative, lab1, nil, 0);
+            GenImplied(m_tya);
+            GenNative(m_cmp_s, direct, 1, nil, 0);
+            GenLab(lab1);
+            if op^.opcode = pc_grt then begin
+               lab3 := GenLabel;
+               GenNative(m_beq, relative, lab3, nil, 0);
+               end; {if}
+            GenNative(m_bcs, relative, lab2, nil, 0);
+            if op^.opcode = pc_grt then
+               GenLab(lab3);
+            GenImplied(m_dex);
+            GenLab(lab2);
+            GenImplied(m_pla);
+            GenImplied(m_pla);
             GenImplied(m_txa);
+            if rOpcode = pc_fjp then begin
+               lab4 := GenLabel;
+               GenNative(m_bne, relative, lab4, nil, 0);
+               GenNative(m_brl, longrelative, lb, nil, 0);
+               GenLab(lab4);
+               end {if}
+            else if rOpcode = pc_tjp then begin
+               lab4 := GenLabel;
+               GenNative(m_beq, relative, lab4, nil, 0);
+               GenNative(m_brl, longrelative, lb, nil, 0);
+               GenLab(lab4);
+               end; {else if}
             end; {else}
-         lab1 := GenLabel;
-         GenNative(m_ldx_imm, immediate, 1, nil, 0);
-         GenNative(m_cmp_s, direct, 3, nil, 0);
-         GenNative(m_bne, relative, lab1, nil, 0);
-         GenImplied(m_tya);
-         GenNative(m_cmp_s, direct, 1, nil, 0);
-         GenLab(lab1);
-         lab2 := GenLabel;
-         if op^.opcode = pc_grt then begin
-            lab3 := GenLabel;
-            GenNative(m_beq, relative, lab3, nil, 0);
-            end; {if}
-         GenNative(m_bcs, relative, lab2, nil, 0);
-         if op^.opcode = pc_grt then
-            GenLab(lab3);
-         GenImplied(m_dex);
-         GenLab(lab2);
-         GenImplied(m_pla);
-         GenImplied(m_pla);
-         GenImplied(m_txa);
-         if rOpcode = pc_fjp then begin
-            lab4 := GenLabel;
-            GenNative(m_bne, relative, lab4, nil, 0);
-            GenNative(m_brl, longrelative, lb, nil, 0);
-            GenLab(lab4);
-            end {if}
-         else if rOpcode = pc_tjp then begin
-            lab4 := GenLabel;
-            GenNative(m_beq, relative, lab4, nil, 0);
-            GenNative(m_brl, longrelative, lb, nil, 0);
-            GenLab(lab4);
-            end; {else if}
          end;
 
       cgReal,cgDouble,cgComp,cgExtended: begin
