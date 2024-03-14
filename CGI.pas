@@ -293,6 +293,8 @@ type
          ccPointer      : (pval: longint; pstr: longStringPtr);
       end;
 
+   codeRef = icptr;                     {reference to a code location}
+
 					{basic blocks}
                                         {------------}
    iclist = ^iclistRecord;		{used to form lists of records}
@@ -658,6 +660,21 @@ procedure GenTool (fop: pcodes; fp1, fp2: integer; dispatcher: longint);
 {       dispatcher - tool entry point                           }
 
 
+function GetCodeLocation: codeRef;
+
+{ Get a reference to the current location in the generated      }
+{ code, suitable to be passed to RemoveCode.                    }
+
+
+procedure InsertCode (theCode: codeRef);
+
+{ Insert a section of already-generated code that was           }
+{ previously removed with RemoveCode.                           }
+{                                                               }
+{ parameters:                                                   }
+{       theCode - code removed (returned from RemoveCode)       }
+
+
 {procedure PrintBlocks (tag: stringPtr; bp: blockPtr); {debug}
 
 { print a series of basic blocks				}
@@ -665,6 +682,28 @@ procedure GenTool (fop: pcodes; fp1, fp2: integer; dispatcher: longint);
 { parameters:							}
 {    tag - label for lines					}
 {    bp - first block to print					}
+
+
+{procedure PrintDAG (tag: stringPtr; code: icptr); {debug}
+
+{ print a DAG                                                   }
+{                                                               }
+{ parameters:                                                   }
+{    tag - label for lines                                      }
+{    code - first node in DAG                                   }
+
+
+function RemoveCode (start: codeRef): codeRef;
+
+{ Remove a section of already-generated code, from immediately  }
+{ after start up to the latest code generated.  Returns the     }
+{ code removed, so it may be re-inserted later.                 }
+{                                                               }
+{ parameters:                                                   }
+{       start - location to start removing from                 }
+{                                                               }
+{ Note: start must be a top-level pcode (not a subexpression).  }
+{ Note: The region removed must not include a dc_enp.           }
 
 
 function TypeSize (tp: baseTypeEnum): integer;
@@ -1429,6 +1468,74 @@ if codeGeneration then begin
    Gen0(pc_ldc);
    end; {if}
 end; {GenLdcReal}
+
+
+function GetCodeLocation{: codeRef};
+
+{ Get a reference to the current location in the generated      }
+{ code, suitable to be passed to RemoveCode.                    }
+
+begin {GetCodeLocation}
+GetCodeLocation := DAGhead;
+end {GetCodeLocation};
+
+
+procedure InsertCode {theCode: codeRef};
+
+{ Insert a section of already-generated code that was           }
+{ previously removed with RemoveCode.                           }
+{                                                               }
+{ parameters:                                                   }
+{       theCode - code removed (returned from RemoveCode)       }
+
+var
+   lcode: icptr;
+
+begin {InsertCode}
+if theCode <> nil then
+   if codeGeneration then begin
+      lcode := theCode;
+{     PrintDAG(@'Inserting: ', lcode);  {debug}
+      while lcode^.next <> nil do
+         lcode := lcode^.next;
+      lcode^.next := DAGhead;
+      DAGhead := theCode;
+      end; {if}
+end; {InsertCode}
+
+
+function RemoveCode {start: codeRef): codeRef};
+
+{ Remove a section of already-generated code, from immediately  }
+{ after start up to the latest code generated.  Returns the     }
+{ code removed, so it may be re-inserted later.                 }
+{                                                               }
+{ parameters:                                                   }
+{       start - location to start removing from                 }
+{                                                               }
+{ Note: start must be a top-level pcode (not a subexpression).  }
+{ Note: The region removed must not include a dc_enp.           }
+
+var
+   lcode: icptr;
+
+begin {RemoveCode}
+if start = DAGhead then
+   RemoveCode := nil
+else begin
+   RemoveCode := DAGhead;
+   if codeGeneration then begin
+      lcode := DAGhead;
+      while (lcode^.next <> start) and (lcode^.next <> nil) do
+         lcode := lcode^.next;
+      if lcode^.next = nil then
+         Error(cge1);
+      lcode^.next := nil;
+{     PrintDAG(@'Removing: ', DAGhead); {debug}
+      DAGhead := start;
+      end; {if}
+   end; {else}
+end; {RemoveCode}
 
 
 function TypeSize {tp: baseTypeEnum): integer};

@@ -122,13 +122,6 @@ type
       val: longlong;                    {switch value}
       end;
 
-                                        {token stack}
-                                        {-----------}
-   tokenStackPtr = ^tokenStackRecord;
-   tokenStackRecord = record
-      next: tokenStackPtr;
-      token: tokenType;
-      end;
                                         {statement stack}
                                         {---------------}
    statementPtr = ^statementRecord;
@@ -157,7 +150,7 @@ type
             );
          forSt: (
             forLoop: integer;           {branch here to loop}
-            e3List: tokenStackPtr;      {tokens for last expression}
+            e3Code: codeRef;            {code for last expression}
             );
          switchSt: (
             maxVal: longint;            {max switch value}
@@ -690,11 +683,9 @@ var
    { handle a for statement                                      }
  
    var
-      errorFound: boolean;              {did we find an error?}
+      e3Start: codeRef;                 {ref to start of code for expression 3}
       forLoop, continueLab, breakLab: integer; {branch points}
-      parencount: integer;              {number of unmatched '(' chars}
       stPtr: statementPtr;              {work pointer}
-      tl,tk: tokenStackPtr;             {for forming expression list}
 
    begin {ForStatement}
    NextToken;                           {skip the 'for' token}
@@ -733,29 +724,12 @@ var
       end; {if}
    Match(semicolonch,22);
 
-   tl := nil;                           {collect the tokens for the last expression}
-   parencount := 0;
-   errorFound := false;
-   while (token.kind <> eofsy)
-      and ((token.kind <> rparench) or (parencount <> 0))
-      and (token.kind <> semicolonch) do begin
-      new(tk);                          {place the token in the list}
-      tk^.next := tl;
-      tl := tk;
-      tk^.token := token;
-      if token.kind = lparench then     {allow parens in the expression}
-         parencount := parencount+1
-      else if token.kind = rparench then
-         parencount := parencount-1;
-      NextToken;                        {next token}
-      end; {while}
-   if errorFound then                   {if an error was found, dump the list}
-      while tl <> nil do begin
-         tk := tl;
-         tl := tl^.next;
-         dispose(tk);
-         end; {while}
-   stPtr^.e3List := tl;                 {save the list}
+   e3Start := GetCodeLocation;          {generate and save code for expression 3}
+   if token.kind <> rparench then begin
+      Expression(normalExpression, [rparench]);
+      Gen0t(pc_pop, UsualUnaryConversions);
+      end; {if}
+   stPtr^.e3Code := RemoveCode(e3Start);
    Match(rparench,12);                  {get the closing for loop paren}
 
    if c99Scope then PushTable;
@@ -1128,37 +1102,13 @@ procedure EndForStatement;
 { finish off a for statement                                    }
 
 var
-   ltoken: tokenType;                   {for putting ; on stack}
    stPtr: statementPtr;                 {work pointer}
-   tl,tk: tokenStackPtr;                {for forming expression list}
-   lSuppressMacroExpansions: boolean;   {local copy of suppressMacroExpansions}
 
 begin {EndForStatement}
 if c99Scope then PopTable;
 stPtr := statementList;
 Gen1(dc_lab, stPtr^.continueLab);       {define the continue label}
-
-tl := stPtr^.e3List;                    {place the expression back in the list}
-if tl <> nil then begin
-   PutBackToken(token, false, false);
-   ltoken.kind := semicolonch;
-   ltoken.class := reservedSymbol;
-   PutBackToken(ltoken, false, false);
-   while tl <> nil do begin
-      PutBackToken(tl^.token, false, false);
-      tk := tl;
-      tl := tl^.next;
-      dispose(tk);
-      end; {while}
-   lSuppressMacroExpansions := suppressMacroExpansions; {inhibit token echo}
-   suppressMacroExpansions := true;
-   NextToken;                           {evaluate the expression}
-   Expression(normalExpression, [semicolonch]);
-   Gen0t(pc_pop, UsualUnaryConversions);
-   NextToken;                           {skip the semicolon}
-   suppressMacroExpansions := lSuppressMacroExpansions;
-   end; {if}
-
+InsertCode(stPtr^.e3Code);              {insert code for expression 3}
 Gen1(pc_ujp, stPtr^.forLoop);           {loop to the test}
 Gen1(dc_lab, stPtr^.breakLab);          {create the exit label}
 statementList := stPtr^.next;           {pop the statement record}

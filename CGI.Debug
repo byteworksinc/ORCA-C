@@ -139,7 +139,7 @@ opt[pc_ckn] := 'ckn';
 end; {InitWriteCode}
 
 
-procedure PrintDAG (tag: stringPtr; code: icptr);
+procedure PrintDAG {tag: stringPtr; code: icptr};
 
 { print a DAG							}
 {								}
