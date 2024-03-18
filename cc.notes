@@ -1618,6 +1618,8 @@ If you use #pragma debug 0x0010 to enable stack check debug code, the compiler w
 
 14. If a struct, union, or enum type name appeared within the third expression in a for loop statement (e.g. in a cast or as the argument to sizeof), ORCA/C could behave incorrectly.  It could report a spurious error if a semicolon occurred within the type name as part of a structure or union member declaration.  Also, any tags or enumeration constants declared by such a type name should be in scope within the loop body, but they were not.
 
+15. Native code peephole optimization might produce invalid code in some obscure circumstances where one element of a global or static array was decremented and then another element of the same array was accessed immediately thereafter.
+
 -- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
 
 1.  There were various bugs that could cause incorrect code to be generated in certain cases.  Some of these were specific to certain optimization passes, alone or in combination.

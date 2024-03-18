@@ -1720,11 +1720,12 @@ var
                                     Remove(ns+3);
                                     end; {if}
 
-         m_dec_abs:
+         {disabled - can generate bad code}
+         {m_dec_abs:
             if npeep[ns+1].opcode = m_lda_abs then
                if name^ = npeep[ns+1].name^ then
                   if npeep[ns+2].opcode = m_beq then
-                     Remove(ns+1);
+                     Remove(ns+1);}
 
          m_lda_abs:
             if npeep[ns+1].opcode = m_clc then begin
@@ -2657,7 +2658,7 @@ yRegister.condition := regUnknown;
 lastRegOpcode := 0; {BRK}
 nnextspot := 1;
 nleadOpcodes := [m_asl_a,m_bcc,m_bcs,m_beq,m_bmi,m_bne,m_bpl,m_brl,{m_bvs,}
-   m_dec_abs,m_lda_abs,m_lda_dir,m_lda_imm,m_ldx_imm,m_sta_abs,m_sta_dir,
+   {m_dec_abs,}m_lda_abs,m_lda_dir,m_lda_imm,m_ldx_imm,m_sta_abs,m_sta_dir,
    m_pha,m_plb,{m_plx,}m_tax,m_tya,m_tyx,m_phy,m_pei_dir,m_ldy_imm,m_rep,
    m_ora_dir,m_ora_abs,m_and_imm,m_pea,m_tcd];
 nstopOpcodes := [d_end,d_pin];
