@@ -3453,11 +3453,17 @@ var
       while tp <> nil do begin
          if tp^.middle <> nil then begin
             GenerateCode(tp^.middle);
-            if expressionType^.kind in [structType,unionType] then begin
-               if expressionType^.size & $FFFF8000 <> 0 then
-                  Error(61);
-               Gen1t(pc_ldc, long(expressionType^.size).lsw, cgWord);
-               Gen0(pc_psh);
+            if expressionType^.kind in [structType,unionType,definedType]
+               then begin
+               tType := expressionType;
+               while tType^.kind = definedType do
+                  tType := tType^.dType;
+               if tType^.kind in [structType,unionType] then begin
+                  if tType^.size & $FFFF8000 <> 0 then
+                     Error(61);
+                  Gen1t(pc_ldc, long(tType^.size).lsw, cgWord);
+                  Gen0(pc_psh);
+                  end; {if}
                end; {if}
             if fmt <> fmt_none then begin
                new(tfp);
