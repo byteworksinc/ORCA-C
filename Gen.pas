@@ -321,6 +321,7 @@ case op^.opcode of
          loc := LabelToDisp(op^.left^.r) + op^.left^.q;
       if (op^.left^.opcode <> pc_lod) or (loc > 255) then
          Error(cge1);
+      offset := offset + op^.q;
       if offset = 0 then
          GenNative(mop, direct, loc, nil, 0)
       else begin
