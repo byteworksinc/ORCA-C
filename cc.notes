@@ -1622,7 +1622,7 @@ If you use #pragma debug 0x0010 to enable stack check debug code, the compiler w
 
 16. When an expression of const- or volatile-qualified struct or union type was passed as a function parameter, incorrect code would be generated.  This could lead to incorrect program behavior or crashes.
 
-17. Incorrect code could sometimes be generated if a long long or unsigned long long value was a non-initial member of a structure, and it was accessed through a pointer to the structure and used as an operand of certain arithmetic, bitwise, or comparison operators.
+17. Incorrect code could be generated in certain circumstances where a long long or unsigned long long member of a structure or array was accessed via a pointer.
 
 -- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
 

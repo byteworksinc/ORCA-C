@@ -3283,81 +3283,44 @@ case optype of
       gQuad := lQuad;
       gQuad.where := gQuad.preference; {unless overridden later}
       if gLong.where = inPointer then begin
-         if q = 0 then begin
-            if gLong.fixedDisp then begin
-               GenNative(m_ldy_imm, immediate, 6, nil, 0);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(6);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(4);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(2);
-               GenNative(m_lda_indl, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(0);
-               end {if}
+         if gLong.fixedDisp then begin
+            GenNative(m_ldy_imm, immediate, q+6, nil, 0);
+            GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+            StoreWordOfQuad(6);
+            GenNative(m_ldy_imm, immediate, q+4, nil, 0);
+            GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+            StoreWordOfQuad(4);
+            GenNative(m_ldy_imm, immediate, q+2, nil, 0);
+            GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+            StoreWordOfQuad(2);
+            if q = 0 then
+               GenNative(m_lda_indl, direct, gLong.disp, nil, 0)
             else begin
-               GenImplied(m_tya);
-               GenImplied(m_clc);
-               GenNative(m_adc_imm, immediate, 6, nil, 0);
-               GenImplied(m_tay);
+               GenNative(m_ldy_imm, immediate, q, nil, 0);
                GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(6);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(4);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(2);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(0);
                end; {else}
-            end {if q = 0}
+            StoreWordOfQuad(0);
+            end {if}
          else begin
-            if gLong.fixedDisp then begin
-               GenNative(m_ldy_imm, immediate, q+6, nil, 0);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(6);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(4);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(2);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(0);
-               end {if}
-            else begin
-               GenImplied(m_tya);
-               GenImplied(m_clc);
-               GenNative(m_adc_imm, immediate, q+6, nil, 0);
-               GenImplied(m_tay);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(6);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(4);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(2);
-               GenImplied(m_dey);
-               GenImplied(m_dey);
-               GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
-               StoreWordOfQuad(0);
-               end; {else}
+            gQuad.where := onStack;
+            GenImplied(m_tya);
+            GenImplied(m_clc);
+            GenNative(m_adc_imm, immediate, q+6, nil, 0);
+            GenImplied(m_tay);
+            GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+            GenImplied(m_pha);
+            GenImplied(m_dey);
+            GenImplied(m_dey);
+            GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+            GenImplied(m_pha);
+            GenImplied(m_dey);
+            GenImplied(m_dey);
+            GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+            GenImplied(m_pha);
+            GenImplied(m_dey);
+            GenImplied(m_dey);
+            GenNative(m_lda_indly, direct, gLong.disp, nil, 0);
+            GenImplied(m_pha);
             end; {else}
          end {if glong.where = inPointer}
       else if gLong.where = localAddress then begin
