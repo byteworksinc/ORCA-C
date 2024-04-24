@@ -309,6 +309,8 @@ charSym  start                          single character symbols
          enum  (barbarop,pluseqop,minuseqop,asteriskeqop,slasheqop)
          enum  (percenteqop,ltlteqop,gtgteqop,andeqop,caroteqop)
          enum  (bareqop,poundpoundop,dotdotdotsy)
+         enum  (ppnumber)               preprocessing number
+         enum  (otherch)                other non-whitespace char
          enum  (eolsy,eofsy)            control characters
          enum  (typedef)                user types
 !                                       converted operations
@@ -466,6 +468,7 @@ icp      start                          in-coming priority for expression
          dc    i1'3'                    bareqop
          dc    i1'200'                  poundpoundop
          dc    i1'200'                  dotdotdotsy
+         dc    i1'200'                  ppnumber
          dc    i1'200'                  otherch
          dc    i1'200'                  eolsy
          dc    i1'200'                  eofsy
@@ -644,6 +647,7 @@ isp      start                          in stack priority for expression
          dc    i1'2'                    bareqop
          dc    i1'0'                    poundpoundop
          dc    i1'0'                    dotdotdotsy
+         dc    i1'0'                    ppnumber
          dc    i1'0'                    otherch
          dc    i1'0'                    eolsy
          dc    i1'0'                    eofsy

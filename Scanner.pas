@@ -805,6 +805,7 @@ if list or (numErr <> 0) then begin
         186: msg := @'lint: implicit conversion changes value of constant';
         187: msg := @'expression has incomplete struct or union type';
         188: msg := @'local variable used in asm statement is out of range for addressing mode';
+        189: msg := @'malformed numeric constant';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
@@ -1097,6 +1098,8 @@ case token.kind of
    dotdotdotsy:      write('...');
    
    otherch:          write(token.ch);
+   
+   ppNumber:         write(token.numString^);
 
    macroParm:        write('$', token.pnum:1);
 
@@ -1118,16 +1121,11 @@ procedure CheckIdentifier; forward;
 { See if an identifier is a reserved word, macro or typedef     }
 
 
-procedure DoNumber (scanWork: boolean); forward;
+procedure DoNumber; forward;
 
-{  The current character starts a number - scan it            }
-{                                                             }
-{  Parameters:                                                }
-{     scanWork - get characters from workString?              }
+{  Scan a number from workString                              }
 {                                                             }
 {  Globals:                                                   }
-{     ch - first character in sequence; set to first char     }
-{             after sequence                                  }
 {     workString - string to take numbers from                }
 
 
@@ -1374,6 +1372,12 @@ else if class1 in numericConstants then begin
       str2 := @reservedWords[kind2]
    else if kind2 = dotch then
       str2 := @'.'
+   else if (kind2 = plusch)
+      and (tk1.numString^[length(tk1.numString^)] in ['e','E','p','P']) then
+      str2 := @'+'
+   else if (kind2 = minusch)
+      and (tk1.numString^[length(tk1.numString^)] in ['e','E','p','P']) then
+      str2 := @'-'
    else begin
       Error(63);
       goto 1;
@@ -1382,7 +1386,7 @@ else if class1 in numericConstants then begin
    lt := token;
    lsaveNumber := saveNumber;
    saveNumber := true;
-   DoNumber(true);
+   DoNumber;
    saveNumber := lsaveNumber;
    tk1 := token;
    token := lt;
@@ -1390,14 +1394,15 @@ else if class1 in numericConstants then begin
    end {else if class1 in numericConstants}
 
 else if kind1 = dotch then begin
-   if class2 in numericConstants then begin
-      workString := concat(tk1.numString^, tk2.numString^);
-      lt := token;
-      DoNumber(true);
-      tk1 := token;
-      token := lt;
-      goto 1;
-      end; {if}
+   if class2 in numericConstants then
+      if charKinds[ord(tk2.numString^[1])] = digit then begin
+         workString := concat('.', tk2.numString^);
+         lt := token;
+         DoNumber;
+         tk1 := token;
+         token := lt;
+         goto 1;
+         end; {if}
    end {else if class1 in numericConstants}
 
 else if kind1 = poundch then begin
@@ -2981,6 +2986,9 @@ var
                               tk2^.token.sval^.str[i] then
                               goto 3;
                         end;
+                     preprocessingNumber:
+                        if tk1^.token.numString^ <> tk2^.token.numString^ then
+                           goto 3;
                      macroParameter:
                         if tk1^.token.pnum <> tk2^.token.pnum then
                            goto 3;
@@ -3866,22 +3874,19 @@ Error(err);
 end; {Error2}
 
 
-procedure DoNumber {scanWork: boolean};
+procedure DoNumber;
 
-{  The current character starts a number - scan it            }
-{                                                             }
-{  Parameters:                                                }
-{     scanWork - get characters from workString?              }
+{  Scan a number from workString                              }
 {                                                             }
 {  Globals:                                                   }
-{     ch - first character in sequence; set to first char     }
-{             after sequence                                  }
 {     workString - string to take numbers from                }
 
 label 1,2;
 
 var
+   atEnd: boolean;                      {at end of workString?}
    c2: char;                            {next character to process}
+   err: integer;                        {error code}
    i: integer;                          {loop index}
    isBin: boolean;                      {is the value a binary number?}
    isHex: boolean;                      {is the value a hex number?}
@@ -3904,17 +3909,13 @@ var
    {  Return the next character that is a part of the number    }
 
    begin {NextChar}
-   if scanWork then begin
-      if ord(workString[0]) <> numIndex then begin
-         numIndex := numIndex+1;
-         c2 := workString[numIndex];
-         end {if}
-      else
-         c2 := ' ';
+   if ord(workString[0]) <> numIndex then begin
+      numIndex := numIndex+1;
+      c2 := workString[numIndex];
       end {if}
    else begin
-      NextCh;
-      c2 := ch;
+      atEnd := true;
+      c2 := ' ';
       end; {else}
    end; {NextChar}
 
@@ -3926,8 +3927,10 @@ var
    {  code never actually get converted to numeric constants.   }
    
    begin {FlagError}
-      if not skipping then
-         Error(errCode);
+      if err = 0 then
+         err := errCode
+      else if err <> errCode then
+         err := 189;
    end; {FlagError}
 
 
@@ -3974,6 +3977,7 @@ var
    
 
 begin {DoNumber}
+atEnd := false;                         {not at end}
 isBin := false;                         {assume it's not binary}
 isHex := false;                         {assume it's not hex}
 isReal := false;                        {assume it's an integer}
@@ -3981,13 +3985,10 @@ isLong := false;                        {assume a short integer}
 isLongLong := false;
 isFloat := false;
 unsigned := false;                      {assume signed numbers}
+err := 0;                               {no error so far}
 stringIndex := 0;                       {no digits so far...}
-if scanWork then begin                  {set up the scanner}
-   numIndex := 0;
-   NextChar;
-   end {if}
-else
-   c2 := ch;
+numIndex := 0;                          {set up the scanner}
+NextChar;
 if c2 = '.' then begin                  {handle the case of no leading digits}
    stringIndex := 1;
    numString[1] := '0';
@@ -4229,14 +4230,18 @@ else begin                            {hex, octal, & binary}
       token.class := intConstant;
       end; {else}
    end; {else}
-if saveNumber then begin
-   sp := pointer(GMalloc(length(numString)+1));
-   CopyString(pointer(sp), @numString);
+if not atEnd then                       {make sure we read all characters}
+   FlagError(189);
+if err <> 0 then begin                  {handle unconvertible pp-numbers}
+   token.class := preprocessingNumber;
+   token.kind := ppnumber;
+   token.errCode := err;
+   end; {if}
+if saveNumber or (err <> 0) then begin
+   sp := pointer(GMalloc(length(workString)+1));
+   CopyString(pointer(sp), @workString);
    token.numString := sp;
    end; {if}
-if scanWork then                        {make sure we read all characters}
-   if ord(workString[0]) <> numIndex then
-      Error(63);
 end; {DoNumber}
 
 
@@ -4573,7 +4578,8 @@ lintErrors :=
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';
                                         {set of classes for numeric constants}
-numericConstants := [intConstant,longConstant,longlongConstant,realConstant];
+numericConstants :=
+   [intConstant,longConstant,longlongConstant,realConstant,preprocessingNumber];
 
 new(mp);                                {__LINE__}
 mp^.name := @'__LINE__';
@@ -4804,7 +4810,7 @@ repeat
                else if lch in ['.','0'..'9'] then begin
                   token.name := GetWord;
                   saveNumber := true;
-                  DoNumber(true);
+                  DoNumber;
                   saveNumber := false;
                   end {else if}
                else if lch = '"' then 
@@ -5328,6 +5334,44 @@ var
    end; {ConcatenateTokenString}
 
 
+   procedure Number;
+   
+   { Scan a preprocessing number token.  It is converted to an  }
+   { integer or floating constant if it matches the syntax for  }
+   { one of those, or left as a preprocessing number if not.    }
+
+   var
+      numLen: 1..maxint;
+      lastCh: char;
+
+   begin {Number}
+   numLen := 0;
+   lastCh := chr(0);
+   
+   while (charKinds[ord(ch)] in [digit,letter,ch_dot])
+      or ((lastCh in ['e','E','p','P'])
+         and (charKinds[ord(ch)] in [ch_plus,ch_dash])) do
+      begin
+      if numLen < 255 then begin
+         numLen := numLen + 1;
+         workString[numLen] := ch;
+         end {if}
+      else
+         numLen := 256;
+      lastCh := ch;
+      NextCh;
+      end; {while}
+   if numLen = 256 then begin
+      if not skipping then
+         Error(131);
+      numLen := 1;
+      workString[1] := '0';
+      end; {if}
+   workString[0] := chr(numLen);
+   DoNumber;
+   end; {Number}
+
+
 begin {NextToken}
 if ifList = nil then			{do pending EndInclude calls}
    while includeCount <> 0 do begin
@@ -5661,7 +5705,7 @@ case charKinds[ord(ch)] of
 
    ch_dot   : begin                     {tokens that start with '.'}
       if charKinds[ord(PeekCh)] = digit then
-         DoNumber(false)
+         Number
       else begin
          NextCh;
          if (ch = '.') and (PeekCh = '.') then begin
@@ -5874,7 +5918,7 @@ case charKinds[ord(ch)] of
       end;
 
    digit :                              {numeric constants}
-      DoNumber(false);
+      Number;
 
    ch_other: begin                      {other non-whitespace char (pp-token)}
       token.kind := otherch;
@@ -5932,10 +5976,20 @@ if printMacroExpansions then
    if not suppressMacroExpansions then
       if not suppressPrint then
          PrintToken(token);             {print the token stream}
-if token.kind = otherch then
+if token.kind = otherch then begin
    if not (skipping or preprocessing or suppressMacroExpansions)
       or doingPPExpression then
       Error(1);
+   end {if}
+else if token.kind = ppNumber then
+   if not (skipping or preprocessing or suppressMacroExpansions)
+      or doingPPExpression then begin
+      Error(token.errCode);
+      token.kind := intconst;
+      token.class := intConstant;
+      token.ival := 0;
+      token.numString := @'0';
+      end; {if}
 end; {NextToken}
 
 

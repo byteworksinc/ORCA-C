@@ -202,6 +202,7 @@ type
                barbarop,pluseqop,minuseqop,asteriskeqop,slasheqop,
                percenteqop,ltlteqop,gtgteqop,andeqop,caroteqop,
                bareqop,poundpoundop,dotdotdotsy,
+               ppnumber,                {preprocessing number (pp-token)}
                otherch,                 {other non-whitespace char (pp-token)}
                eolsy,eofsy,             {control characters}
                typedef,                 {user types}
@@ -225,7 +226,7 @@ type
    tokenSet = set of tokenEnum;
    tokenClass = (reservedWord,reservedSymbol,identifier,intConstant,longConstant,
                  longlongConstant,realConstant,stringConstant,otherCharacter,
-                 macroParameter);
+                 preprocessingNumber,macroParameter);
    identPtr = ^identRecord;             {^ to a symbol table entry}
    tokenType = record                   {a token}
       kind: tokenEnum;                  {kind of token}
@@ -243,6 +244,7 @@ type
                           ispstring: boolean;
                           prefix: charStrPrefixEnum);
          otherCharacter: (ch: char);    {used for preprocessing tokens only}
+         preprocessingNumber: (errCode: integer);  {used for pp tokens only}
          macroParameter: (pnum: integer);
      end;
  

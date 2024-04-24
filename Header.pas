@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 42;                 {version number of .sym file format}
+   symFileVersion = 44;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -722,6 +722,7 @@ procedure EndInclude {chPtr: ptr};
                 		WriteByte(ord(token.prefix));
                 		end;
             otherCharacter:	WriteByte(ord(token.ch));
+            preprocessingNumber:WriteWord(token.errCode);
             macroParameter:	WriteWord(token.pnum);
             reservedSymbol:	if token.kind in [lbracech,rbracech,lbrackch,
                                    rbrackch,poundch,poundpoundop] then 
@@ -1392,6 +1393,7 @@ var
                 	        token.prefix := charStrPrefixEnum(ReadByte);
                 	        end;
          otherCharacter:	token.ch := chr(ReadByte);
+         preprocessingNumber:   token.errCode := ReadWord;
          macroParameter:	token.pnum := ReadWord;
          reservedSymbol:	if token.kind in [lbracech,rbracech,lbrackch,
                                    rbrackch,poundch,poundpoundop] then 

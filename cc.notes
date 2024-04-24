@@ -1624,6 +1624,10 @@ If you use #pragma debug 0x0010 to enable stack check debug code, the compiler w
 
 17. Incorrect code could be generated in certain circumstances where a long long or unsigned long long member of a structure or array was accessed via a pointer.
 
+18. The ORCA/C preprocessor now allows for preprocessing number tokens that do not match the syntax of an integer or floating constant (e.g. 08Ae-.x).  If any such tokens remain after preprocessing, an error will still be reported.  Note that this means that code like 0x3e+1 is now treated as a single token that is invalid if it remains after preprocessing, rather than as three tokens that form a valid expression; if you want it to be interpreted as three tokens, you must include whitespace before the +.
+
+19. When numeric tokens beginning with . were used as operands to the ## preprocessing operator, they behaved as if they started with a leading 0, which could lead to an incorrect result (e.g. 123##.456 became 1230.456).
+
 -- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
 
 1.  There were various bugs that could cause incorrect code to be generated in certain cases.  Some of these were specific to certain optimization passes, alone or in combination.
