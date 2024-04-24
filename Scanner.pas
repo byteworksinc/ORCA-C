@@ -4057,6 +4057,8 @@ while c2 in ['l','u','L','U'] do        {check for long or unsigned}
       if c2 = c1 then begin
          NextChar;
          isLongLong := true;
+         if isReal then
+            FlagError(156);
          end {if}
       else
          isLong := true;
@@ -4070,10 +4072,6 @@ while c2 in ['l','u','L','U'] do        {check for long or unsigned}
       unsigned := true;
       end; {else}
 if c2 in ['f','F'] then begin           {allow F designator on reals}
-   if unsigned then
-      FlagError(91);
-   if isLongLong then
-      FlagError(156);
    if not isReal then begin
       FlagError(100);
       isReal := true;
@@ -4152,6 +4150,8 @@ else begin                            {hex, octal, & binary}
    token.qval.hi := 0;
    if isHex then begin
       i := 3;
+      if length(numString) < 3 then
+         FlagError(189);
       while i <= length(numString) do begin
          if token.qval.hi & $F0000000 <> 0 then begin
             i := maxint;
@@ -4170,6 +4170,8 @@ else begin                            {hex, octal, & binary}
       end {if}
    else if isBin then begin
       i := 3;
+      if length(numString) < 3 then
+         FlagError(189);
       while i <= length(numString) do begin
          if token.qval.hi & $80000000 <> 0 then begin
             i := maxint;
@@ -4185,7 +4187,7 @@ else begin                            {hex, octal, & binary}
          end; {while}
       end {if}
    else begin
-      i := 1;
+      i := 2;
       while i <= length(numString) do begin
          if token.qval.hi & $E0000000 <> 0 then begin
             i := maxint;
