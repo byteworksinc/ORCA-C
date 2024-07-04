@@ -2259,6 +2259,8 @@ if (op^.optype in [cgByte,cgUByte,cgWord,cgUWord]) and
          end {if}
       else if num = 1 then
          GenImplied(m_dea)
+      else if num = -1 then
+         GenImplied(m_ina)
       else
          GenNative(m_cmp_imm, immediate, num, nil, 0);
       if opcode = pc_fjp then
