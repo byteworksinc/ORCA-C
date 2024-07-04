@@ -26,6 +26,7 @@
 #define LIST_SELECT 0x0002              /* single selection only */
 
 /* memFlag Codes */
+#define memNever 0x20                   /* Inactive */
 #define memDisabled 0x40                /* Sets member flag to disabled */
 #define memSelected 0x80                /* Sets member flag to selected */
 struct LColorTable {

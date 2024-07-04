@@ -43,6 +43,7 @@
 #define fTextCanDim 0x0008	        /* static text control */
 #define fSquishText 0x0010	        /* static text control */
 #define fNoTrackIcon 0x0008             /* make Icon Button play dead */
+#define testMemNever 0x0040             /* list control */
 
 /* CtlProc Codes */
 #define simpleProc 0x00000000L
