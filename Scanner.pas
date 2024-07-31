@@ -4428,6 +4428,8 @@ var
             'x': begin
                val := 0;
                NextCh;
+               if not (lch in ['0'..'9','a'..'f','A'..'F']) then
+                  Error(162);
                while lch in ['0'..'9','a'..'f','A'..'F'] do begin
                   if lch in ['0'..'9'] then
                      dig := ord(lch) & $0F
@@ -5156,6 +5158,8 @@ var
             'x': begin
                val := 0;
                NextCh;
+               if not (ch in ['0'..'9','a'..'f','A'..'F']) then
+                  Error(162);
                while ch in ['0'..'9','a'..'f','A'..'F'] do begin
                   if ch in ['0'..'9'] then
                      dig := ord(ch) & $0F
