@@ -1628,6 +1628,8 @@ If you use #pragma debug 0x0010 to enable stack check debug code, the compiler w
 
 19. When numeric tokens beginning with . were used as operands to the ## preprocessing operator, they behaved as if they started with a leading 0, which could lead to an incorrect result (e.g. 123##.456 became 1230.456).
 
+20. When using strict type checks, == or != comparisons between a function pointer and NULL or (void*)0 would cause a spurious error.
+
 -- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
 
 1.  There were various bugs that could cause incorrect code to be generated in certain cases.  Some of these were specific to certain optimization passes, alone or in combination.

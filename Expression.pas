@@ -2899,8 +2899,6 @@ var
    kind: typeKind;                      {temp type kind}
    size: longint;                       {size of an array element}
    t1: integer;                         {temporary work space label number}
-   tlastwasconst: boolean;              {temp lastwasconst}
-   tlastconst: longint;                 {temp lastconst}
    tlastWasNullPtrConst: boolean;       {temp lastWasNullPtrConst}
    tp: tokenPtr;                        {work pointer}
    tType: typePtr;                      {temp type of operand}
@@ -3604,7 +3602,7 @@ var
             if not looseTypeChecks then begin
                if not equality then
                   Error(47)
-               else if (not tlastwasconst) or (tlastconst <> 0) then
+               else if not tlastWasNullPtrConst then
                   if t2^.ptype^.kind = functionType then
                      Error(47);
                end {if}
@@ -3614,7 +3612,7 @@ var
             if not looseTypeChecks then begin
                if not equality then
                   Error(47)
-               else if (not lastwasconst) or (lastconst <> 0) then
+               else if not lastWasNullPtrConst then
                   if t1^.ptype^.kind = functionType then
                      Error(47);
                end {if}
@@ -3623,13 +3621,13 @@ var
             Error(47);
          t2 := ulongPtr;
          end {if}
-      else if (not lastwasconst) or (lastconst <> 0) 
+      else if not lastWasNullPtrConst
          or (not equality and not looseTypeChecks) then
          Error(47);
       t1 := ulongPtr;
       end {if}
-   else if expressionType^.kind in [pointerType,arrayType] then begin
-      if (not equality) or (not tlastwasconst) or (tlastconst <> 0) then
+   else if t2^.kind in [pointerType,arrayType] then begin
+      if not equality or not tlastWasNullPtrConst then
          Error(47);
       t2 := ulongPtr;
       end; {else if}
@@ -4549,8 +4547,7 @@ case tree^.token.kind of
    exceqop: begin                       {!=}
       GenerateCode(tree^.left);
       lType := expressionType;
-      tlastwasconst := lastwasconst;
-      tlastconst := lastconst;
+      tLastWasNullPtrConst := lastWasNullPtrConst;
       GenerateCode(tree^.right);
       CompareCompatible(ltype, expressionType, true);
       if tree^.token.kind = eqeqop then
