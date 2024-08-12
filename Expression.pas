@@ -2287,7 +2287,9 @@ if token.kind in startExpression then begin
                else if opStack^.token.kind = _Alignofsy then
                   doingAlignof := true;
             tType := TypeName;
-            if doingSizeof or doingAlignof then begin
+            Match(rparench,12);
+            if (doingSizeof and (token.kind <> lbracech)) or doingAlignof then
+               begin
 
                {handle a sizeof operator}
                op := opStack;
@@ -2324,7 +2326,6 @@ if token.kind in startExpression then begin
                op^.next := opStack;
                opStack := op;
                end; {else}
-            Match(rparench,12);
             end {if}
          else begin
             new(op);                    {record the '('}
