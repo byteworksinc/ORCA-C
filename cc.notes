@@ -8,6 +8,10 @@ These release notes document the changes between ORCA/C 2.0 and ORCA/C 2.2.1.  T
 
 2.2.1       1.	Bugs squashed.  See bug notes, below.
 
+            2.	Small optimizations in some library functions.
+
+            3.	Improved the code generated for certain operations.
+
 2.2.0       1.	Bugs squashed.  See bug notes, below.
 
             2.	New language features added (mainly features from C99 and C11).
