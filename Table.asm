@@ -953,6 +953,7 @@ stdcVersion start                       __STDC_VERSION__ values
          dc    i4'199901'               c99
          dc    i4'201112'               c11
          dc    i4'201710'               c17
+         dc    i4'202311'               c23
          end
 
 macRomanToUCS start

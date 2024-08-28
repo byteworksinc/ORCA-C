@@ -4895,6 +4895,14 @@ repeat
             cStd := c17;
             strictMode := true;
             end {else if}
+         else if (stdName^ = 'c23compat') or (stdName^ = 'c24compat') then begin
+            cStd := c23;
+            strictMode := false;
+            end {else if}
+         else if (stdName^ = 'c23') or (stdName^ = 'c24') then begin
+            cStd := c23;
+            strictMode := true;
+            end {else if}
          else
             FlagErrorAndSkip;
          end {else if}
