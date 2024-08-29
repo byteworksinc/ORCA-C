@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 46;                 {version number of .sym file format}
+   symFileVersion = 47;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1606,6 +1606,7 @@ var
             i := ReadByte;
             extendedKeywords := odd(i);
             extendedParameters := odd(i >> 1);
+            SetKeywordMask;
             end;
 
          otherwise: begin

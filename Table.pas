@@ -21,6 +21,7 @@ var
    charKinds: array[minChar..maxChar] of charEnum; {character kinds}
    charSym: array[minChar..maxChar] of tokenEnum; {symbols for single char symbols}
    reservedWords: array[_Alignassy..whilesy] of string[14]; {reserved word strings}
+   keywordCategories: array[_Alignassy..whilesy] of byte; {keyword categories}
    wordHash: array[0..25] of tokenEnum; {for hashing reserved words}
    stdcVersion: array[c95..c23] of longint; {__STDC_VERSION__ values}
 

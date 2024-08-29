@@ -83,6 +83,7 @@ var
    reportEOL: boolean;                  {report eolsy as a token?}
    token: tokenType;                    {next token to process}
    doingFakeFile: boolean;              {processing tokens from fake "file" in memory?}
+   keywordMask: integer;                {mask of keyword categories to enable}
 
                                         {#pragma ignore flags}
                                         {--------------------}
@@ -177,6 +178,12 @@ procedure PutBackToken (var token: tokenType; expandEnabled: boolean;
 {       suppressPrint - suppress printing with #pragma expand?  }
 
 
+procedure SetKeywordMask;
+
+{ Set the mask defining which keywords to recognize based on    }
+{ current language mode.                                        }
+
+
 procedure TermScanner;
 
 { Shut down the scanner.                                        }
@@ -197,6 +204,12 @@ const
    NEWLINE      = 10;                   {newline}
    RETURN       = 13;                   {RETURN key code}
    VT           = 11;                   {vertical tab}
+
+                                        {keyword categories}
+                                        {(also defined in Table.asm)}
+   c17keyword   = 1;
+   c23keyword   = 2;
+   orcacKeyword = 128;
 
                                         {misc}
                                         {----}
@@ -966,15 +979,18 @@ case token.kind of
                      write('"');
                      end;
 
-   _Alignassy,_Alignofsy,_Atomicsy,_Boolsy,_Complexsy,
-   _Genericsy,_Imaginarysy,_Noreturnsy,_Static_assertsy,_Thread_localsy,
-   autosy,asmsy,breaksy,casesy,charsy,
-   continuesy,constsy,compsy,defaultsy,dosy,
-   doublesy,elsesy,enumsy,externsy,extendedsy,
-   floatsy,forsy,gotosy,ifsy,intsy,
-   inlinesy,longsy,pascalsy,registersy,restrictsy,
-   returnsy,shortsy,sizeofsy,staticsy,structsy,
-   switchsy,segmentsy,signedsy,typedefsy,unionsy,
+   _Alignassy,_Alignofsy,_Atomicsy,_BitIntsy,_Boolsy,
+   _Complexsy,_Decimal128sy,_Decimal32sy,_Decimal64sy,_Genericsy,
+   _Imaginarysy,_Noreturnsy,_Static_assertsy,_Thread_localsy,alignassy,
+   alignofsy,autosy,asmsy,boolsy,breaksy,
+   casesy,charsy,continuesy,constsy,constexprsy,
+   compsy,defaultsy,dosy,doublesy,elsesy,
+   enumsy,externsy,extendedsy,falsesy,floatsy,
+   forsy,gotosy,ifsy,intsy,inlinesy,
+   longsy,nullptrsy,pascalsy,registersy,restrictsy,
+   returnsy,shortsy,sizeofsy,staticsy,static_assertsy,
+   structsy,switchsy,segmentsy,signedsy,thread_localsy,
+   truesy,typedefsy,typeofsy,typeof_unqualsy,unionsy,
    unsignedsy,voidsy,volatilesy,whilesy:
                      write(reservedWords[token.kind]);
 
@@ -3623,6 +3639,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      val := long(expressionValue).lsw;
                      extendedKeywords := odd(val);
                      extendedParameters := odd(val >> 1);
+                     SetKeywordMask;
                      if token.kind <> eolsy then
                         Error(11);
                      end {else if}
@@ -4953,7 +4970,23 @@ if strictMode then begin
    mp^.next := bp^;
    bp^ := mp;
    end; {if}
+SetKeywordMask;
 end; {InitScanner}
+
+
+procedure SetKeywordMask;
+
+{ Set the mask defining which keywords to recognize based on    }
+{ current language mode.                                        }
+
+begin {SetKeywordMask}
+if cStd >= c23 then
+   keywordMask := c23keyword
+else
+   keywordMask := c17keyword;
+if extendedKeywords then
+   keywordMask := keywordMask | orcacKeyword;
+end; {SetKeywordMask}
 
 
 procedure CheckIdentifier;
@@ -4982,12 +5015,11 @@ if expandMacros then                    {handle macro expansions}
          end;
       end; {if}
                                         {see if it's a reserved word}
-if workString[1] in ['_','a'..'g','i','l','p','r'..'w'] then
+if workString[1] in ['_','a'..'g','i','l','n','p','r'..'w'] then
    for rword := wordHash[ord(workString[1])-ord('_')] to
       pred(wordHash[ord(succ(workString[1]))-ord('_')]) do
       if reservedWords[rword] = workString then
-         if extendedKeywords or not (rword in 
-         [asmsy,compsy,extendedsy,pascalsy,segmentsy]) then begin
+         if (keywordCategories[rword] & keywordMask) <> 0 then begin
             token.kind := rword;
             token.class := reservedWord;
             goto 1;
