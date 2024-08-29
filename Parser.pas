@@ -3270,6 +3270,15 @@ while token.kind in allowedTokens do begin
          NextToken;
          end;
 
+      _Decimal32sy,_Decimal64sy,_Decimal128sy: begin
+         Error(190);
+         if not typeDone then begin
+            myTypeSpec := doublePtr;
+            typeDone := true;
+            end; {if}
+         NextToken;
+         end;
+
       enumsy: begin                     {enum}
          if typeDone or (typeSpecifiers <> []) then
             Error(badNextTokenError)
@@ -4748,7 +4757,7 @@ anonNumber := 0;                        {no anonymous structs/unions yet}
 typeSpecifierStart := 
    [voidsy,charsy,shortsy,intsy,longsy,floatsy,doublesy,signedsy,unsignedsy,
     extendedsy,compsy,_Boolsy,boolsy,_Complexsy,_Imaginarysy,_Atomicsy,
-    structsy,unionsy,enumsy,typedef];
+    _Decimal32sy,_Decimal64sy,_Decimal128sy,structsy,unionsy,enumsy,typedef];
 
 storageClassSpecifiers :=
    [typedefsy,externsy,staticsy,_Thread_localsy,thread_localsy,autosy,registersy];

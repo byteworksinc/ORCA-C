@@ -819,6 +819,7 @@ if list or (numErr <> 0) then begin
         187: msg := @'expression has incomplete struct or union type';
         188: msg := @'local variable used in asm statement is out of range for addressing mode';
         189: msg := @'malformed numeric constant';
+        190: msg := @'decimal floating types are not supported by ORCA/C';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
