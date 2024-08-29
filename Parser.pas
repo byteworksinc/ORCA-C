@@ -2903,7 +2903,7 @@ var
    fl := nil;                           {nothing in the field list, yet}
                                         {while there are entries in the field list...}
 1: while token.kind in structDeclarationStart do begin
-      if token.kind = _Static_assertsy then begin
+      if token.kind in [_Static_assertsy,static_assertsy] then begin
          DoStaticAssert;
          goto 1;
          end; {if}
@@ -3132,7 +3132,8 @@ var
       myTypeSpec := extendedPtr
    else if typeSpecifiers = [compsy] then
       myTypeSpec := compPtr
-   else if typeSpecifiers = [_Boolsy] then begin
+   else if (typeSpecifiers = [_Boolsy])
+      or (typeSpecifiers = [boolsy]) then begin
       myTypeSpec := boolPtr;
       end {else if}
    else
@@ -3185,8 +3186,8 @@ while token.kind in allowedTokens do begin
          NextToken;
          end;
 
-      _Thread_localsy: begin
-         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
+      _Thread_localsy,thread_localsy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [_Thread_localsy];
          if doingParameters then
             Error(87);
          if not (myStorageClass in [ident,staticsy,externsy]) then
@@ -3241,7 +3242,7 @@ while token.kind in allowedTokens do begin
 
       {type specifiers}
       unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,voidsy,
-      compsy,extendedsy,_Boolsy: begin
+      compsy,extendedsy,_Boolsy,boolsy: begin
          if typeDone then
             Error(badNextTokenError)
          else if token.kind in typeSpecifiers then begin
@@ -3480,8 +3481,8 @@ while token.kind in allowedTokens do begin
          end;
 
       {alignment specifier}
-      _Alignassy: begin
-         myDeclarationModifiers := myDeclarationModifiers + [token.kind];
+      _Alignassy,alignassy: begin
+         myDeclarationModifiers := myDeclarationModifiers + [_Alignassy];
          NextToken;
          Match(lparench, 13);
          if token.kind in specifierQualifierListElement then begin
@@ -3751,7 +3752,7 @@ var
 begin {DoDeclaration}
 lInhibitHeader:= inhibitHeader;
 inhibitHeader := true;			{block imbedded includes in headers}
-if token.kind = _Static_assertsy then begin
+if token.kind in [_Static_assertsy,static_assertsy] then begin
    DoStaticAssert;
    goto 4;
    end; {if}
@@ -4746,18 +4747,18 @@ anonNumber := 0;                        {no anonymous structs/unions yet}
                                         {See C17 section 6.7 ff.}
 typeSpecifierStart := 
    [voidsy,charsy,shortsy,intsy,longsy,floatsy,doublesy,signedsy,unsignedsy,
-    extendedsy,compsy,_Boolsy,_Complexsy,_Imaginarysy,_Atomicsy,
+    extendedsy,compsy,_Boolsy,boolsy,_Complexsy,_Imaginarysy,_Atomicsy,
     structsy,unionsy,enumsy,typedef];
 
 storageClassSpecifiers :=
-   [typedefsy,externsy,staticsy,_Thread_localsy,autosy,registersy];
+   [typedefsy,externsy,staticsy,_Thread_localsy,thread_localsy,autosy,registersy];
 
 typeQualifiers :=
    [constsy,volatilesy,restrictsy,_Atomicsy];
 
 functionSpecifiers := [inlinesy,_Noreturnsy,pascalsy,asmsy];
 
-alignmentSpecifiers := [_Alignassy];
+alignmentSpecifiers := [_Alignassy,alignassy];
 
 declarationSpecifiersElement := typeSpecifierStart + storageClassSpecifiers
    + typeQualifiers + functionSpecifiers + alignmentSpecifiers;
@@ -4765,13 +4766,14 @@ declarationSpecifiersElement := typeSpecifierStart + storageClassSpecifiers
 specifierQualifierListElement := 
    typeSpecifierStart + typeQualifiers + alignmentSpecifiers + [pascalsy];
 
-structDeclarationStart := specifierQualifierListElement + [_Static_assertsy];
+structDeclarationStart :=
+   specifierQualifierListElement + [_Static_assertsy,static_assertsy];
 
-topLevelDeclarationStart :=
-   declarationSpecifiersElement + [ident,segmentsy,_Static_assertsy];
+topLevelDeclarationStart := declarationSpecifiersElement
+   + [ident,segmentsy,_Static_assertsy,static_assertsy];
 
 localDeclarationStart :=
-   declarationSpecifiersElement + [_Static_assertsy] - [asmsy];
+   declarationSpecifiersElement + [_Static_assertsy,static_assertsy] - [asmsy];
 end; {InitParser}
 
 

@@ -1715,6 +1715,7 @@ var
       opminusminus,                     {postfix --}
       sizeofsy,                         {sizeof}
       _Alignofsy,                       {_Alignof (erroneous uses)}
+      alignofsy,
       castoper,                         {(type)}
       typedef,                          {(type-name)}
       tildech,                          {~}
@@ -1747,7 +1748,7 @@ var
             op^.left := nil;
             end {if sizeofsy}
         
-         else if op^.token.kind = _Alignofsy then begin
+         else if op^.token.kind in [_Alignofsy,alignofsy] then begin
             {error case: operand of _Alignof is not a parenthesized type-name}
             Error(36);
             op^.token.kind := ulongConst;
@@ -2284,7 +2285,7 @@ if token.kind in startExpression then begin
             if opStack <> nil then
                if opStack^.token.kind = sizeofsy then
                   doingSizeof := true
-               else if opStack^.token.kind = _Alignofsy then
+               else if opStack^.token.kind in [_Alignofsy,alignofsy] then
                   doingAlignof := true;
             tType := TypeName;
             Match(rparench,12);
@@ -2375,8 +2376,8 @@ if token.kind in startExpression then begin
                   errorFound := true;
                   end; {if}
             if token.kind in         {make sure we get what we want}
-               [plusplusop,minusminusop,sizeofsy,_Alignofsy,tildech,excch,
-                uasterisk,uminus,uplus,uand] then begin
+               [plusplusop,minusminusop,sizeofsy,_Alignofsy,alignofsy,tildech,
+                excch,uasterisk,uminus,uplus,uand] then begin
                if not expectingTerm then begin
                   Error(38);
                   Skip;
@@ -5043,7 +5044,7 @@ startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
               charconst,scharconst,ucharconst,ushortconst,stringconst];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
-              plusplusop,minusminusop,typedef,_Alignofsy,_Genericsy];
+              plusplusop,minusminusop,typedef,_Alignofsy,alignofsy,_Genericsy];
 end; {InitExpression}
 
 end.
