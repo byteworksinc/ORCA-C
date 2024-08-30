@@ -159,7 +159,48 @@ typedef unsigned long long uintmax_t;
 #define WCHAR_MAX       65535u
 #endif
 
-/* WINT_MIN and WINT_MAX are not defined because wint_t is not defined. */
+/* Widths of integer types */
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define INT8_WIDTH         8
+#define INT16_WIDTH        16
+#define INT32_WIDTH        32
+#define INT64_WIDTH        64
+#define UINT8_WIDTH        8
+#define UINT16_WIDTH       16
+#define UINT32_WIDTH       32
+#define UINT64_WIDTH       64
+
+#define INT_LEAST8_WIDTH   8
+#define INT_LEAST16_WIDTH  16
+#define INT_LEAST32_WIDTH  32
+#define INT_LEAST64_WIDTH  64
+#define UINT_LEAST8_WIDTH  8
+#define UINT_LEAST16_WIDTH 16
+#define UINT_LEAST32_WIDTH 32
+#define UINT_LEAST64_WIDTH 64
+
+#define INT_FAST8_WIDTH    16
+#define INT_FAST16_WIDTH   16
+#define INT_FAST32_WIDTH   32
+#define INT_FAST64_WIDTH   64
+#define UINT_FAST8_WIDTH   16
+#define UINT_FAST16_WIDTH  16
+#define UINT_FAST32_WIDTH  32
+#define UINT_FAST64_WIDTH  64
+
+#define INTPTR_WIDTH       32
+#define UINTPTR_WIDTH      32
+
+#define INTMAX_WIDTH       64
+#define UINTMAX_WIDTH      64
+
+#define PTRDIFF_WIDTH      32
+#define SIG_ATOMIC_WIDTH   16
+#define SIZE_WIDTH         32
+#define WCHAR_WIDTH        16
+#endif
+
+/* WINT_{MIN,MAX,WIDTH} are not defined because wint_t is not defined. */
 
 /* Macros for minimum-width integer constants */
 #define INT8_C(val)     (val)

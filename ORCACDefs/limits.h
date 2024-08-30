@@ -34,5 +34,19 @@
 #define LLONG_MAX       9223372036854775807
 #define ULLONG_MAX      18446744073709551615u
 #endif
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define BOOL_WIDTH      1
+#define CHAR_WIDTH      8
+#define SCHAR_WIDTH     8
+#define UCHAR_WIDTH     8
+#define SHRT_WIDTH      16
+#define USHRT_WIDTH     16
+#define INT_WIDTH       16
+#define UINT_WIDTH      16
+#define LONG_WIDTH      32
+#define ULONG_WIDTH     32
+#define LLONG_WIDTH     64
+#define ULLONG_WIDTH    64
+#endif
 
 #endif
