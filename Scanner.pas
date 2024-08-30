@@ -1113,6 +1113,8 @@ case token.kind of
                         write('%:%:');
 
    dotdotdotsy:      write('...');
+
+   coloncolonsy:     write('::');
    
    otherch:          write(token.ch);
    
@@ -1588,7 +1590,11 @@ else if kind1 = colonch then begin
       tk1.kind := rbrackch;
       tk1.isDigraph := true;
       goto 1;
-      end; {if}
+      end {if}
+   else if (kind2 = colonch) and (cStd >= c23) then begin
+      tk1.kind := coloncolonsy;
+      goto 1;
+      end; {else if}
    end; {else if}
 
 Error(63);
@@ -5772,6 +5778,10 @@ case charKinds[ord(ch)] of
          token.isDigraph := true;
          NextCh;
          end
+      else if (ch = ':') and (cStd >= c23) then begin
+         token.kind := coloncolonsy;
+         NextCh;
+         end         
       else
          token.kind := colonch;
       end;

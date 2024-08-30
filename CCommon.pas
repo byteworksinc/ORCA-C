@@ -204,7 +204,7 @@ type
                lteqop,gteqop,eqeqop,exceqop,andandop,
                barbarop,pluseqop,minuseqop,asteriskeqop,slasheqop,
                percenteqop,ltlteqop,gtgteqop,andeqop,caroteqop,
-               bareqop,poundpoundop,dotdotdotsy,
+               bareqop,poundpoundop,dotdotdotsy,coloncolonsy,
                ppnumber,                {preprocessing number (pp-token)}
                otherch,                 {other non-whitespace char (pp-token)}
                eolsy,eofsy,             {control characters}
