@@ -2078,8 +2078,11 @@ var
             end;
 
          pointerType:
-            if (etype = stringTypePtr) or (etype = utf16StringTypePtr)
-               or (etype = utf32StringTypePtr) then begin
+            if (etype = stringTypePtr)
+               or (etype = utf8StringTypePtr)
+               or (etype = utf16StringTypePtr)
+               or (etype = utf32StringTypePtr)
+               then begin
                iPtr^.isConstant := true;
                iPtr^.basetype := ccPointer;
                iPtr^.pval := 0;

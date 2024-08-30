@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 48;                 {version number of .sym file format}
+   symFileVersion = 49;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1021,6 +1021,8 @@ procedure EndInclude {chPtr: ptr};
                WriteByte(18)
             else if tp = utf32StringTypePtr then
                WriteByte(19)
+            else if tp = utf8StringTypePtr then
+               WriteByte(20)
             else if tp^.saveDisp <> 0 then begin
                WriteByte(1);
                WriteLong(tp^.saveDisp);
@@ -1800,6 +1802,7 @@ var
             17: tp := uShortPtr;
             18: tp := utf16StringTypePtr;
             19: tp := utf32StringTypePtr;
+            20: tp := utf8StringTypePtr;
 
             otherwise: begin
                PurgeSymbols;

@@ -47,6 +47,8 @@
 {  charPtrPtr - pointer to type record for char *               }
 {  vaInfoPtr - pointer to type record for internal va info type }
 {  stringTypePtr - pointer to the base type for string literals }
+{  utf8StringTypePtr - pointer to the base type for UTF-8       }
+{       string literals (used in C23 or later)                  }
 {  utf16StringTypePtr - pointer to the base type for UTF-16     }
 {       string literals                                         }
 {  utf32StringTypePtr - pointer to the base type for UTF-32     }
@@ -95,9 +97,9 @@ var
                                         {base types}
    charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
       uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
-      floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,utf16StringTypePtr,
-      utf32StringTypePtr,voidPtr,voidPtrPtr,charPtrPtr,vaInfoPtr,constCharPtr,
-      defaultStruct: typePtr;
+      floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,utf8StringTypePtr,
+      utf16StringTypePtr,utf32StringTypePtr,voidPtr,voidPtrPtr,charPtrPtr,
+      vaInfoPtr,constCharPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
 
@@ -1897,6 +1899,15 @@ with stringTypePtr^ do begin
    aType := charPtr;
    elements := 0;
    end; {with}
+new(utf8StringTypePtr);                 {UTF-8 string constant type (C23+)}
+with utf8StringTypePtr^ do begin
+   size := 0;
+   saveDisp := 0;
+   qualifiers := [];
+   kind := arrayType;
+   aType := uCharPtr;
+   elements := 0;
+   end; {with}
 new(utf16StringTypePtr);                {UTF-16 string constant type}
 with utf16StringTypePtr^ do begin
    size := 0;
@@ -2592,8 +2603,14 @@ function StringType{prefix: charStrPrefixEnum): typePtr};
 {       prefix - the prefix                                     }
 
 begin {StringType}
-if prefix in [prefix_none,prefix_u8] then
+if prefix = prefix_none then
    StringType := stringTypePtr
+else if prefix = prefix_u8 then begin
+   if cStd < c23 then
+      StringType := stringTypePtr
+   else
+      StringType := utf8StringTypePtr;
+   end {else if}
 else if prefix in [prefix_u16,prefix_L] then
    StringType := utf16StringTypePtr
 else
