@@ -467,6 +467,8 @@ cch      equ   13
          enum  (ch_asterisk,ch_slash,ch_percent,ch_carot,ch_pound,ch_colon)
          enum  (ch_backslash,ch_other,letter,digit)
 
+         enum  (c89,c95,c99,c11,c17,c23),0
+
 ! begin {NextCh}
          tsc                            create stack frame
          sec
@@ -753,7 +755,8 @@ lc2a     lda   cch
 !                and (ptr(ord4(chPtr)-1)^ <> '\')
 !                and ((ptr(ord4(chPtr)-1)^ <> '/') 
 !                  or (ptr(ord4(chPtr)-2)^ <> '?')
-!                  or (ptr(ord4(chPtr)-3)^ <> '?'))
+!                  or (ptr(ord4(chPtr)-3)^ <> '?')
+!                  or (cStd >= c23))
 !                then
 !                done := true
 !             else
@@ -777,6 +780,9 @@ lc2a     lda   cch
          lda   [p1]
          cmp   #'??'
          jne   lc5
+         lda   cStd
+         cmp   #c23
+         jge   lc5
 lc2aa    inc4  chPtr
          bra   lc2
 !             end {else if}
@@ -833,10 +839,14 @@ lc5      anop
          sta   ch
 !       end {if}
          brl   le2
-!    else if (ch = '?') and (chPtr <> eofPtr) and (chr(chPtr^) = '?') then begin
+!    else if (ch = '?') and (cStd < c23) and (chPtr <> eofPtr)
+!       and (chr(chPtr^) = '?') then begin
 lc6      lda   ch
 lc7      cmp   #'?'
          jne   le2
+         lda   cStd
+         cmp   #c23
+         jge   le2
          lda   chPtr
          cmp   eofPtr
          bne   lc8

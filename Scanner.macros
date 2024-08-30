@@ -681,3 +681,8 @@
 ~&SYSCNT dec &a
  ~restm
  mend
+ macro
+&l jge &bp
+&l blt *+5
+ brl &bp
+ mend

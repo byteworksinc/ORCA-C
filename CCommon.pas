@@ -146,6 +146,7 @@ type
    gsosOutStringPtr = ^gsosOutString;
    
    { C language standards }
+   { Note: this enumeration also appears in Scanner.asm. }
    cStandardEnum = (c89,c95,c99,c11,c17,c23);
    
    { The base types include two main categories.  The values starting    }

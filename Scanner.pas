@@ -1667,7 +1667,8 @@ if rawSourceCode then begin
    i := 1;
 1: while i <= len do begin
       ch := chr(cp^);
-      if ch = '?' then                  {handle trigraphs}
+                                        {handle trigraphs}
+      if (ch = '?') and (cStd < c23) then
          if i < len-1 then
             if chr(ptr(ord4(cp)+1)^) = '?' then
                if chr(ptr(ord4(cp)+2)^) in
@@ -5069,7 +5070,7 @@ if cp = eofPtr then
    PeekCh := chr(0)
 else begin
    ch := chr(cp^);
-   if ch = '?' then                     {handle trigraphs}
+   if (ch = '?') and (cStd < c23) then  {handle trigraphs}
       if ord4(eofPtr)-ord4(cp) > 2 then
          if chr(ptr(ord4(cp)+1)^) = '?' then
             if chr(ptr(ord4(cp)+2)^) in
