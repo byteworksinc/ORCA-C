@@ -2782,8 +2782,12 @@ if (expressionType = nil) or (expressionType^.kind <> scalarType) then
    Error(18)
 else if expressionValue = 0 then
    Error(132);
-Match(commach, 86);
-Match(stringconst, 83);
+if token.kind = commach then begin
+   NextToken;
+   Match(stringconst, 83);
+   end {if}
+else if cStd < c23 then
+   Error(86);
 Match(rparench, 12);
 Match(semicolonch, 22);
 end; {DoStaticAssert}
