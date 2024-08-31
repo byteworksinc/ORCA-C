@@ -1992,7 +1992,12 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
          if token.kind = commach then begin
             NextToken;
             done := false;
-            end; {if}
+            end {if}
+         else if (cStd >= c23)
+            and macro^.isVarargs
+            and (token.kind = rparench)
+            and (paramCount = macro^.parameters - 1) then
+            done := false;
       until done;
       if paramCount = 1 then
          if macro^.parameters = 0 then
