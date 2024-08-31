@@ -30,4 +30,8 @@ typedef unsigned short wchar_t;
 
 #define offsetof(type,member) ((size_t) (&(((type *)0L)->member)))
 
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define unreachable() ((void)0)
+#endif
+
 #endif
