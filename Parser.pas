@@ -2786,7 +2786,7 @@ if token.kind = commach then begin
    NextToken;
    Match(stringconst, 83);
    end {if}
-else if cStd < c23 then
+else if (cStd < c23) and strictMode then
    Error(86);
 Match(rparench, 12);
 Match(semicolonch, 22);

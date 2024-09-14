@@ -1591,7 +1591,7 @@ else if kind1 = colonch then begin
       tk1.isDigraph := true;
       goto 1;
       end {if}
-   else if (kind2 = colonch) and (cStd >= c23) then begin
+   else if (kind2 = colonch) and ((cStd >= c23) or not strictMode) then begin
       tk1.kind := coloncolonsy;
       goto 1;
       end; {else if}
@@ -1993,7 +1993,7 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
             NextToken;
             done := false;
             end {if}
-         else if (cStd >= c23)
+         else if ((cStd >= c23) or not strictMode)
             and macro^.isVarargs
             and (token.kind = rparench)
             and (paramCount = macro^.parameters - 1) then
@@ -4334,7 +4334,7 @@ ucnString[0] := chr(i - 1);
 if (codePoint < 0) or (codePoint > maxUCSCodePoint)
    or ((codePoint >= $00D800) and (codePoint <= $00DFFF))
    or ((codePoint < $A0) and not (ord(codePoint) in [$24,$40,$60])
-      and (cStd < c23))
+      and (cStd < c23) and strictMode)
    then begin
    Error(145);
    UniversalCharacterName := $0000C0;
@@ -5785,7 +5785,7 @@ case charKinds[ord(ch)] of
          token.isDigraph := true;
          NextCh;
          end
-      else if (ch = ':') and (cStd >= c23) then begin
+      else if (ch = ':') and ((cStd >= c23) or not strictMode) then begin
          token.kind := coloncolonsy;
          NextCh;
          end         
