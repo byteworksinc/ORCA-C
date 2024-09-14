@@ -4333,7 +4333,8 @@ ucnString[0] := chr(i - 1);
 
 if (codePoint < 0) or (codePoint > maxUCSCodePoint)
    or ((codePoint >= $00D800) and (codePoint <= $00DFFF))
-   or ((codePoint < $A0) and not (ord(codePoint) in [$24,$40,$60]))
+   or ((codePoint < $A0) and not (ord(codePoint) in [$24,$40,$60])
+      and (cStd < c23))
    then begin
    Error(145);
    UniversalCharacterName := $0000C0;

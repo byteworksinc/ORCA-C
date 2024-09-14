@@ -15,6 +15,12 @@ interface
 
 uses CCommon;
 
+type
+   charRange = record                   {Range of Unicode chars (low 16 bits)}
+      min: integer;
+      max: integer;
+      end;
+
 var
                                         {from scanner.pas}
                                         {----------------}
@@ -43,6 +49,12 @@ var
                                         {from Charset.pas}
                                         {----------------}
    macRomanToUCS: array[$80..$FF] of integer; {mapping from MacRoman charset to UCS}
+                                        {Unicode data tables in CharTables.asm}
+   XID_Start_Table: array[0..765] of charRange;
+   XID_Continue_Table: array[0..632] of charRange;
+   XID_Start_PlaneStart: array[0..17] of integer;
+   XID_Continue_PlaneStart: array[0..17] of integer;
+
 implementation
 
 end.

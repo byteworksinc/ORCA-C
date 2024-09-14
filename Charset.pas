@@ -24,7 +24,8 @@ interface
 uses CCommon, Table;
 
 const
-   maxUCSCodePoint = $10ffff;
+   maxUCSCodePoint = $10ffff;           {Maximum Unicode code point}
+   maxPlane = 16;                       {Maximum Unicode plane}
 
 type
    ucsCodePoint = 0..maxUCSCodePoint;
@@ -182,6 +183,73 @@ else begin
 end; {UTF8Encode}
 
 
+function XID_Start(ch: ucsCodePoint): boolean;
+
+{ Check if a Unicode code point has the XID_Start property.      }
+
+label 1;
+
+var
+   plane: integer;
+   low16: longint;
+   index: integer;
+
+begin {XID_Start}
+XID_Start := false;
+plane := ord(ch >> 16);
+low16 := ch & $0000FFFF;
+
+if (plane < 0) or (plane > maxPlane) then
+   goto 1;
+
+for index := XID_Start_PlaneStart[plane] to XID_Start_PlaneStart[plane+1]-1 do
+   begin
+   if (low16 >= (XID_Start_Table[index].min & $0000FFFF))
+      and (low16 <= (XID_Start_Table[index].max & $0000FFFF)) then begin
+      XID_Start := true;
+      goto 1;
+      end; {if}
+   end; {for}
+1:
+end; {XID_Start}
+
+
+function XID_Continue(ch: ucsCodePoint): boolean;
+
+{ Check if a Unicode code point has the XID_Continue property.   }
+
+label 1;
+
+var
+   plane: integer;
+   low16: longint;
+   index: integer;
+
+begin {XID_Continue}
+if XID_Start(ch) then begin
+   XID_Continue := true;
+   goto 1;
+   end; {if}
+
+XID_Continue := false;
+plane := ord(ch >> 16);
+low16 := ch & $0000FFFF;
+
+if (plane < 0) or (plane > maxPlane) then
+   goto 1;
+
+for index := XID_Continue_PlaneStart[plane]
+   to XID_Continue_PlaneStart[plane+1]-1 do begin
+   if (low16 >= (XID_Continue_Table[index].min & $0000FFFF))
+      and (low16 <= (XID_Continue_Table[index].max & $0000FFFF)) then begin
+      XID_Continue := true;
+      goto 1;
+      end; {if}
+   end; {for}
+1:
+end; {XID_Continue}
+
+
 function ValidUCNForIdentifier{(ch: ucsCodePoint; initial: boolean): boolean};
 
 { Check if a code point is valid for a UCN in an identifier      }
@@ -190,61 +258,70 @@ function ValidUCNForIdentifier{(ch: ucsCodePoint; initial: boolean): boolean};
 { initial - is this UCN the initial element of the identifier?   }
 
 begin {ValidUCNForIdentifier}
-{See C17 Annex D}
-ValidUCNForIdentifier := false;
-if    (ch = $0000A8)
-   or (ch = $0000AA)
-   or (ch = $0000AD)
-   or (ch = $0000AF)
-   or ((ch >= $0000B2) and (ch <= $0000B5))
-   or ((ch >= $0000B7) and (ch <= $0000BA))
-   or ((ch >= $0000BC) and (ch <= $0000BE))
-   or ((ch >= $0000C0) and (ch <= $0000D6))
-   or ((ch >= $0000D8) and (ch <= $0000F6))
-   or ((ch >= $0000F8) and (ch <= $0000FF))
-   or ((ch >= $000100) and (ch <= $00167F))
-   or ((ch >= $001681) and (ch <= $00180D))
-   or ((ch >= $00180F) and (ch <= $001FFF))
-   or ((ch >= $00200B) and (ch <= $00200D))
-   or ((ch >= $00202A) and (ch <= $00202E))
-   or ((ch >= $00203F) and (ch <= $002040))
-   or (ch = $002054)
-   or ((ch >= $002060) and (ch <= $00206F))
-   or ((ch >= $002070) and (ch <= $00218F))
-   or ((ch >= $002460) and (ch <= $0024FF))
-   or ((ch >= $002776) and (ch <= $002793))
-   or ((ch >= $002C00) and (ch <= $002DFF))
-   or ((ch >= $002E80) and (ch <= $002FFF))
-   or ((ch >= $003004) and (ch <= $003007))
-   or ((ch >= $003021) and (ch <= $00302F))
-   or ((ch >= $003031) and (ch <= $00303F))
-   or ((ch >= $003040) and (ch <= $00D7FF))
-   or ((ch >= $00F900) and (ch <= $00FD3D))
-   or ((ch >= $00FD40) and (ch <= $00FDCF))
-   or ((ch >= $00FDF0) and (ch <= $00FE44))
-   or ((ch >= $00FE47) and (ch <= $00FFFD))
-   or ((ch >= $010000) and (ch <= $01FFFD))
-   or ((ch >= $020000) and (ch <= $02FFFD))
-   or ((ch >= $030000) and (ch <= $03FFFD))
-   or ((ch >= $040000) and (ch <= $04FFFD))
-   or ((ch >= $050000) and (ch <= $05FFFD))
-   or ((ch >= $060000) and (ch <= $06FFFD))
-   or ((ch >= $070000) and (ch <= $07FFFD))
-   or ((ch >= $080000) and (ch <= $08FFFD))
-   or ((ch >= $090000) and (ch <= $09FFFD))
-   or ((ch >= $0A0000) and (ch <= $0AFFFD))
-   or ((ch >= $0B0000) and (ch <= $0BFFFD))
-   or ((ch >= $0C0000) and (ch <= $0CFFFD))
-   or ((ch >= $0D0000) and (ch <= $0DFFFD))
-   or ((ch >= $0E0000) and (ch <= $0EFFFD))
-   then ValidUCNForIdentifier := true;
-
-if initial then
-   if    ((ch >= $000300) and (ch <= $00036F))
-      or ((ch >= $001DC0) and (ch <= $001DFF))
-      or ((ch >= $0020D0) and (ch <= $0020FF))
-      or ((ch >= $00FE20) and (ch <= $00FE2F))
-      then ValidUCNForIdentifier := false;
+if cStd < c23 then begin
+   {See C17 Annex D}
+   ValidUCNForIdentifier := false;
+   if    (ch = $0000A8)
+      or (ch = $0000AA)
+      or (ch = $0000AD)
+      or (ch = $0000AF)
+      or ((ch >= $0000B2) and (ch <= $0000B5))
+      or ((ch >= $0000B7) and (ch <= $0000BA))
+      or ((ch >= $0000BC) and (ch <= $0000BE))
+      or ((ch >= $0000C0) and (ch <= $0000D6))
+      or ((ch >= $0000D8) and (ch <= $0000F6))
+      or ((ch >= $0000F8) and (ch <= $0000FF))
+      or ((ch >= $000100) and (ch <= $00167F))
+      or ((ch >= $001681) and (ch <= $00180D))
+      or ((ch >= $00180F) and (ch <= $001FFF))
+      or ((ch >= $00200B) and (ch <= $00200D))
+      or ((ch >= $00202A) and (ch <= $00202E))
+      or ((ch >= $00203F) and (ch <= $002040))
+      or (ch = $002054)
+      or ((ch >= $002060) and (ch <= $00206F))
+      or ((ch >= $002070) and (ch <= $00218F))
+      or ((ch >= $002460) and (ch <= $0024FF))
+      or ((ch >= $002776) and (ch <= $002793))
+      or ((ch >= $002C00) and (ch <= $002DFF))
+      or ((ch >= $002E80) and (ch <= $002FFF))
+      or ((ch >= $003004) and (ch <= $003007))
+      or ((ch >= $003021) and (ch <= $00302F))
+      or ((ch >= $003031) and (ch <= $00303F))
+      or ((ch >= $003040) and (ch <= $00D7FF))
+      or ((ch >= $00F900) and (ch <= $00FD3D))
+      or ((ch >= $00FD40) and (ch <= $00FDCF))
+      or ((ch >= $00FDF0) and (ch <= $00FE44))
+      or ((ch >= $00FE47) and (ch <= $00FFFD))
+      or ((ch >= $010000) and (ch <= $01FFFD))
+      or ((ch >= $020000) and (ch <= $02FFFD))
+      or ((ch >= $030000) and (ch <= $03FFFD))
+      or ((ch >= $040000) and (ch <= $04FFFD))
+      or ((ch >= $050000) and (ch <= $05FFFD))
+      or ((ch >= $060000) and (ch <= $06FFFD))
+      or ((ch >= $070000) and (ch <= $07FFFD))
+      or ((ch >= $080000) and (ch <= $08FFFD))
+      or ((ch >= $090000) and (ch <= $09FFFD))
+      or ((ch >= $0A0000) and (ch <= $0AFFFD))
+      or ((ch >= $0B0000) and (ch <= $0BFFFD))
+      or ((ch >= $0C0000) and (ch <= $0CFFFD))
+      or ((ch >= $0D0000) and (ch <= $0DFFFD))
+      or ((ch >= $0E0000) and (ch <= $0EFFFD))
+      then ValidUCNForIdentifier := true;
+   
+   if initial then
+      if    ((ch >= $000300) and (ch <= $00036F))
+         or ((ch >= $001DC0) and (ch <= $001DFF))
+         or ((ch >= $0020D0) and (ch <= $0020FF))
+         or ((ch >= $00FE20) and (ch <= $00FE2F))
+         then ValidUCNForIdentifier := false;
+      end {if}
+else begin
+   {C23 rules}
+   ValidUCNForIdentifier := false;
+   if ch >= $0000A0 then
+      if XID_Start(ch) or (not initial and XID_Continue(ch)) then
+         ValidUCNForIdentifier := true;
+   end; {else}
 end; {ValidUCNForIdentifier}
 
 end.

@@ -128,7 +128,7 @@ if {#} == 0
      set header header
   end
      
-  Newer obj/table.a table.pas table.asm
+  Newer obj/table.a table.pas table.asm chartables.asm
   if {status} != 0
      set table table
      set asm asm

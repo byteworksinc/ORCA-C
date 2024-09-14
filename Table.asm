@@ -1098,3 +1098,5 @@ macRomanToUCS start
          dc    i2'$F8FF, $00D2, $00DA, $00DB, $00D9, $0131, $02C6, $02DC'
          dc    i2'$00AF, $02D8, $02D9, $02DA, $00B8, $02DD, $02DB, $02C7'
          end
+
+         copy  chartables.asm
