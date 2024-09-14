@@ -269,7 +269,7 @@ charKinds start                         character set
          dc    i'letter'                s
          dc    i'letter'                t
          dc    i'letter'                u
-         dc    i'ch_other'              v
+         dc    i'letter'                v
          dc    i'ch_other'              w
          dc    i'ch_other'              x
          dc    i'ch_other'              y
@@ -278,7 +278,7 @@ charKinds start                         character set
          dc    i'ch_other'              |
          dc    i'ch_other'              }
          dc    i'ch_other'              ~
-         dc    i'ch_other'              rub
+         dc    i'letter'                rub
          end
 
 charSym  start                          single character symbols
