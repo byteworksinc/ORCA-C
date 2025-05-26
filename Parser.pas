@@ -202,6 +202,10 @@ var
    protoType: typePtr;                  {type from a parameter list}
    protoVariable: identPtr;             {variable from a parameter list}
 
+                                        {attribute processing variables}
+                                        {------------------------------}
+   haveAttributeSpecifier: boolean;     {was an attribute specifier found?}
+
                                         {syntactic classes of tokens}
                                         {---------------------------}
 {  specifierQualifierListElement: tokenSet; (in CCommon)}
@@ -306,6 +310,37 @@ if op = dc_lab then begin
 else
    Gen1(pc_ujp, gt^.lab);
 end; {GotoLabel}
+
+
+{-- Attributes -------------------------------------------------}
+
+procedure AttributeSpecifierSequence;
+
+{ handle a possible attribute specifier sequence                }
+
+label 1;
+
+begin {AttributeSpecifierSequence}
+haveAttributeSpecifier := false;
+if (cStd >= c23) or not strictMode then
+   while token.kind = lbrackch do begin
+      NextToken;
+      if token.kind <> lbrackch then begin
+         PutBackToken(token, false, true);
+         token.kind := lbrackch;
+         token.class := reservedSymbol;
+         goto 1;
+         end; {if}
+      NextToken;
+
+      haveAttributeSpecifier := true;
+      {TODO handle attributes}
+      
+      Match(rbrackch, 24);
+      Match(rbrackch, 24);
+      end; {while}
+1:
+end; {AttributeSpecifierSequence}
 
 
 {-- Statements -------------------------------------------------}
@@ -1347,6 +1382,7 @@ var
          else
             checkParms := true;
          NextToken;
+         AttributeSpecifierSequence;
          if token.kind = eqch then
             state := initialized;
          lastWasIdentifier := true;
@@ -1355,6 +1391,7 @@ var
       asteriskch: begin                 {handle '*' 'declarator'}
          while token.kind = asteriskch do begin
             NextToken;
+            AttributeSpecifierSequence;
             new(cp);
             cp^.next := cpList;
             cpList := cp;
@@ -1553,6 +1590,7 @@ var
             PopTable
          else
             madeFunctionTable := true;
+         AttributeSpecifierSequence;
          end {if}
 
       {handle array declarations}
@@ -1605,6 +1643,7 @@ var
          else if gotStatic then
             Error(35);
          Match(rbrackch,24);
+         AttributeSpecifierSequence;
          end; {else if}
       end; {while}
 
@@ -2837,6 +2876,7 @@ var
    myStorageClass: tokenEnum;           {storage class}
    
    isLongLong: boolean;                 {is this a "long long" type?}
+   tHaveAttributeSpecifier: boolean;    {local copy of haveAttributeSpecifier}
  
    procedure FieldList (tp: typePtr; kind: typeKind);
  
@@ -3292,6 +3332,8 @@ while token.kind in allowedTokens do begin
          else if restrictsy in myDeclarationModifiers then
             Error(143);
          NextToken;                     {skip the 'enum' token}
+         AttributeSpecifierSequence;
+         tHaveAttributeSpecifier := haveAttributeSpecifier;
          if token.kind in [ident,typedef] then begin {handle a type definition}
             ttoken := token;
             NextToken;
@@ -3307,6 +3349,8 @@ while token.kind in allowedTokens do begin
                   begin
                   if looseTypeChecks then
                      declaredTagOrEnumConst := true;
+                  if tHaveAttributeSpecifier then
+                     Error(27);
                   goto 1;
                   end {if}
                else begin
@@ -3341,6 +3385,7 @@ while token.kind in allowedTokens do begin
                   end {if}
                else
                   Error(9);
+               AttributeSpecifierSequence;
                if token.kind = eqch then begin {handle explicit enumeration values}
                   NextToken;
                   Expression(arrayExpression,[commach,rbracech]);
@@ -3371,7 +3416,9 @@ while token.kind in allowedTokens do begin
                Error(23);
                SkipStatement;
                end; {else}
-            end; {if}
+            end {if}
+         else if tHaveAttributeSpecifier then
+            Error(27);
 1:       myTypeSpec := intPtr;
          typeDone := true;
          end;
@@ -3390,6 +3437,8 @@ while token.kind in allowedTokens do begin
          structPtr := nil;              {no record, yet}
          structTypePtr := defaultStruct; {use int as a default type}
          NextToken;                     {skip 'struct' or 'union'}
+         AttributeSpecifierSequence;
+         tHaveAttributeSpecifier := haveAttributeSpecifier;
          if token.kind in [ident,typedef] {if there is a struct name then...}
             then begin
                                         {look up the name}
@@ -3471,7 +3520,10 @@ while token.kind in allowedTokens do begin
                Error(23);
                SkipStatement;
                end; {else}
-            end; {if}
+            end {if}
+         else if token.kind <> semicolonch then
+            if tHaveAttributeSpecifier then
+               Error(192);
          if globalStruct then
             useGlobalPool := lUseGlobalPool;
          myTypeSpec := structTypePtr;
@@ -3536,6 +3588,7 @@ if myTypeSpec = nil then begin
 declSpecifiers.typeSpec :=              {apply type qualifiers}
    MakeQualifiedType(myTypeSpec, typeQualifiers);
 declSpecifiers.storageClass := myStorageClass;
+AttributeSpecifierSequence;
 end; {DeclarationSpecifiers}
 
 
@@ -4204,6 +4257,7 @@ var
             tp^.fType := Unqualify(tl);
             tl := tp;
             NextToken;
+            AttributeSpecifierSequence;
             end {if}
          else begin
 
@@ -4224,6 +4278,7 @@ var
 
          {create a pointer type}
          NextToken;
+         AttributeSpecifierSequence;
          tp := pointer(Malloc(sizeof(typeRecord)));
          tp^.size := cgPointerSize;
          tp^.saveDisp := 0;
@@ -4264,6 +4319,7 @@ var
          tp^.fType := tl;
          tl := tp;
          Match(rbrackch,24);
+         AttributeSpecifierSequence;
          end; {else}
 
       if token.kind = lparench then begin
@@ -4291,6 +4347,7 @@ var
          {tp^.dispatcher := 0;}
          tp^.fType := Unqualify(tl);
          tl := tp;
+         AttributeSpecifierSequence;
          end; {if}
       end; {NonEmptyAbstractDeclarator}
 

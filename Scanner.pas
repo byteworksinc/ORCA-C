@@ -820,6 +820,8 @@ if list or (numErr <> 0) then begin
         188: msg := @'local variable used in asm statement is out of range for addressing mode';
         189: msg := @'malformed numeric constant';
         190: msg := @'decimal floating types are not supported by ORCA/C';
+        191: msg := @'''['' expected';
+        192: msg := @'invalid attribute specifier';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
