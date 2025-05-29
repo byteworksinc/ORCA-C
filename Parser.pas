@@ -205,6 +205,7 @@ var
                                         {attribute processing variables}
                                         {------------------------------}
    haveAttributeSpecifier: boolean;     {was an attribute specifier found?}
+   keepAttributes: boolean;             {keep existing attributes?}
 
                                         {syntactic classes of tokens}
                                         {---------------------------}
@@ -213,6 +214,7 @@ var
    localDeclarationStart: tokenSet;
    declarationSpecifiersElement: tokenSet;
    structDeclarationStart: tokenSet;
+   prototypeParameterDeclarationStart: tokenSet;
 
 {-- External procedures ----------------------------------------}
 
@@ -321,7 +323,10 @@ procedure AttributeSpecifierSequence;
 label 1;
 
 begin {AttributeSpecifierSequence}
-haveAttributeSpecifier := false;
+if not keepAttributes then
+   haveAttributeSpecifier := false
+else
+   keepAttributes := false;
 if (cStd >= c23) or not strictMode then
    while token.kind = lbrackch do begin
       NextToken;
@@ -1008,6 +1013,7 @@ if traceBack or debugFlag then
       RecordLineNumber(lineNumber);
 
 {handle the statement}
+AttributeSpecifierSequence;
 case token.kind of
    asmsy:               begin
                         NextToken;
@@ -1041,7 +1047,11 @@ case token.kind of
    ifsy:                IfStatement;
    lbracech:            CompoundStatement(true);
    returnsy:            ReturnStatement;
-   semicolonch:         NextToken;
+   semicolonch:         begin
+                        if haveAttributeSpecifier then
+                           Error(192);
+                        NextToken;
+                        end;
    switchsy:            SwitchStatement;
    whilesy:             WhileStatement;
    otherwise:           AssignmentStatement;
@@ -1491,7 +1501,7 @@ var
                end; {else}
             end; {if}
                                         {see if we are doing a prototyped list}
-         if token.kind in declarationSpecifiersElement then begin
+         if token.kind in prototypeParameterDeclarationStart then begin
             {handle a prototype variable list}
             numberOfParameters := 0;    {don't allow K&R parm declarations}
             done2 := false;
@@ -1499,7 +1509,7 @@ var
             with tPtr2^ do begin
                prototyped := true;      {it is prototyped}
                repeat                   {collect the declarations}
-                  if token.kind in declarationSpecifiersElement then begin
+                  if token.kind in prototypeParameterDeclarationStart then begin
                      ldeclaredTagOrEnumConst := declaredTagOrEnumConst;
                      lLastParameter := lastParameter;
                      DoDeclaration(true);
@@ -2954,6 +2964,7 @@ var
          DoStaticAssert;
          goto 1;
          end; {if}
+      AttributeSpecifierSequence;
       DeclarationSpecifiers(fieldDeclSpecifiers, specifierQualifierListElement, 176);
       repeat                            {declare the variables...}
          if didFlexibleArray then
@@ -3350,7 +3361,7 @@ while token.kind in allowedTokens do begin
                   if looseTypeChecks then
                      declaredTagOrEnumConst := true;
                   if tHaveAttributeSpecifier then
-                     Error(27);
+                     Error(192);
                   goto 1;
                   end {if}
                else begin
@@ -3418,7 +3429,7 @@ while token.kind in allowedTokens do begin
                end; {else}
             end {if}
          else if tHaveAttributeSpecifier then
-            Error(27);
+            Error(192);
 1:       myTypeSpec := intPtr;
          typeDone := true;
          end;
@@ -3613,6 +3624,7 @@ var
    isNoreturn: boolean;                 {has the _Noreturn specifier been used?}
    alignmentSpecified: boolean;         {was an alignment explicitly specified?}
    lDoingParameters: boolean;           {local copy of doingParameters}
+   lHaveAttributeSpecifier: boolean;    {local copy of haveAttributeSpecifier}
    lInhibitHeader: boolean;             {local copy of inhibitHeader}
    lp,tlp,tlp2: identPtr;               {for tracing parameter list}
    lUseGlobalPool: boolean;             {local copy of useGlobalPool}
@@ -3821,7 +3833,17 @@ var
 begin {DoDeclaration}
 lInhibitHeader:= inhibitHeader;
 inhibitHeader := true;			{block imbedded includes in headers}
+AttributeSpecifierSequence;
+lHaveAttributeSpecifier := haveAttributeSpecifier;
+if lHaveAttributeSpecifier then         {handle attribute declaration}
+   if token.kind = semicolonch then
+      if not doingPrototypes then begin
+         NextToken;
+         goto 4;
+         end; {if}
 if token.kind in [_Static_assertsy,static_assertsy] then begin
+   if lHaveAttributeSpecifier then
+      Error(192);
    DoStaticAssert;
    goto 4;
    end; {if}
@@ -3846,7 +3868,7 @@ isNoreturn := _Noreturnsy in declSpecifiers.declarationModifiers;
 alignmentSpecified := _Alignassy in declSpecifiers.declarationModifiers;
 if token.kind = semicolonch then
    if not doingPrototypes then
-      if not declaredTagOrEnumConst then
+      if not declaredTagOrEnumConst or lHaveAttributeSpecifier then
          Error(176);
 
 3:
@@ -4398,17 +4420,23 @@ begin {DoStatement}
 case statementList^.kind of
 
    compoundSt: begin
+      AttributeSpecifierSequence;
       hasStatementNext := true;
       if token.kind = rbracech then begin
+         if haveAttributeSpecifier then
+            Error(192);
          hasStatementNext := false;
          EndCompoundStatement;
          end {if}
       else if (statementList^.doingDeclaration or allowMixedDeclarations)
-         and (token.kind in localDeclarationStart)
+         and ((token.kind in localDeclarationStart) or
+            (haveAttributeSpecifier and (token.kind = semicolonch)))
          then begin
          hasStatementNext := false;
-         if token.kind <> typedef then
-            DoDeclaration(false)
+         if token.kind <> typedef then begin
+            keepAttributes := true;
+            DoDeclaration(false);
+            end {if}
          else begin
             lToken := token;
             lSuppressMacroExpansions := suppressMacroExpansions;
@@ -4418,8 +4446,10 @@ case statementList^.kind of
             nToken := token;
             PutBackToken(nToken, false, false);
             token := lToken;
-            if nToken.kind <> colonch then
-               DoDeclaration(false)
+            if nToken.kind <> colonch then begin
+               keepAttributes := true;
+               DoDeclaration(false);
+               end {if}
             else
                hasStatementNext := true;
             end {else}
@@ -4433,6 +4463,7 @@ case statementList^.kind of
                firstCompoundStatement := false;
                end; {if}
             end; {if}
+         keepAttributes := true;
          Statement;
          end; {else}
       end;
@@ -4840,13 +4871,15 @@ specifierQualifierListElement :=
    typeSpecifierStart + typeQualifiers + alignmentSpecifiers + [pascalsy];
 
 structDeclarationStart :=
-   specifierQualifierListElement + [_Static_assertsy,static_assertsy];
+   specifierQualifierListElement + [_Static_assertsy,static_assertsy,lbrackch];
 
 topLevelDeclarationStart := declarationSpecifiersElement
-   + [ident,segmentsy,_Static_assertsy,static_assertsy];
+   + [ident,segmentsy,_Static_assertsy,static_assertsy,lbrackch];
 
-localDeclarationStart :=
-   declarationSpecifiersElement + [_Static_assertsy,static_assertsy] - [asmsy];
+localDeclarationStart := declarationSpecifiersElement
+   + [_Static_assertsy,static_assertsy,lbrackch] - [asmsy];
+
+prototypeParameterDeclarationStart := declarationSpecifiersElement + [lbrackch];
 end; {InitParser}
 
 

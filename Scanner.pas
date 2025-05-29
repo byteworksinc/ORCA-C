@@ -821,7 +821,7 @@ if list or (numErr <> 0) then begin
         189: msg := @'malformed numeric constant';
         190: msg := @'decimal floating types are not supported by ORCA/C';
         191: msg := @'''['' expected';
-        192: msg := @'invalid attribute specifier';
+        192: msg := @'an attribute specifier cannot be used here';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
