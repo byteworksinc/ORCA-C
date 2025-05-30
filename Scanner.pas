@@ -822,6 +822,8 @@ if list or (numErr <> 0) then begin
         190: msg := @'decimal floating types are not supported by ORCA/C';
         191: msg := @'''['' expected';
         192: msg := @'an attribute specifier cannot be used here';
+        193: msg := @'invalid standard attribute name';
+        194: msg := @'unbalanced '')'', ''}'', or '']''';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);

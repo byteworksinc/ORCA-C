@@ -316,6 +316,123 @@ end; {GotoLabel}
 
 {-- Attributes -------------------------------------------------}
 
+procedure Attribute;
+
+{ handle an attribute                                           }
+
+var
+   prefixName, attrName: stringPtr;     {attribute prefix and name}
+
+
+   procedure MakeIdentToken;
+   
+   { Make token into an ident token.  It must be an identifier, }
+   { typedef name, or reserved word to begin with.              }
+   
+   begin {MakeIdentToken}
+   if token.class = reservedWord then begin
+      token.name := @reservedWords[token.kind];
+      token.kind := ident;
+      token.class := identifier;
+      end {if}
+   else if token.kind = typedef then
+      token.kind := ident;
+   end; {MakeIdentToken}
+
+
+   procedure BalancedTokens;
+   
+   { Parse a balanced token sequence (where all parentheses,    }
+   { brackets, and braces are balanced and properly nested).    }
+   { The sequence starts with ( and ends with the matching ).   }
+
+   type
+      delimiterRecPtr = ^delimiterRec;
+      delimiterRec = record
+         endToken: tokenEnum;
+         next: delimiterRecPtr;
+         end;
+
+   var
+      nestedDelimiters: delimiterRecPtr; {stack of nested delimiters}
+      tDelimiters: delimiterRecPtr;     {work pointer}
+
+   begin {BalancedTokens}
+   nestedDelimiters := nil;
+   repeat
+      if token.kind in [lparench,lbracech,lbrackch] then begin
+         new(tDelimiters);
+         tDelimiters^.next := nestedDelimiters;
+         case token.kind of
+            lparench: tDelimiters^.endToken := rparench;
+            lbracech: tDelimiters^.endToken := rbracech;
+            lbrackch: tDelimiters^.endToken := rbrackch;
+            end; {case}
+         nestedDelimiters := tDelimiters;
+         end {if}
+      else if token.kind in [rparench,rbracech,rbrackch] then begin
+         if nestedDelimiters^.endToken = token.kind then begin
+            tDelimiters := nestedDelimiters;
+            nestedDelimiters := nestedDelimiters^.next;
+            dispose(tDelimiters);
+            end {if}
+         else
+            Error(194);
+         end; {else if}
+      NextToken;
+   until (nestedDelimiters = nil) or (token.kind = eofsy);
+   while nestedDelimiters <> nil do begin
+      tDelimiters := nestedDelimiters;
+      nestedDelimiters := nestedDelimiters^.next;
+      dispose(tDelimiters);      
+      end; {while}
+   end; {BalancedTokens}
+
+begin {Attribute}
+if token.class in [reservedWord,identifier] then begin
+   MakeIdentToken;
+   prefixName := nil;
+   new(attrName);
+   attrName^ := token.name^;
+   NextToken;
+
+   if token.kind = coloncolonsy then begin
+      NextToken;
+      if token.class in [reservedWord,identifier] then begin
+         MakeIdentToken;
+         prefixName := attrName;
+         new(attrName);
+         attrName^ := token.name^;
+         NextToken;
+         end {if}
+      else
+         Error(9);
+      end; {if}
+
+   if prefixName = nil then
+      if not ((attrName^ = 'deprecated') or (attrName^ = '__deprecated__')
+         or (attrName^ = 'fallthrough') or (attrName^ = '__fallthrough__')
+         or (attrName^ = 'maybe_unused') or (attrName^ = '__maybe_unused__')
+         or (attrName^ = 'nodiscard') or (attrName^ = '__nodiscard__')
+         or (attrName^ = 'noreturn') or (attrName^ = '__noreturn__')
+         or (attrName^ = '_Noreturn') or (attrName^ = '___Noreturn__')
+         or (attrName^ = 'unsequenced') or (attrName^ = '__unsequenced__')
+         or (attrName^ = 'reproducible') or (attrName^ = '__reproducible__'))
+         then
+         Error(193);
+
+   if token.kind = lparench then
+      BalancedTokens;
+
+   dispose(attrName);
+   if prefixName <> nil then
+      dispose(prefixName);
+   end {if}
+else
+   Error(9);
+end; {Attribute}
+
+
 procedure AttributeSpecifierSequence;
 
 { handle a possible attribute specifier sequence                }
@@ -339,7 +456,16 @@ if (cStd >= c23) or not strictMode then
       NextToken;
 
       haveAttributeSpecifier := true;
-      {TODO handle attributes}
+      
+      while token.kind <> rbrackch do begin
+         Attribute;
+         if token.kind = commach then
+            NextToken
+         else if token.kind <> rbrackch then begin
+            Error(24);
+            goto 1;
+            end; {else if}
+         end; {if}
       
       Match(rbrackch, 24);
       Match(rbrackch, 24);
