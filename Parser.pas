@@ -607,7 +607,7 @@ if (lastLine <> lineNumber) or changedSourceFile then begin
 end; {RecordLineNumber}
 
 
-procedure Statement;
+procedure Statement (doingBlockItems: boolean);
 
 { handle a statement                                            }
 
@@ -692,16 +692,16 @@ var
    end; {BreakStatement}
 
 
-   procedure CaseStatement;
+   procedure CaseLabel;
  
-   { handle a case statement                                     }
+   { handle a case label                                         }
 
    var
       stPtr: statementPtr;              {switch record for this case label}
       swPtr,swPtr2: switchPtr;          {work pointers for inserting new entry}
       val: longlong;                    {case label value}
 
-   begin {CaseStatement}
+   begin {CaseLabel}
    while token.kind = casesy do begin
       NextToken;                        {skip the 'case' token}
       stPtr := GetSwitchRecord;         {get the proper switch record}
@@ -764,8 +764,7 @@ var
 
       Match(colonch,29);                {get the colon}
       end; {while}
-   Statement;                           {process the labeled statement}
-   end; {CaseStatement}
+   end; {CaseLabel}
 
 
    procedure ContinueStatement;
@@ -796,14 +795,14 @@ var
    end; {ContinueStatement}
 
 
-   procedure DefaultStatement;
+   procedure DefaultLabel;
  
-   { handle a default statement                                  }
+   { handle a default label                                      }
  
    var
       stPtr: statementPtr;              {work pointer}
 
-   begin {DefaultStatement}
+   begin {DefaultLabel}
    NextToken;                           {skip the 'default' token}
    Match(colonch,29);                   {get the colon}
    stPtr := GetSwitchRecord;            {record the presense of a default label}
@@ -815,8 +814,7 @@ var
       stPtr^.switchDefault := GenLabel;
       Gen1(dc_lab, stPtr^.switchDefault);
       end; {else}
-   Statement;                           {process the labeled statement}
-   end; {DefaultStatement}
+   end; {DefaultLabel}
 
 
    procedure DoStatement;
@@ -840,7 +838,7 @@ var
    stPtr^.continueLab := 0;
    if c99Scope then PushTable;
    if c99Scope then PushTable;
-   Statement;                           {process the first loop body statement}
+   Statement(false);                    {process the first loop body statement}
    end; {DoStatement}
 
 
@@ -899,7 +897,7 @@ var
    Match(rparench,12);                  {get the closing for loop paren}
 
    if c99Scope then PushTable;
-   Statement;                           {process the first loop body statement}
+   Statement(false);                    {process the first loop body statement}
    end; {ForStatement}
 
 
@@ -928,7 +926,7 @@ var
    stPtr^.kind := ifSt;
    stPtr^.ifLab := lab;
    if c99Scope then PushTable;
-   Statement;                           {process the 'true' statement}
+   Statement(false);                    {process the 'true' statement}
    end; {IfStatement}
 
 
@@ -948,11 +946,11 @@ var
    end; {GotoStatement}
 
 
-   procedure LabelStatement;
+   procedure NamedLabel;
  
-   { handle a labeled statement                                  }
+   { handle a named labeled                                      }
  
-   begin {LabelStatement}
+   begin {NamedLabel}
    GotoLabel(dc_lab);                   {define the label}
    NextToken;                           {skip the label}
    if token.kind = colonch then         {if present, skip the colon}
@@ -961,7 +959,7 @@ var
       Error(31);
       SkipStatement;
       end; {else}
-   end; {LabelStatement}
+   end; {NamedLabel}
 
 
    procedure ReturnStatement;
@@ -1096,7 +1094,7 @@ var
       end; {case}
    Gen1(pc_ujp, stPtr^.switchLab);      {branch to the xjp instruction}
    if c99Scope then PushTable;
-   Statement;                           {process the loop body statement}
+   Statement(false);                    {process the loop body statement}
    end; {SwitchStatement}
 
 
@@ -1128,7 +1126,7 @@ var
    CompareToZero(pc_neq);               {evaluate the condition}
    Gen1(pc_fjp, endl);
    if c99Scope then PushTable;
-   Statement;                           {process the first loop body statement}
+   Statement(false);                    {process the first loop body statement}
    end; {WhileStatement}
 
 begin {Statement}
@@ -1146,9 +1144,19 @@ case token.kind of
                         AsmStatement;
                         end;
    breaksy:             BreakStatement;
-   casesy:              CaseStatement;
+   casesy:              begin
+                        CaseLabel;
+                        if ((cStd < c23) and strictMode)
+                           or not doingBlockItems then
+                           goto 1;
+                        end;
    continuesy:          ContinueStatement;
-   defaultsy:           DefaultStatement;
+   defaultsy:           begin
+                        DefaultLabel;
+                        if ((cStd < c23) and strictMode)
+                           or not doingBlockItems then
+                           goto 1;
+                        end;
    dosy:                DoStatement;
    elsesy:              begin Error(25); SkipStatement; end;
    forsy:               ForStatement;
@@ -1164,8 +1172,10 @@ case token.kind of
                         token := lToken;
                         suppressMacroExpansions := lSuppressMacroExpansions;
                         if tToken.kind = colonch then begin
-                           LabelStatement;
-                           goto 1;
+                           NamedLabel;
+                           if ((cStd < c23) and strictMode)
+                              or not doingBlockItems then
+                              goto 1;
                            end {if}
                         else
                            AssignmentStatement;
@@ -1242,7 +1252,7 @@ if token.kind = elsesy then begin       {if an else clause exists, process it}
    stPtr^.kind := elseSt;
    stPtr^.elseLab := lab2;
    if c99Scope then PushTable;
-   Statement;                           {evaluate the else clause}
+   Statement(false);                    {evaluate the else clause}
    end {if}
 else begin
    Gen1(dc_lab, lab1);                  {create label for if to branch to}
@@ -4590,7 +4600,7 @@ case statementList^.kind of
                end; {if}
             end; {if}
          keepAttributes := true;
-         Statement;
+         Statement(true);
          end; {else}
       end;
  

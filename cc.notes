@@ -60,6 +60,7 @@ may be invoked as
 
 7. Attribute specifiers of the form [[ /*...*/ ]] may appear in certain places in declarations and statements, declaring attributes that appertain to various syntactic elements.  ORCA/C currently ignores all attributes.
 
+8. Labels are no longer restricted to appearing only before statements.  They can now appear before declarations (within a function body) or immediately before the closing } of a compound statement.
 
 Library Updates
 ---------------
