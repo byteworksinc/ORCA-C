@@ -1,0 +1,2944 @@
+ORCA/C 2.2.1
+Copyright 1997, Byte Works Inc.
+Updated by Stephen Heumann and Kelvin Sherlock, 2017-2024
+
+These release notes document the changes between ORCA/C 2.0 and ORCA/C 2.2.1.  They are intended mainly for users familiar with earlier versions of ORCA/C.  New users should refer to the ORCA/C 2.2 manual, which has been fully updated to document the new features and other changes in ORCA/C 2.2.
+
+-- Change List --------------------------------------------------------------
+
+2.2.1       1.	Bugs squashed.  See bug notes, below.
+
+            2.	Small optimizations in some library functions.
+
+            3.	Improved the code generated for certain operations.
+
+2.2.0       1.	Bugs squashed.  See bug notes, below.
+
+            2.	New language features added (mainly features from C99 and C11).
+              	See "New Language Features," below.
+
+            3.	Some optimization passes have small improvements.
+
+            4.	Some internal size limits were raised, allowing compilation of
+              	larger functions.
+
+            5.	Certain errors that were previously ignored are now detected.
+
+            6.	Two new #pragma debug bits are defined.  See "Additions to
+              	#pragma debug."
+
+            7.	Some new headers specified by recent C standards are added.
+              	See "New Headers."
+
+            8.	Several new #pragma ignore bits are defined.  See "Additions to
+              	#pragma ignore."
+
+            9.	Several new #pragma lint bits are defined.  Also, messages from
+              	#pragma lint can now optionally be treated as warnings rather
+              	than errors.  See "Enhancements to #pragma lint."
+
+            10.	Stack repair code is now more efficient.
+
+            11.	Several new library functions and features from C99 and C11
+               	have been added.  See "Library Updates."
+
+            12.	Support has been added for some library functions from the
+               	original ANSI C standard that had been missing from ORCA/C.
+               	See "Library Updates" and "Locales."
+
+            13.	Floating-point constant expressions now use extended precision.
+               	See "Evaluation of Floating-Point Expressions and Constants."
+
+            14.	New bit added to control floating-point optimizations that may
+               	violate the IEEE standard.  See "Floating-Point Optimizations."
+
+            15.	New option to print file names in error messages.  See
+               	"File Names in Error Messages."
+
+            16.	New option to include a custom file before processing the
+               	source file.  See "Custom Pre-Include File."
+
+            17.	New pragma for controlling ORCA/C extensions.  See "#pragma
+               	extensions."
+
+            18.	New option to select which C standard to use.  See "C Standard
+               	Selection."
+
+            19.	The code generated for certain operations has been improved.
+
+            20.	The slot parameter to #pragma float now sets the FPE slot.
+
+2.1.1 B3    1.	Bugs squashed.  See bug notes, below.
+
+2.1.0       1.	Bugs squashed.  See bug notes, below.
+
+	    2.	New bit added for vararg stack repair removal.  See #pragma
+		optimize, below.
+
+	    3.	There have been several changes to assert().  See the Manual
+		Errata for page 343 for details.
+
+	    4.	C supports the extended character set.  See "Extended
+		Characters."
+
+	    5.	You can create defaults that are used in all of your C programs
+		using the new defaults.h file.  See "The Default .h File."
+
+	    6.	ORCA/C supports // comments.  See "// Comments."
+
+2.0.3       1.	Bugs squashed.  See bug notes, below.
+
+2.0.2       1.	Bugs squashed.  See bug notes, below.
+
+2.0.1       1.	Bugs squashed.  See bug notes, below.
+
+-- Manual Errata in the ORCA/C 2.0 Manual -----------------------------------
+
+(These errata have been corrected in the ORCA/C 2.2 manual.)
+
+p. 40
+
+The description of the action function says it takes a single integer parameter.  Actually, it takes two parameters, as shown in the example on page 41.
+
+Both the description and the sample on page 41 indicate that the action procedure for an NDA should return void.  Actually, the action routine should return int, returning 1 if it handled the action and 0 if it did not.  The correct function looks like this:
+
+int Action (long param, int code)
+
+{
+int handledEvent = 0;
+
+<<<process the events, setting handleEvent to 1 if we process the event>>>
+
+return handledEvent;
+}
+
+The description of the init function doesn't point out some important limitations.  When this call is made at shutdown time, your NDA has already been placed in a dormant state, and all RAM has been deallocated.  (This happened when the close function was called.)  If you need dynamic memory for any purpose, be sure you obtain a valid user ID, and that you dispose of the memory after you are finished with it.  Do not rely on C memory management functions at shutdown time.  Static variables are safe, though, and can be used to pass information to the init function for use at shutdown time.
+
+p. 67
+
+Delete the paragraph starting "One important point is that you should never reinitialize the Text Tool Set. ..."  ORCA/C no longer uses the Text Tool Set for routine input and output, and definitely does not use it for I/O redirection.
+
+p. 100
+
+The text does not mention the sixth default character.  It is not used by PRIZM, though.  For details on the 6th default character (as well as the 5th) see page 193, where their use by the text based editor is described.
+
+p. 101
+
+The sample SYSTABS line at the top of the page should start
+
+   8
+   100110
+
+p. 107
+
+The table shows the language number for C as 7.  It should be 8.
+
+p. 128
+
+The ASML, ASMLG, ASSEMBLE, CMPL, CMPLG, COMPILE, and RUN commands now accept a new flag, +F.  The +F flag causes the compiler to include the file name in any error messages that it prints.  It is currently only effective for ORCA/C.
+
+There is also two new options which can be used within the cc= portion of the command line.  The -p option specifies a custom pre-include file.  The -s option specifies the C standard to use See "Custom Pre-Include File" and "C Standard Selection," below.
+
+p. 233
+
+Identifiers may now contain universal character names, a type of escape sequence that can denote a Unicode character.  See "New Language Features," below.
+
+Several new reserved words (keywords) added in the C99 or C11 standards are now supported.  For information on what these are and how they are used, see "New Language Features," below.
+
+Certain ORCA/C-specific extensions to the standard C language can now be disabled.  See "#pragma extensions," below.
+
+Certain alternate reserved symbols known as digraphs are now supported.  See "New Language Features," below.
+
+p. 237
+
+ORCA/C now supports character constants containing multiple characters.  See "Multi-Character Character Constants," below.
+
+Character and string constants may now have prefixes indicating they should use Unicode encodings.  See "New Language Features," below.
+
+p. 238
+
+The limits on the length of a single string constant and on the total length of string constants in a single function have both been raised to 32760 bytes.
+
+p. 239
+
+String and character constants may now contain universal character names, a type of escape sequence that can denote a Unicode character.  See "New Language Features," below.
+
+p. 240
+
+The discussion of escape sequences states that hexadecimal numeric escape sequences can contain from one to three digits.  This was true until ORCA/C 2.1, when the compiler was changed to respect the ANSI C standard.  The compiler will now scan a hexadecimal escape sequence until no more hexadecimal characters are found.  (ORCA/C 2.1 would also scan an octal escape sequence until no more octal characters were found, but this has been changed back to limit octal escape sequences to at most three octal digits, as required by the C standards.)
+
+The value of an octal or hexadecimal escape sequence must be within the range of representable values in the relevant type (0-255 for char).  Also, \ may not be followed by a character other than one of the ones described as forming an escape sequence.  ORCA/C now gives an error in these cases.  Accordingly, the examples of "\410" and '\g' mentioned in the manual are now treated as errors.
+
+Floating-point constants may now be written in a new hexadecimal format.  See "New Language Features," below.
+
+p. 241
+
+The 'f', 'F', 'l', or 'L' suffixes on floating-point constants do now affect the semantic type of those constants, although they do not change the constant's precision or range (which are always those of the SANE extended format).
+
+ORCA/C now supports // comments.  See "// Comments," below.
+
+p. 247
+
+The predefined macros __STDC__ and __ORCAC__ expand to the integer constant 1, not -1.
+
+ORCA/C now supports several new predefined macros.  See "New Language Features," below.
+
+p. 250
+
+Several things are listed that will cause a .sym file to stop or not be built at all.  Add to this list a #append, which does not work like a #include.
+
+It's worth keeping in mind that #append in included in ORCA/C solely for the purpose of appending files of a different language.  There are several advantages to using #append to tack assembly language source to the end of a C source file, but there is no other place in ORCA/C where a #append is more useful than a #include.
+
+p. 254
+
+The #error directive may be followed by any sequence of preprocessing tokens, not just a string constant.
+
+ORCA/C now supports several standard pragmas of the form "#pragma STDC ...", as well as a new ORCA/C-specific pragma, #pragma extensions.  See "New Language Features" and "#pragma extensions," below.
+
+p. 256
+
+Checking the debug check box in the desktop development environment will not enable all the debugging features that are available through #pragma debug.  It is equivalent to setting #pragma debug bits 1 and 2 only.
+
+The #pragma debug directive supports two new bits.  If bit 5 is set, ORCA/C generates code to check for illegal use of null pointers.  If bit 15 is set, ORCA/C generates inline function names for use with assembly-level debugging tools.  See "Additions to #pragma debug," below.
+
+p. 257
+
+The #pragma expand directive has been changed to use three-digit octal escape sequences (rather than hexadecimal ones) in strings it outputs.  (This ensures that subsequent characters in the string cannot be interpreted as part of the escape sequence.)  Also, #pragma expand will now print an appropriate suffix on numeric constants with types other than int or double.
+
+If precompiled headers are being used, #pragma expand will not print the tokens for the portion of the code that has been precompiled and represented in the .sym file.  It will still print the tokens for the remainder of the code (including all functions).  If you want to see the tokens for all of the code, you can use the -I flag to make ORCA/C ignore the .sym file.
+
+p. 258
+
+The slot parameter to #pragma float is now optional, and if present is used to set the FPE slot.  See "Changes to #pragma float," below.
+
+The #pragma ignore directive supports several new bits.
+
+Bit 1 affects the interpretation of multi-character character constants.  See "Multi-Character Character Constants," below.
+
+Bit 2 controls whether spurious tokens are allowed after an #endif directive.  See "Additions to #pragma ignore," below.
+
+Bit 3 controls whether // comments are allowed.  If bit 3 is set, as in
+
+   #pragma ignore 0x0008
+
+ORCA/C supports // comments.  If bit 3 is clear, ORCA/C does not support // comments, which are not actually allowed in ANSI C89 programs.
+
+See "// Comments," below, for a complete description of // comments.
+
+Bit 4 controls whether C99-style scope rules are followed and whether mixed statements and declarations are allowed in blocks.  See "New Language Features," below.
+
+Bit 5 controls whether type compatibility checks should strictly follow the C standards, or whether looser rules should be used in certain cases.  See "Additions to #pragma ignore," below.
+
+p. 259
+
+The #pragma lint directive can now optionally treat messages from lint checks as warnings rather than errors.  In addition, several new types of lint checks are now available.  For details, see "Enhancements to #pragma lint," below.
+
+p. 263
+
+1. The discussion of NDAs is on page 40, not page 58.
+
+2. There are new optimization bits for #pragma optimize.  See "#pragma optimize" and "Floating-Point Optimizations," below.
+
+p. 269
+
+The 64-bit integer types long long and unsigned long long are now supported.  So is the type _Bool, a boolean type that can hold the values 0 or 1.  See "New Language Features," below.
+
+p. 275
+
+Several new declaration specifiers from C99 and C11 are now supported.  For details, see "New Language Features," below.
+
+p. 277
+
+The type "long double" now specifies a number in the SANE extended format.
+
+p. 282
+
+Declarations like "int * float fp;" are not actually legal, and are not supported by ORCA/C.
+
+p. 286
+
+Unions may now contain bit fields.
+
+p. 289
+
+Unions can be initialized by a brace-enclosed expression giving the initializer value for the first element of the union, or by an expression of the appropriate union type.  The non-standard construct of initializing the first element of a union with a non-brace-enclosed initializer is no longer supported.  The supported alternative is simply to enclose the initializer in braces, e.g.
+
+   union nums {float f; int i;} x = {0.0};
+
+p. 297
+
+Variable argument lists will now work even if stack repair code is enabled.
+
+p. 299
+
+Structures and unions are passed by value, not by reference.  (Arrays are passed by reference, as described.)
+
+p. 303
+
+ORCA/C now supports additional forms of expressions known as generic selection expressions and compound literals.  See "New Language Features," below.
+
+p. 311
+
+If integer overflow occurs during signed integer multiplication, the resulting value is not predictable.  Contrary to what the description in the manual implies, it will not necessarily be the low-order bits from the true product of the operands.  (Unsigned integer multiplication does give the low-order bits from the true product.)
+
+p. 321
+
+The unary conversion rules have been modified to convert values of type char or unsigned char to int (rather than unsigned int), as required by the C standards.  Also, they do not change the semantic type of float or double values.
+
+In the binary conversions, if either operand has a floating-point type, the semantic type is the largest floating-point type of either operand.  However, floating-point operations are always evaluated with the range and precision of the SANE extended format.
+
+p. 333,334
+
+If assembly code attempts to access a local variable using direct page addressing when its location is more than 255 bytes from the start of the direct page, ORCA/C will now detect and report this error ("local variable used in asm statement is out of range for addressing mode").
+
+p. 337
+
+The ORCA/C compiler is intended as a faithful implementation of ANSI C with some extensions, but there have always been some library functions from ANSI C that were missing in ORCA/C.  Chapter 19 should start with a summary of these omissions.
+
+The missing functions from the original ANSI C standard are mbstowcs(), mbtowc(), wcstombs() and wctomb().  These <stdlib.h> functions relate to wide characters or strings, which ORCA/C does not currently support.
+
+Various other functions added in later C standards are also not supported yet.
+
+p. 342
+
+Several new standard library functions from C99 and C11 are now provided.  See "Library Updates," below.
+
+All the functions in <math.h> that are specified as having argument or return types of extended actually use the type double.  However, the values passed to and returned from them still have the range and precision of the extended type.
+
+p. 343
+
+The documentation states that assert() uses exit(-1) to exit a program.  Actually, it uses abort().
+
+Beginning with ORCA/C 2.1, assert() prints a string that includes the assertion itself, not just the line number and file name.  Beginning with ORCA/C 2.2.0 B5, it also includes the name of the enclosing function.  The assertion has the form
+
+   Assertion failed: file :hd:foo.cc, line 47, function fn; assertion: bar==1
+
+The documentation states assert() writes to stdout.  Beginning with ORCA/C 2.1, it writes to stderr.
+
+p. 344
+
+The atexit() function actually returns zero if the function is registered successfully, and a non-zero value if there is not enough memory to satisfy the request (the reverse of what the manual says).
+
+p. 348
+
+The discussion of clock() should mention the standard macro CLOCKS_PER_SEC, which gives the number of clock ticks per second.  The CLK_TCK macro also gives the same value, but it is non-standard and should be considered deprecated.  Also, CLOCKS_PER_SEC and CLK_TCK may be either 50 or 60, depending on the system's video frequency setting; they now expand to code that will detect the setting and give the appropriate value.
+
+p. 350
+
+If a creat() call is successful, it actually returns the file ID (a non-negative integer).
+
+p. 352
+
+If a dup() call is successful, it actually returns the new file ID (a non-negative integer).
+
+p. 353
+
+All error numbers used by errno are defined in <errno.h>, not <math.h>.
+
+The discussion of _exit() should note that the _exit() function is an extension to ANSI C.
+
+p. 354
+
+The discussion of abort() should note that it will call raise(SIGABRT) before exiting.  Accordingly, if a SIGABRT handler was previously registered via a call to signal(), it will be executed.
+
+p. 355
+
+If an fcntl() call using F_DUPFD is successful, it actually returns the new file ID (a non-negative integer).
+
+p. 356
+
+fgetpos() and fsetpos() actually set errno to EIO if there is an error.
+
+p. 357
+
+If fgets() encounters a read error, it will return a null pointer, but the buffer s may have been modified; its contents are indeterminate.
+
+p. 359
+
+The fprintf() family of functions has been updated to support several new features specified by C99.  Also, the snprintf() and vsnprintf() functions have been added.  See "Library Updates," below.
+
+p. 367
+
+The fscanf() family of functions has been updated to support several new features specified by C99.  Also, the vscanf() family of functions have been added.  See "Library Updates," below.
+
+p. 375
+
+The discussion of isascii() should note that isascii() is an extension to ANSI C.
+
+p. 376
+
+The discussions of iscsym() and iscsymf() should note that these functions are extensions to ANSI C.
+
+p. 377
+
+The discussion of isodigit() should note that isodigit() is an extension to ANSI C.
+
+p. 381
+
+If an lseek() call is successful, it actually returns the new file pointer value (in bytes from the start of the file).
+
+p. 385
+
+If an open() call is successful, it actually returns the file ID (a non-negative integer).
+
+p. 396
+
+The discussion of strpos() and strrpos() should note that the these functions are an extension to ANSI C.
+
+p. 398
+
+The discussion of strrpbrk() should note that the strrpbrk() function is an extension to ANSI C.
+
+p. 404
+
+The discussions of toascii(), toint(), and _tolower should note that they are extensions to ANSI C.
+
+p. 405
+
+The discussion of _toupper should note that _toupper is an extension to ANSI C.
+
+ORCA/C's implementation of ungetc() actually uses a two-character putback buffer for each stream, so ungetc() can be successfully called two times in a row.
+
+p. 406
+
+va_end is now a macro, not a function.  Also, the va_arg, va_end, and va_start macros will now work even if stack repair code is enabled.
+
+p. 409
+
+Several new error messages may now be produced.  Some of these relate to malformed or otherwise illegal uses of new language features described below.  There are also several new lint checks that may optionally be enabled, as described below.  In addition, some violations of C language rules that were previously ignored will now be reported as errors.
+
+p. 410
+
+"A character constant must contain exactly one character" is no longer reported as an error.  As discussed below under "Multi-Character Character Constants," character constants may contain multiple characters.  Character constants with zero characters give the error "invalid character constant."
+
+p. 414
+
+"Extern variables cannot be initialized" is no longer reported as an error.  Such declarations are actually legal, and are allowed as of ORCA/C 2.1.0.
+
+p. 419
+
+"The & operator cannot be applied to arrays" is not reported as an error.  Such operations are actually legal, giving a pointer to the array.
+
+p. 422
+
+"Unions cannot have bit fields" is no longer reported as an error.  Bit fields in unions are now allowed, consistent with the C standards.
+
+p. 444,445
+
+The control codes to turn the cursor on and off are no longer used in the .CONSOLE driver, which is what the current version of ORCA/C uses for all text output.  In the .CONSOLE driver, the cursor is always off unless it is waiting for a character.
+
+-- Compiler changes introduced in C 2.2.0 -----------------------------------
+
+New Language Features
+---------------------
+
+ORCA/C 2.2.0 adds support for several new C language features.  Most are features that were added in the C99 or C11 language standards.
+
+1.  (C99 and C11) ORCA/C now recognizes the new keywords added in C99 and C11.  These are:
+
+   _Alignas
+   _Alignof
+   _Atomic
+   _Bool
+   _Complex
+   _Generic
+   _Imaginary
+   _Noreturn
+   _Static_assert
+   _Thread_local
+   restrict
+   inline (already treated as a keyword by ORCA/C)
+
+Of these, _Atomic, _Complex, and _Imaginary are recognized as keywords, but the corresponding language features are not supported, so any attempt to use them will produce an error message.  The other new keywords are supported, as described below.
+
+2.  (C99) Statements and declarations may now be mixed within a block; declarations are no longer required to come before statements.  The first clause of a for loop statement may also be a declaration (with auto or register storage class only).  Variables may only be referred to by name in code syntactically after their declaration, but their lifetime continues as long as control remains in the enclosing block scope, even if it returns to a point before the declaration.  Initializers for variables with automatic storage duration are evaluated whenever execution reaches the point where they appear in the code.
+
+In addition, the scope rules are changed so that each while, do, for, if, or switch statement introduces a new block scope corresponding to the statement, separate from the enclosing scope and ending at the end of the statement.  Each substatement of these statements also introduces its own new block scope corresponding to that substatement, separate from the enclosing scope associated with the while, do, for, if, or switch statement itself.  These rules ensure that a variable declared in the first clause of a for loop is local to that loop, but they can also affect other code by restricting the scope where an identifier is visible.  In certain unusual cases, this can change the semantics of a program that was valid under C89, potentially producing a compile error or causing unexpected behavior when it executes.
+
+These new rules for declaration placement and scopes are enabled by default, but they can be controlled by a new flag bit in the #pragma ignore directive.  Setting bit 4 (a value of 16) enables these new C99 features; clearing it disables them and returns to the older C89 rules.
+
+3.  (C99) ORCA/C now supports flexible array members, in which the last member of a struct may be declared with an incomplete array type, e.g.
+
+   struct S {
+      int a;
+      int b[];
+   };
+
+The flexible array member does not contribute to the size of the struct as reported by sizeof, but if such a struct is allocated in the heap, extra space may be allocated for the flexible array member, and elements of it up to the limit of the size allocated may be accessed.  (This feature was actually permitted "by accident" in previous versions of ORCA/C, but it is now a supported feature, and errors related to it are now detected.)
+
+4.  (C99) The value 0 will always be returned if execution reaches the end of the main function without encountering a return statement, provided main is declared as returning a value of type int.
+
+5.  (C99) Enumeration specifiers may contain a trailing comma, e.g.
+
+   enum color {black, purple, green, white,} pencolor;
+
+(Kelvin Sherlock)
+
+6.  (C99) Functions may be declared with the "inline" function specifier, which suggests (but does not require) that calls to the function should be inlined.
+
+Functions declared as "static inline" or "extern inline" have the same semantics as if "inline" was omitted.
+
+Other function definitions with the "inline" specifier provide an inline definition of the function, which is potentially usable only within the source file containing it.  There should also be a non-inline definition of the function in another source file, and it is unspecified which definition will be used for calls to the function within the file containing the inline definition.
+
+ORCA/C currently does not inline any functions and does not generate calls to inline definitions of functions, but future versions might add such features.
+
+7.  (Draft C23) Integer constants may be written in binary, with a "0b" or "0B" prefix followed by binary digits.  The type of these constants is determined by the same rules as for octal and hexadecimal constants.
+
+(Kelvin Sherlock)
+
+8.  (Draft C23) The "#warning" preprocessor directive is now supported.  This behaves similarly to #error in that it causes any following tokens to be printed as a diagnostic message, but (unlike #error) it does not abort compilation.
+
+9.  (C11) The _Alignof operator and _Alignas declaration specifier are now supported.  An expression "_Alignof(type-name)" gives the alignment of the specified type.  In a declaration, an alignment specifier "_Alignas(type-name)" or "_Alignas(constant-expression)" specifies the required alignment for the object being declared.  In ORCA/C, the alignment of all object types is 1, and that is the only alignment value supported.  (As such, these features are not particularly useful in ORCA/C-specific code, but they may be used to control alignment in portable programs.)
+
+10. (C11) The _Noreturn function specifier may be used in function declarations.  It indicates that the function does not return to its caller.  This serves as documentation to the user.  It could potentially also enable optimizations, although ORCA/C does not currently perform any optimizations based on it.
+
+11. (C11) Static assertions are now supported.  These have the form
+
+   _Static_assert ( constant-expression , string-literal ) ;
+
+and may appear wherever a declaration can (including inside and outside functions).  They serve as assertions evaluated at compilation time, which will fail and abort compilation if the constant expression evaluates to 0.  The string literal can contain an error message describing the problem.
+
+12. (C99) The "restrict" type qualifier is now supported.  This qualifier on object pointer types requires that all accesses to the pointed-to object must directly or indirectly use the value of that particular pointer.  For example, if a function takes two pointer parameters that are both restrict-qualified, this asserts that during any execution of the function, if an object is accessed through one of those pointer parameters, it is not also accessed through the other; the values passed at call sites must be such that this will be the case.  Using "restrict" could potentially enable greater optimization possibilities, but ORCA/C does not currently perform any optimizations based on it.
+
+13. (C95) Digraphs are now supported. These are alternative tokens that are equivalent to certain tokens that may be difficult to type or display in some situations (e.g. on the IIgs text screen with certain language settings).  Specifically, the following six tokens are now supported:
+
+   <: :> <% %> %: %:%:
+
+These behave the same as the existing tokens [, ], {, }, #, and ## (respectively), apart from their spelling.
+
+14. (C99) Universal character names are now supported in string literals, character constants, and identifiers.  These are sequences of the form \unnnn or \Unnnnnnnn, where the nnnn or nnnnnnnn is a hexadecimal representation of a Unicode code point.  These may be used to represent characters in a way that is independent of the source and execution character sets.  In an unprefixed string literal or character constant, only characters that can be mapped to the execution character set may be represented.  There are also certain other restrictions on what characters can be used; see the C standards for details.  In ORCA/C the source and execution character sets are both considered to be the character set used in the IIGS desktop environment, known as Mac OS Roman.
+
+15. (C99) Function-like macros may take a variable number of arguments.  To specify such a macro, include "..." as the last (or only) member of its parameter list.  When the macro is used, one or more corresponding arguments may be provided.  To access these arguments within the macro, use the special identifier __VA_ARGS__.  This functions similarly to a normal macro parameter, but its expansion includes the tokens from all the corresponding arguments that were provided, including any commas separating arguments.
+
+16. (C99) Any or all of the arguments to a function-like macro can now be empty.  (This happened to work previously in some cases but not others.)
+
+17. (C99, C11, and C17) Several new predefined macros have been added:
+
+__STDC_HOSTED__ normally expands to the integer constant 1, indicating that ORCA/C is a hosted implementation of the C language (where the full standard library is available and the program starts by executing the main function).  However, it will expand to 0 if one of the pragmas for special types of programs with different entry points has been used.
+
+__STDC_NO_ATOMICS__, __STDC_NO_COMPLEX__, __STDC_NO_THREADS__, and __STDC_NO_VLA__ all expand to the integer constant 1.  These indicate that ORCA/C does not implement certain C language features that are optional under the C11 and later standards (atomics, complex numbers, threads, and variable length arrays).
+
+__STDC_UTF_16__ and __STDC_UTF_32__ expand to the integer constant 1.  These indicate that the char16_t and char32_t types (discussed below) use UTF-16 and UTF-32 encodings.
+
+__STDC_VERSION__ expands to a constant indicating the C language standard in use, unless the C89 or C90 standards (which do not define this macro) are selected.  By default, it expands to 201710L, corresponding to the C17 standard.
+
+18. (C99) The _Bool type is now supported.  This is a boolean type that can hold the values 0 or 1.  When a value of another type is converted to _Bool, the result is 0 if the value compares equal to 0, or 1 otherwise.
+
+19. (C99) The types "long long" and "unsigned long long" are now supported.  In ORCA/C, these are 64-bit integer types, capable of representing a larger range of values than the existing smaller integer types.  All operations that can be done on other integer types can now be done on these types as well.
+
+Several new library functions in <stdlib.h> support operations on these types, and the fprintf() and fscanf() function families have been updated to support them.  Also, several new functions defined in <inttypes.h> operate on intmax_t and uintmax_t, which are now typedefs for long long and unsigned long long.  For details on these new and updated functions, see "Library Updates," below.
+
+The predefined macro __ORCAC_HAS_LONG_LONG__ is now defined, and expands to the integer constant 1.  This indicates that these long long types are supported.
+
+20. (C99) The predefined identifier __func__ is now supported, providing a way for code within a function to get the function's name.  Specifically, it behaves as if the following declaration appeared at the beginning of each function body (where function-name is the name of the function):
+
+   static const char __func__[] = "function-name";
+
+21. (C99) ORCA/C now supports the following standard pragmas:
+
+   #pragma STDC FENV_ACCESS [ ON | OFF | DEFAULT ]
+   #pragma STDC FP_CONTRACT [ ON | OFF | DEFAULT ]
+   #pragma STDC CX_LIMITED_RANGE [ ON | OFF | DEFAULT ]
+
+These pragmas can be used either outside any external declarations or just after the opening brace of a compound statement.  In the former case, they remain in effect until the end of the translation unit, or until another instance of the same pragma is encountered.  In the latter case, they remain in effect until the end of the compound statement, and then revert to their previous setting.
+
+The FENV_ACCESS pragma should be set to ON if the code may access the floating-point environment (via functions in <fenv.h>) or run under non-default floating-point control modes.  Under ORCA/C, it is not strictly necessary to use this pragma when accessing the floating-point environment, but if it is not used then certain operations may not affect or be affected by the floating-point environment in the expected way.  Under ORCA/C, the default setting for FENV_ACCESS is OFF.  Note that setting it to ON will disable some optimizations.
+
+The FP_CONTRACT pragma controls whether the compiler may "contract" certain floating-point expressions, evaluating multiple operations together and rounding only at the end.  ORCA/C never does this.  Accordingly, the FP_CONTRACT pragma is accepted, but its setting has no effect.
+
+The CX_LIMITED_RANGE pragma relates to complex arithmetic, which ORCA/C does not support, so it is also accepted but has no effect.
+
+22. (C11) ORCA/C now supports generic selection expressions, which can select which of several expressions they should evaluate to based on the type of one expression.  They have the following syntax:
+
+   generic-selection:
+      _Generic '(' assignment-expression ',' generic-assoc-list ')'
+   generic-assoc-list:
+      generic-association |
+      generic-assoc-list ',' generic-association
+   generic-association:
+      type-name ':' assignment-expression |
+      default ':' assignment-expression
+
+The generic-assoc-list provides a list of associations of types with expressions (and optionally a default association).  If the type of the initial expression is compatible with one of those in the generic-assoc-list, the generic selection expression evaluates to the expression specified in that association.  If there is no compatible type but there is a default association, the expression specified there is used.  It is an error if there is no suitable association.  Only the expression from the selected association is evaluated and becomes the value of the overall generic selection expression; the initial expression and all those in other associations are not evaluated.
+
+As an example, this expression evaluates to 2 because the type of 1+2 is int:
+
+   _Generic(1+2, double: 1.0, int: 2, char*: 3, default: 4)
+
+Generic selection expressions are primarily useful within macros, which can give different behavior based on the types of the arguments passed to them.
+
+23. (C11) Character constants and string literals may now have prefixes indicating they should use Unicode encodings.  The prefixes u8, u, and U indicate UTF-8, UTF-16, and UTF-32 encodings, respectively.  The u8 prefix may only be used on string literals.  The U and u prefixes may be used on string literals or character constants.  U- and u-prefixed character constants have the types char32_t and char16_t (as defined in <uchar.h>); U- and u-prefixed string literals are treated as arrays of those types.  For example, the string literal U"abc" designates an array with four members of type char32_t: the three letters encoded in UTF-32, plus a null terminator.
+
+24. (C99) Floating-point constants may now be expressed in a hexadecimal format.  These consist of a leading 0X or 0x, followed by a sequence of hexadecimal digits optionally containing a period, then P or p, then an exponent expressed as a sequence of decimal digits optionally preceded by + or -.  These designate the number given by the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent.  For example, the constant 0xF.8p-1 is equivalent to 7.75.
+
+Note that the fprintf family of functions also support output in this hexadecimal floating-point format using the 'A' and 'a' conversion specifiers, described below.  The strtod, strtold, and strtof functions can also accept numbers in this format as input.
+
+25. (C99) When a function parameter is declared with an array type, type qualifiers and/or the keyword "static" may be included within the angle brackets that designate the array type.  For example, a function may be defined as:
+
+   void f(long x[const static 20]) { ... }
+
+The type of an 'array' parameter is adjusted to a pointer type, and the type qualifiers are applied to that pointer type (so the x parameter in the example has the type "long * const").  The "static" keyword indicates that when the function is called, the corresponding argument must give access to an array of at least the specified length; if it does not, the behavior is undefined.
+
+26. (C99) ORCA/C now supports compound literals.  These are expressions of the following form:
+
+   ( type-name ) { initializer-list }
+
+Such an expression behaves similarly to a declaration in that it creates an object of the specified type, initialized with the brace-enclosed initializer list.  That object is unnamed, but the compound literal expression acts as a reference to it.  Compound literals within a function have automatic storage duration, while ones outside of any function have static storage duration.  Note that a compound literal is not a cast, even though the syntax is similar.
+
+Compound literals can be used in code similarly to the identifier for a named variable.  For example, a compound literal can be used to designate a structure to be passed to a function, either directly or via a pointer, e.g.:
+
+   PaintRect(&(Rect){10,20,100,200});
+
+Compound literals can also be used in initializers, as in the following declaration, which creates an unnamed array and initializes p to point to the first element of it:
+
+   int *p = (int[]){1,2,3};
+
+(This declaration could be used inside or outside of a function, with the compound literal having automatic or static storage duration, respectively.)
+
+27. (C11) ORCA/C now supports anonymous structures and unions.  These are unnamed members of a structure or union that themselves have structure or union type.  Their structure or union type must be declared directly within the declaration of the containing structure or union type (not using a typedef) and must not have a tag.  Anonymous structures or unions may be nested.
+
+Here is an example of a structure containing an anonymous union that in turn contains an anonymous structure:
+
+   struct S {
+      int a;
+      union {
+         struct {
+            long b;
+            char c;
+         };
+         double d;
+      };
+   } s;
+
+Members of anonymous structures or unions (including nested ones) may be accessed as if they are members of the containing structure or union.  For example, given the declaration above, the expressions s.a, s.b, s.c, and s.d may be used to access the various fields.  All the fields must have distinct names.
+
+28. (C11) ORCA/C can now accept the _Thread_local storage-class specifier, which indicates that a variable has thread-local storage.  On platforms that support multithreading, there would be a separate copy of the variable for each running thread in the program.  ORCA/C does not support multithreading, so the whole execution of an ORCA/C program consists of a single thread, and therefore there is only one copy of each thread-local variable.  Accordingly, the _Thread_local storage-class specifier is essentially ignored by ORCA/C, but it may be used in portable code designed to support multithreading on other systems.
+
+The _Thread_local storage-class specifier may be used together with static or extern.  This has the normal effect of the other storage-class specifier while also indicating that the variable has thread-local storage.  For declarations within a function, _Thread_local must be used together with static or extern.
+
+29. (C99) ORCA/C now supports the _Pragma preprocessing operator.  A token sequence of the form
+
+   _Pragma ( string-literal )
+
+is processed as if the contents of the string literal were the operands of a #pragma preprocessing directive.  For example,
+
+   _Pragma("optimize 1")
+
+is equivalent to the directive
+
+   #pragma optimize 1
+
+The _Pragma("...") token sequence may be formed using preprocessor macros.
+
+30. (C99) ORCA/C now supports designated initializers, which let you explicitly specify the array element or struct/union member that should be initialized by an expression within a braced initializer list.  They have the form:
+
+   designator-list = expression
+
+Designators may be of the form
+
+   [ constant-expression ]
+
+to designate an element of an array, or
+
+   . identifier
+
+to designate a specific field of a structure or union.  A designator list may consist of one or more designators; successive designators correspond to successive levels of a nested data structure.
+
+Designated and non-designated initializers may be mixed within an initializer list.  If a non-designated initializer follows a designated one, it applies to the next subobject after the designated one, and initialization continues forward in the usual order until it is complete or another designator is encountered.  If a braced initializer list does not include initializers for all the elements of an array or all the named members of a structure, the other ones are initialized to 0 (the same as when not using designated initializers).
+
+Designated initializers make it possible to initialize subobjects in any order, and to initialize later subobjects without having to write an explicit initializer for earlier ones.  Designated initializers also allow union members other than the first one to be initialized.  It is also possible to initialize the same subobject multiple times, but in that case the initializer appearing latest in the initializer list will override any earlier ones.
+
+As an example, the declaration
+
+   struct {
+      int i;
+      union {
+         long x;
+         char y;
+      } u;
+      short a[3];
+   } s = {20, .a[0] = 9, .u.y = 'F', .i = 50, .a = {[1]=1,2}, .a[1] = 10};
+
+sets s.i to 50, s.u.y to 'F', s.a[0] to 0, s.a[1] to 10, and s.a[2] to 2.
+
+
+Multi-Character Character Constants
+-----------------------------------
+
+Unprefixed character constants containing multiple characters are now supported, as required by the C standards.  The value of such constants is implementation-defined.  In ORCA/C, the value is initially set to the ordinal value of the first character, as in a single-character constant.  For each subsequent character encountered, the existing value is shifted left by eight bit positions, and the ordinal value of the new character is placed in the lower eight bits.  (This is similar to the behavior of GCC and Clang.)
+
+A new bit is also introduced in #pragma ignore that affects the interpretation of such constants.  Setting #pragma ignore bit 1 (a value of 2) causes character constants with three or more characters to be treated as having type long, rather than type int.  This non-standard feature effectively allows a character constant to contain the values of up to four characters, rather than only two.
+
+Note that MPW IIGS ORCA/C also supports multi-character constants and #pragma ignore bit 1, but it calculates the value of such constants differently.  (In general, the bytes of a multi-character constant will be in the opposite order.)  Also, MPW IIGS ORCA/C treats #pragma ignore bit 1 as being set by default, but in this version it is unset by default, providing standard-compliant semantics.
+
+(Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
+
+
+Evaluation of Floating-Point Expressions and Constants
+------------------------------------------------------
+
+There have been some changes to the way ORCA/C evaluates floating-point expressions and constants.  ORCA/C has always used the SANE extended format (which is the format of long double) to evaluate floating-point expressions at run time, even if their semantic type in the standard C language was float or double.  However, it previously used the double format to evaluate constant expressions that could be computed at compile time.  Now, it uses the extended format for those computations too, producing consistent results for a computation regardless of whether it is done at compile time or run time.
+
+ORCA/C also historically used the double format internally to hold the values of all floating-point constants, even those with an 'L' suffix indicating they were of type long double.  It now uses the extended format for all floating-point constants.  This allows long double constants to be represented with the full range and precision that they should have.  It also provides extra range and precision for constants of type float or double, beyond what would be provided if they were simply represented using their semantic type.
+
+Using the extended format provides greater precision and range than the float or double formats, and can lead to more accurate results.  However, using it for expressions or constants with shorter semantic types can cause behavior that may be surprising.  For example, a variable of type double that has had a constant of type double assigned to it may not compare equal to that same constant.  This behavior is allowed under the C standards (the new behavior is designed to be consistent with a FLT_EVAL_METHOD value of 2, as defined in the C99 and later standards), but it is different from that of some C compilers on other systems.
+
+If you want to get a value strictly in a certain type with no extra range or precision, you can store it in a variable of that type or explicitly cast it to that type.  (In older versions of ORCA/C, floating-point casts did not remove extra range or precision, but now they do, as required by the C standards.)
+
+
+Floating-Point Optimizations
+----------------------------
+
+ORCA/C can perform certain optimizations on floating-point computations based on properties that are true for real numbers but are not always true in the IEEE floating-point arithmetic system.  In particular, these optimizations can occasionally cause behavior that differs from the IEEE standard in regard to infinities, NaNs, or the sign of zero.  Historically, these optimizations were performed mainly as part of intermediate code peephole optimization and in some cases also as part of common subexpression elimination.
+
+A new #pragma optimize bit has now been introduced to control this behavior.  Setting bit 7 (a value of 128) allows floating-point math optimizations that may violate the IEEE standard.  It currently only has an effect if #pragma optimize bit 0 or bit 4 is also set.  If bit 7 is not set, these floating-point optimizations will not be performed.  This allows most aspects of intermediate code peephole optimization and common subexpression elimination to be used while preserving IEEE floating-point behavior.
+
+
+Changes to #pragma float
+------------------------
+
+The second numeric parameter to #pragma float is now optional.  If it is provided, it specifies the slot number of the FPE card.  If it is not provided or is not in the range 1-7, the FPE card is auto-detected instead.  With these changes, it is generally no longer necessary to call setfpeslot() in programs that use the FPE card.
+
+If you use #pragma float in any of the special types of programs that can be created using other pragmas, the slot parameter will be ignored and the FPE will not be auto-detected.  In those cases, the program will still need to call setfpeslot() to set the slot number before doing any floating-point operations.
+
+
+Additions to #pragma ignore
+---------------------------
+
+Several additional #pragma ignore bits are now supported.
+
+Bit 1 (a value of 2) affects the interpretation of multi-character character constants.  It is described under "Multi-Character Character Constants," above.
+
+Bit 2 (a value of 4) controls whether spurious tokens are allowed after an #endif directive.  If it is set, the tokens are treated as a comment, and have no effect on the program.  If this bit is clear, tokens after #endif are treated as an error.  (This feature was introduced in MPW IIgs ORCA/C and is compatible with it, but in this version the bit is unset by default, providing standard-compliant semantics.)
+
+Bit 4 (a value of 16) controls whether ORCA/C follows C99-style rules for declaration placement and block scopes.  See "New Language Features," above.
+
+Bit 5 (a value of 32) controls whether type compatibility checks should strictly follow the C standards, or whether looser rules should be used in certain cases.  If this bit is set, the looser rules will be followed, matching ORCA/C's historical behavior.  Bit 5 is currently set by default, but new code should not rely on this.  There are five situations where bit 5 currently has an effect:
+
+First, setting bit 5 causes pointer assignments that discard type qualifiers to be allowed.  For example, this affects an assignment from an expression of type "const int *" to a variable of type "int *", because it discards the "const" qualifier from the type pointed to.  These assignments are prohibited by the C standards, but ORCA/C historically allowed them.  If bit 5 is set it will still allow them, but if bit 5 is clear it will give an error.
+
+Second, setting bit 5 causes type compatibility checks involving function pointers to ignore the prototyped parameter types.  If bit 5 is clear, the prototyped parameter types (if available) must be compatible.
+
+Third, setting bit 5 causes certain comparisons involving pointers, as well as certain uses of the ? : operator with pointer operands, to be permitted even though they violate constraints specified in the C standards.  If bit 5 is clear, the rules in the standards will be followed strictly.
+
+Fourth, setting bit 5 causes ORCA/C to treat basic types with the same representation as mutually compatible.  This affects the following pairs of types: short and int, unsigned short and unsigned int, char and unsigned char.  Historically, ORCA/C essentially treated each of these pairs as being the same type, so it never reported type conflicts between them.  If bit 5 is set, it will continue to do so.  If bit 5 is clear, it will treat all of the above types as distinct and mutually incompatible, as specified by the C standards.
+
+Fifth, setting bit 5 allows enum types to be redefined within a single scope (with different constants) or used before their constants are defined.  If bit 5 is clear, these things are prohibited, as specified by the C standards.
+
+Note that _Generic expressions always use the stricter type compatibility rules for determining which association to use, regardless of the setting of bit 5.
+
+(Mike Westerfield, Kelvin Sherlock, Stephen Heumann)
+
+
+Additions to #pragma debug
+--------------------------
+
+Two new debugging features can now be enabled with #pragma debug:
+
+* Checking for illegal use of null pointers:
+
+Setting #pragma debug bit 5 (a value of 32) turns on checking for illegal use of null pointers.  If this bit is set, ORCA/C will detect when your program would dereference a null pointer or when it would do pointer arithmetic on a null pointer.  A "Subrange exceeded" error will be reported in these cases.
+
+* Inline function names:
+
+Setting #pragma debug bit 15 (a value of 0x8000) causes ORCA/C to record the names of functions using the inline name format documented in Apple IIGS Technical Note #103.  This allows assembly-level debugging tools such as GSBug and Nifty List to display the names of functions in an ORCA/C program while debugging it.  Note that inline function names are unrelated to the other types of debug code that ORCA/C can generate.  In particular, inline function names are not needed for source-level debugging using the desktop development environment or other compatible source-level debuggers, although it is possible to enable both types of debugging information at the same time.
+
+(Stephen Heumann, Kelvin Sherlock)
+
+
+Enhancements to #pragma lint
+----------------------------
+
+The #pragma lint directive has several new features.
+
+First, the directive can now optionally be configured to perform its checks but treat any messages produced as warnings rather than errors, so that they do not cause compilation to fail.  To make it work this way, add ";0" after the integer value indicating the checks to perform.  For example, you can use
+
+   #pragma lint -1;0
+
+to perform all lint checks but treat them as warnings rather than errors.
+
+In addition, several new kinds of lint checks can now be performed.  They are controlled by new bits in the #pragma lint operand, as described below.
+
+* Format checking:
+
+There is a new #pragma lint bit to enable checking of the format strings passed to the fprintf() and fscanf() families of functions.  If #pragma lint bit 4 (a value of 16) is set, the compiler will check if the format strings passed to those functions are valid, and if the number and types of arguments passed to them match what the format strings call for.
+
+If these lint checks detect any errors, they will produce the error message "lint: invalid format string or arguments," followed by more detailed information about the problem(s) found.
+
+(Kelvin Sherlock)
+
+* Checking for undefined behavior in computations:
+
+There is a new #pragma lint bit to enable checking for several situations in arithmetic computations or bit manipulation that give rise to undefined behavior according to the C standards.  These are generally indicative of bugs, or (in code ported from other platforms) of assumptions that types have larger ranges than they do in ORCA/C.
+
+These checks are enabled if #pragma lint bit 5 (a value of 32) is set.  They currently check for the following conditions:
+
+- Integer overflow from arithmetic in constant expressions of type int
+- Integer division by the constant zero (or remainder from such division)
+- Invalid constant shift counts (negative, or >= the width of the type)
+
+* Checking for syntax disallowed by C99:
+
+ORCA/C can now detect several elements of C syntax that were allowed in C89 but are not allowed in C99 or later.  These checks are performed if #pragma lint bit 6 (a value of 64) is set.  This currently checks for the following situations:
+
+- Calls to undeclared functions (also detected by #pragma lint bit 0)
+- K&R-style function definitions without explicit declarations for parameters
+- return statements with no value in functions that have non-void return types
+  (also detected by #pragma lint bit 7, described below)
+- Declarations or type names with no type specifiers (using 'implicit int')
+  (This includes but is broader than what is checked by #pragma lint bit 1.)
+- Object-like macro definitions with no whitespace after the macro name
+
+* Checking for functions not returning a value or returning inappropriately:
+
+If #pragma lint bit 7 (a value of 128) is set, ORCA/C detects some situations where a function with a non-void return type may return an unpredictable value, either by executing a return statement with no value or by executing to the end of the function with no return statement.  (The former case is also detected by #pragma lint bit 6.)  It also detects some situations where a _Noreturn function could return.  Note that these checks only detect some cases of these problems, not all of them.  Also, they may report a potential problem in some situations where the code at the end of a function is not actually reachable.
+
+* Checking for unused variables:
+
+If #pragma lint bit 8 (a value of 256) is set, ORCA/C checks for variables that are declared but never subsequently used.  This covers local variables in functions, as well as file-scope static variables.
+
+* Checking for implicit conversions that change the value of a constant:
+
+If #pragma lint bit 9 (a value of 512) is set, ORCA/C checks for certain situations where an implicit conversion will change the value of a constant.  Implicit conversions occur in assignments, where the value of the expression is converted to the type of the location being assigned to.  They also occur in some related situations like initializers and return statements.  This lint check identifies cases where a constant is used in such a situation, but its value is outside the range of the type it is converted to, and therefore the value will be changed by the implicit conversion.  This may be indicative of a programming error, or of code written with the assumption that types have larger ranges than they do in ORCA/C.  This check currently only identifies cases where out-of-range integer values are converted to an 8-bit or 16-bit integer type.
+
+
+#pragma extensions
+------------------
+
+ORCA/C supports certain extensions that are not part of the standard C language.  A new pragma has been introduced to control whether some of these extensions are enabled.  The format is:
+
+   #pragma extensions parm
+
+The parameter must be an integer constant, which is treated as a set of flags.  Currently, two flag bits are defined:
+
+If bit 0 (a value of 1) is set, then asm, comp, extended, pascal, and segment are treated as reserved words (keywords), with the meanings specified in the ORCA/C manual.  If bit 0 is clear, then those tokens are instead treated as identifiers, as required by the C standards.  Bit 0 is set by default.  Note that toolbox headers use these keywords, so bit 0 must be set when they are included.
+
+If bit 1 (a value of 2) is set, then function parameters declared with the types float, double, or comp are treated as actually having the type long double (aka extended) rather than their declared type.  This results in faster code and also allows the parameters to have the greater precision and range of the extended type.  However, this change of types may cause some standard-compliant code not to work properly, particularly if it takes the address of such a parameter and tries to access it through the resulting pointer.  If bit 1 is clear, these parameters are treated as having their declared type, restricting their precision and range and causing pointers to them to behave in the standard way.  Bit 1 is set by default, matching ORCA/C's historical behavior.
+
+
+C Standard Selection
+--------------------
+
+Several editions of the C language standards have been published by ANSI and ISO.  ORCA/C now provides a command-line option that allows you to select which C standard ORCA/C should follow.  This is specified by using a new option, -s, within the cc= portion of the command line.  This is immediately followed by the name of a language mode, as given in the below chart:
+
+  C Standard                    Compatibility Mode      Strict Conformance Mode
+  ----------                    ------------------      -----------------------
+  ANSI X3.159-1989              c89compat               (not available)
+  ISO/IEC 9899:1990             c90compat               (not available)
+  ISO/IEC 9899:1990/Amd 1:1995  c94compat or c95compat  (not available)
+  ISO/IEC 9899:1999             c99compat               (not available)
+  ISO/IEC 9899:2011             c11compat               c11
+  ISO/IEC 9899:2018             c17compat or c18compat  c17 or c18
+
+The strict conformance modes cause ORCA/C to follow the specified standard as closely as possible.  The compatibility modes are generally compatible with code that follows the corresponding standard, but they also include ORCA/C extensions and features from earlier and later standards (excluding those likely to cause compatibility problems).
+
+The default language mode is currently c17compat.  ORCA/C now supports nearly all the features required by C17, apart from wide character and string support and a few library features related to floating-point numbers.
+
+If a non-default language mode is selected, it will affect the initial settings of various pragma flags, as described below.  However, these can still be changed by subsequent #pragma directives.
+
+If a language standard prior to C99 is selected, then #pragma ignore bits 3 and 4 are cleared.  This disables support for // comments, requires declarations to come before statements, and uses C89-compatible scope rules.
+
+If a strict conformance mode is selected, then all #pragma extensions bits are cleared, #pragma ignore bit 5 is cleared, #pragma lint bit 6 is set, and #pragma optimize bit 6 is cleared even if +O is specified on the command line.  This disables ORCA/C extensions, enables strict type checks, enables lint checks for syntax disallowed in C99 and later, and ensures standard-compliant behavior for calls to functions with variable arguments.  In addition, the macro __KeepNamespacePure__ is defined; this causes headers to omit non-standard function and macro definitions.
+
+The macro __STDC_VERSION__ is defined to the value specified by the selected language standard, if any.  (In C89 or C90 modes, it is not defined.)
+
+
+File Names in Error Messages
+----------------------------
+
+When ORCA/C prints out error messages, it can now optionally include the name of the file containing the error.  This can help you to understand whether an error is in the main source file or an include file.  To enable this option, use the new +F flag to the ASML, ASMLG, ASSEMBLE, CMPL, CMPLG, COMPILE, or RUN commands.
+
+
+Custom Pre-Include File
+-----------------------
+
+ORCA/C supports a new command-line option to specify a custom file that will be included before the main source file is processed.  This is specified by using a new option, -p, within the cc= portion of the command line.  The -p option is immediately followed by the name of the file to include, given as a quoted string.  For example, using the command line option
+
+   cc=(-p"myconfig.h")
+
+is similar to starting the source file with
+
+   #include "myconfig.h"
+
+However, the file name specified on the command line is used as-is rather than being subject to the usual header search rules.
+
+Only one pre-include file may be specified.  If the -p option is used, then the default .h file (described below) will not be included.  If you still wish to include the default .h file, you can explicitly write #include <Defaults.h> within your custom pre-include file or your source file.
+
+Like the default .h file, the custom pre-include file is primarily intended to contain pragmas or other preprocessor directives but may contain any C source code.  The difference is that the custom pre-include file can be customized for a specific source file or project.
+
+
+Locales
+-------
+
+Standard C defines the concept of locales, which can be used to localize certain aspects of the system's behavior to suit the conventions of different languages and cultures.  The <locale.h> header and its functions provide the main implementation of locales, but various other functions in the standard library may behave in a way that varies by locale.  The C standards define the "C" locale, which specifies a minimal environment for the execution of a C program and is the locale used if no other locale has been explicitly selected.  Which (if any) other locales are supported is implementation-defined.
+
+Historically, ORCA/C did not support <locale.h> or certain other locale-related functions.  A minimalistic implementation of these functions has now been added.  However, ORCA/C currently only supports the "C" locale.  As such, any attempt to change to a different locale will fail, and the behavior of the library does not actually vary based on locale, since only one locale is supported.  This minimalistic locale implementation is not particularly useful, but it is intended to be conformant with the C standards, and it allows portable code that uses locale-related functions to compile and run under ORCA/C.  Future versions of ORCA/C might possibly have more extensive locale support.
+
+See "Library Updates" below for information on the new locale-related functions.
+
+
+Multibyte Characters
+--------------------
+
+Standard C defines a multibyte character as a sequence of one or more bytes representing a character, and certain library functions are specified as handling multibyte characters.  This definition is designed to allow for variable-length character encodings in which certain characters can be encoded with one byte but other extended characters need multiple bytes to encode.  However, ORCA/C does not use such an encoding.  Accordingly, under ORCA/C, "multibyte" characters will always just consist of a single byte.
+
+Standard C also allows for state-dependent encodings, where there can be shift sequences that are considered to change the shift state and thereby alter the interpretation of subsequent characters.  ORCA/C does not use such an encoding.
+
+The macros MB_LEN_MAX (in <limits.h>) and MB_CUR_MAX (in <stdlib.h>) give the maximum possible length for a multibyte character in any locale and in the current locale, respectively.  IN ORCA/C, these are both 1.
+
+
+New Headers
+-----------
+
+ORCA/C now includes several new headers specified by recent C standards.
+
+1.  (C95) The <iso646.h> header contains macros giving alternative spellings for certain operators.  It may be useful in contexts where the characters in those operators cannot easily be typed or displayed.
+
+2.  (C99) The <stdint.h> header defines various integer types with certain sizes and properties, as well as macros related to integer types.
+
+3.  (C99) The <inttypes.h> header defines macros that can be used for format specifiers when values of the types defined in <stdint.h> are used with the fprintf or fscanf family of functions.  It also provides several functions operating on the types intmax_t or uintmax_t.
+
+4.  (C11) The <stdalign.h> header defines the macros "alignas" for _Alignas and "alignof" for _Alignof.
+
+5.  (C11) The <stdnoreturn.h> header defines the macro "noreturn" for _Noreturn.
+
+6.  (C99) The <stdbool.h> header defines the macro "bool" for _Bool, and the macros "true" and "false" for the boolean values 1 and 0.
+
+7.  (C99) The <fenv.h> header provides functions to access the floating-point environment, plus types and macros used by those functions and the macro FE_DFL_ENV representing the default floating-point environment.
+
+8.  (C89 and C99) The <locale.h> header provides functions and definitions related to locale support.
+
+9.  (C11) The <uchar.h> header defines the types char16_t and char32_t suitable for holding UTF-16 and UTF-32 code units, and provides functions for handling Unicode characters.
+
+10. (C99) The <tgmath.h> header contains type-generic macros that can invoke the float, double, or long double versions of certain math functions, as determined based on the types of the arguments passed to them.
+
+
+Library Updates
+---------------
+
+ORCA/C now includes some new library functions and features, mostly specified by the C99 and C11 standards:
+
+1.  (C99) The isblank() function and macro have been added:
+
+#include <ctype.h>
+int isblank(int c);
+
+isblank returns non-zero if the argument is a standard blank character, and zero if it is not.  The argument must lie in the range -1 to 255, or the result is not valid.  The standard blank characters are space and horizontal tab.
+
+2.  (C99) The snprintf() and vsnprintf() functions have been added:
+
+#include <stdio.h>
+int snprintf(char * restrict s, size_t n, const char * restrict format, ...);
+
+#include <stdarg.h>
+#include <stdio.h>
+int vsnprintf(char * restrict s, size_t n, const char * restrict format,
+   va_list arg);
+
+These are equivalent to sprintf and vsprintf, except that they take an additional argument giving the maximum number of characters to be written.  If n is 0, no characters are written.  Otherwise, at most n-1 characters are written based on the format string, followed by a terminating null character.  They return the number of characters (not including the terminating null character) that would have been written if there was no size limit.
+
+3.  (C99) The vscanf(), vfscanf(), and vsscanf() functions have been added:
+
+#include <stdarg.h>
+#include <stdio.h>
+int vscanf(const char * restrict format, va_list arg);
+int vfscanf(FILE * restrict stream, const char * restrict format, va_list arg);
+int vsscanf(const char * restrict s, const char * restrict format, va_list arg);
+
+These functions are equivalent to scanf, fscanf, and sscanf, except that the variable portion of the arguments is instead supplied by arg, a variable argument list that should have been initialized by va_start.
+
+4.  (C99) The fprintf() and fscanf() families of functions have been updated to support some additional length modifiers and conversion specifiers:
+
+The length modifiers 'z', 't', 'j', 'hh', and 'll' are now allowed in the format strings for the fprintf and fscanf families of functions.  They may be used with the 'd', 'i', 'o', 'u', 'x', 'X', or 'n' conversion specifiers.  These each correspond to integer types, as follows: 'z' to size_t or the corresponding signed integer type, 't' to ptrdiff_t or the corresponding unsigned integer type, 'j' to intmax_t or uintmax_t, 'hh' to signed char or unsigned char, and 'll' to long long or unsigned long long.  The corresponding argument must be an integer of an appropriate type, or a pointer to such an integer, as appropriate for the function and conversion specifier.
+
+The conversion specifiers 'a' and 'A' are now allowed in the format strings for the fprintf family of functions.  The 'a' specifier consumes an argument of type double or long double and writes the value in a hexadecimal exponential format.  It consists of a leading sign (if negative or required by the flags used), then '0x', then a number in hexadecimal format (with one hexadecimal digit for the integer part, then a dot and fractional digits), then 'p', then a signed decimal number giving the exponent of 2.  If a precision is specified, it gives the number of digits after the dot; if not, enough digits are used to exactly represent the number.  If the precision is 0 and the '#' flag is not used, no dot is printed.  The 'A' specifier is equivalent to 'a', except that all letters are output in upper case.
+
+The conversion specifier 'F' is now allowed in the format strings for the fprintf family of functions.  It is equivalent to 'f', except that "INF" and "NAN" are guaranteed to be printed in upper case.
+
+The conversion specifiers 'F', 'a', and 'A' are also allowed in the format strings for the fscanf family of functions.  These are all equivalent to 'f' (but none of them accept numbers in the hexadecimal format described above).
+
+The ORCA/C-specific conversion specifier 'P' is now allowed in the format strings for the fprintf and fscanf families of functions.  This works exactly the same as the existing 'b' conversion specifier, printing or reading input to a string with a leading length byte (a p-string).  This new specifier was introduced because the 'b' specifier may be used for a different purpose in future C standards.  For the time being, the 'b' specifier is still available with its existing meaning, but it is considered deprecated.  Code should be migrated to use the 'P' conversion specifier instead.
+
+5.  (C99 and C11) The _Exit(), quick_exit(), and at_quick_exit() functions have been added:
+
+#include <stdlib.h>
+_Noreturn void _Exit(int status);
+_Noreturn void quick_exit(int status);
+int at_quick_exit(void (*func)(void));
+
+_Exit() exits the program without calling functions registered with atexit() and possibly without doing other clean-up operations.  In ORCA/C, it is functionally identical to _exit().
+
+quick_exit() calls any functions registered with at_quick_exit(), then exits the program in the same way as _Exit().
+
+at_quick_exit() registers a function to be called by quick_exit().  It works similarly to atexit(), except that it maintains a separate list of functions that are called only if the program exits via quick_exit().  It returns zero if the function is registered successfully, and a non-zero value if there is not enough memory to satisfy the request.
+
+6.  (C11) The aligned_alloc function has beed added:
+
+#include <stdlib.h>
+void *aligned_alloc(size_t alignment, size_t size);
+
+This is equivalent to malloc, except that it specifies an alignment for the block of memory to be allocated.  In ORCA/C, the only supported alignment value is 1 (which is the alignment of all object types).
+
+7.  (C11) If the second argument to fopen() or freopen() starts with "w", it can optionally have an "x" at the end (e.g. "wbx").  This is equivalent to the corresponding form without an "x", except that the operation will only succeed if the file does not already exist (so that it can be newly created).  If the file already exists, the operation will fail: it will leave the file alone, set errno to EEXIST, and return NULL.
+
+8.  (C99) Several functions operating on long long types have been added:
+
+#include <stdlib.h>
+typedef struct {long long quot,rem;} lldiv_t;
+long long atoll(const char *str);
+long long llabs(long long x);
+lldiv_t lldiv(long long numer, long long denom);
+long long strtoll(const char * restrict str, char ** restrict ptr, int base);
+unsigned long long strtoull(const char * restrict str, char ** restrict ptr,
+   int base);
+
+The atoll(), strtoll(), and strtoull() functions convert a string to a long long or unsigned long long number.  llabs() computes the absolute value of a long long value.  lldiv() divides one long long value by another, returning a structure with both the quotient and the remainder.  Except for the types used and the range of numbers that can be represented, these functions behave the same as atol(), strtol(), strtoul(), labs(), and ldiv(), respectively.
+
+There are also several functions operating on the type intmax_t or uintmax_t:
+
+#include <inttypes.h>
+typedef struct {intmax_t quot,rem;} imaxdiv_t;
+intmax_t  imaxabs(intmax_t);
+imaxdiv_t imaxdiv(intmax_t, intmax_t);
+intmax_t  strtoimax(const char * restrict, char ** restrict, int);
+uintmax_t strtoumax(const char * restrict, char ** restrict, int);
+
+Under ORCA/C, intmax_t is long long and uintmax_t is unsigned long long, so these functions behave the same as the ones above.
+
+9.  (C99) Several functions for accessing the floating-point environment have been added:
+
+#include <fenv.h>
+int feclearexcept(int excepts);
+int fegetexceptflag(fexcept_t *flagp, int excepts);
+int feraiseexcept(int excepts);
+int fesetexceptflag(const fexcept_t *flagp, int excepts);
+int fetestexcept(int excepts);
+int fegetround(void);
+int fesetround(int round);
+int fegetenv(fenv_t *envp);
+int feholdexcept(fenv_t *envp);
+int fesetenv(const fenv_t *envp);
+int feupdateenv(const fenv_t *envp);
+
+For all the functions taking an argument called excepts, it is a bitwise OR of floating-point exception macros defined in <fenv.h>.  feclearexcept() clears the specified exceptions.  fegetexceptflag() saves a representation of the current state of the specified exceptions to *flagp.  feraiseexcept() raises the specified exceptions.  fesetexceptflag() sets the exception flags for the specified exceptions to the states saved in *flagp, but does not raise them.  fetestexcept() tests whether the specified exceptions are set, returning the bitwise OR of the specified exceptions that are set.
+
+fegetround() gets the current rounding direction.  fesetround() sets the rounding direction.  fegetenv() saves a representation of the current floating-point environment to *envp.  feholdexcept() saves a representation of the current environment, then clears all exception flags and disables halts for all floating-point exceptions.  fesetenv() sets the floating-point environment, but does not raise any exceptions.  feupdateenv() temporarily saves the currently raised floating-point exceptions, installs the specified floating-point environment, and then raises the saved exceptions.
+
+Except for fetestexcept() and fegetround(), these calls return 0 if they successfully carried out the operation, or non-zero otherwise.  Under ORCA/C, they always succeed if given valid arguments.  To ensure that these functions interact properly with floating-point operations in the program, #pragma STDC FENV_ACCESS ON should be in effect when they are called; see "New Language Features," above.  Under ORCA/C, these functions all correspond to operations on the SANE environment; see the Apple Numerics Manual for details on its behavior.  Note that these functions may not behave as expected when using an FPE or compatible floating-point card.
+
+10. (C99) Several new function-like macros for classification of floating-point numbers have been added:
+
+#include <math.h>
+int fpclassify(real-floating x);
+int isfinite(real-floating x);
+int isinf(real-floating x);
+int isnan(real-floating x);
+int isnormal(real-floating x);
+int signbit(real-floating x);
+
+These macros accept an argument of any real floating type, i.e. float, double, or long double.  They behave as if the argument is converted strictly to its semantic type before classifying it, removing any extra range and precision.
+
+fpclassify() returns one of the macro values FP_INFINITE, FP_NAN, FP_NORMAL, FP_SUBNORMAL, or FP_ZERO, indicating the classification of its argument.  isfinite() returns a non-zero value if its argument is normal, subnormal, or zero (not infinite or NAN).  isinf(), isnan(), and isnormal() return a non-zero value if their arguments are infinite, NAN, or normal, respectively.  signbit() returns zero if the argument has a positive sign, and non-zero if it has a negative sign (this applies to all floating-point values, even zeros and NANs).
+
+11. (C89 and C99) The strftime function has been added:
+
+#include <time.h>
+size_t strftime(char *restrict s, size_t maxsize, const char *restrict format,
+   const struct tm *restrict timeptr);
+
+The strftime function produces a string representing the date/time specified by timeptr in a format specified by the format string format.  It writes the output to s, writing at most maxsize characters (including a terminating null).
+
+The format string can contain conversion specifiers starting with %, as well as other characters.  Conversion specifiers cause strftime() to write portions of the date/time in certain formats, as specified below.  Other characters are copied to the output unchanged.  If the field(s) of *timeptr relevant to a conversion specifier are outside of their normal ranges, the characters written are unspecified.  If a conversion specifier other than those specified below is used, the behavior is undefined.
+
+Portions of strftime()'s output could differ depending on the locale, but ORCA/C always follows the behavior for the "C" locale as specified below.
+
+The conversion specifiers are:
+
+%a - abbreviated weekday name ("Mon", "Tue", etc. in the "C" locale)
+%A - full weekday name ("Monday", "Tuesday", etc. in the "C" locale)
+%b - abbreviated month name ("Jan", "Feb", etc. in the "C" locale)
+%B - full month name ("January", "February", etc. in the "C" locale)
+%c - date and time (equivalent to "%a %b %e %T %Y" in the "C" locale)
+%C - year divided by 100 and truncated to an integer (e.g. "19")
+%d - day of the month (01-31)
+%D - equivalent to "%m/%d/%y"
+%e - day of the month (1-31, with a single digit preceded by a space)
+%F - equivalent to "%Y-%m-%d"
+%g - last two digits of ISO 8601 week-based year (00-99)
+%G - ISO 8601 week-based year (e.g. 1986)
+%h - equivalent to "%b"
+%H - hour of 24-hour clock (00-23)
+%I - hour of 12-hour clock (01-12)
+%j - day of the year (001-366)
+%m - month (as a number, 01-12)
+%M - minute (00-59)
+%n - replaced by a new-line character
+%p - AM/PM designation ("AM" or "PM", in the "C" locale)
+%r - 12-hour clock time (equivalent to "%I:%M:%S %p" in the "C" locale)
+%R - equivalent to "%H:%M"
+%S - second (00-60)
+%t - replaced by a horizontal-tab character
+%T - equivalent to "%H:%M:%S"
+%u - weekday number (1-7), where Monday is 1
+%U - week number of the year (00-53), where the first Sunday starts week 01
+%V - ISO 8601 week number (01-53)
+%w - weekday number (0-6), where Sunday is 0
+%W - week number of the year (00-53), where the first Monday starts week 01
+%x - date (equivalent to "%m/%d/%y" in the "C" locale)
+%X - time (equivalent to "%T" in the "C" locale)
+%y - last two digits of the year (00-99)
+%Y - year (e.g. 1986)
+%z - time zone offset from UTC in hours and minutes (e.g. +0430), if available
+%Z - time zone name or abbreviation, if available
+%% - replaced by %
+
+Some conversion specifiers can also include an "E" or "O" modifier (e.g. "%Ec").  These might cause an alternate format to be used in certain locales, but in the "C" locale these modifiers are ignored.
+
+The %g, %G, and %V specifiers are based on the ISO 8601 week-based year, in which weeks begin on a Monday and week 01 of a year is the week that includes January 4.  According to this system, the first few days of some years are considered to be in week 52 or 53 of the previous year, and the last few days of some years are considered to be in week 01 of the next year.
+
+If the __useTimeTool variable (described below) has been set to a non-zero value, the %z and %Z specifiers will use the Time Tool Set to obtain the time zone offset.  (In ORCA/C, the %Z specifier currently represents the time zone in the same numeric format as %z.)  Otherwise, those specifiers will not produce any output.
+
+If strftime() is able to write the full formatted date/time string to s, it returns the total number of characters written, not including the terminating null.  If it is not able to do so because the full size exceeds maxsize, then it returns 0 and the contents of s are unspecified.
+
+12. (C89) The setlocale function has been added:
+
+#include <locale.h>
+char *setlocale(int category, const char *locale);
+
+This function can be used to set or query the locale.  Category should be one of the LC_* macros in <locale.h>.  If it is LC_ALL, the call relates to the whole locale; otherwise, it relates to only the specified portion of the locale.
+
+If locale is a null pointer, the call queries the current setting for (the specified portion of) the locale and returns a string representing it.  Otherwise, it attempts to set (the specified portion of) the locale to the specified value.  If it succeeds, it returns a string representing the new setting for (that portion of) the locale; if it fails, it returns NULL.
+
+The locale string may be "C" (representing the "C" locale), "" (representing the native environment, as determined by the C implementation or by user settings), or other implementation-defined values.  In the current version of ORCA/C, "" is treated as equivalent to "C" and no other strings are accepted.  Accordingly, the only locale available is the "C" locale.
+
+13. (C89 and C99) The localeconv function has been added:
+
+#include <locale.h>
+struct lconv *localeconv(void);
+
+This function returns a pointer to a structure containing information on how numeric and monetary quantities should be formatted in the current locale.  See the C standards or other references for information on the meaning of each of its fields.  In ORCA/C, this currently always gives the values appropriate for the "C" locale, as specified in the C standards.
+
+14. (C89 and C99) The strcoll and strxfrm functions have been added:
+
+#include <string.h>
+int strcoll(const char *s1, const char *s2);
+size_t strxfrm(char * restrict s1, const char * restrict s2, size_t n);
+
+The strcoll function compares two strings based on a locale-specific collation (sorting) order.  It returns a negative number if s1 is less that s2, 0 if the two strings are equal, or a positive number if s1 is greater than s2.  In the "C" locale as implemented by ORCA/C, it orders strings identically to strcmp.
+
+The strxfrm function transforms the string s2 into s1, such that two output strings from strxfrm will compare the same way with strcmp that the input strings would with strcoll.  It writes at most n bytes to s1.  It returns the length needed for the output string, not including the terminating null.  If that length is less that n, it writes the output string to s1 (including a terminating null).  Otherwise, the contents of s1 are unspecified.
+
+15. (C89) The mblen function has been added:
+
+#include <stdlib.h>
+int mblen(const char *s, size_t n);
+
+If s is not a null pointer, the mblen function determines the length of the multibyte character pointed to by s, examining at most n bytes.  If it is a null character, mblen returns 0.  If it is another valid multibyte character, mblen returns its length in bytes.  If those n or fewer bytes do not form a valid multibyte character, mblen returns -1.  As discussed above, multibyte characters in ORCA/C always have length 1, so mblen never returns a value larger than 1.
+
+If s is a null pointer, mblen returns a nonzero value if multibyte characters have state-dependent encodings, or 0 if they do not.  On ORCA/C, it returns 0.
+
+16. (C11) The mbrtoc16, mbrtoc32, c16rtomb, and c32rtomb functions have been added:
+
+#include <uchar.h>
+size_t mbrtoc16(char16_t * restrict pc16, const char * restrict s, size_t n,
+   mbstate_t * restrict ps);
+size_t mbrtoc32(char32_t * restrict pc32, const char * restrict s, size_t n,
+   mbstate_t * restrict ps);
+
+These functions convert a multibyte character to Unicode, using the UTF-16 or UTF-32 encoding.  They read the multibyte character pointed to by s, examining at most n bytes.  If a valid multibyte character is found, it is converted to UTF-16 and written to *pc16 (in mbrtoc16), or converted to UTF-32 and written to *pc32 (in mbrtoc32); 0 is returned if processing the null character, or the number of bytes in the multibyte character otherwise.  In certain other cases, these functions may return a negative value cast to size_t, but those cases do not occur in ORCA/C provided that n>0.  The ps argument (if not null) points to an object that can hold any conversion state, but in ORCA/C it is not used.
+
+#include <uchar.h>
+size_t c16rtomb(char * restrict s, char16_t c16, mbstate_t * restrict ps);
+size_t c32rtomb(char * restrict s, char32_t c32, mbstate_t * restrict ps);
+
+These functions convert from a UTF-16-encoded or UTF-32-encoded Unicode character (c16 or c32) to a multibyte character, which is written to *s.  They return the number of bytes written to s, or return (size_t)(-1) and set errno to EILSEQ if a conversion cannot be performed (e.g. because there is no corresponding character in the multibyte character set).  The ps argument (if not null) points to an object that can hold any conversion state, but in ORCA/C it is currently not used.
+
+In ORCA/C, multibyte characters are always one byte and are considered to be encoded in the character set used by the IIGS desktop environment (known as Mac OS Roman), so these functions convert between that character set and Unicode.
+
+17. (C99) The function-like macro va_copy has been added:
+
+#include <stdarg.h>
+void va_copy(va_list dest, va_list src);
+
+The va_copy macro makes a copy of the va_list src, which must have been initialized by a call to va_start in a function taking variable arguments (plus possibly some number of calls to va_arg).  After a call to va_copy, dest can be used to access the variable arguments in the same way as src.  A corresponding call to va_end(dest) must be made in the function that called va_copy.
+
+18. (C99) Several new function-like macros for comparison of floating-point numbers have been added:
+
+#include <math.h>
+int isgreater(real-floating x, real-floating y);
+int isgreaterequal(real-floating x, real-floating y);
+int isless(real-floating x, real-floating y);
+int islessequal(real-floating x, real-floating y);
+int islessgreater(real-floating x, real-floating y);
+int isunordered(real-floating x, real-floating y);
+
+These macros accept arguments of any real floating types, i.e. float, double, or long double.  They return 1 if x and y have the indicated relationship, or 0 if they do not.  These macros differ from the ordinary relational operators in that the macros will not raise the "invalid" floating-point exception if x and y are unordered because one or both is a quiet NaN.  (In ORCA/C, they will raise the "invalid" exception for signaling NaNs.)
+
+19. (C99) Several new functions operating on floating-point values have been added.  Each of these has a version using each of the three real floating types (float, double, and long double) for its arguments and/or return value.  The double versions have no suffix, while the float and long double versions have an 'f' or 'l' suffix.  Under ORCA/C, however, these types are all passed and returned using the SANE extended format (the format of long double), and for most of these functions the three versions will actually behave identically.
+
+Also, note that under ORCA/C these functions generally will not set errno for error conditions (e.g. domain and range errors).  However, they do set floating-point exceptions as appropriate.  The <fenv.h> functions documented above can be used to retrieve these exceptions, allowing errors to be detected.
+
+#include <math.h>
+double      acosh(double x);
+float       acoshf(float x);
+long double acoshl(long double x);
+
+These functions return the (non-negative) inverse hyperbolic cosine of x.
+
+#include <math.h>
+double      asinh(double x);
+float       asinhf(float x);
+long double asinhl(long double x);
+
+These functions return the inverse hyperbolic sine of x.
+
+#include <math.h>
+double      atanh(double x);
+float       atanhf(float x);
+long double atanhl(long double x);
+
+These functions return the inverse hyperbolic tangent of x.
+
+#include <math.h>
+double      cbrt(double x);
+float       cbrtf(float x);
+long double cbrtl(long double x);
+
+These functions return the cube root of x.
+
+#include <math.h>
+double      copysign(double x, double y);
+float       copysignf(float x, float y);
+long double copysignl(long double x, long double y);
+
+These functions return a value with the magnitude of x and the sign of y.  If x is a NaN, they return a NaN with the same NaN code but with the sign bit of y.
+
+#include <math.h>
+double      erf(double x);
+float       erff(float x);
+long double erfl(long double x);
+
+These functions compute the error function of x.
+
+#include <math.h>
+double      erfc(double x);
+float       erfcf(float x);
+long double erfcl(long double x);
+
+These functions compute the complementary error function of x.  Mathematically, erfc(x) equals 1 - erf(x).  However, calling the erfc function rather than computing 1 - erf(x) can give a more precise result when erf(x) is close to 1.
+
+#include <math.h>
+double      exp2(double x);
+float       exp2f(float x);
+long double exp2l(long double x);
+
+These functions return 2^x.
+
+#include <math.h>
+double      expm1(double x);
+float       expm1f(float x);
+long double expm1l(long double x);
+
+These functions return e^x - 1.
+
+#include <math.h>
+double      fdim(double x, double y);
+float       fdimf(float x, float y);
+long double fdiml(long double x, long double y);
+
+These functions return x - y if x > y, or +0.0 if x <= y.
+
+double      fma(double x, double y, double z);
+float       fmaf(float x, float y, float z);
+long double fmal(long double x, long double y, long double z);
+
+These functions compute (x * y) + z, rounded as one ternary operation.  That is, they behave as if the mathematical result is computed exactly and then rounded once to produce the return value.
+
+double      fmax(double x, double y);
+float       fmaxf(float x, float y);
+long double fmaxl(long double x, long double y);
+
+These functions return the maximum numeric value of their arguments.  If one argument is a NaN, the other argument is returned.
+
+double      fmin(double x, double y);
+float       fminf(float x, float y);
+long double fminl(long double x, long double y);
+
+These functions return the minimum numeric value of their arguments.  If one argument is a NaN, the other argument is returned.
+
+#include <math.h>
+double      hypot(double x, double y);
+float       hypotf(float x, float y);
+long double hypotl(long double x, long double y);
+
+These functions return the square root of x^2 + y^2, without undue overflow or underflow.
+
+#include <math.h>
+int         ilogb(double x);
+int         ilogbf(float x);
+int         ilogbl(long double x);
+
+These functions extract the binary exponent of x as an integer value, treating denormalized numbers as if they were normalized.  If x is 0, infinite, or NaN, they return the macro values FP_ILOGB0, INT_MAX, or FP_ILOGBNAN, respectively.
+
+#include <math.h>
+double      lgamma(double x);
+float       lgammaf(float x);
+long double lgammal(long double x);
+
+These functions compute the natural logarithm of the absolute value of the gamma function of x.
+
+#include <math.h>
+double      log1p(double x);
+float       log1pf(float x);
+long double log1pl(long double x);
+
+These functions return the natural logarithm of 1+x.
+
+#include <math.h>
+double      log2(double x);
+float       log2f(float x);
+long double log2l(long double x);
+
+These functions return the base-2 logarithm of x.
+
+#include <math.h>
+double      logb(double x);
+float       logbf(float x);
+long double logbl(long double x);
+
+These functions extract the binary exponent of x as an integer value in floating-point format, treating denormalized numbers as if they were normalized.
+
+#include <math.h>
+long        lrint(double x);
+long        lrintf(float x);
+long        lrintl(long double x);
+long long   llrint(double x);
+long long   llrintf(float x);
+long long   llrintl(long double x);
+
+These functions round x to an integer using the current rounding direction and return it as a long or long long.  If the rounded value is outside the range of the return type, the number returned is unspecified.
+
+#include <math.h>
+long        lround(double x);
+long        lroundf(float x);
+long        lroundl(long double x);
+long long   llround(double x);
+long long   llroundf(float x);
+long long   llroundl(long double x);
+
+These functions round x to the nearest integer, rounding halfway cases away from zero, regardless of the current rounding direction.  They then return the rounded value as a long or long long.  If the rounded value is outside the range of the return type, the number returned is unspecified.
+
+double      nan(const char *tagp);
+float       nanf(const char *tagp);
+long double nanl(const char *tagp);
+
+These functions return a quiet NaN, with the NaN code determined by the string argument.  Specifically, nan("char-sequence") returns the same value as strtod("NAN(char-sequence)", NULL).  See the Apple Numerics Manual for a description of NaN codes.
+
+#include <math.h>
+double      nextafter(double x, double y);
+float       nextafterf(float x, float y);
+long double nextafterl(long double x, long double y);
+double      nexttoward(double x, long double y);
+float       nexttowardf(float x, long double y);
+long double nexttowardl(long double x, long double y);
+
+These functions first convert x and y to their declared types (removing any extra range and precision), then they return the next representable value (in the return type of the function) after x in the direction of y.  If x equals y, they return y.  The only difference between the nextafter and nexttoward functions is the type of y; nextafterl and nexttowardl are identical.
+
+#include <math.h>
+double      remainder(double x, double y);
+float       remainderf(float x, float y);
+long double remainderl(long double x, long double y);
+double      remquo(double x, double y, int *quo);
+float       remquof(float x, float y, int *quo);
+long double remquol(long double x, long double y, int *quo);
+
+These functions return x REM y as specified by IEEE 754: r = x - ny, where n is the integer nearest to the exact value of x/y.  When x/y is halfway between two integers, n is chosen to be even.  If r = 0, its sign is that of x.  The remquo functions also set *quo to a value whose sign is the same as x/y and whose magnitude gives the low-order 7 bits of the absolute value of n.
+
+#include <math.h>
+double      rint(double x);
+float       rintf(float x);
+long double rintl(long double x);
+double      nearbyint(double x);
+float       nearbyintf(float x);
+long double nearbyintl(long double x);
+
+These functions round x to an integer using the current rounding direction.  The rint functions raise the "inexact" floating-point exception if they change the value, while the nearbyint functions do not.
+
+#include <math.h>
+double      round(double x);
+float       roundf(float x);
+long double roundl(long double x);
+
+These functions round x to the nearest integer, rounding halfway cases away from zero, regardless of the current rounding direction.
+
+#include <math.h>
+double      scalbn(double x, int n);
+float       scalbnf(float x, int n);
+long double scalbnl(long double x, int n);
+double      scalbln(double x, long n);
+float       scalblnf(float x, long n);
+long double scalblnl(long double x, long n);
+
+These functions return x * FLT_RADIX^n, computed efficiently.  In ORCA/C, FLT_RADIX is 2.
+
+#include <math.h>
+double      tgamma(double x);
+float       tgammaf(float x);
+long double tgammal(long double x);
+
+These functions compute the gamma function of x.
+
+#include <math.h>
+double      trunc(double x);
+float       truncf(float x);
+long double truncl(long double x);
+
+These functions truncate x to an integer (discarding the fractional part).
+
+There are also added functions that correspond to existing <math.h> functions, but using float or long double for their argument and return types:
+
+#include <math.h>
+float       acosf(float x);
+long double acosl(long double x);
+float       asinf(float x);
+long double asinl(long double x);
+float       atanf(float x);
+long double atanl(long double x);
+float       atan2f(float y, float x);
+long double atan2l(long double y, long double x);
+float       ceilf(float x);
+long double ceill(long double x);
+float       cosf(float x);
+long double cosl(long double x);
+float       coshf(float x);
+long double coshl(long double x);
+float       expf(float x);
+long double expl(long double x);
+float       fabsf(float x);
+long double fabsl(long double x);
+float       floorf(float x);
+long double floorl(long double x);
+float       fmodf(float x, float y);
+long double fmodl(long double x, long double y);
+float       frexpf(float x, int *nptr);
+long double frexpl(long double x, int *nptr);
+float       ldexpf(float x, int n);
+long double ldexpl(long double x, int n);
+float       logf(float x);
+long double logl(long double x);
+float       log10f(float x);
+long double log10l(long double x);
+float       modff(float x, float *nptr);
+long double modfl(long double x, long double *nptr);
+float       powf(float x, float y);
+long double powl(long double x, long double y);
+float       sinf(float x);
+long double sinl(long double x);
+float       sinhf(float x);
+long double sinhl(long double x);
+float       sqrtf(float x);
+long double sqrtl(long double x);
+float       tanf(float x);
+long double tanl(long double x);
+float       tanhf(float x);
+long double tanhl(long double x);
+
+These functions are equivalent to the existing un-suffixed versions, apart from their argument and return types.  In ORCA/C, most of them actually behave identically to the un-suffixed versions.  An exception is the modf family of functions, which differ in the type of the location in which the integer part of the value is stored.
+
+20. Several <time.h> functions can now use the Time Tool Set by Geoff Weiss to determine the time zone.  This behavior is controlled by a new variable:
+
+#include <time.h>
+extern int __useTimeTool;
+
+The affected functions are gmtime(), strftime() (described above), and timespec_get() (described below).
+
+If __useTimeTool is set to 0 (the default), gmtime() and timespec_get() will behave as if the system's local time is equal to UTC, and strftime()'s %z and %Z conversion specifiers will produce no output because time zone information is not available.
+
+If __useTimeTool is set to a non-zero value, gmtime() and timespec_get() will give the UTC time, using the Time Tool Set to determine the offset between local time and UTC, and strftime()'s %z and %Z conversion specifiers will produce a string representation of that offset.  The __useTimeTool variable must only be set to a non-zero value if the Time Tool Set is active.  Your program will need to include code to load it and start it up before you make any library calls that would use it, and then to shut it down and unload it before the program exits.  The ORCA libraries will not do this for you.
+
+See the Time Tool Set website for more information and downloads:
+
+https://timetool.gwlink.net
+
+21. (C11) The timespec_get function has been added:
+
+#include <time.h>
+struct timespec {
+   time_t tv_sec;       /* full seconds */
+   long   tv_nsec;      /* nanoseconds */
+   };
+int timespec_get(struct timespec *ts, int base);
+
+This function sets the structure *ts to a representation of the current time based on a specified time base determined by the base parameter (which should be a macro value defined in <time.h>).  If it completes successfully, it returns the value of base; otherwise, it returns 0.
+
+The only time base supported by ORCA/C is TIME_UTC.  This gives the time in seconds and nanoseconds since an implementation-defined time known as the epoch.  In ORCA/C, the epoch is 13 Nov 1969 00:00:00.  If the __useTimeTool variable (described above) has been set to a non-zero value, timespec_get will use the Time Tool Set to determine the time zone offset from UTC and provide a representation of the current UTC time; otherwise, it provides the current local time, assuming it is equal to UTC.
+
+Although struct timespec can represent a time with nanosecond resolution, ORCA/C currently only reports the time with a resolution of one second, so ts->tv_nsec is always set to 0.
+
+22. (C99) The strtod function can now accept strings in a hexadecimal floating-point format, in addition to the normal decimal format.  The hexadecimal format consists of an optional leading + or - sign, then 0X or 0x, then a sequence of hexadecimal digits optionally containing a period, then an optional exponent part consisting of a P or p character followed by a decimal number optionally preceded by + or -.  A string in this format designates the number given by the sign (if present) and the hexadecimal digit sequence (with any digits after the period being the fractional part) multiplied by 2 raised to the specified exponent (if it is present).  For example, "0xF.8p-1" designates the number 7.75.
+
+The strtod function also accepts the string "INFINITY" (without regard to case, and optionally preceded by + or -) to designate an infinity.  This is equivalent to the string "INF", which was already accepted in earlier versions of ORCA/C.
+
+Also, there are now float and long double analogs of the strtod function:
+
+#include <stdlib.h>
+float       strtof(const char * restrict str, char ** restrict ptr);
+long double strtold(const char * restrict str, char ** restrict ptr);
+
+As currently implemented in ORCA/C, strtof and strtold behave identically to strtod, all giving values with the precision and range of long double.
+
+-- Compiler changes introduced in C 2.1.0 -----------------------------------
+
+The Default .h File
+-------------------
+
+The default .h file is a new way for you to set up compiler options that you want to use on every C source file you compile.  Here's how it works:
+
+When ORCA/C starts, it begins by processing any command line parameters.  Next, it looks for a file called defaults.h in the ORCACDefs folder.  Finally, it compiles your source file.
+
+When ORCA/C looks for the defaults.h file, it behaves almost as if your program had started with the line
+
+   #include <defaults.h>
+
+The only differences are that the file doesn't have to exist (and if it doesn't no error is generated), the line is never shown in your source file, and the line number counter is not incremented.
+
+You can put absolutely anything you like in this file.  The intent is to use it for pragmas or other preprocessor directives that you would like to become defaults for all of your programs, but there is no restriction that prevents you from putting other things in the file.
+
+As of ORCA/C 2.2.0 B6, a custom pre-include file may also be used, as described above.  If one is specified, it will be included instead of the default .h file.
+
+WARNING:  If you add a defaults.h file, be sure and delete all .sym files.  .sym files are created by the compiler to make recompiling programs faster.  They need to be recreated with the new information from the defaults.h file, but the compiler will not notice the presence of the defaults.h file if it is using a .sym file created when the defaults.h file did not exist.
+
+
+// Comments
+-----------
+
+ORCA/C supports // comments.  These comments begin with the characters //, and continue to the end of the line.
+
+// comments are a flagrant violation of the ANSI C89 standard, although they are supported by the C99 and later standards.  This is legal ANSI C89, and it should print 4:
+
+   a = 8//* yep, this is legal */ 2
+   ;
+   printf("All ANSI C compilers should now print 4! %d\n", a);
+
+To restore ANSI C89 conformance, use the #pragma ignore directive.  Setting bit 3 (a value of 8) tells ORCA/C to allow // comments.  This is the default.  Clearing bit 3 tells ORCA/C not to look for // comments.  To restore ANSI C89 conformance for all programs, use this directive in the defaults.h file.  (see "The Default .h File," above.)
+
+
+Extended Characters
+-------------------
+
+Bear with me.  This is an ASCII file, and it describes non-ASCII material.
+
+Beginning with version 2.1, the PRIZM desktop editor supports the full Apple extended character set.  A file called FontTest on the samples disk shows the complete character set, and also contains a table that shows how to type each character from a U.S. English keyboard.
+
+C supports the use of extended characters in strings, comments, identifiers, and for a few mathematical operations.
+
+Any character you can type from PRIZM (or for that matter, any character with an ordinal value in [1..12, 14..255]) can appear in a string or comment.  The ordinal value of the character matches the values shown in FontTest, as well as several official Apple publications.  Keep in mind that many output devices, including Apple's text console driver, do not support all of these characters.  ORCA/C will properly send extended characters to whatever output device you choose, but what happens when the output device tries to handle the character varies from device to device.
+
+Many of the characters in the extended character set are used in languages other than English, and are now allowed in identifiers.  There are two ways to think about which characters will work in an identifier.
+
+The simple way is to remember that all characters that look like a graphically modified ASCII alphabetic character or a Greek alphabetic character are allowed in identifiers.  For example, an a with two dots above it is now legal in an identifier.
+
+The more exact, and naturally more complicated way to think about which characters are allowed in an identifier is to list all of them.  Since this is an ASCII file, I'll list the ordinal values--you can cross reference the values in FontTest.  The ordinal values of the extended characters that are allowed in identifiers are [$80..$9F, $A7, $AE, $AF, $B4..$B9, $BB..$BF, $C4, $C6, $CB..$CF, $D8, $DE, $DF].
+
+As of ORCA/C 2.2.0 B7, the characters with the following ordinal values are also allowed in identifiers: [$D9, $E5..$EF, $F1..$F5].  (These characters are additional letters that are present in some IIGS fonts.)
+
+In addition, ORCA/C supports several extended characters as shortcuts for multi-character mathematical operations.  These are:
+
+	ordinal value	description		substitutes for
+	-------------	-----------		---------------
+	$C7		two <			<<
+	$C8		two >			>>
+	$AD		not equal		!=
+	$B2		less than or equal	<=
+	$B3		greater than or equal	>=
+	$D6		division (- with dots)	/
+
+Finally, the non-breaking space, sometimes called the sticky space (ordinal value $CA), is treated exactly like a standard space character.
+
+
+#pragma optimize
+----------------
+
+In brief, there is a new optimization bit.  Setting bit 6 (a value of 64) turns off stack repair code around variable argument function calls.
+
+The rest of this section describes when the stack repair code is generated, why, and the side effects of using this optimization--or not using it.
+
+In variable argument functions (functions with ... as the last "parameter") it is illegal to pass fewer parameters than the function expects, or to pass parameters of a type different than the function expects.  For example, both of these statements are illegal in ANSI C, even though few if any compilers can detect the error (and those that do are blocking some legal--albeit stupid--C code.):
+
+   printf("%d %d", 4);
+   printf("%d", 4.5);
+
+ORCA/C has always taken advantage of this fact to generate code that is more efficient and compatible with the other ORCA languages.  With all optimizations on, programs containing the above statements will corrupt the stack, generally leading to a crash.
+
+On the other hand, ORCA/C did not allow this statement:
+
+   printf("%d", 4, 5);
+
+Contrary to all common sense, the ANSI standard says this statement is legal IF THE APPROPRIATE HEADER FILE IS INCLUDED, even though the first two are not.
+
+Beginning with ORCA/C 2.1, this statement will work.  Note that in keeping with the ANSI standard, this call and others like it only work if the function is properly defined with a prototyped variable argument parameter list.
+
+There is an undesirable side effect, though.  All function calls to a variable argument function are surrounded by extra stack repair code, even if you set optimization bit 3.  (This bit turns off stack repair code.)  This increases code size and slows a program down.  Sometimes these changes are noticeable, or even dramatic.
+
+Prior to ORCA/C 2.2.0 B7, native code peephole optimization was always disabled when stack repair code was in use, so you would also lose another optimization if you did not use this one.  As of ORCA/C 2.2.0 B7, this is no longer the case: native code peephole optimization can be used without disabling stack repair code.
+
+Turning this optimization on means ORCA/C is no longer strictly in compliance with the ANSI standard.  For strict compliance, you should leave stack repair code on for variable argument functions.  You can add any or all of the other optimizations and remain ANSI compliant, so this pragma will work with all ANSI C programs:
+
+   #pragma optimize 0x003F
+
+If you use #pragma debug 0x0010 to enable stack check debug code, the compiler will still flag variable argument functions that do not consume all arguments as a run-time error, even though ANSI C does allow them.
+
+-- Bugs from C 2.2.0 that have been fixed in C 2.2.1 ------------------------
+
+1.  If there was a #define directive immediately after the opening brace of a function body, and the macro defined there was used after the end of that function or was used in the initializer for a static variable, incorrect code might be generated or spurious errors might be reported.
+
+(Kelvin Sherlock)
+
+2.  In <gsbug.h>, the declarations of the pseudo tool calls provided by GSBug did not include prototypes.  Now they do.
+
+(Kelvin Sherlock)
+
+3.  In <gsos.h>, the error code devListFull was misspelled as defListFull.
+
+4.  Code that divides an integer constant by zero (e.g. 1/0) will no longer always produce an error.  Such code will produce undefined behavior if it is executed, but since the compiler cannot always determine whether the code will be executed at run time, this is no longer treated as an error that prevents compilation.  If #pragma lint bit 5 is set, a lint message about the division by zero will still be produced.  An error will also still be reported for division by zero in constant expressions that need to be evaluated at compile time.  
+
+5.  In some obscure circumstances, ORCA/C might behave incorrectly when the postfix ++ or -- operators were used on an expression of pointer type.  This would typically result in "compiler error" messages, but could potentially also cause incorrect code to be generated without any errors being reported.
+
+6.  If the first string passed to strcat() or strncat() crossed a bank boundary, those functions would generally behave incorrectly and corrupt memory.
+
+7.  In certain situations where the third argument to strncat() was 0x8000 or greater, it could behave incorrectly.
+
+8.  If strncmp() was called with a third argument of 0x1000000 or greater, it could sometimes incorrectly return 0.  (Note that such size values exceed the address space of the 65816, so under ORCA/C they effectively impose no limit on the number of characters to be compared.  The behavior of strncmp() should therefore be the same as strcmp() in these cases.)
+
+9.  If an error was encountered when trying to write out buffered data in fclose(), the stream would not actually be closed, and the buffer allocated for it would not be freed.  Now the stream will be closed (disassociated from the file) and the buffer will be freed even if an error is encountered.
+
+10. If an error was encountered when trying to write out buffered data to a file when exiting the program, it could hang and never actually quit.
+
+11. If fclose() was called on a file created by tmpfile() at a time when there was very little free memory available, it could corrupt memory and cause a crash.  (This will no longer happen, but the file still may not be deleted if there is insufficient memory available when fclose() is called.)
+
+12. If a numeric token formed using a ## preprocessor operator was an operand for another ## preprocessor operator, the resulting token would be incorrect.
+
+13. If an empty argument was passed for a macro parameter that was used as an operand of the ## preprocessing operator, the result would likely be incorrect, and subsequent uses of the same macro also might not be expanded correctly.
+
+14. If a struct, union, or enum type name appeared within the third expression in a for loop statement (e.g. in a cast or as the argument to sizeof), ORCA/C could behave incorrectly.  It could report a spurious error if a semicolon occurred within the type name as part of a structure or union member declaration.  Also, any tags or enumeration constants declared by such a type name should be in scope within the loop body, but they were not.
+
+15. Native code peephole optimization might produce invalid code in some obscure circumstances where one element of a global or static array was decremented and then another element of the same array was accessed immediately thereafter.
+
+16. When an expression of const- or volatile-qualified struct or union type was passed as a function parameter, incorrect code would be generated.  This could lead to incorrect program behavior or crashes.
+
+17. Incorrect code could be generated in certain circumstances where a long long or unsigned long long member of a structure or array was accessed via a pointer.
+
+18. The ORCA/C preprocessor now allows for preprocessing number tokens that do not match the syntax of an integer or floating constant (e.g. 08Ae-.x).  If any such tokens remain after preprocessing, an error will still be reported.  Note that this means that code like 0x3e+1 is now treated as a single token that is invalid if it remains after preprocessing, rather than as three tokens that form a valid expression; if you want it to be interpreted as three tokens, you must include whitespace before the +.
+
+19. When numeric tokens beginning with . were used as operands to the ## preprocessing operator, they behaved as if they started with a leading 0, which could lead to an incorrect result (e.g. 123##.456 became 1230.456).
+
+20. When using strict type checks, == or != comparisons between a function pointer and NULL or (void*)0 would cause a spurious error.
+
+21. If the operand to sizeof was a compound literal that was not enclosed in parentheses, a spurious error would be reported.
+
+-- Bugs from C 2.1.1 B3 that have been fixed in C 2.2.0 ---------------------
+
+1.  There were various bugs that could cause incorrect code to be generated in certain cases.  Some of these were specific to certain optimization passes, alone or in combination.
+
+(Doug Gwyn, Norman Dodge, Dave Tribby, Michael Lutinsky, Todd Whitesel, et al.)
+
+2.  The integer promotion rules (usual unary conversions) would previously promote values of type char or unsigned char to unsigned int, rather than int.  The C standards require these types to be promoted to int (not unsigned int) when the types involved have the ranges that they do in ORCA/C, and ORCA/C now behaves accordingly.  (This is sometimes referred to as "value-preserving" behavior, rather than the previous "unsigned-preserving" behavior.)  This can cause certain expressions to be evaluated differently, for example when char values are compared with negative integers.
+
+(Devin Reade)
+
+3.  Globals or static variables that used pointer arithmetic or the & operator in their initializers could sometimes get the wrong values.
+
+(Devin Reade)
+
+4.  Preprocessing directives could be mis-evaluated if they occurred immediately after a use of a function-like macro.
+
+5.  Arrays could not be used as operands of && and ||, or as the first operand of the ? : operator.  Now they can (they are implicitly converted to pointers).
+
+(Derek Taubert)
+
+6.  Dereferencing pointers to const struct or const union types gave spurious errors.
+
+(Derek Taubert)
+
+7.  When a bit-field is used within an lvalue expression but isn't what's being assigned to, the bit-field could erroneously be assigned to instead.
+
+(Michael Guitton)
+
+8.  When arrays are declared using a typedef'd incomplete array type, the size for all arrays of that type would erroneously be fixed based on the initializer of the first array using it.
+
+(Devin Reade)
+
+9.  The += and -= operators could not be used on function parameters declared using array syntax (which are adjusted to have pointer type).
+
+(Doug Gwyn, Norman Dodge)
+
+10.  String and floating-point constants may now appear within the operands of sizeof in a constant expression.
+
+(Devin Reade)
+
+11.  Code for narrowing conversions or casts was sometimes not properly generated.
+
+12.  Case labels in switch statements may now be out of range of the type being switched on.  They are converted to the promoted type of the expression being switched on, as if by a cast.  Code requiring this is dubious, but it's allowed under the C standards.
+
+13.  Unsigned constants in the range 0x8000-0xFFFF were erroneously being treated like negative signed values in some contexts.
+
+14.  Unions can now be initialized by assignment from expressions of the appropriate union type.
+
+15.  If a defaults.h file is present, the value of the __LINE__ macro would be off by one.
+
+(Steve Reeves)
+
+16.  Zero-initializing a one-byte array could crash the system.
+
+17.  The 'extern' storage-class specifier may now be used in function definitions.
+
+18.  Certain integer constant expressions, including sizeof expressions, were treated as having type signed long when they should have type unsigned long.
+
+19.  Spurious error messages were produced when #error was used with tokens other than a string constant.  It now properly accepts any sequence of pp-tokens.
+
+(Soenke Behrens)
+
+20.  The types of shift expressions depended on the types of both their operands.  They now correctly depend only on the (promoted) type of the left operand.
+
+21.  The __DATE__ macro did not properly report dates in the year 2000 or later, and used a slightly non-standard date format in some cases.
+
+(Dave Tribby)
+
+22.  When using common subexpression elimination, ORCA/C could crash or corrupt memory due to stack overflow in certain cases involving large switch statements or long sequences of code without control flow statements.
+
+23.  Comparing 32-bit values in static arrays or structs against 0 could sometimes give the wrong result when using the large memory model.
+
+24.  Pointer types with type qualifiers (const or volatile) were not allowed in casts and sizeof expressions.
+
+(Doug Gwyn)
+
+25.  Spurious errors were given when calling functions with const-qualified parameter types or returning from functions with const-qualified return type.
+
+(Norman Dodge)
+
+26.  Statically-evaluated conversions from floating-point values to integers could give wrong values because they were rounded rather than truncated in certain cases.
+
+27.  If a macro's name appeared inside the macro, it would be expanded repeatedly, leading to a crash.  (Bug in ORCA/C 2.1.1 betas only.)
+
+28.  Statically-evaluated division and remainder computations on unsigned 32-bit values could give incorrect results because of bugs in the math routines.
+
+29.  Unsigned long values greater than 2^31 could not be used as the second operand to % in constant expressions.
+
+30.  In constant binary expressions involving unsigned int and signed long operands, the operands would be converted to unsigned long and the expression evaluated using that type.  They are now correctly evaluated using the type long, rather than unsigned long.
+
+31.  Statically-evaluated signed comparisons evaluated to -1 if true.  They now properly evaluate to 1.
+
+32.  Floating literals that are immediately cast to integer types were not allowed in integer constant expressions.  Now they are, as required by the C standards.
+
+33.  Within preprocessor expressions, keywords and typedef names were sometimes processed based on their usual semantics rather than being treated as identifiers.  They are now consistently treated as identifiers.
+
+34.  Preprocessor expressions were being evaluated using the normal type conversion rules (with many expressions evaluated as type int).  All preprocessor expressions are now evaluated using the intmax_t and uintmax_t types, as required by the C standards.  (As of ORCA/C 2.2.0 B5, these are the 64-bit types long long and unsigned long long.)
+
+35.  The unary ! operator could not be applied to floating constants.
+
+36.  In constant expressions, the result type of || and && expressions was based on the types of their operands.  Now they always correctly yield type int.
+
+37.  Certain error conditions (use of #error or undefined labels in goto statements) would not cause an error status to be reported to the shell.  This could cause a multi-step compilation process to continue when it should halt due to the error.  Now a non-zero error level is always reported in these cases, so the compilation process will halt.
+
+(Michael Lutinsky)
+
+38.  An error was reported if there were unknown preprocessor directives or unexpected tokens following a preprocessing directive within a section of code that was skipped during preprocessing.  Now these cases are not reported as errors.  This allows certain nonstandard constructs used by other compilers to appear within conditionally-skipped code.
+
+39.  Errors would be reported when a number-like token was not a valid numeric constant, even if it was a valid preprocessing-number token used in a context where it did not need to be converted to a numeric constant (e.g. within conditionally-skipped code).  Some such cases are now allowed.
+
+40.  Array types were not treated as compatible with corresponding pointer types in function prototypes.  Now they are, so the following declarations, for example, are permitted to all be present in one translation unit:
+
+int foo(int*);
+int foo(int[]);
+int foo(int[42]);
+
+41.  Spurious errors could be reported due to improper handling of the symbol table when a pointer to a typedef'd function type was declared.
+
+42.  Global structs and unions with const-qualified types were not being generated in object files.
+
+43.  In programs that used the 'volatile' keyword, both accesses to volatile variables and certain other operations could be erroneously optimized out in some cases.
+
+44.  Character constants containing multiple characters were not allowed.  Now they are, as required by the C standards.  See above for information on their semantics.
+
+45.  Typedef'd versions of "void" could not be used in the prototyped parameter list of a function taking no arguments.
+
+46.  The declaration of PutScrap in <scrap.h> was incorrect.
+
+(Kelvin Sherlock)
+
+47.  The declaration of LEClassifyKey in <lineedit.h> was incorrect.
+
+(Kelvin Sherlock)
+
+48.  The declaration of SetContentOrigin2 in <window.h> was commented out, with a comment indicating it was not documented.  It is actually a valid tool call documented in TBR2.  A prototyped declaration for it is now provided.
+
+49.  In some cases, very large functions would appear to compile correctly, but actually generate corrupt OMF object files.  These cases should now either work correctly (if they fit within the new, increased size limits) or give an error message.
+
+(Jawaid Bazyar)
+
+50.  There was a bug that might trash four bytes of memory in certain circumstances.
+
+(Kelvin Sherlock)
+
+51.  An unlimited number of octal digits could be processed as part of an octal escape sequence in a character constant or string.  Octal escape sequences are now limited to a maximum of three octal digits, as required by the C standards.  (This partially reverts a change in ORCA/C 2.1.0, which should only have applied to hexadecimal escape sequences.)
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B2.)
+
+52. Fixed several bugs that could cause invalid optimizations to be performed by the loop invariant removal optimization pass, and also one that affected common subexpression elimination.
+
+(Soenke Behrens, Michael Guitton, Dave Tribby)
+
+53. Added prototypes for internal functions called by macros in <stdio.h>, so they will not produce errors when certain #pragma lint options are used.
+
+(Robert Eckweiler)
+
+54. Fixed several bugs that could cause invalid code to be generated for array indexing or pointer arithmetic in certain cases.
+
+(Kelvin Sherlock, Stephen Heumann)
+
+55. Prototypes for the library functions also defined as macros are now provided.  This ensures correct behavior when the macro is bypassed to access the library function.
+
+56. The setbuf macro could evaluate its second argument twice, which could cause incorrect behavior.  It has been removed in favor of just calling the library function.
+
+57. Correct code was not being generated when producing profiling code but not source-level debug code (e.g. by using "#pragma debug 4").  This could result in incorrect profiling results or other strange behavior.
+
+(Kelvin Sherlock)
+
+58. When a macro's own name was used within it, that token could be re-expanded later in some cases. That re-expansion is now blocked, consistent with the C standards.
+
+59. When zero was consecutively stored to two global or static variables, the second store might be omitted if using the native code peephole optimizer.  (This was a regression introduced in ORCA/C 2.2.0 B1.)
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B3.)
+
+60. If two consecutive operations stored zero to the same volatile variable, one of the stores might be omitted if using the native code peephole optimizer.  (This was a regression introduced in ORCA/C 2.2.0 B1.)
+
+61. Invalid debug code was generated in some cases involving structs or unions.
+
+(Kelvin Sherlock)
+
+62. The definition of struct __file in <stdio.h> did not match that actually used by the ORCALib library binary.  This could cause problems with (non-portable) code that accesses the members of that structure.
+
+63. Parameters in a function prototype with previously-undeclared structure types would be entered in the global symbol table, which could cause incorrect behavior or error messages if the same name was used later.
+
+(Kelvin Sherlock)
+
+64. Tentative definitions of arrays (e.g. "int i[];" at file scope) are now allowed and handled as required by the C standards: such arrays will wind up having one element, initialized to 0, unless a subsequent non-tentative definition gives a size.
+
+65. sys_nerr was 6; it should be 12.
+
+(Devin Reade)
+
+66. The function (but not the macro) for iscntrl() was misnamed isctrl().
+
+(Devin Reade)
+
+67. toupper() and tolower() were not correctly handling inputs of EOF (-1).
+
+(Kelvin Sherlock)
+
+68. The code to parse the command line into argv would mis-handle certain cases involving double-quoted arguments (such as double-quoted arguments containing only whitespace characters), which could lead to argv being corrupted.
+
+(Kelvin Sherlock)
+
+69. When argc==0 (as for S16 programs and various other cases), argv should be a valid pointer and argv[0] should be NULL.
+
+70. sprintf()/vsprintf() should write a terminating null character even if the string produced is empty.
+
+71. asctime() should correctly print dates in the years 1000 through 9999.
+
+(Steve Reeves)
+
+72. mktime() was treating the tm_yday field of struct tm as if it was indexed from 1 for January 1st.  In fact, it is the number of days since January 1st.
+
+(Steve Reeves)
+
+73. Calling system(NULL) should detect whether a command processor is present.
+
+(Philippe R Manet)
+
+74. strtol()/strtoul() should return LONG_MIN/LONG_MAX/ULONG_MAX for out-of-range values.
+
+(Devin Reade)
+
+75. Fixed some bugs in code generation and optimization of expressions using the comma operator.
+
+76. Fixed some bugs that caused spurious errors when const-qualified struct or union types were used in certain ways.
+
+77. Fixed several bugs in intermediate code optimization that could cause invalid code to be generated for certain unusual (and mostly useless) expressions.
+
+78. Fixed several bugs that could cause invalid code to be generated in functions with 254 or more bytes of local variables.
+
+79. Fixed some cases where decay of array types to pointer types was not handled correctly.
+
+(Bugs in items 75-79 were identified using Csmith.)
+
+80. ORCA/C sometimes failed to initialize an error message being reported.
+
+(Kelvin Sherlock)
+
+81. The #line directive was setting the number for the current line, rather than the following one.
+
+82. Output from #pragma expand could contain string literals that were invalid or did not represent the same strings as those in the original program code.  In order to fix this problem, #pragma expand has been changed to use three-digit octal escape sequences (rather than hexadecimal ones) in strings it outputs.  (This ensures that subsequent characters in the string cannot be interpreted as part of the escape sequence.)
+
+83. Constant expressions cast to char or unsigned char could be treated as if their type promoted to unsigned int rather than int.
+
+84. If the compiler was set to enter the editor on errors, it could sometimes open the editor at the wrong position in the file.
+
+(Matt Ackeret)
+
+85. Errors displayed for source lines indented with tabs would typically appear to be at the wrong position (depending on how the console in use displays tabs).
+
+86. The LDBL_* values in <float.h> were all wrong.  They specified values for the double format, not the SANE extended format actually used for long double.  As of ORCA/C 2.2.0 B5, all of them now have the correct values.
+
+87. perror() should write only a single new-line.  Also, it should not write the prefix string, colon and space if the prefix string pointer is NULL or if it points to an empty string.
+
+88. The % operator would generally not work correctly if either operand was negative.  It could produce an incorrect result, or in certain scenarios give a compile-time or run-time error.  It now gives correct results as defined by the C standards, such that (a/b)*b + a%b equals a (provided that b is not 0 and a/b is representable in the type used for the operation).
+
+(Devin Reade)
+
+89. The div() and ldiv() functions could also give incorrect remainders: in some cases where one or both of the arguments were negative, the remainder would have the wrong sign.  This has been corrected; these functions now also generate correct remainder values, consistent with what the % operator now produces.
+
+90. strtol() and strtoul() incorrectly considered it an error for the string to start with "0X" or "0x" if the base parameter was something other than 0 or 16.
+
+91. Including system headers named via macros, as in the following example, did not work properly:
+
+   #define STDIO_H <stdio.h>
+   #include STDIO_H
+
+92. The ?: operator could sometimes evaluate the wrong branch when certain kinds of expressions were used as the condition.
+
+93. Fixed several issues where initializers of structs or unions (or arrays containing structs or unions) might not be processed correctly.
+
+94. const-qualified struct or union types were not being recorded properly in .sym files.  This could lead to spurious errors or other problems when the .sym files were used.  This bug has now been fixed, and .sym files created by older versions of ORCA/C will automatically be ignored and regenerated.
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B4.)
+
+95. const-qualified struct types were not being represented properly in debugger symbol tables.
+
+(Kelvin Sherlock)
+
+96. Some operations on function parameters declared with array types could give spurious errors.
+
+(Kelvin Sherlock)
+
+97. Floating point division by 0.0 is now consistently allowed.  It can be used to generate infinities, consistent with the principles of IEEE/SANE arithmetic.
+
+(Kelvin Sherlock)
+
+98. Some uses of enum constants in integer constant expressions could give spurious errors or generate bad code.
+
+99. Common subexpression elimination could cause a crash or a spurious error in certain rare circumstances.
+
+100. Fixed various cases where code in ORCA/C might dereference null pointers.  Some of these could potentially lead to spurious errors, memory trashing, or possibly crashes.
+
+101. Incrementing or decrementing pointers to types with a size of 64 KiB or larger would generally not work correctly (even with the large memory model).
+
+102. Invalid sym files could be generated if an #include was encountered within the scope of an #if or #ifdef in the main source file, leading to spurious "type conflict" errors on subsequent compilations.
+
+103. In certain very obscure circumstances, stale values of __DATE__ or __TIME__ could be stored in the sym file and used on subsequent compilations.
+
+104. Initializing bitfields of type long could lead to a spurious "compiler error" (and memory trashing).
+
+105. The WDM instruction is now supported in the mini-assembler.  It is treated as taking a one-byte numeric operand.
+
+107. Declaration specifiers (storage class specifiers, type specifiers, type qualifiers, function specifiers, and alignment specifiers) can now appear in any order within a declaration or type name.
+
+108. Prototyped function parameter types can now begin with "volatile".
+
+109. strtoul() should return 0 when given an empty string.  It now does, and also sets errno to EINVAL in that case.  (This was a regression introduced in ORCA/C 2.2.0 B3.)
+
+110. strtok() might not always return NULL after having reached the end of the string.  (This depended on the contents of memory location 0.)
+
+111. The fscanf() family of functions might corrupt the stack if a scan error occurred and certain conversion specifiers containing the % character in a scanset (e.g. %4[%]) appeared as subsequent elements in the format string.
+
+(Kelvin Sherlock)
+
+112. If #pragma rtl was used, the exit() family of functions would still try to exit the program via a GS/OS Quit call instead of an RTL.
+
+(Sheppy)
+
+113. strtol(), atoi(), and atol() would accept numbers with extra white space and/or an additional plus sign after the initial sign, e.g. "- +53".
+
+114. strtoul() will now accept numbers with a leading minus sign.  This causes the value to be negated in the unsigned long type before being returned.
+
+115. strtol() and strtoul() did not always set the end pointer to the right value in error cases.  Now they do: if there was a sequence of the expected numeric form, then they fully parse that sequence and give a pointer past the end of it, even if the number was out of range.  If there was not a sequence of the expected form, they give the starting pointer that was passed in to them.
+
+116. strtol() now accepts "-2147483648" or equivalent in other bases (i.e. LONG_MIN) as a valid input, and does not set errno in this case.
+
+117. Register optimization could generate incorrect code in some cases.
+
+(Kelvin Sherlock)
+
+118. Unnamed bit-fields with non-zero widths were treated as taking up no space.  They now take up the same space as a named bit-field of the same width would.
+
+119. The compiler allowed non-pointer types to be dereferenced when used as an l-value.
+
+(Kelvin Sherlock)
+
+120. The # operator in macros, which makes a string literal from the tokens passed as an argument to the macro, now puts quotes around string literal tokens and inserts spaces corresponding to whitespace between tokens.
+
+121. freopen() did not properly handle modes with 'b' before '+' (e.g. "rb+").
+
+122. If tmpnam() is called with a non-null pointer argument, it should return that same pointer, not a pointer to its internal static buffer.
+
+123. When running under a multitasking environment, there was a theoretical possibility that a race condition could cause tmpfile() to open a file that had already been created by another program running concurrently.  It will now return NULL in the very unlikely situation where this would occur.
+
+124. localtime() would set tm_isdst based on the system's current DST setting even when given a time_t argument other than the current time, so the tm_isdst value might be incorrect.  Now it works as follows: if localtime() is passed the time_t value that was produced by the most recent call to time(), it gives the DST setting (as configured in the Time CDev) in effect at the time of that call.  Otherwise, it sets tm_isdst to -1, indicating that the correct value is unknown.
+
+(Steve Reeves)
+
+125. Within character constants, /* or // should not start a comment.
+
+126. In a proprocessor expression, any identifiers remaining after macro expansion should be replaced with the constant 0.  This did not work correctly for declared variable or function names, nor for enumeration constants.
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B5.)
+
+127. ORCA/C historically did not report a type conflict in several circumstances where the C standards say that there is one and require the compiler to report it.  ORCA/C can now detect the type conflicts in several of these cases.  However, to preserve compatibility with existing code, these new checks are currently off by default.  They can be enabled by clearing a new bit (bit 5) in #pragma ignore.  See "Additions to #pragma ignore" above for details.
+
+128. The ++ and -- operators often would not work correctly on bit-fields, or on floating-point values that were in a structure or were accessed via a pointer.
+
+129. Certain invalid compound assignment expressions were erroneously permitted.
+
+130. In the fprintf() family of functions, %#x or %#X conversions should not print the 0x or 0X prefix if the value is 0.
+
+131. In the fprintf() family of functions, if the field width or precision in a conversion specification was * (indicating that it will be specified by an argument to the function) and the corresponding argument was negative, the behavior could be incorrect.  It now behaves correctly, as follows: if a negative argument is given for the field width, it is treated like a positive field width with the - flag.  If a negative argument is given for the precision, it is treated as if the precision was not specified.
+
+132. In the fprintf() family of functions, if a d, i, o, u, x, or X conversion has a precision specified, the 0 flag should be ignored even if present.
+
+133. In certain cases where a cast expression was used in a language construct that implicitly compares its value against 0 (such as an if statement), the comparison could be mis-evaluated, leading to execution of the wrong code path.
+
+134. Negative values of type signed char could be handled incorrectly in several cases, making them behave as if they had a positive value outside the range representable by signed char.
+
+135. Hexadecimal and octal constants in the range 0x80000000 to 0xFFFFFFFF should have the type unsigned long int, but they were being treated as having the type signed long int (with negative values) instead.
+
+136. Numeric constants with duplicate suffixes (e.g. "123ulu") were incorrectly being accepted.
+
+137. Trying to define a macro to + or - on the command line (with the -d option) would actually define it to 0 instead.  Now this gives an error, indicating that the definition is unsupported.  (Currently, macros can only be defined via the command line to an identifier, a numeric constant, or a string literal.)
+
+138. In the fscanf() family of functions, the 'o', 'u', 'x', and 'X' conversions should accept an integer optionally preceded by a plus or minus sign.
+
+139. In the fscanf() family of functions, if the input item for an integer conversion contains a sign and/or (if applicable) an '0x' or '0X' prefix but does not contain any digits of the number, it is not a matching sequence.  This should be treated as a matching failure, causing no assignment to be done and causing the function to return without processing any further directives.
+
+140. In the fscanf() family of functions, a %% conversion should be able to consume leading whitespace before the % character.
+
+141. In the fscanf() family of functions, input failures on certain directives (before having performed any conversions) would not cause them to return EOF.
+
+142. In the fscanf() family of functions, if a 'd' or 'i' conversion specification includes a maximum field width, a leading + or - sign in the number should count toward that field width.
+
+143. In the fscanf() family of functions, if a directive fails and causes the function to return before it has done all the possible assignments, then it would trash a word on the stack, potentially causing a crash or other problems.
+
+144. In the fscanf() family of functions, the number of characters reported as read by an 'n' conversion could be off by one if a previous 's' or '[' conversion read to the end of the available input and encountered EOF.
+
+145. In expressions like "exp | -1" or "exp & 0", the intermediate code peephole optimizer could optimize away the evaluation of "exp" even though it had side effects (e.g. a function call or assignment).
+
+146. In initializers for static data, expressions where an integer with unsigned type was added to an array address (e.g. "a + 1U") would not be accepted.
+
+147. The <string.h> and <ctype.h> headers include several non-standard functions and macros.  Their declarations and definitions should be omitted if __KeepNamespacePure__ is defined.
+
+148. When an expression that the intermediate code peephole optimizer could reduce to a constant was cast to a character type, the resulting value could be outside the range of that type.
+
+149. When qsort() was called with a count argument of 0 and certain values for the other arguments, it might behave incorrectly, possibly causing a crash.
+
+(Kelvin Sherlock)
+
+150. Constants and constant expressions of type long double (aka extended) were only represented and evaluated with the range and precision of double, often producing less accurate results and potentially giving infinities for numbers that should have been within the range of finite long double values.  Now, they are evaluated in the long double format, with its full range and precision.  In fact, all floating-point expressions are now evaluated in the long double format.  See "Evaluation of Floating-Point Expressions and Constants," above.
+
+151. An explicit cast to a floating-point type should produce a value that is exactly representable in that type's format, with no extra range or precision.  Similarly, the value of an assignment expression should be exactly the value stored, with no more range or precision than that of the location it was stored to.  ORCA/C was not reducing the range and precision of floating-point values in these cases, but now it does.
+
+152. sizeof did not give the right values for certain expressions of floating-point and character types, including expressions cast to those types.
+
+153. The postfix ++ and -- operators might not give exactly the original value when applied to floating-point variables.
+
+154. If the upper byte of the int argument to memset() was nonzero, it could set the memory locations to the wrong value.  It now properly converts the int argument to unsigned char and uses that value (i.e. only the low-order byte).
+
+155. Extra characters (detritus from the on-screen spinner) could be left in the compiler's output when #pragma expand 1 was used.
+
+156. The second subexpression of a ? : expression may use the comma operator, even in a context where commas would otherwise separate items (such as arguments to a function).  For example, abs(1 ? 2,-3 : 4) is a valid call that passes one argument.  Code like this was causing spurious errors, but now it is accepted.
+
+157. An error was not reported if code tried to define an enumeration constant with a value in the range 0xFFFF8000 to 0xFFFFFFFF.  (Enumeration constants are limited to values representable as an int.)
+
+158. An "illegal type cast" error would be reported when an illegal operator was used in a constant expression.  An appropriate error message is now produced.
+
+159. The CLOCKS_PER_SEC and CLK_TCK macros were hard-coded as 60, but they should actually be 50 if the system is in 50Hz video mode.  This could throw off timing code that used these macros in conjunction with clock().  The macros now expand to code that will detect the video mode and give the appropriate value.
+
+160. The volatile type qualifier was omitted from declarations recorded in a .sym file.  This could lead to volatile accesses being optimized away.
+
+161. The system() function might return the wrong value when using the large memory model.  (This was a regression introduced in ORCA/C 2.2.0 B3.)
+
+162. In certain cases, an assignment from a location with an 8-bit type to a location with a 16-bit type might store the wrong value.
+
+163. When an argument of type double was passed to a function taking variable arguments, va_arg(ap,double) would not retrieve it correctly.
+
+(Devin Reade)
+
+164. The fields of const-qualified structs and unions were not treated as being const-qualified.  Neither were the members of arrays declared like "const T a", where T is a typedef'd array type.  Now such fields and array members are treated as const-qualified, so assignments to them will give errors.
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B6.)
+
+165. When assigning to multiple structures or unions using successive = operators (e.g. s1=s2=s3), assignments other than the rightmost one might store incorrect values, depending on the size of the structures or unions.
+
+166. The fields of structures and unions should be accessible from any expression of structure or union type, including assignments and function calls.  For example, if x and y have type "struct S {int i;}", then (x=y).i is a legal expression that performs an assignment and then gets the value of the i field.  Similarly, f().i is a legal expression if the function call f() has a return type of struct S.  These expressions were not being accepted, but now they are.
+
+167. If an array with automatic storage duration was initialized from a string literal containing an embedded null byte (e.g. char s[] = "a\0b"), characters after the null byte would not be properly initialized.
+
+168. Unions may now contain bit-fields, as specified in the C standards.
+
+169. If an assembly-language function (declared with the asm keyword) had a structure or union return type, ORCA/C would generate some spurious code at the beginning of the function, which might trash data used by its caller.
+
+170. Variable argument processing could not be restarted by calling va_start() after va_end().  Also, the addresses of local variables would change when va_end() was called, invalidating any pointers to them.  The implementation of variable arguments has been changed to fix these problems.  The only remaining non-standard restriction is that if #pragma optimize bit 6 or #pragma debug bit 4 is set, calls to functions taking variable arguments are not allowed to pass extra arguments beyond the number that the function will use.
+
+171. Function parameters declared with array types are adjusted to actually have pointer types, but this adjustment was not applied in some situations.  Now such parameters are consistently treated as actually having pointer types.  This affects their size as given by sizeof and their type as shown in debuggers.
+
+172. When certain negative integers that are multiples of 65536 were converted from floating-point types to long, long long, or comp, an incorrect value might be produced due to a bug in SANE.  ORCA/C now includes workarounds to avoid this bug in several situations, although it might still occur in certain other ones.
+
+173. sizeof could give the wrong value if the type contained a nested use of a type name within an array length expression, e.g. sizeof(short[(long)50]).
+
+174. Certain calls using a pascal-qualified function pointer would not work properly.  They could cause either incorrect code generation or spurious compiler errors, depending on the parameter types.
+
+(Chris Vavruska)
+
+175. The pascal qualifier was not accepted in certain places where types are used.  Among other things, this prevented pascal-qualified function pointers from being declared as members of a structure or union.
+
+(Michael Hackett)
+
+176. Certain address expressions (e.g. &"string"[1]) would cause spurious errors if they were used in the initializers of global or static variables.
+
+(Devin Reade)
+
+177. The name of the current source file was not updated when processing an #include or #append.  As a result, uses of the __FILE__ macro within an include file would not give the name of that file, and functions (or portions of functions) within an include file would not have the proper file name recorded in their debugging information.
+
+178. Keep names specified via the KEEP= portion of the command line or the {KeepName} shell variable could sometimes be saved in the .sym file and applied to subsequent compilations, even if they were no longer specified for the later compilation.  Also, if a .sym file was used, the keep name specified via #pragma keep might override the one specified on the command line or via {KeepName}.
+
+179. Macro definitions specified via the cc= portion of the command line could be saved in the .sym file and applied to subsequent compilations, even if they were no longer specified on the command line.
+
+180. Certain #undef directives might be ignored when using a .sym file.
+
+181. #pragma expand might not work correctly when used in certain places.
+
+182. #pragma path directives were not saved in .sym files.  This could cause ORCA/C not to search the proper paths for include files that were not represented in the .sym file (e.g. because they were included after a function).
+
+183. The # preprocessor operator would not work correctly on tokens that had been produced by the ## preprocessor operator, tokens that were split over two or more lines using line continuations, or tokens represented using trigraphs.
+
+184. If a macro was declared with the same name as a keyword or a typedef, and that name was also used within another macro, the first macro would not be correctly expanded within invocations of the second macro.  (This is a bug that was previously fixed in ORCA/C 2.1.1 B3, but was subsequently reintroduced.)
+
+185. In the invocation of a macro with multiple ## operators, each successive token formed by a ## operator could be subject to macro replacement (if there was a macro of that name).  Macro replacement should instead only be done after all ## operators have been evaluated.
+
+186. Expressions like &"string" were treated as having an incorrect type.  They should have the type char(*)[N], where N is the length of the string, including terminating null character.  This led to spurious "type conflict" errors.
+
+187. Expressions like sizeof(&*a), where a is an array, would generally give the wrong size.  They should give the size of a pointer to the first element, not the size of the whole array.
+
+188. Expressions like sizeof(&*"string") would cause a spurious error.
+
+(Devin Reade)
+
+189. Some combinations of operand types were not properly supported for the ? : operator.  This could result in a spurious error, or could cause the ? : expression to have an incorrect type.  One case where a spurious error would be produced is for expressions like i?0:p, where p is a pointer.
+
+(Jay Krell, Devin Reade)
+
+190. Calling rewind() should clear the I/O error indicator for the stream (the value returned by ferror()), but it was not doing so.
+
+191. If a call like fseek(f, N, SEEK_CUR) was used on a file opened in read mode, it would not seek to the correct location, and in some cases it would set the error indicator for the stream, causing further operations on it to fail.
+
+(Norman Dodge, Devin Reade)
+
+192. If a file is opened in append mode (using 'a' in the mode argument to fopen), then all writes should be forced to the end of the file, regardless of any prior calls to positioning functions like fseek.
+
+193. The ungetc() function did not work on character values 0x80 through 0xFF.
+
+(Soenke Behrens)
+
+194. A successful call to ungetc() should clear the end-of-file indicator for the stream.
+
+195. fread() would discard characters put back with ungetc().
+
+(Soenke Behrens)
+
+196. fread() would generally return the wrong value if it was reading from stdin and the specified element size was anything other that 1.
+
+197. If fread() was used on a file after data had been read from it using a different <stdio.h> function, fread() might not read the correct data.
+
+198. Calling ftell() or fgetpos() on a file opened in read mode could cause subsequent reads to return data from the wrong position in the file.
+
+199. If a file is open for reading and writing, it should be possible to read from it until end-of-file is encountered and then immediately write to it, but an error would be reported when the write was attempted.
+
+200. Arithmetic operations on unsigned integer types should give the low-order bits of the true mathematical result in the event of overflow, but 16-bit unsigned multiplication did not always do this.
+
+201. When certain expressions were used for the condition in an if statement, loop, or conditional expression, the conditional branch might be evaluated incorrectly, leading to incorrect control flow.  The affected condition expressions included shifts, loads or stores of bit-fields, and ? : expressions.
+
+202. Some comparisons against the constant 0xFFFF would give the wrong result when intermediate code peephole optimization was used.
+
+203. The O_APPEND flag to open() had no effect.  Now it works as documented, setting the file pointer to the end of the file before every write.
+
+204. Calling lseek() with a whence value of 2 and a negative offset should seek to a location before the end of the file, but it would not actually do so.  (The problem was that lseek effectively negated the specified offset if whence was 2.  It has been changed to avoid the negation.  If any code relied on the old behavior by using a whence value of 2 with a positive offset to seek before the end of the file, it should be changed to use a negative offset instead.)
+
+205. Using the same identifier as a typedef name and then as the tag for an enum would cause a spurious error.
+
+206. If an enum type defined in an outer scope was used in an inner scope, and then a new struct, union, or enum type was declared with the same tag in the same inner scope, a spurious error was reported.
+
+(Bug fixes below here were added in ORCA/C 2.2.0 B7.)
+
+207. If a struct or union type with a tag T has been declared within an outer scope, a declaration "struct T;" or "union T;" within an inner scope should declare a separate type, distinct from the one in the outer scope.
+
+208. The native code peephole optimizer and register optimizer could alter the assembly code in asm statements, occasionally causing it not be behave as intended.  Now, code from asm statements will not be altered by the optimizers.
+
+(Dave Tribby)
+
+209. The native code peephole optimizer might not correctly analyze whether short branch instructions can be used around an asm statement with one or more dcl directives.  This could cause "Relative address out of range" linker errors in some cases, or generate bad code without reporting any errors in others.
+
+210. If fgets() or gets() encounters end-of-file after reading one or more characters, they should return a pointer to the buffer, not a null pointer.
+
+211. If fgets() encounters end-of-file before reading any characters, it should leave the buffer unmodified.  (In some cases, it would write two zero bytes.)
+
+212. If fgets() is called with an n value of 1, it should write a single terminating null character to the buffer.  (It was writing two.)
+
+213. If a floating-point constant beginning with . had a line continuation between the . and the first digit, a spurious error would be reported.
+
+214. If the #line directive was used, line numbering would be off by one when using a .sym file.
+
+215. The digit sequence in the #line directive should be interpreted as a decimal number (not octal) even if it begins with a 0.
+
+216. Preprocessing directive names could be subject to macro replacement, potentially altering their behavior (e.g. due to a definition like "#define ifdef ifndef").  Now directive names are not expanded as macros, even if there is a macro of the same name.
+
+217. If there were multiple declarations of a variable with internal or external linkage, only the type from the latest declaration would be used, rather than properly forming the composite type from the various declarations.  If a global array was first declared with a size specified and subsequently redeclared without a size, this could cause the proper storage not to be allocated for it.
+
+218. If a function declared within a block had the same name as a variable in an outer scope, the symbol table entry for that variable could be corrupted, leading to spurious errors or incorrect code generation. 
+
+219. If a function is first declared as "static" and then subsequently redeclared or defined as "extern" or with no storage-class specifier, it should be private to the source file, the same as if it was just declared "static".
+
+220. In certain cases where a header starts or ends in the middle of a declaration, it would not be represented correctly in the .sym file.  This could cause errors or misbehavior on subsequent compiles.
+
+221. Structures with unnamed bit-fields were sometimes initialized incorrectly.
+
+222. If an expression of type unsigned long and value greater than LONG_MAX was used in the initializer for a floating-point variable with static storage duration, the wrong value would be produced.
+
+223. Expressions of floating-point type could not be used in initializers for integer variables with static storage duration.  This should be allowed, with a conversion performed as in the case of assignment.
+
+224. Comparisons against four-byte values in global structures, unions, or arrays might not work correctly when using the large memory model.
+
+225. According to the C99 and later standards, a line continuation with \ should let a // comment continue to the next line.  ORCA/C now behaves accordingly.
+
+226. The unary + operator should apply the integer promotions to its operand, e.g. promoting char to int.  This can affect the value of sizeof(+expression).
+
+227. If an unsigned 16-bit value was divided by a constant 1000 or larger, and the result was assigned to two different variables (e.g. a = b = c/1000), incorrect code would be generated when using native code peephole optimization.  (This was a regression introduced in ORCA/C 2.2.0 B6.)
+
+228. If a segment directive specifying a dynamic segment was used before the first function in the main source file, an invalid .root file would be generated, causing the resulting program to crash.  (Note that having your program's main function in a dynamic segment serves little purpose and will cause an unrecoverable error if there is not enough free memory to load it.  Also, CDevs, XCMDs, and NBAs cannot use dynamic segments.)
+
+229. Each time a CDev written with ORCA/C was opened and closed, it would leak a user ID.  If it was opened and closed many times, the system could run out of user IDs of the appropriate type, potentially causing problems.  To avoid this, new cleanup code has been added that runs when a CDev is closed.  To ensure this code gets run, CDevs written with ORCA/C should always set the wantClose flag so that they receive CloseCDEV messages, even if they do not otherwise need them.
+
+230. It should be allowed to declare a static function that is never defined, provided that the function is also never used in an expression.
+
+231. Several <time.h> functions would not work properly for dates in 2036, 2037, or later.  Now they work for dates up to 20 Dec 2105.  (In the case of the time() function, this relies on the ReadTimeHex tool call to return the correct date, which it may not do in 2040 or later when using current system software.)
+
+232. The mktime() function should accept a struct tm in which one or more of the time components are outside their normal ranges.  In such cases, it should calculate the time correctly and change the structure to represent the specified time, but with all its components in the normal ranges.  It was never changing the out-of-range time components, and in some cases would also calculate the time incorrectly.  Now it works as specified.
+
+233. The qsort() function would not work correctly if the size of the elements to be sorted was too large.  This generally affected uses with element sizes greater than 65535 bytes, but in some obscure situations there could also be problems with smaller element sizes.
+
+234. When using the large memory model, the qsort() function might call the comparison function with the data bank set incorrectly, potentially causing memory corruption or other incorrect behavior.
+
+235. With certain inputs, the qsort() function could cause a stack overflow due to excessive recursion, potentially leading to crashes or other problems.  Now its stack usage is limited to less than 600 bytes (usually significantly less), excluding whatever stack space may be used by the comparison function.
+
+236. If a typedef name was used immediately after the end of an inner scope where the same name was used as a variable name or struct/union/enum tag, it might not be properly recognized as a typedef name, leading to spurious errors.
+
+237. If the same identifier was used for both a variable or function name and a struct/union/enum tag, it might not be possible to take the address of the variable or function within the initializer for a static variable.
+
+238. If a typedef name declared in an outer scope was used within an inner scope where the same name was declared as a struct/union/enum tag, it would not be properly recognized as a typedef name, leading to spurious errors.
+
+239. If a listing was produced using the +L option when a Defaults.h file was present, an extra blank first line would be listed (in ORCA/C 2.1) or the first line of the source file would be listed twice (in ORCA/C 2.2 betas).
+
+240. If a .sym file was in use, ORCA/C might not print "Including ..." messages for certain header files.
+
+241. When using the large memory model, functions registered with atexit() (or at_quick_exit(), in ORCA/C 2.2 betas) might be called with the data bank set incorrectly, potentially causing memory corruption or other incorrect behavior.
+
+(Bug fixes below here were added in the final release of ORCA/C 2.2.0.)
+
+242. In the fprintf() family of functions, the '0' flag should be ignored if '-' was also specified.
+
+243. In the fprintf() family of functions, when a conversion specification like "%#.0o" is used with the value 0, it should print "0" (rather than nothing).
+
+244. Calls to malloc(), calloc(), or realloc() with a requested allocation size of 2 GB or greater could sometimes return a non-null pointer.  Such calls should always fail and return NULL, since the IIGS does not have that much memory.
+
+245. Programs using #pragma rtl would not return the proper value if run from the shell.  (This did not affect the usual use of #pragma rtl for a PIF or TIF.)
+
+246. The difftime() function would return incorrect values if the two times were at least 2^31 seconds (about 68 years) apart.
+
+247. Floating-point conversions in the scanf() family of functions should scan to a long double if the L modifier is used, but this did not work properly.
+
+(Kelvin Sherlock)
+
+248. If the low-order 16 bits of the size passed realloc() were 0x0001, it would fail to deallocate the memory at the old address.  This might cause the system to run out of memory.
+
+249. In certain obscure circumstances, realloc() might access soft switches or slot I/O locations, which could cause strange behavior or crashes.
+
+250. When using the E conversion specifier in the fprintf() family of functions, INF or NAN values might not be printed correctly.  The output for them could have incorrect padding and/or extraneous characters at the end.
+
+251. When a conversion specification like %#.0E or %#.0e is used in the fprintf() family of functions, the printed number should include a decimal point.
+
+252. When using the g or G conversion specifiers in the fprintf() family of functions, slightly incorrect limits were used for determining whether to print the value in a decimal or exponential format.
+
+253. When using the g or G conversion specifiers in the fprintf() family of functions, too many or too few digits might be printed in some circumstances, or a trailing decimal point might be printed when it should not be.
+
+(Devin Reade)
+
+254. The strtod() function should be able to skip over line feed, form feed, carriage return, and vertical tab characters (as well as space and horizontal tab) as part of the whitespace that may precede the number.
+
+255. The strtod() function should return 0 if the string is empty or is not in the expected format.
+
+(Dave Tribby)
+
+256. In the fscanf() family of functions, floating-point conversions like %f could match certain character sequences that were not in the proper format, e.g. because they contained no digits.
+
+257. In the fscanf() family of functions, an input failure caused by encountering EOF should cause any subsequent directives to be skipped and not executed, even if they are directives like %n that require no input.
+
+258. If scanf() was called with a format string that was empty or contained only %n directives, it might pause awaiting a line of input from the console.  It should not do this, because it should not try to read any characters for such calls.
+
+259. If an error was encountered when processing a floating-point conversion directive with assignment suppressed, the scanf() family of functions might not return the correct value.
+
+260. When using the g or G conversion specifiers in the fprintf() family of functions, the number zero could sometimes be printed in an exponential format like "0e+00".  It should be printed in a non-exponential format like "0".
+
+261. Several <math.h> functions could set errno inappropriately, based on a previous floating-point math operation rather than the current operation.
+
+262. If a domain or range error had occurred in any previous floating-point operation, sinh() and cosh() calls might return the wrong values.
+
+(William K. Watts, Jr.)
+
+263. The sqrt() function would set errno to ERANGE if its argument was negative.  This is a domain error, so it should set errno to EDOM in this case.
+
+(William K. Watts, Jr.)
+
+264. The fmod() function could return the wrong value when the second argument was negative.
+
+-- Bugs from C 2.1.0 that have been fixed -----------------------------------
+
+1.  In some situations, fread() reread the first 1K or so of the file.
+
+(Devin Reade)
+
+2.  Typedef names used as macro parameters were not treated properly.
+
+(Devin Reade)
+
+3.  In the error message "pascal qualifier is only allowed on functions",
+qualifier was spelled qualtifier.
+
+(Kelvin Sherlock)
+
+4.  strtod() and atof() did not handle errors correctly when the input string contained leading whitespace and no valid numeric characters, or when the input string was the NULL pointer.
+
+(Dave Tribby)
+
+-- Bugs from C 2.0.3 that have been fixed -----------------------------------
+
+1.  Corrected a very rare bug that caused an unreliable value to be used in determining the type of an assignment statement.
+
+2.  Converting a value larger than 2147483647.0 from a real representation to an unsigned long integer representation did not generally work correctly.
+
+(Soenke Behrens)
+
+3.  Variables declared as "unsigned" were treated as "int" rather than "unsigned int".
+
+(Soenke Behrens, Philipp Vandry)
+
+4.  isgraph(' ') was true; it now correctly returns 0.
+
+(Soenke Behrens)
+
+5.  When asked to scan 65536 or more bytes, memchr actually scanned an extra 65536 bytes, often returning an incorrect result.
+
+(Soenke Behrens)
+
+6.  scanf("%d", &i) did not return EOF if it was used twice in succession, once with a numeric line followed by a return, and then pressing Control-@ o signal and end of file.
+
+(Sharon Barbaccia)
+
+7.  A switch statement with a default label but no case labels now generates the correct code to jump to the default label.
+
+(Animasia, Soenke Behrens, Michael Hackett)
+
+8.  In textedit.h, the last parameter to TEInsert was a Long; it has been changed to Handle.
+
+(Norm Dodge)
+
+9.  In time.h, NULL and size_t are now declared.
+
+(Soenke Behrens)
+
+10.  In time.h, string.h, stdio.h and stdlib.h, several functions that should have had const arguments do, now.
+
+(Soenke Behrens)
+
+11.  0x8000 * 1 and 0x80000000 * 1 are now evaluated correctly.  (Note: This actually showed up as a pointer offset bug, where
+
+	*ptr = (char *)0x00C000;
+	int offset = -32768;
+
+gave an incorrect result for ptr + offset).
+
+(Soenke Behrens, David Empson)
+
+12.  In expressions that could be evaluated at compile time, results that overflowed an integer frequently resulted in the constant being improperly promoted from an integer or unsigned to a long or unsigned long.  Examples of expressions that would cause this kind of error are (65533U + 1U) / 2 and 0x8000|1.
+
+(Soenke Behrens, David Empson, Jay Krell)
+
+13.  In expressions that could be evaluated at compile time, binary operations involving an unsigned and integer were treated as an integer, when they should be treated as unsigned.  This applies both to short and long operands.
+
+(Soenke Behrens, David Empson, Jay Krell)
+
+14.  The first and last parameter to FWEntry were reversed by the tool glue code.
+
+(Soenke Behrens, David Empson)
+
+15.  Storing multiple long values through a pointer stored in a global or static variable, as in
+
+   a->b = a->c = 0L;
+
+where b and c are long and a is a global pointer, did not store the correct value in any but the rightmost operand.
+
+(Soenke Behrens, Derek Taubert)
+
+16.  Code generation has been improved for optimized code when a value is stored through a global or static pointer.
+
+17.  A linefeed between a macro name and the ( before the macro arguments caused a spurious compiler error.
+
+(Soenke Behrens, Jay Krell)
+
+18.  When skipping tokens due to a preprocessor command, ORCA/C was flagging # tokens from assembly language code as an error.
+
+Frankly, I can read the standard either way here.  It's clear that skipped code must be tokenized.  It is not clear whether # is allowed as a token in skipped code.  Since I've gotten close to a bazilion complaints about this, though, I'm streatching things to allow # in skipped code, even without using the ignore pragma.
+
+(Soenke Behrens, Matt Ackeret)
+
+19.  In misctool.h, the fields in the HexTime struct were reversed, causing problems with the WriteTimeHex call.
+
+(Soenke Behrens, David Empson)
+
+20.  In stdio.h, fputc(), putchar() and ungetc() were declared with char parameters that should have been declared as int.  In ctype.h, the same is true for tolower() and toupper().
+
+(Soenke Behrens)
+
+21.  signal.h did not define sig_atomic_t;
+
+(Soenke Behrens)
+
+22.  Loads of double values were not performed correctly by the FPE version of the SysFloat library, resulting in a large loss of precision.
+
+(Soenke Behrens, Dirk Froehling, Frank Gizinski, Doug Gwyn)
+
+23.  Function parameters of type (const void *) generated an error when a pointer type was passed, rather than treating all pointer types as compatible.
+
+(Animasia)
+
+24.  There are several technical violations of the ANSI C namespace for header files.  Basically, ANSI C says a compiler can't declare names in headers other than those documented in the standard unless they follow some very specific rules.  Identifiers that start with an underscore and are followed by another underscore or an uppercase letter are reserved for use by the implementation.  If you avoid these and all names explicitly defined by ANSI C, you should not have problems.
+
+Because ORCA/C defines some names other than those declared in the standard, and also because these names do not start with an underscore followed by an underscore or uppercase letter, there is the very slight potential that a program that should compile correctly won't.
+
+This bug can be corrected with the new libraries by defining a macro __KeepNamespacePure__ before including any header files.  At some point I plan to define a header file that is always included, and you could define this macro there for 100% ANSI namespace compatibility.  Until that time, though, the bug technically will continue to exist, but you have an easy workaround: just define the macro like this:
+
+   #define __KeepNamespacePure__ 0
+
+before the #include's in any file that should compile under ANSI C, but has namespace problems.
+
+(Soenke Behrens)
+
+25.  The various arguments and return types in math.h were declared as extended; they have been changed to double.  (This actually doesn't make any difference, since all arguments and return types are promoted to extended anyway.)
+
+(Soenke Behrens)
+
+26.  The second parameter of the modf() function was of type (int *); this has been changed to (double *).
+
+(Soenke Behrens, Jay Krell)
+
+27.  In starg.h, va_end was declared as a function, when it must be a macro.  It is now a macro.
+
+(Soenke Behrens)
+
+28.  localtime() now sets tm_isdst based on the BRAM setting.  You can change the BRAM setting using the Clock CDev.
+
+(Soenke Behrens, Marlin Allred)
+
+29.  Mixing an integer 0 with a pointer in a conditional expression, as in
+
+    void *p, *q = 0xdeadbeef;
+    p = (1) ? 0 : q;
+
+generated incorrect code.
+
+(Soenke Behrens, Devin Reade)
+
+30.  If all of the following contitions are met, the 2.0.3 compiler crashes:
+
+	a. Debug code is turned on (as in #pragma debug -1).
+	b. A struct type is defined, and one of the elements of the struct type is a pointer back to the same struct type.  (Think linked lists.)
+	c. A function is defined containing a variable of this struct type, and that variable is the first variable processed when the compiler builds the debug symbol table.
+
+(Soenke Behrens)
+
+31.  Initlializers did not work for types defined like "static const struct foo bar[] = "  Leaving out const worked fine.
+
+(Soenke Behrens)
+
+32.  Using const after a struct or union typedef name and before the variable name, as in
+
+   struct charname
+     {
+       const char *symbol;
+       const char *crypted;
+     };
+
+   static struct charname const charname[3];
+
+caused a spurious compiler error.
+
+(Soenke Behrens)
+
+33.  Casting an unsigned long value to double did not work correctly when the value being cast could not be evaluated until run-time, and when the value exceeded 0x7FFFFFFFul.
+
+(Soenke Behrens, Philipp Vandry)
+
+34.  Ignoring a long value returned by a tool call by casting the result to void, as in
+
+	(void) ConvSeconds (TimeRec2ProDOS, 0L, (Pointer) &time);
+
+left the results on the stack, which generally resulted in a crash.  The value is correctly removed, now.
+
+(Soenke Behrens, David Empson)
+
+35.  In some cases, nesting an increment or decriment operator around another increment or decrement operator, as in
+
+   foo[*sp++]++
+
+generated incorrect code.
+
+(Soenke Behrens)
+
+36.  Declaring a function using prototyped parameters, then defining it with K&R parameters, as in
+
+   extern void foo (int *, int *);
+   void foo (bar, gorp)
+      int *bar, *gorp;
+   {}
+
+generated incorrect code for accessing the parameters.
+
+(Soenke Behrens)
+
+37.  The compiler did not flag an error when an old-style struct parameter was used in a prototyped function declatation, as in:
+
+  void foo (int x)
+  struct bar = {1,2};
+  { return; }
+
+(Peter Watson, Soenke Behrens)
+
+38.  The predefined macros __LINE__, __STDC__ and __ORCAC__ did not work correctly when used with the ## operator.
+
+(Soenke Behrens, Jay Krell)
+
+39.  The __VERSION__ macro was not corrently updated in several earlier versions.  It is now in lock-step with the version number printed when ORCA/C compiles a program, making it much more likely that it will stay correct.
+
+(Michael Hackett)
+
+40.  scanf() and its cousins incremented the number of items scanned when a %d or %i specifier encountered an input stream with no matching number.  For example,
+
+   sscanf("foo","%d",&bar)
+
+returned 1, when it should return 0, indicating that no number was found in the input stream.
+
+(Soenke Behrens)
+
+41.  When handling character set specifiers, scanf() and its cousins are supposed to allow ] as the first character in a set.  For example, "%[]]" should scan ']', while "%[^]]" should scan all but ']'.  This works correctly, now.
+
+(Jay Krell, Soenke Behrens)
+
+42.  With a file opened as "rb+", writing a single character and then closing the file did not always write the character to the output file.  Multiple character writes would succeed.
+
+(Peter Watson, Soenke Behrens)
+
+43.  When a file is opened for reading and writing (as with "r+"), then a read is done, followed by an fflush(), the file should be available for output.  In ORCA/C 2.0.3, it was not reset so output could occur.
+
+Note that this is generally no big deal, since the behavior of fflush() is undefined if the most recent operation on the file was input.  In other words, the file position is not reliable.  In general, you should use fseek(), fsetpos() or rewind() to change a file from input to output mode, not fflush().
+
+(Soenke Behrens)
+
+44.  fflush(NULL) should flush all open streams.  Starting with this version, it does.
+
+45.  With output redirected to a file and input comming from the keyboard, pressing the return key echoed the return that should have shown up on the screen to the output file.
+
+(Soenke Behrens, David Empson)
+
+46.  ORCA/C was allowing prototyped parameter lists with types but no identifier, as in
+
+   foo (int, float)
+
+in both function declarations and function definitions.  They should only be allowed in function declarations, and now cause an error if the identifier is missing in a function definition.
+
+(Soenke Behrens)
+
+47.  Variable argument functions that pass too many parameters are legal, and should not cause the compiler to behave in an unexpected way.  ORCA/C now allows such function calls.  See #pragma optimize for some details.
+
+(Soenke Behrens)
+
+48.  Assignments of structs or unions were sometimes removed from a loop by the loop invariant removal optimization when they should not have been removed.
+
+(Animasia)
+
+49.  A unary + operator was not allowed at the start of an expression.
+
+(Soenke Behrens)
+
+50.  When calling a pascal function from the C compiler's inline assembler, the compiler did not capitolize the identifier, resulting in link errors.
+
+(Jay Krell, Soenke Behrens)
+
+51.  ORCA/C 2.0.3 did not accept -1 as a value for period in #pragma nda, although documentation said it would.  It now accepts a leading + or -.
+
+(Peter Watson, Soenke Behrens)
+
+52.  The compiler complained with "identifier expected" when doing something like:
+
+    typedef char *ptr; typedef void *vptr;
+    #define ptr vptr
+
+It should not care, since the preprocessor is a simple text substitution system.
+
+(Jay Krell, Soenke Behrens)
+
+53.  Multiple ## operators, as in
+
+   #define cat(a,b,c) a##b##c
+
+were not handled correctly.
+
+(Soenke Behrens)
+
+54.  #append was not resetting the line counter used by the __LINE__ macro.  It does, now.
+
+(Soenke Behrens)
+
+55.  When handling numeric escape sequences like '\x0077', ORCA/C has always limited the number of numeric characters actually scanned.  In this specific example, the result would have been two characters, one with a value of 0x07 and another with the value '7'.  According to the ANSI standard, all characters that can be included in a numeric sequence should be accepted.  This, the above example should give a single character with a value of 0x77; it does now.
+
+(Dave Huang, Soenke Behrens)
+
+56.  printf("%#.0x", 0) should not print anything; it was printing 0x.
+
+(Soenke Behrens)
+
+57.  scanf with the '[' format specifier treated an input string with no matching characters as a valid match, returning a null string.  It should have treated an input sequence with no matching characters as an error.
+
+(Soenke Behrens)
+
+58.  In several places, if output was suppressed and a scanf input failed, scanf returned one less than the correct number of inputs scanned.
+
+59.  Several functions were defined as macro overrides, and the macro overrides called other standard C functions.  This could cause a problem in obscure cases where the function defined as a macro was used, but the user replaced the standar function it calls with one of their own.  All of these cases have been corrected in some way so this cannot happen.
+
+The affected functions are:
+
+  stdio.h:  getc(), putc(), rewind(), setbuf()
+
+(Soenke Behrens)
+
+60.  Several functions were defined as macro overrides.  This works fine unless the function is used form a program that does not include the header file.
+
+These functions have all been recreated as true library functions that will link into a program whether or not the header file is included.  In cases where is more efficient to use the macro than to make a function call, the macro definition has been left in place.  This is not a violation of the standard, but if if bothers you, you can eliminate the macro and replace it with the header file form shown in the ANSI standard or any correct C reference manual.  If you do this, your program may end up a little larger or slower, but it will still work, since the functions do exist in ORCALib.
+
+The affected functions are:
+
+  stdio.h:  getc(), putc(), rewind(), setbuf()
+  ctype.h:  isalnum(), isalpha(), iscntrl(), isdigit(), isgraph(), islower(),
+            isprint(), ispunct(), isspace(), isupper(), isxdigit()
+
+(Soenke Behrens)
+
+61.  Definitions like
+
+   extern int foo = 0;
+
+are now legal.  Once you wade through the technical language of the standard, it turns out that this declaration works exactly as if the extern is left off.
+
+Note that this definition is illegal in virtually all dialects of C except ANSI C.  In particular, it is not legal in either K&R C or C++.  Since there is no real reason to ever use it, I recomment you don't.
+
+(Soenke Behrens)
+
+62.  When the compiler found a single error, it ended with the message "1 errors found."  It now ends with "1 error found."
+
+63.  ORCA/C now supports tenative definitions.  Basically, this means that variables declared at the program level can be declared as many times as you like, with or without the extern qualifier.  The only restrictions are:
+
+   1.  The types must match on all of the declarations and definitions.
+   2.  A variable can only get an initializer in one place, even if the same initializer is used in all places.  That place does NOT have to be the last place the variable appears, though.
+   3.  If a variable is declared without the static qualifier, it cannot be declared in any other source file without the static qualifier.  This isn't really a change, but the restriction still applies.
+
+Note that you can use extern and an initializer at the same time, now.  (See bug 61.)  The result is a declaration, though, not a definition.  In other words, if
+
+   extern int foo = 4;
+
+appears in one source file, it is an error if
+
+   int foo;
+
+appears in some other source file; you will get i duplicate symbol error in the linker.  If the first instance is changed to
+
+   extern int foo;
+
+then this is a definition, and references to the variable actually use the one declared in the other source file.
+
+(Soenke Behrens)
+
+64.  Making a function call though a variable that is declared but not a function, as in
+
+   int foo;
+
+   foo(4);
+
+did not generate an error, and caused various problems, like incorrect code generation or compile time hangs.  This will now generate an error.
+
+(David Empson, Soenke Behrens)
+
+65.  If the last include in a source file was followed immediately by a #endif, the compiler generated a spurious error whenever a .sym file was available.
+
+(Jay Krell, Soenke Behrens, JoeV16@AOL.COM, Michael Hackett)
+
+66.  assert() now prints the argument as a string, in addition to the file and line number.
+
+(Soenke Behrens)
+
+67.  asert() now writes to stderr, not stdout.
+
+(Soenke Behrens)
+
+68.  In some situations where a number is referenced indirectly, and added to itself, and when intermediate code optimization was used, the compiler could fail with a terminal compiler error.
+
+One example that caused this problem is:
+
+   #pragma optimize 1
+   ...
+   x = ptr->field + 1 + (ptr->field + 1);
+
+(Guy Umbright, Michael Hackett)
+
+69.  The midiSynth tool call GetMSData needed a tool glue routine; it has one, now.
+
+(Dave Tribby, Michael Hackett)
+
+70.  String constants formed using the macro stringization operator (#) were always disposed of at the end of a subroutine.  This caused problems if the resulting string was used to initialize a static variable, since ORCA/C creates the static variable strings long after the subroutine is complete.
+
+(Philippe Manet, Michael Hackett)
+
+71.  strstr("abc", "") took an excessive amount of time to return an incorrect result.  It now returns "abc", as required when the search string is the null string.
+
+(Doug Gwyn, Michael Hackett)
+
+72.  fwrite() now returns a correct element count when a disk full error occurs during a write.
+
+(Todd Whitesel, Michael Hackett)
+
+73.  The Gamm.cc benchmark gave incorrect results.  This was due to a coding error in the benchmark itself.  It has been corrected on the latest samples disk.
+
+74.  Pointers to functions were not entered in the debug table properly, causing debuggers to have a variety of problems.  Debuggers generally show what a pointer points to, and there's no realistic way to do that for a pointer to a function, so the compiler now enters pointers to functions in the debug symbol table as if they are pointers to integers.
+
+(Michael Hackett)
+
+-- Bugs from C 2.0.2 that have been fixed -----------------------------------
+
+1.  Debug code was inadvertantly left in the 2.0.2 compiler release.  This could cause crashes or entry into a debugger, as well as extraneous text output during a compile.
+
+(Joe Wankerl)
+
+2.  The comments in stdarg.h were ended too early, so stdarg.h did not compile.
+
+-- Bugs from C 2.0.1 that have been fixed -----------------------------------
+
+1.  The #line directive does not set the source file in a way that causes the debugger to use a different source file.
+
+(Gary Desrochers)
+
+2.  The #line directive now allows a line number of 0.
+
+3.  The results of the #line directive are now saved in the .sym file, so file names and line numbers are preserved when the .sym file is read.
+
+4.  stdarg.h has been modified to work with the stricter error checking for type casts implemented in C 2.0.1.
+
+(Doug Gwynn)
+
+-- Bugs from C 2.0 that have been fixed -------------------------------------
+
+1. In desk.h, added CloseNDAbyWinPtr to match TBR #1.  Apple's original
+spelling (CloseNDAByWinPtr) has been retained for compatibility with existing
+source.
+
+(Dave Tribby)
+
+2.  In locator.h, an extraneous ; has been removed.
+
+(Dave Tribby, John Mills)
+
+3.  In sane.h, the spellings DecForm and Decimal have been added so Apple's
+naming scheme in the remainder of the file will work.
+
+(Dave Tribby)
+
+4.  In MidiSynth.h, the following spelling corrections were made:
+
+	from		to
+	----		--
+	WavAddrB	WaveAddrB
+	FindTuneA	TineTuneA
+
+(Dave Tribby)
+
+5. In MidiSynth.h, added SetBasicChan to match TBR.  Apple's original
+spelling (SetBasicChannel) has been retained for compatibility with existing
+source.
+
+(Dave Tribby)
+
+6. With static or global integers, multiple assignments of zero (e.g. a=b=0)
+stored random values in all but the last value.
+
+(Doug Gwyn, D.Leffler, AFAAndyW, et. al.)
+
+7. strtod() and related functions fail when the input is a single digit number.
+
+(James C.Smith)
+
+8. SaveTextState() in Locator.h did not have an inline directive.
+
+(GSPlusDiz)
+
+9. In some cases, successive stores of a long constant with common
+subexpression elimination turned on would damage the stack.
+
+(GNOTim2)
+
+10. Assigning the same constant to both a single-byte value and a word, as in
+
+   unsigned char foo;
+   unsigned int  bar;
+
+   bar = foo = 1;
+
+did not correctly set the most significant byte of the word value.
+
+(GNOTim2)
+
+11. In some conditional branches involcing comples integer expressions, the
+condition code was not properly evaluated.
+
+(GNOTim2)
+
+12. Optimization of arithmetic shifts by a constant in the range 9..15 has been
+improved.
+
+(GNOTim2)
+
+13. Closing carriage return added to ToolLib.h.
+
+(Doug Gwyn)
+
+14. Some comparisons of pointers to pointers, such as *p1 == *p2, caused the
+code generator to generate a spurious error.
+
+(Soenke Behrens)
+
+15. strtoul() would fail when a string address at the start of a bank was
+passed.
+
+(AFA AndyW)
+
+16. fread() and fwrite() now return results of size_t.
+
+(John Joganic)
+
+17. Text programs didn't work when launched from the Finder.
+
+(JamesG7858)
+
+18. Run-time error checks for two-byte add and subtract operations flagged
+legal operations as illegal.  Run-time error checks for two-byte adds and
+subtracts have been removed.
+
+(D.Tribby)
+
+19. fclose() did not properly close temp files before trying to destroy them.
+
+(Jawaid Bazyar)
+
+20. Decrementing a global or static long by 1 generated incorrect code.  This
+was fixed in an earlier version, but I don't remember which one.
+
+(Jawaid Bazyar)
+
+21. The type for ptrdiff_t in stddef.h should be a signed type, not unsigned
+long.
+
+(Doug Gwyn)
+
+22. Using the large memory model, some two-byte load operations used absolute
+addressing when they should have used long absoule addressing.
+
+(AFAAndyW)
+
+23. IBeamCursor() (in QDAux.h) is prototyped with a Word parameter; it should
+be void.
+
+(J.Mills11)
+
+24. TEInsert() (in TextEdit.h) has one too few parameters prototyped.
+
+(J.Mills11)
+
+25. Improperly set optionList parameters on GetFileInfo calls were causing
+compiler crashes, generally in a pseudo-random way, but most often while
+creating .sym files.
+
+(Walker Archer)
+
+26. With optimize 1, adding 1 to a global long and saving the result to the
+same location generated incorrect code.  (e.g. v := v+1 or ++v where v is a
+global 4-byte value.)
+
+27. The purge call to remove an included file from memory was not working
+correctly.
+
+(Jawaid Bazyar)
+
+28. Casting an l-value is not legal, but the compiler did not flag an error.
+
+(Marc Wolfgram, Doug Gwyn)
+
+29.  Macro stringization of a string produced a garbage result.
+
+(D.Kopper)
+
+30.  A conditional jump based on a load of a signed character could be evaluated
+incorrectly.
+
+31.  In several places, particularly in the .CONSOLE standard I/O routines, the
+libraries used absolute addressing when long addressing should have been used,
+or when the databank register should have been set to K.  These problems could
+cause loads and stores or loss of character output with the large memory model.
+
+(Marsha J, John Joganic, et. al.)
+
+32.  The library routine that sets bank zero memory to zero trashes the data
+register.
+
+(GSPlusDiz)
+
+33.  gets() does not write a terminating null character if the return key is
+pressed right away.
+
+(Jawaid Bazyar)
+
+34.  C programs hang when input is read through standard in and standard in
+is redirected from a file using a shell command.
+
+(Jawaid Bazyar)
+
+35.  sys_nerr is 6; it should be 11.
+
+(Doug Gwynn, Joe Walters)
+
+36.  When a single code segment exceeds 32K, the compiler could loose track of
+the correct length for an object file.
+
+37.  In some cases, a conditional branch based on the result of a divide or add
+could fail.
