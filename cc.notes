@@ -56,11 +56,13 @@ may be invoked as
 
 5.  Universal character names (UCNs) within string literals or character constants can now designate any valid Unicode code point, including ASCII characters or control characters.
 
-6. (C23 modes only) The validity of UCNs within identifiers is now defined based on the XID_Start and XID_Continue Unicode properties.
+6.  (C23 modes only) The validity of UCNs within identifiers is now defined based on the XID_Start and XID_Continue Unicode properties.
 
-7. Attribute specifiers of the form [[ /*...*/ ]] may appear in certain places in declarations and statements, declaring attributes that appertain to various syntactic elements.  ORCA/C currently ignores all attributes.
+7.  Attribute specifiers of the form [[ /*...*/ ]] may appear in certain places in declarations and statements, declaring attributes that appertain to various syntactic elements.  ORCA/C currently ignores all attributes.
 
-8. Labels are no longer restricted to appearing only before statements.  They can now appear before declarations (within a function body) or immediately before the closing } of a compound statement.
+8.  Labels are no longer restricted to appearing only before statements.  They can now appear before declarations (within a function body) or immediately before the closing } of a compound statement.
+
+9.  Character constants can now have the u8 prefix, indicating UTF-8 encoding.  Such character constants have the type unsigned char.  Unless designated by an octal or hexadecimal escape sequence, the character specified by a u8-prefixed character constant must be one that can be represented by a single UTF-8 code unit, i.e. a character within the 7-bit ASCII character set.
 
 Library Updates
 ---------------

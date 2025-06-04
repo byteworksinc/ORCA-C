@@ -824,6 +824,7 @@ if list or (numErr <> 0) then begin
         192: msg := @'an attribute specifier cannot be used here';
         193: msg := @'invalid standard attribute name';
         194: msg := @'unbalanced '')'', ''}'', or '']''';
+        195: msg := @'character not representable in one code unit';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
@@ -5312,8 +5313,12 @@ var
          cnt := cnt + 1;
       if charStrPrefix = prefix_none then
          result := (result << 8) | EscapeCh
-      else
+      else begin
          result := EscapeCh;
+         if (cStd >= c23) or (charStrPrefix = prefix_u8) then
+            if cnt > 1 then
+               Error(2);
+         end; {else}
       end; {while}
    doingStringOrCharacter := false;
    
@@ -5339,6 +5344,17 @@ var
          token.ival := long(result).lsw;
          end; {else}
       end {if}
+   else if charStrPrefix = prefix_u8 then begin
+      token.kind := ucharconst;
+      token.class := intConstant;
+      if octHexEscape then
+         token.ival := long(result).lsw
+      else begin
+         token.ival := long(result).lsw & $007f;
+         if (result & $ffffff80) <> 0 then
+            Error(195);
+         end; {else}
+      end {else if}
    else if charStrPrefix = prefix_u16 then begin
       token.kind := ushortconst;
       token.class := intConstant;
@@ -5347,6 +5363,9 @@ var
       else begin
          UTF16Encode(result, utf16);
          token.ival := utf16.codeUnits[1];
+         if cStd >= c23 then
+            if utf16.length <> 1 then
+               Error(195);
          end; {else}
       end {else if}
    else if charStrPrefix = prefix_U32 then begin
@@ -5970,7 +5989,10 @@ case charKinds[ord(ch)] of
             end; {if}
          end {if}
       else if i = 2 then
-         if charKinds[ord(ch)] = ch_string then
+         if (charKinds[ord(ch)] = ch_string)
+            or ((charKinds[ord(ch)] = ch_char)
+               and (((cStd >= c23) or not strictMode)))
+            then
             if workString = 'u8' then begin
                charStrPrefix := prefix_u8;
                goto 6;
