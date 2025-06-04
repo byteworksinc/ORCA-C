@@ -64,6 +64,20 @@ may be invoked as
 
 9.  Character constants can now have the u8 prefix, indicating UTF-8 encoding.  Such character constants have the type unsigned char.  Unless designated by an octal or hexadecimal escape sequence, the character specified by a u8-prefixed character constant must be one that can be represented by a single UTF-8 code unit, i.e. a character within the 7-bit ASCII character set.
 
+10. The #elifdef and #elifndef preprocessor directives are now supported:
+
+   #elifdef identifier
+   #elifndef identifier
+
+The first is equivalent to
+
+   #elif defined identifier
+
+and the second is equivalent to
+
+   #elif !defined identifier
+
+
 Library Updates
 ---------------
 

@@ -825,6 +825,7 @@ if list or (numErr <> 0) then begin
         193: msg := @'invalid standard attribute name';
         194: msg := @'unbalanced '')'', ''}'', or '']''';
         195: msg := @'character not representable in one code unit';
+        196: msg := @'#elif, #elifdef, or #elifndef after #else';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
@@ -3067,6 +3068,8 @@ var
    begin {DoElif}
    ip := ifList;
    if (ip <> nil) and (ip^.theFile = fileList) then begin
+      if ip^.elseFound then             {check for elif after else}
+         Error(196);
                                         {decide if we should be skipping}
       tSkipping := ip^.status <> skippingToElse;
       if tSkipping then
@@ -3086,6 +3089,43 @@ var
    else
       Error(20);
    end; {DoElif}
+
+
+   procedure DoElifdef (trueCondition: boolean);
+ 
+   { #elifdef expression                                         }
+   { #elifndef expression                                        }
+   {                                                             }
+   { parameter:                                                  }
+   {     trueCondition - true for elifdef, false for elifndef    }
+ 
+   var
+      ip: ifPtr;                        {temp; for efficiency}
+      macroDefined: boolean;            {is the macro defined?}
+
+   begin {DoElifdef}
+   ip := ifList;
+   if (ip <> nil) and (ip^.theFile = fileList) then begin
+      if ip^.elseFound then             {check for elifdef/elifndef after else}
+         Error(196);
+                                        {decide if we should be skipping}
+      tSkipping := ip^.status <> skippingToElse;
+      if tSkipping then
+         ip^.status := skippingToEndif
+      else begin
+         macroDefined := Defined;       {check if macro is defined}
+         if token.kind <> eolsy then    {check for extra stuff on the line}
+            Error(11);
+         if macroDefined <> trueCondition then
+            ip^.status := skippingToElse
+         else
+            ip^.status := processing;
+         tSkipping := ip^.status <> processing; {decide if we should be skipping}
+         end; {else}
+      end
+   else
+      Error(20);
+   end; {DoElifdef}
 
 
    procedure DoElse;
@@ -3473,6 +3513,18 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                else if token.name^ = 'elif' then begin
                   DoElif;
                   goto 2;
+                  end {else if}
+               else if token.name^ = 'elifdef' then begin
+                  if (cStd >= c23) or not strictMode then begin
+                     DoElifdef(true);
+                     goto 2;
+                     end; {if}
+                  end {else if}
+               else if token.name^ = 'elifndef' then begin
+                  if (cStd >= c23) or not strictMode then begin
+                     DoElifdef(false);
+                     goto 2;
+                     end; {if}
                   end {else if}
                else if token.name^ = 'error' then begin
                   if tskipping then goto 2;

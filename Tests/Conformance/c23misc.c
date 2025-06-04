@@ -27,6 +27,52 @@ int main(void) {
         if (!_Generic(u8'?', unsigned char: 1))
                 goto Fail;
 
+        // #elifdef and #elifndef
+#define m1
+        int y = 0;
+#if 0
+        y = 1;
+#elifdef m1
+        y = 2;
+#elifndef m2
+        y = 3;
+#else
+        y = 4;
+#endif
+        if (y != 2)
+                goto Fail;
+
+        y = 0;
+#if 0
+        y = 1;
+#elifdef m2
+        y = 2;
+#else
+        y = 3;
+#endif
+        if (y != 3)
+                goto Fail;
+
+        y = 0;
+#if 0
+        y = 1;
+#elifndef m1
+        y = 2;
+#else
+        y = 3;
+#endif
+        if (y != 3)
+                goto Fail;
+
+        y = 0;
+#if 0
+        y = 1;
+#elifndef m2
+        y = 2;
+#endif
+        if (y != 2)
+                goto Fail;
+
         printf ("Passed Conformance Test c99misc\n");
         return 0;
 
