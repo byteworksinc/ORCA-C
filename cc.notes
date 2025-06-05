@@ -38,7 +38,7 @@ The following C23 language features are currently implemented:
    _Decimal32
    _Decimal64
 
-Of these, alignas, alignof, bool, static_assert, and thread_local are equivalent to the existing _Alignas, _Alignof, _Bool, _Static_assert, and _Thread_local keywords, respectively.  The other new C23 keywords are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.
+Of these, alignas, alignof, bool, static_assert, and thread_local are equivalent to the existing _Alignas, _Alignof, _Bool, _Static_assert, and _Thread_local keywords, respectively.  true and false are described below.  The other new C23 keywords are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.
 
 2.  (C23 modes only) Trigraphs are no longer supported, and character sequences that would have been interpreted as trigraphs can now be used normally, e.g. within string literals.
 
@@ -78,6 +78,8 @@ The first is equivalent to
 and the second is equivalent to
 
    #elif !defined identifier
+
+11. (C23 modes only) The new keywords true and false denote predefined constants with type bool and values 1 and 0, respectively.  If true is used in a preprocessor expression, it is replaced with 1, unlike other identifiers or keywords (including false) that are replaced with 0.  This means that true and false can effectively be used as boolean constants within preprocessor expressions, as well as in regular C code.
 
 
 Library Updates

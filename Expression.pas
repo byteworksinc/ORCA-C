@@ -971,9 +971,9 @@ var
    sp^.right := nil;
    stack := sp;
 
-   {handle the preprocessor 'defined' function}
    if kind = preprocessorExpression then
       if token.name^ = 'defined' then begin
+         {handle the preprocessor 'defined' function}
          expandMacros := false;
          NextToken;
          sp^.token.kind := intconst;
@@ -996,7 +996,16 @@ var
             end; {else}
          expandMacros := true;
          goto 1;
-         end; {if}
+         end {if}
+      else if (cStd >= c23) and (token.name^ = 'true') then begin
+         {handle 'true' in the preprocessor for C23}
+         stack^.token.class := longlongConstant;
+         stack^.token.kind := longlongconst;
+         stack^.token.qval := longlong1;
+         stack^.id := nil;
+         NextToken;
+         goto 1;
+         end;
 
    {check for illegal use}
    id := FindSymbol(token, variableSpace, false, true);
@@ -2240,6 +2249,21 @@ if token.kind in startExpression then begin
             DoOperand
          else begin
             {handle a constant operand}
+            case token.kind of
+               truesy: begin
+                  token.kind := boolconst;
+                  token.class := intConstant;
+                  token.ival := 1;
+                  end; {case truesy}
+               
+               falsesy: begin
+                  token.kind := boolconst;
+                  token.class := intConstant;
+                  token.ival := 0;
+                  end; {case falsesy}
+
+               otherwise: ;
+               end; {case}
             new(sp);
             sp^.token := token;
             sp^.next := stack;
@@ -5072,7 +5096,7 @@ begin {InitExpression}
 startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
               ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
               charconst,scharconst,ucharconst,shortconst,ushortconst,boolconst,
-              stringconst];
+              stringconst,truesy,falsesy];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
               plusplusop,minusminusop,typedef,_Alignofsy,alignofsy,_Genericsy];
