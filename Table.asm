@@ -286,7 +286,8 @@ charSym  start                          single character symbols
 !                                       constants
          enum  (intconst,uintconst,longconst,ulongconst,longlongconst)
          enum  (ulonglongconst,floatconst,doubleconst,extendedconst,compconst)
-         enum  (charconst,scharconst,ucharconst,ushortconst,stringconst)
+         enum  (charconst,scharconst,ucharconst,shortconst,ushortconst)
+         enum  (boolconst,stringconst)
 !                                       reserved words
          enum  (_Alignassy,_Alignofsy,_Atomicsy,_BitIntsy,_Boolsy)
          enum  (_Complexsy,_Decimal128sy,_Decimal32sy,_Decimal64sy,_Genericsy)
@@ -372,7 +373,9 @@ icp      start                          in-coming priority for expression
          dc    i1'200'                  charconst
          dc    i1'200'                  scharconst
          dc    i1'200'                  ucharconst
+         dc    i1'200'                  shortconst
          dc    i1'200'                  ushortconst
+         dc    i1'200'                  boolconst
          dc    i1'200'                  stringconst
          dc    i1'200'                  _Alignassy
          dc    i1'16'                   _Alignofsy
@@ -567,7 +570,9 @@ isp      start                          in stack priority for expression
          dc    i1'0'                    charconst
          dc    i1'0'                    scharconst
          dc    i1'0'                    ucharconst
+         dc    i1'0'                    shortconst
          dc    i1'0'                    ushortconst
+         dc    i1'0'                    boolconst
          dc    i1'0'                    stringconst
          dc    i1'0'                    _Alignassy
          dc    i1'16'                   _Alignofsy
@@ -1048,7 +1053,8 @@ wordHash start                          reserved word hash table
 !                                       constants
          enum  (intconst,uintconst,longconst,ulongconst,longlongconst)
          enum  (ulonglongconst,floatconst,doubleconst,extendedconst,compconst)
-         enum  (charconst,scharconst,ucharconst,ushortconst,stringconst)
+         enum  (charconst,scharconst,ucharconst,shortconst,ushortconst)
+         enum  (boolconst,stringconst)
 !                                       reserved words
          enum  (_Alignassy,_Alignofsy,_Atomicsy,_BitIntsy,_Boolsy)
          enum  (_Complexsy,_Decimal128sy,_Decimal32sy,_Decimal64sy,_Genericsy)

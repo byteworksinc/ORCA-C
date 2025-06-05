@@ -180,7 +180,8 @@ type
                                         { They are created only by casts.    }
                intconst,uintconst,longconst,ulongconst,longlongconst,
                ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
-               charconst,scharconst,ucharconst,ushortconst,stringconst,
+               charconst,scharconst,ucharconst,shortconst,ushortconst,
+               boolconst,stringconst,
                                         {reserved words}
                _Alignassy,_Alignofsy,_Atomicsy,_BitIntsy,_Boolsy,
                _Complexsy,_Decimal128sy,_Decimal32sy,_Decimal64sy,_Genericsy,

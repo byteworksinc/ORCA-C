@@ -14,9 +14,12 @@
         default: 200            \
         )
 
-int main(void) {
-        int i;
+int i = 0;
 
+#define check_expression_type(T) _Generic((T)i, T: 1)
+#define check_constant_type(T)   _Generic((T)0, T: 1)
+
+int main(void) {
         if (g(12345) != 12346)
                 goto Fail;
 
@@ -37,6 +40,39 @@ int main(void) {
 
         if (g(123u) != 200)
                 goto Fail;
+
+        check_expression_type(_Bool);
+        check_expression_type(char);
+        check_expression_type(signed char);
+        check_expression_type(unsigned char);
+        check_expression_type(short);
+        check_expression_type(unsigned short);
+        check_expression_type(int);
+        check_expression_type(unsigned int);
+        check_expression_type(long);
+        check_expression_type(unsigned long);
+        check_expression_type(long long);
+        check_expression_type(unsigned long long);
+        check_expression_type(float);
+        check_expression_type(double);
+        check_expression_type(long double);
+
+        check_constant_type(_Bool);
+        check_constant_type(char);
+        check_constant_type(signed char);
+        check_constant_type(unsigned char);
+        check_constant_type(short);
+        check_constant_type(unsigned short);
+        check_constant_type(int);
+        check_constant_type(unsigned int);
+        check_constant_type(long);
+        check_constant_type(unsigned long);
+        check_constant_type(long long);
+        check_constant_type(unsigned long long);
+        check_constant_type(float);
+        check_constant_type(double);
+        check_constant_type(long double);
+        check_constant_type(void*);
 
         printf ("Passed Conformance Test c11generic\n");
         return 0;

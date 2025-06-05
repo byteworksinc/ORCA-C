@@ -917,6 +917,8 @@ case token.kind of
    charconst,
    scharconst,
    ucharconst,
+   shortconst,
+   boolconst,
    intconst:         write(token.ival:1);
 
    ushortconst,
@@ -3236,13 +3238,15 @@ var
    begin {DoFloat}
    FlagPragmas(p_float);
    NextToken;
-   if token.kind in [intconst,uintconst,ushortconst] then begin
+   if token.kind in [intconst,uintconst,shortconst,ushortconst,boolconst] then
+      begin
       floatCard := token.ival;
       NextToken;
       end {if}
    else
       Error(18);
-   if token.kind in [intconst,uintconst,ushortconst] then begin
+   if token.kind in [intconst,uintconst,shortconst,ushortconst,boolconst] then
+      begin
       floatSlot := token.ival;
       NextToken;
       end {if}
@@ -3321,7 +3325,8 @@ var
          NextToken;
          isNegative := true;
          end; {else if}
-      if token.kind in [intconst,uintconst,ushortconst] then begin
+      if token.kind in [intconst,uintconst,shortconst,ushortconst,boolconst]
+         then begin
 	 value := token.ival;
 	 NextToken;
 	 end {if}

@@ -2087,8 +2087,8 @@ var
          tree := tree^.left;
          if tree^.token.kind = plusch then begin
             rtree := tree^.right;
-            if rtree^.token.kind in
-               [intconst,uintconst,ushortconst,charconst,scharconst,ucharconst] then
+            if rtree^.token.kind in [intconst,uintconst,shortconst,ushortconst,
+               charconst,scharconst,ucharconst,boolconst] then
                size := rtree^.token.ival
             else if rtree^.token.kind in [longconst,ulongconst] then
                size := rtree^.token.lval
@@ -2332,10 +2332,11 @@ var
             operator := tree^.token.kind;
             while operator in [plusch,minusch] do begin
                with tree^.right^.token do
-                  if kind in [intConst,uintconst,ushortconst,longConst,
-                     ulongconst,longlongConst,ulonglongconst,charconst,
-                     scharconst,ucharconst] then begin
-                     if kind in [intConst,charconst,scharconst,ucharconst] then
+                  if kind in [intConst,uintconst,shortconst,ushortconst,
+                     longConst,ulongconst,longlongConst,ulonglongconst,
+                     charconst,scharconst,ucharconst,boolconst] then begin
+                     if kind in [intConst,charconst,scharconst,
+                        ucharconst,shortconst,boolconst] then
                         offSet2 := ival
                      else if kind in [uintConst,ushortconst] then
                         offset2 := ival & $0000ffff
@@ -4069,8 +4070,8 @@ if isFunction then begin
          with fnType^ do begin
             NextToken;
             Match(lparench,13);
-            if token.kind in
-               [intconst,uintconst,ushortconst,charconst,scharconst,ucharconst]
+            if token.kind in [intconst,uintconst,shortconst,ushortconst,
+               charconst,scharconst,ucharconst,boolconst]
                then begin
                toolNum := token.ival;
                NextToken;
@@ -4082,8 +4083,8 @@ if isFunction then begin
                dispatcher := token.lval;
                NextToken;
                end {if}
-            else if token.kind in
-               [intconst,uintconst,ushortconst,charconst,scharconst,ucharconst]
+            else if token.kind in [intconst,uintconst,shortconst,ushortconst,
+               charconst,scharconst,ucharconst,boolconst]
                then begin
                dispatcher := token.ival;
                NextToken;

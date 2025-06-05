@@ -6,7 +6,9 @@ These release notes document the changes between ORCA/C 2.2.1 and ORCA/C 2.3.0. 
 
 -- Change List --------------------------------------------------------------
 
-2.3.0       1.  New C23 language and library features added.  See
+2.3.0       1.  Bugs squashed.  See bug notes, below.
+
+            2.  New C23 language and library features added.  See
                 "New Language Features" and "Library Updates," below.
 
 -- Compiler changes introduced in C 2.3.0 -----------------------------------
@@ -98,3 +100,7 @@ An invocation of this macro indicates that the control-flow path leading to it i
 void va_start(va_list ap, ...);
 
 Only the va_list argument is required.  The previously-required second argument giving the name of the last fixed parameter is no longer required and is ignored if present.
+
+-- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
+
+1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
