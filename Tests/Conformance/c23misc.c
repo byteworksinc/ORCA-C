@@ -73,9 +73,9 @@ int main(void) {
         if (y != 2)
                 goto Fail;
 
-        printf ("Passed Conformance Test c99misc\n");
+        printf ("Passed Conformance Test c23misc\n");
         return 0;
 
 Fail:
-        printf ("Failed Conformance Test c99misc\n");
+        printf ("Failed Conformance Test c23misc\n");
 }
