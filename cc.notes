@@ -106,3 +106,7 @@ Only the va_list argument is required.  The previously-required second argument 
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
+
+2. A spurious error could be reported if the definition of a function returning a function pointer did not include names for the parameters of the pointed-to function type, e.g.:
+
+   void (*f(void))(int, long) { /*...*/ }

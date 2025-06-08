@@ -1659,8 +1659,10 @@ var
                         wp^.parameter := protoVariable;
                         wp^.parameterType := protoType;
                         if protoVariable <> nil then begin
-                           protoVariable^.pnext := lastParameter;
-                           lastParameter := protoVariable;
+                           if not madeFunctionTable then begin
+                              protoVariable^.pnext := lastParameter;
+                              lastParameter := protoVariable;
+                              end; {if}
                            end; {if}
                         end; {if}
                      if token.kind = commach then begin
@@ -1713,8 +1715,10 @@ var
                      pvar := NewSymbol(token.name, nil, ident, variableSpace,
                         declared, false);
                      pvar^.storage := parameter;
-                     pvar^.pnext := lastParameter;
-                     lastParameter := pvar;
+                     if not madeFunctionTable then begin
+                        pvar^.pnext := lastParameter;
+                        lastParameter := pvar;
+                        end; {if}
                      numberOfParameters := numberOfParameters+1;
                      pvar^.bitdisp := numberOfParameters;
                      NextToken;
