@@ -197,7 +197,6 @@ var
                                         {parameter processing variables}
                                         {------------------------------}
    lastParameter: identPtr;             {next parameter to process}
-   numberOfParameters: integer;         {number of indeclared parameters}
    pfunc: identPtr;                     {func. for which parms are being defined}
    protoType: typePtr;                  {type from a parameter list}
    protoVariable: identPtr;             {variable from a parameter list}
@@ -1484,7 +1483,8 @@ var
       ttPtr: typeDefPtr;                {work pointer}
       parencount: integer;              {for skipping in parm list}
       gotStatic: boolean;               {got 'static' in array declarator?}
- 
+      numberOfParameters: integer;      {number of K&R-style parameters}
+
                                         {variables used to preserve states}
                                         { across recursive calls          }
                                         {---------------------------------}
@@ -1864,7 +1864,6 @@ if checkParms then begin                {check for parameter type conflicts}
       if doingParameters then begin
          if itype = nil then begin
             itype := tPtr;
-            numberOfParameters := numberOfParameters-1;
             if pfunc^.itype^.prototyped then begin
                pfunc^.itype^.overrideKR := true;
                p1 := nil;
@@ -4145,12 +4144,11 @@ if isFunction then begin
             Error(27);
             NextToken;
             end; {else}
-      if numberOfParameters <> 0 then   {default K&R parm type is int}
-         begin
+      if not fnType^.prototyped or fnType^.overrideKR then begin
          tlp := lp;
          while tlp <> nil do begin
             if tlp^.itype = nil then begin
-               tlp^.itype := intPtr;
+               tlp^.itype := intPtr;    {default K&R parm type is int}
                if (lint & lintC99Syntax) <> 0 then
                   if (lint & lintNotPrototyped) = 0 then
                      Error(147);        {C99+ require K&R params to be declared}
