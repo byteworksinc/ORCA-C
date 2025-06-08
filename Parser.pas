@@ -1855,9 +1855,17 @@ while typeStack <> nil do begin         {reverse the type stack}
 if pascalsy in declSpecifiers.declarationModifiers then
    tptr := MakePascalType(tptr);
 
-if doingParameters then                 {adjust array parameters to pointers}
+if doingParameters then                 {adjust array/fn parameters to pointers}
    if tPtr^.kind = arrayType then
-      tPtr := MakePointerTo(tPtr^.aType);
+      tPtr := MakePointerTo(tPtr^.aType)
+   else if tPtr^.kind = functionType then begin
+      tPtr := MakePointerTo(tPtr);
+      isFunction := false;
+      if madeFunctionTable then begin
+         PopTable;
+         madeFunctionTable := false;
+         end;
+      end; {else if}
 
 if checkParms then begin                {check for parameter type conflicts}
    with variable^ do begin

@@ -110,3 +110,5 @@ Only the va_list argument is required.  The previously-required second argument 
 2. A spurious error could be reported if the definition of a function returning a function pointer did not include names for the parameters of the pointed-to function type, e.g.:
 
    void (*f(void))(int, long) { /*...*/ }
+
+3. Function parameters can now be declared with function types, which get automatically adjusted to function pointers.
