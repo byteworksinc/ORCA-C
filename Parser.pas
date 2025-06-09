@@ -1493,6 +1493,31 @@ var
       lSuppressMacroExpansions: boolean;{local copy of suppressMacroExpansions}
       ldeclaredTagOrEnumConst: boolean; {local copy of declaredTagOrEnumConst}
 
+
+      procedure MakeUnnamedParameter;
+      
+      { make a variable for an unnamed parameter in a prototype }
+      
+      begin {MakeUnnamedParameter}
+      pvar := pointer(Calloc(sizeof(identRecord)));
+      {pvar^.next := nil;}
+      {pvar^.saved := 0;}
+      pvar^.name := @'?';
+      pvar^.itype := tPtr;
+      {pvar^.disp := 0;}
+      {pvar^.bitDisp := 0;}
+      {pvar^.bitsize := 0;}
+      {pvar^.initialized := false;}
+      {pvar^.iPtr := nil;}
+      {pvar^.isForwardDeclared := false;}
+      pvar^.class := autosy;
+      pvar^.storage := parameter;
+      variable := pvar;
+      lastWasIdentifier := true;
+      newName := nil;
+      unnamedParm := true;
+      end; {MakeUnnamedParameter}
+
    begin {StackDeclarations}
    lastWasIdentifier := false;          {used to see if the declaration is a fn}
    cpList := nil;
@@ -1559,35 +1584,28 @@ var
          StackDeclarations;
          end;
 
-      lparench: begin                   {handle '(' 'declarator' ')'}
+      lparench: begin
          NextToken;
-         isPtr := token.kind = asteriskch;
-         StackDeclarations;
-         Match(rparench,12);
-         if isPtr then
-            lastWasIdentifier := false;
+         if doingPrototypes
+            and (token.kind in prototypeParameterDeclarationStart)
+            then begin                  { unnamed param declared with fn type }
+            PutBackToken(token, false, true);
+            token.kind := lparench;
+            token.class := reservedSymbol;
+            MakeUnnamedParameter;
+            end {if}
+         else begin                     {handle '(' 'declarator' ')'}
+            isPtr := token.kind = asteriskch;
+            StackDeclarations;
+            Match(rparench,12);
+            if isPtr then
+               lastWasIdentifier := false;
+            end; {else}
          end;
 
       otherwise:
-         if doingPrototypes then begin  {allow for unnamed parameters}
-            pvar := pointer(Calloc(sizeof(identRecord)));
-            {pvar^.next := nil;}
-            {pvar^.saved := 0;}
-            pvar^.name := @'?';
-            pvar^.itype := tPtr;
-            {pvar^.disp := 0;}
-            {pvar^.bitDisp := 0;}
-            {pvar^.bitsize := 0;}
-            {pvar^.initialized := false;}
-            {pvar^.iPtr := nil;}
-            {pvar^.isForwardDeclared := false;}
-            pvar^.class := autosy;
-            pvar^.storage := parameter;
-            variable := pvar;
-            lastWasIdentifier := true;
-            newName := nil;
-            unnamedParm := true;
-            end; {if}
+         if doingPrototypes then        {allow for unnamed parameters}
+            MakeUnnamedParameter;
 
       end; {case}
 
