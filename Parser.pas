@@ -1518,6 +1518,23 @@ var
       unnamedParm := true;
       end; {MakeUnnamedParameter}
 
+
+      function PeekToken: tokenEnum;
+      
+      { peek at next token and get its kind                     }
+
+      var
+         tToken: tokenType;             {temporary copy of current token}
+
+      begin {PeekToken}
+      tToken := token;
+      NextToken;
+      PeekToken := token.kind;
+      PutBackToken(token, false, true);
+      token := tToken;
+      end; {PeekToken}
+
+
    begin {StackDeclarations}
    lastWasIdentifier := false;          {used to see if the declaration is a fn}
    cpList := nil;
@@ -1588,6 +1605,7 @@ var
          NextToken;
          if doingPrototypes
             and (token.kind in prototypeParameterDeclarationStart)
+            and ((token.kind <> lbrackch) or (PeekToken = lbrackch))
             then begin                  { unnamed param declared with fn type }
             PutBackToken(token, false, true);
             token.kind := lparench;
