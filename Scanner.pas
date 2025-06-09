@@ -711,7 +711,7 @@ if list or (numErr <> 0) then begin
          79: msg := @'illegal operand for the indirection operator';
          80: msg := @'the selection operator must be used on a structure or union';
          81: msg := @'the selected field does not exist in the structure or union';
-         82: msg := @'''('', ''['' or ''*'' expected';
+        {82: msg := @'''('', ''['' or ''*'' expected';}
          83: msg := @'string constant expected';
          84: msg := @'''dynamic'' expected';
          85: msg := @'the number of parameters does not agree with the prototype';

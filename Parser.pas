@@ -4422,43 +4422,29 @@ var
       var
          pcount: integer;               {paren counter}
          tp: typePtr;                   {work pointer}
+         nextKind: tokenEnum;           {lookahead token kind}
 
       begin {NonEmptyAbstractDeclarator}
       if token.kind = lparench then begin
          NextToken;
-         if token.kind = rparench then begin
-
-            {create a function type}
-            tp := pointer(Calloc(sizeof(typeRecord)));
-            {tp^.size := 0;}
-            {tp^.saveDisp := 0;}
-            {tp^.qualifiers := [];}
-            tp^.kind := functionType;
-            {tp^.varargs := false;}
-            {tp^.prototyped := false;}
-            {tp^.overrideKR := false;}
-            {tp^.parameterList := nil;}
-            {tp^.isPascal := false;}
-            {tp^.toolNum := 0;}
-            {tp^.dispatcher := 0;}
-            tp^.fType := Unqualify(tl);
-            tl := tp;
+         if token.kind = lbrackch then begin
+            {check for a function parameter starting with an attribute}
             NextToken;
-            AttributeSpecifierSequence;
+            nextKind := token.kind;
+            PutBackToken(token, false, true);
+            token.kind := lbrackch;
+            token.class := reservedSymbol;
+            end; {if}
+         if (token.kind in [lparench,asteriskch])
+            or ((token.kind = lbrackch) and (nextKind <> lbrackch)) then begin
+            NonEmptyAbstractDeclarator;
+            Match(rparench,12);
             end {if}
          else begin
-
-            {handle a parenthesized type}
-            if not (token.kind in [lparench,asteriskch,lbrackch]) then
-               begin
-               Error(82);
-               while not (token.kind in
-                  [eofsy,lparench,asteriskch,lbrackch,rparench]) do
-                  NextToken;
-               end; {if}
-            if token.kind in [lparench,asteriskch,lbrackch] then
-               NonEmptyAbstractDeclarator;
-            Match(rparench,12);
+            {this must be a function abstract declarator (handled below)}
+            PutBackToken(token, false, true);
+            token.kind := lparench;
+            token.class := reservedSymbol;
             end; {else}
          end {if token.kind = lparench}
       else if token.kind = asteriskch then begin
