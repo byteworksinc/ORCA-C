@@ -112,3 +112,5 @@ Only the va_list argument is required.  The previously-required second argument 
    void (*f(void))(int, long) { /*...*/ }
 
 3. Function parameters can now be declared with function types, which get automatically adjusted to function pointers.
+
+4. If a prototype parameter list appeared as part of a type name (e.g. when type casting a function pointer), it would be ignored and treated as if no prototype was provided.

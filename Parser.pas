@@ -4433,14 +4433,15 @@ var
       {                                                         }
       { nonempty-abstract-declarator:                           }
       {    ( nonempty-abstract-declarator )                     }
-      {    abstract-declarator ( )                              }
+      {    abstract-declarator ( parameter-type-list OPT )      }
       {    abstract-declarator [ expression OPT ]               }
       {    * abstract-declarator                                }
 
       var
-         pcount: integer;               {paren counter}
          tp: typePtr;                   {work pointer}
          nextKind: tokenEnum;           {lookahead token kind}
+         done: boolean;                 {for loop termination}
+         wp: parameterPtr;              {used to build prototype var list}
 
       begin {NonEmptyAbstractDeclarator}
       if token.kind = lparench then begin
@@ -4515,15 +4516,6 @@ var
 
       if token.kind = lparench then begin
          {create a function type}
-         NextToken;
-         pcount := 1;
-         while (token.kind <> eofsy) and (pcount <> 0) do begin
-            if token.kind = rparench then
-               pcount := pcount-1
-            else if token.kind = lparench then
-               pcount := pcount+1;
-            NextToken;
-            end; {while}
          tp := pointer(Calloc(sizeof(typeRecord)));
          {tp^.size := 0;}
          {tp.saveDisp := 0;}
@@ -4537,7 +4529,48 @@ var
          {tp^.toolNum := 0;}
          {tp^.dispatcher := 0;}
          tp^.fType := Unqualify(tl);
+
+         NextToken;
+         if token.kind in prototypeParameterDeclarationStart then begin
+            {handle a prototype variable list}
+            PushTable;
+            done := false;
+            with tp^ do begin
+               prototyped := true;      {it is prototyped}
+               repeat                   {collect the declarations}
+                  if token.kind in prototypeParameterDeclarationStart then begin
+                     DoDeclaration(true);
+                     if protoType <> nil then begin
+                        wp := pointer(Malloc(sizeof(parameterRecord)));
+                        wp^.next := parameterList;
+                        parameterList := wp;
+                        wp^.parameter := protoVariable;
+                        wp^.parameterType := protoType;
+                        end; {if}
+                     if token.kind = commach then begin
+                        NextToken;
+                        if token.kind = dotdotdotsy then begin
+                           NextToken;
+                           varargs := true;
+                           done := true;
+                           end; {if}
+                        end {if}
+                     else
+                        done := true;
+                     end {if}
+                  else begin
+                     Error(26);
+                     done := true;
+                     end; {else}
+               until done;
+               end; {with}
+            PopTable;
+            end {if prototype}
+         else
+            tp^.prototyped := false;
+
          tl := tp;
+         Match(rparench, 12);
          AttributeSpecifierSequence;
          end; {if}
       end; {NonEmptyAbstractDeclarator}
