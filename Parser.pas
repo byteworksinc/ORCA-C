@@ -3071,6 +3071,8 @@ var
    
    isLongLong: boolean;                 {is this a "long long" type?}
    tHaveAttributeSpecifier: boolean;    {local copy of haveAttributeSpecifier}
+   
+   lCodeGeneration: boolean;            {local copy of codeGeneration}
  
    procedure FieldList (tp: typePtr; kind: typeKind);
  
@@ -3728,7 +3730,28 @@ while token.kind in allowedTokens do begin
             myDeclarationModifiers := myDeclarationModifiers + [unionsy];
          typeDone := true;
          end;
- 
+
+      typeofsy,                         {typeof}
+      typeof_unqualsy: begin            {typeof_unqual}
+         ttoken := token;
+         NextToken;
+         Match(lparench, 13);
+         if token.kind in specifierQualifierListElement then
+            myTypeSpec := TypeName
+         else begin
+            lCodeGeneration := codeGeneration;
+            codeGeneration := false;
+            Expression(normalExpression, [rparench]);
+            {TODO error on bitfield}
+            codeGeneration := lCodeGeneration and (numErrors = 0);
+            myTypeSpec := GetFullExpressionType;
+            end; {else}
+         if ttoken.kind = typeof_unqualsy then
+            myTypeSpec := Unqualify(myTypeSpec);
+         typeDone := true;
+         Match(rparench, 12);
+         end;
+
       typedef: begin                    {named type definition}
          if (typeSpecifiers = []) and not typeDone then begin
             myTypeSpec := token.symbolPtr^.itype;
@@ -5054,7 +5077,8 @@ anonNumber := 0;                        {no anonymous structs/unions yet}
 typeSpecifierStart := 
    [voidsy,charsy,shortsy,intsy,longsy,floatsy,doublesy,signedsy,unsignedsy,
     extendedsy,compsy,_Boolsy,boolsy,_Complexsy,_Imaginarysy,_Atomicsy,
-    _Decimal32sy,_Decimal64sy,_Decimal128sy,structsy,unionsy,enumsy,typedef];
+    _Decimal32sy,_Decimal64sy,_Decimal128sy,structsy,unionsy,enumsy,typeofsy,
+    typeof_unqualsy,typedef];
 
 storageClassSpecifiers :=
    [typedefsy,externsy,staticsy,_Thread_localsy,thread_localsy,autosy,registersy];

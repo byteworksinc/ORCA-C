@@ -217,10 +217,19 @@ function UsualUnaryConversions: baseTypeEnum;
 { outputs:                                                      }
 {       expressionType - set to result type                     }
 
+
 procedure GetLLExpressionValue (var val: longlong);
 
 { get the value of the last integer constant expression as a    }
 { long long (whether it had long long type or not).             }
+
+
+function GetFullExpressionType: typePtr;
+
+{ Get the full type of the last expression.                     }
+{                                                               }
+{ This differs from just reading expressionType in that the     }
+{ types of string constants include their length.               }
 
 {---------------------------------------------------------------}
 
@@ -238,6 +247,7 @@ var
                                         {misc}
                                         {----}
    errorFound: boolean;                 {was there are error during generation?}
+   stringConstSize: integer;            {size of string constant}
 
 {-- Procedures imported from the parser ------------------------}
 
@@ -3873,6 +3883,7 @@ case tree^.token.kind of
    stringConst: begin
       GenS(pc_lca, tree^.token.sval);
       expressionType := StringType(tree^.token.prefix);
+      stringConstSize := tree^.token.sval^.length;
       end; {case stringConst}
 
    eqch: begin                          {=}
@@ -5052,6 +5063,7 @@ else begin                              {record the expression for an initialize
       else if tree^.token.kind = stringconst then begin
          expressionValue := ord4(tree^.token.sval);
          expressionType := StringType(tree^.token.prefix);
+         stringConstSize := tree^.token.sval^.length;
          isConstant := true;
          if kind in [arrayExpression,preprocessorExpression] then begin
             expressionType := intPtr;
@@ -5086,6 +5098,32 @@ begin {GetLLExpressionValue}
                val.hi := -1;
       end;
 end; {GetLLExpressionValue}
+
+
+function GetFullExpressionType{: typePtr};
+
+{ Get the full type of the last expression.                     }
+{                                                               }
+{ This differs from just reading expressionType in that the     }
+{ types of string constants include their length.               }
+
+var
+   stringType: typePtr;                 {type of a string constant}
+
+begin {GetFullExpressionType}
+if (expressionType = stringTypePtr)
+   or (expressionType = utf8StringTypePtr)
+   or (expressionType = utf16StringTypePtr)
+   or (expressionType = utf32StringTypePtr)
+   then begin
+   stringType := CopyType(expressionType);
+   stringType^.size := stringConstSize;
+   stringType^.elements := stringType^.size div stringType^.aType^.size;
+   GetFullExpressionType := stringType;
+   end {else}
+else
+   GetFullExpressionType := expressionType;
+end; {GetFullExpressionType}
 
 
 procedure InitExpression;

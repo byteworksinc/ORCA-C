@@ -185,6 +185,16 @@ function IsVoid (tp: typePtr): boolean;
 { Returns: True if the type is void, else false                 }
 
 
+function CopyType (tp: typePtr): typePtr;
+
+{ Make a new copy of a type, so it can be modified.             }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to copy                                          }
+{                                                               }
+{ Returns: The new copy of the type                             }
+
+
 function LabelToDisp (lab: integer): integer; extern;
 
 { convert a local label number to a stack frame displacement    }
@@ -2005,7 +2015,7 @@ else if tp^.kind = scalarType then
 end; {IsVoid}
 
 
-function CopyType (tp: typePtr): typePtr;
+function CopyType {tp: typePtr): typePtr};
 
 { Make a new copy of a type, so it can be modified.             }
 {                                                               }
