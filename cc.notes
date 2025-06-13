@@ -90,6 +90,28 @@ and the second is equivalent to
 
 These can appear wherever type specifiers are used, e.g. in declarations.  The forms with typeof specify either the type of the expression or the type designated by the type name.  The forms with typeof_unqual are similar, except that they will remove any qualifiers (e.g. const or volatile) from the type.
 
+13. (C23 modes only) Type inference is now supported in variable definitions.  This applies to declarations that meet all of the following requirements:
+
+- They contain the storage class specifier auto
+- They do not contain any type specifiers
+- They contain exactly one declarator, declaring one variable
+- The declarator is not a pointer, array, or function declarator
+- There is an initializer for the variable
+- The initializer is an expression, not enclosed in braces
+- There was no previous declaration of the variable in the same scope
+
+In declarations meeting these requirements, the type of the variable is inferred to be the type of the initializer expression, with array or function types converted to pointer types, any qualifiers from the type of the expression removed, and any type qualifiers that appear in the declaration added.
+
+In such declarations, auto effectively acts like a type specifier indicating that the type should be inferred, rather than as a storage class specifier.  Therefore, it may be used even in places where an auto storage class specifier would otherwise not be permitted, such as in declarations at file scope or declarations that contain other storage class specifiers.
+
+For example, the declaration
+
+   static auto x = 123L;
+
+declares the variable x with type long (because that is the type of 123L) and static storage class.
+
+Note that this can change the behavior of code written using the "implicit int" feature of C89/C90, where a declaration with no type specifiers would behave as if the type specifier int was included.  In the "c23compat" language mode, declarations that use auto with no type specifiers but do not meet all the other requirements above will still be processed using the "implicit int" rule.  In "c23" mode or when #pragma lint bit 6 is set, they will produce a lint message.
+
 
 Library Updates
 ---------------

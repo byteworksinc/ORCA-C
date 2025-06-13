@@ -386,6 +386,7 @@ type
      isForwardDeclared: boolean;        {does this var use a forward declared type?}
      class: tokenEnum;                  {storage class}
      used: boolean;                     {is this identifier used?}
+     underspecified: boolean;           {not yet fully specified (need initializer)?}
      case storage: storageType of
         stackFrame: (lln: integer;      {local label #}
                      clnext: identPtr); {next compound literal}

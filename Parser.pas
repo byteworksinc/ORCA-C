@@ -169,6 +169,7 @@ type
    declSpecifiersRecord = record
       storageClass: tokenEnum;          {storage class of the declaration}
       typeSpec: typePtr;                {type specifier}
+      inferType: boolean;               {should type be inferred?}
       declarationModifiers: tokenSet;   {all storage class specifiers, type }
                                         {qualifiers, function specifiers, & }
                                         {alignment specifiers in declaration}
@@ -1416,7 +1417,35 @@ end; {EndWhileStatement}
 
 {-- Type declarations ------------------------------------------}
 
-procedure Declarator(declSpecifiers: declSpecifiersRecord;
+procedure AbortTypeInference(var declSpecifiers: declSpecifiersRecord);
+
+{ Stop trying do to type inference using declaration specifiers }
+{                                                               }
+{ This is called in situations where the declaration specifiers }
+{ contained "auto" and initially appeared to be eligible for    }
+{ type inference, but subsequent parts of the declaration did   }
+{ not meet the requirements for it.  This will revert back to   }
+{ the C89-style "implicit int" interpretation of the            }
+{ declaration specifiers, if that is allowed by the syntax and  }
+{ the compilation settings.  Otherwise, it gives an error.      }
+{                                                               }
+{ parameters:                                                   }
+{       declSpecifiers - type/specifiers to use                 }
+
+begin {AbortTypeInference}
+declSpecifiers.inferType := false;
+if not doingFunction or (declSpecifiers.storageClass <> ident) then
+   Error(197)
+else begin
+   {revert to C89-style implicit int interpretation of "auto"}
+   declSpecifiers.storageClass := autosy;
+   if (lint & lintC99Syntax) <> 0 then
+      Error(151);
+   end; {else}
+end; {AbortTypeInference}
+
+
+procedure Declarator(var declSpecifiers: declSpecifiersRecord;
    var variable: identPtr; space: spaceType; doingPrototypes: boolean);
 
 { handle a declarator                                           }
@@ -1994,6 +2023,15 @@ if tPtr^.kind = functionType then begin {declare the identifier}
 1:    end; {if}
    state := declared;
    end; {if}
+
+if declSpecifiers.inferType then
+   if (tPtr^.kind <> scalarType)
+      or (token.kind <> eqch)
+      or (newName = nil)
+      or (variable <> nil)
+      then
+      AbortTypeInference(declSpecifiers);
+
 if madeFunctionTable then begin
    lTable := table;
    table := table^.next;
@@ -2032,22 +2070,40 @@ if variable <> nil then begin
          end; {if}
       variable^.isForwardDeclared := true;
       end; {if}
+   if declSpecifiers.inferType then
+      variable^.underspecified := true;
    end; {if}
 end; {Declarator}
 
 
-procedure Initializer (var variable: identPtr);
+procedure GetInitializerExpression(isStatic: boolean);
+
+{ get the expression for an initializer                         }
+{                                                               }
+{ paramaters:                                                   }
+{       isStatic - is this for a static/global variable?        }
+
+begin {GetInitializerExpression}
+if not isStatic then
+   Expression(autoInitializerExpression, [commach,rparench,rbracech])
+else
+   Expression(initializerExpression, [commach,rparench,rbracech]);
+end; {GetInitializerExpression}
+
+
+procedure Initializer (var variable: identPtr; haveExpression: boolean);
 
 { handle a variable initializer                                 }
 {                                                               }
 { paramaters:                                                   }
 {       variable - ptr to the identifier begin initialized      }
+{       haveExpression - has an expression been parsed but not  }
+{               used?                                           }
 
 var
    disp: longint;                       {disp within overall object being initialized}
    done: boolean;                       {for loop termination}
    errorFound: boolean;                 {used to remove bad initializations}
-   haveExpression: boolean;             {has an expression been parsed but not used?}
    iPtr,jPtr,kPtr: initializerPtr;      {for reversing the list}
    ip: identList;                       {used to place an id in the list}
    isStatic: boolean;                   {static storage duration (or automatic)?}
@@ -2071,18 +2127,6 @@ var
    disp := disp + size;
    end; {InsertInitializerRecord}
 
-
-   procedure GetInitializerExpression;
-   
-   { get the expression for an initializer                       }
-   
-   begin {GetInitializerExpression}
-   if not isStatic then
-      Expression(autoInitializerExpression, [commach,rparench,rbracech])
-   else
-      Expression(initializerExpression, [commach,rparench,rbracech]);
-   end; {GetInitializerExpression}
-   
 
    procedure GetInitializerValue (tp: typePtr; bitsize,bitdisp: integer);
  
@@ -2219,7 +2263,7 @@ var
 
    begin {GetInitializerValue}
    if not haveExpression then
-      GetInitializerExpression
+      GetInitializerExpression(isStatic)
    else begin
       NextToken;
       haveExpression := false;
@@ -2803,7 +2847,7 @@ var
             if not isStatic then
                if (token.kind in startExpression-[stringconst]) then begin
                   if not haveExpression then begin
-                     GetInitializerExpression;
+                     GetInitializerExpression(isStatic);
                      haveExpression := true;
                      PutBackToken(token, false, true);
                      token.kind := ident;  {dummy expression-starting token}
@@ -2969,7 +3013,13 @@ var
 begin {Initializer}
 disp := 0;                              {start at beginning of the object}
 errorFound := false;                    {no errors found so far}
-haveExpression := false;                {no expression parsed yet}
+if haveExpression then begin
+   PutBackToken(token, false, true);
+   token.kind := ident;                 {dummy expression-starting token}
+   token.class := identifier;
+   token.name := @'__';
+   token.symbolPtr := nil;
+   end; {if}
                                         {static or automatic initialization?}
 isStatic := variable^.storage in [external,global,private];
 luseGlobalPool := useGlobalPool;        {use global memory for global vars}
@@ -3061,6 +3111,7 @@ var
    
    typeSpecifiers: tokenSet;            {set of tokens specifying the type}
    typeDone: boolean;                   {no more type specifiers can be accepted}
+   inferType: boolean;                  {should type be inferred?}
    
    typeQualifiers: typeQualifierSet;    {set of type qualifiers found}
 
@@ -3385,6 +3436,51 @@ var
    end; {ResolveType}
 
 
+   procedure DoStorageClass(storageClass: tokenEnum);
+   
+   begin {DoStorageClass}
+   if myStorageClass <> ident then begin
+      if typeDone or (typeSpecifiers <> []) then
+         Error(badNextTokenError)
+      else
+         Error(26);
+      end; {if}
+   myStorageClass := storageClass;
+   if not doingFunction then
+      if storageClass = autosy then
+         Error(62);
+   if doingParameters then begin
+      if storageClass <> registersy then
+         Error(87);
+      end {if}
+   else if myStorageClass in [staticsy,typedefsy] then begin
+      {Error if we may have allocated type info in local pool.}
+      {This should not come up with current use of MM pools.  }
+      if not useGlobalPool then
+         if typeDone then
+            Error(57);
+      useGlobalPool := true;
+      end; {else if}
+   if doingForLoopClause1 then
+      if (cStd < c23) and strictMode then
+         if not (myStorageClass in [autosy,registersy]) then
+            Error(127);
+   if _Thread_localsy in myDeclarationModifiers then
+      if not (myStorageClass in [staticsy,externsy]) then
+         Error(177);
+   end; {DoStorageClass}
+
+
+   procedure GotTypeSpecifier;
+   
+   begin {GotTypeSpecifier}
+   if inferType then begin
+      inferType := false;
+      DoStorageClass(autosy);
+      end; {if}
+   end; {GotTypeSpecifier}
+
+
 begin {DeclarationSpecifiers}
 myTypeSpec := nil;
 myIsForwardDeclared := false;           {not doing a forward reference (yet)}
@@ -3394,39 +3490,20 @@ typeQualifiers := [];
 typeSpecifiers := [];
 typeDone := false;
 isLongLong := false;
+inferType := false;
 while token.kind in allowedTokens do begin
    case token.kind of
       {storage class specifiers}
       autosy,externsy,registersy,staticsy,typedefsy: begin
          myDeclarationModifiers := myDeclarationModifiers + [token.kind];
-         if myStorageClass <> ident then begin
-            if typeDone or (typeSpecifiers <> []) then
-               Error(badNextTokenError)
-            else
-               Error(26);
-            end; {if}
-         myStorageClass := token.kind;
-         if not doingFunction then
-            if token.kind = autosy then
-               Error(62);
-         if doingParameters then begin
-            if token.kind <> registersy then
-               Error(87);
-            end {if}
-         else if myStorageClass in [staticsy,typedefsy] then begin
-            {Error if we may have allocated type info in local pool.}
-            {This should not come up with current use of MM pools.  }
-            if not useGlobalPool then
-               if typeDone then
-                  Error(57);
-            useGlobalPool := true;
-            end; {else if}
-         if doingForLoopClause1 then
-            if not (myStorageClass in [autosy,registersy]) then
-               Error(127);
-         if _Thread_localsy in myDeclarationModifiers then
-            if not (myStorageClass in [staticsy,externsy]) then
-               Error(177);
+         if (cStd >= c23)
+            and (token.kind = autosy)
+            and (not typeDone) and (typeSpecifiers = [])
+            and not doingParameters
+            then
+            inferType := true           {auto possibly used for type inference}
+         else
+            DoStorageClass(token.kind);
          NextToken;
          end;
 
@@ -3475,6 +3552,7 @@ while token.kind in allowedTokens do begin
          NextToken;
          if token.kind = lparench then begin
             {_Atomic(typename) as type specifier}
+            GotTypeSpecifier;
             if typeDone or (typeSpecifiers <> []) then
                Error(badNextTokenError);
             NextToken;
@@ -3487,6 +3565,7 @@ while token.kind in allowedTokens do begin
       {type specifiers}
       unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,voidsy,
       compsy,extendedsy,_Boolsy,boolsy: begin
+         GotTypeSpecifier;
          if typeDone then
             Error(badNextTokenError)
          else if token.kind in typeSpecifiers then begin
@@ -3511,11 +3590,13 @@ while token.kind in allowedTokens do begin
 
       _Complexsy,_Imaginarysy: begin
          Error(136);
+         GotTypeSpecifier;
          NextToken;
          end;
 
       _Decimal32sy,_Decimal64sy,_Decimal128sy: begin
          Error(190);
+         GotTypeSpecifier;
          if not typeDone then begin
             myTypeSpec := doublePtr;
             typeDone := true;
@@ -3524,6 +3605,7 @@ while token.kind in allowedTokens do begin
          end;
 
       enumsy: begin                     {enum}
+         GotTypeSpecifier;
          if typeDone or (typeSpecifiers <> []) then
             Error(badNextTokenError)
          else if restrictsy in myDeclarationModifiers then
@@ -3622,6 +3704,7 @@ while token.kind in allowedTokens do begin
   
       structsy,                         {struct}
       unionsy: begin                    {union}
+         GotTypeSpecifier;
          if typeDone or (typeSpecifiers <> []) then
             Error(badNextTokenError)
          else if restrictsy in myDeclarationModifiers then
@@ -3734,6 +3817,7 @@ while token.kind in allowedTokens do begin
       typeofsy,                         {typeof}
       typeof_unqualsy: begin            {typeof_unqual}
          ttoken := token;
+         GotTypeSpecifier;
          NextToken;
          Match(lparench, 13);
          if token.kind in specifierQualifierListElement then
@@ -3754,6 +3838,7 @@ while token.kind in allowedTokens do begin
 
       typedef: begin                    {named type definition}
          if (typeSpecifiers = []) and not typeDone then begin
+            GotTypeSpecifier;
             myTypeSpec := token.symbolPtr^.itype;
             if restrictsy in myDeclarationModifiers then
                if (myTypeSpec^.kind <> pointerType)
@@ -3800,9 +3885,11 @@ if _Thread_localsy in myDeclarationModifiers then
          Error(177);
 if myTypeSpec = nil then begin
    myTypeSpec := intPtr;                {under C89, default type is int}
-   if (lint & lintC99Syntax) <> 0 then
-      Error(151);
+   if not inferType then
+      if (lint & lintC99Syntax) <> 0 then
+         Error(151);
    end; {if}
+declSpecifiers.inferType := inferType;
 declSpecifiers.typeSpec :=              {apply type qualifiers}
    MakeQualifiedType(myTypeSpec, typeQualifiers);
 declSpecifiers.storageClass := myStorageClass;
@@ -3843,6 +3930,7 @@ var
    tp: typePtr;                         {for tracing type lists}
    startLine: longint;                  {line where this declaration starts}
    declSpecifiers: declSpecifiersRecord; {type & specifiers for the declaration}
+   parsedInitializer: boolean;          {parsed initializer expression?}
 
 
    procedure CheckArray (v: identPtr; firstVariable: boolean);
@@ -4386,7 +4474,28 @@ else {if not isFunction then} begin
          end;
       TermHeader;                       {make sure the header file is closed}
       NextToken;                        {handle an initializer}
-      Initializer(variable);
+      parsedInitializer := false;
+      if declSpecifiers.inferType then begin
+         if token.kind in startExpression then begin
+            GetInitializerExpression(
+               variable^.storage in [external,global,private]);
+            parsedInitializer := true;
+            if token.kind = semicolonch then begin
+                                        {infer type of variable}
+               tp := expressionType;
+               ValueExpressionConversions;
+               variable^.itype := MakeQualifiedType(
+                  expressionType, variable^.itype^.qualifiers);
+               expressionType := tp;
+               end {if}
+            else
+               AbortTypeInference(declSpecifiers);
+            end {if}
+         else
+            AbortTypeInference(declSpecifiers);
+         variable^.underspecified := false;
+         end; {if}
+      Initializer(variable, parsedInitializer);
       end; {if}
                                         {check to insure array sizes are specified}
    if declSpecifiers.storageClass <> typedefsy then
@@ -5038,7 +5147,7 @@ id := NewSymbol(name, tp, class, variableSpace, defined, false);
 compoundLiteralNumber := compoundLiteralNumber + 1;
 if compoundLiteralNumber = 0 then
    Error(57);
-Initializer(id);
+Initializer(id, false);
 MakeCompoundLiteral := id;
 if class = autosy then begin
    id^.lln := GetLocalLabel;

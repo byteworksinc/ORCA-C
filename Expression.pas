@@ -218,6 +218,17 @@ function UsualUnaryConversions: baseTypeEnum;
 {       expressionType - set to result type                     }
 
 
+procedure ValueExpressionConversions;
+
+{ Perform type conversions applicable to an expression used     }
+{ for its value.  These include lvalue conversion (removing     }
+{ qualifiers), array-to-pointer conversion, and                 }
+{ function-to-pointer conversion.  See C17 section 6.3.2.1.     }
+{                                                               }
+{ variables:                                                    }
+{       expressionType - set to type after conversions          }
+
+
 procedure GetLLExpressionValue (var val: longlong);
 
 { get the value of the last integer constant expression as a    }
@@ -1078,6 +1089,11 @@ var
          errorFound := true;
          end; {else}
       end {if id = nil}
+   else if id^.underspecified then begin
+      id := nil;
+      Error(198);
+      errorFound := true;
+      end {else if}
    else if id^.itype^.kind = enumConst then begin
       stack^.token.class := intConstant;
       stack^.token.kind := intconst;

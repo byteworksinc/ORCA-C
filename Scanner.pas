@@ -826,6 +826,8 @@ if list or (numErr <> 0) then begin
         194: msg := @'unbalanced '')'', ''}'', or '']''';
         195: msg := @'character not representable in one code unit';
         196: msg := @'#elif, #elifdef, or #elifndef after #else';
+        197: msg := @'type cannot be inferred';
+        198: msg := @'underspecified variable used in its own initializer';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
