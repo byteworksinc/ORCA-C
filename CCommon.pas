@@ -257,7 +257,7 @@ type
                                         {-----------}
   expressionKind = (                    {kinds of expressions}
      preprocessorExpression,            {used by preprocessor commands}
-     arrayExpression,                   {array subscripts, case labels,
+     integerConstantExpression,         {array subscripts, case labels,
                                          bit-field lengths, enum values}
      initializerExpression,             {static variable initializers}
      autoInitializerExpression,         {auto variable initializers}

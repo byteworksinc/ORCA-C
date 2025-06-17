@@ -2213,7 +2213,7 @@ var
       sp: tokenPtr;
    
    begin {DoCompoundLiteral}
-   if kind in [preprocessorExpression,arrayExpression] then begin
+   if kind in [preprocessorExpression,integerConstantExpression] then begin
       op := opStack;
       while op <> nil do begin
          if op^.token.kind = sizeofsy then
@@ -2297,10 +2297,10 @@ if token.kind in startExpression then begin
             sp^.middle := nil;
             sp^.right := nil;
             stack := sp;
-            if kind in [preprocessorExpression,arrayExpression] then
+            if kind in [preprocessorExpression,integerConstantExpression] then
                if token.kind in [stringconst,floatconst,doubleconst,
                   extendedconst,compconst] then begin
-                  if kind = arrayExpression then begin
+                  if kind = integerConstantExpression then begin
                      op := opStack;
                      if token.kind <> stringconst then
                         if op <> nil then
@@ -5070,7 +5070,7 @@ else begin                              {record the expression for an initialize
          else {if tree^.token.kind = compconst then}
             expressionType := compPtr;
          isConstant := true;
-         if kind in [arrayExpression,preprocessorExpression] then begin
+         if kind in [integerConstantExpression,preprocessorExpression] then begin
             expressionType := intPtr;
             expressionValue := 1;
             Error(47);
@@ -5081,13 +5081,13 @@ else begin                              {record the expression for an initialize
          expressionType := StringType(tree^.token.prefix);
          stringConstSize := tree^.token.sval^.length;
          isConstant := true;
-         if kind in [arrayExpression,preprocessorExpression] then begin
+         if kind in [integerConstantExpression,preprocessorExpression] then begin
             expressionType := intPtr;
             expressionValue := 1;
             Error(47);
             end; {if}
          end {else if}
-      else if kind in [arrayExpression,preprocessorExpression] then begin
+      else if kind in [integerConstantExpression,preprocessorExpression] then begin
          DisposeTree(initializerTree);
          expressionValue := 1;
          end; {else if}

@@ -705,7 +705,7 @@ var
    while token.kind = casesy do begin
       NextToken;                        {skip the 'case' token}
       stPtr := GetSwitchRecord;         {get the proper switch record}
-      Expression(arrayExpression, [colonch]); {evaluate the branch condition}
+      Expression(integerConstantExpression, [colonch]); {evaluate the branch condition}
       GetLLExpressionValue(val);
       if stPtr^.size = cgLongSize then begin {convert out-of-range values}
          if val.lo < 0 then
@@ -1848,7 +1848,7 @@ var
          typeStack := ttPtr;
          ttPtr^.typeDef := tPtr2;
          if token.kind <> rbrackch then begin
-            Expression(arrayExpression, [rbrackch,semicolonch]);
+            Expression(integerConstantExpression, [rbrackch,semicolonch]);
             if expressionValue <= 0 then begin
                Error(45);
                expressionValue := 1;
@@ -2761,7 +2761,7 @@ var
                      goto 1;
                      end; {if}
                   Match(lbrackch, 35);
-                  Expression(arrayExpression, [rbrackch]);
+                  Expression(integerConstantExpression, [rbrackch]);
                   if (expressionValue < 0)
                      or ((maxCount <> 0) and (expressionValue >= maxCount)) then
                      begin
@@ -3060,7 +3060,7 @@ procedure DoStaticAssert;
 begin {DoStaticAssert}
 NextToken;
 Match(lparench, 13);
-Expression(arrayExpression, [commach]);
+Expression(integerConstantExpression, [commach]);
 if (expressionType = nil) or (expressionType^.kind <> scalarType) then
    Error(18)
 else if expressionValue = 0 then
@@ -3239,7 +3239,7 @@ var
          if token.kind = colonch then   {handle a bit field}
             begin
             NextToken;
-            Expression(arrayExpression,[commach,semicolonch]);
+            Expression(integerConstantExpression,[commach,semicolonch]);
             if (expressionValue >= maxBitField) or (expressionValue < 0) then
                begin
                Error(54);
@@ -3667,7 +3667,7 @@ while token.kind in allowedTokens do begin
                AttributeSpecifierSequence;
                if token.kind = eqch then begin {handle explicit enumeration values}
                   NextToken;
-                  Expression(arrayExpression,[commach,rbracech]);
+                  Expression(integerConstantExpression,[commach,rbracech]);
                   enumVal := long(expressionValue).lsw;
                   if enumVal <> expressionValue then
                      Error(6)
@@ -3863,7 +3863,7 @@ while token.kind in allowedTokens do begin
                   Error(133);
             end {if}
          else begin
-            Expression(arrayExpression, [rparench]);
+            Expression(integerConstantExpression, [rparench]);
             if (expressionValue <> 0) and (expressionValue <> 1) then
                Error(138);
             end;
@@ -4630,7 +4630,7 @@ var
          if token.kind = rbrackch then
             expressionValue := 0
          else begin
-            Expression(arrayExpression, [rbrackch]);
+            Expression(integerConstantExpression, [rbrackch]);
             if expressionValue <= 0 then begin
                Error(45);
                expressionValue := 1;
