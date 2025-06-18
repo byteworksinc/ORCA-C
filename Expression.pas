@@ -2886,21 +2886,25 @@ else if kind <> uasterisk then
 end; {L_Value}
 
 
-procedure ChangePointer (op: pcodes; size: longint; tp: baseTypeEnum);
+procedure ChangePointer (op: pcodes; elementType: typePtr; tp: baseTypeEnum);
 
 { Add or subtract an integer to a pointer			}
 {                                                               }
 { The stack has a pointer and an integer (integer on TOS).      }
-{ The integer is removed, multiplied by size, and either        }
-{ added to or subtracted from the pointer; the result           }
+{ The integer is removed, multiplied by the element size, and   }
+{ either added to or subtracted from the pointer; the result    }
 { replaces the pointer on the stack                             }
 {                                                               }
 { parameters:                                                   }
 {    op - operation (pc_adl or pc_sbl)                          }
-{    size - size of one pointer element                         }
+{    elementType - type of one pointer element                  }
 {    tp - type of the integer operand                           }
 
+var
+   size: longint;                       {size of one array element}
+
 begin {ChangePointer}
+size := elementType^.size;
 if size = 0 then
    Error(122);
 if checkNullPointers then
@@ -4047,7 +4051,7 @@ case tree^.token.kind of
 
          pluseqop:
             if kind = pointerType then begin
-               ChangePointer(pc_adl, lType^.pType^.size, UsualUnaryConversions);
+               ChangePointer(pc_adl, lType^.pType, UsualUnaryConversions);
                expressionType := lType;
                end
             else if et in [cgWord,cgUWord] then
@@ -4063,7 +4067,7 @@ case tree^.token.kind of
 
          minuseqop:
             if kind = pointerType then begin
-               ChangePointer(pc_sbl, lType^.pType^.size, UsualUnaryConversions);
+               ChangePointer(pc_sbl, lType^.pType, UsualUnaryConversions);
                expressionType := lType;
                end
             else if et in [cgWord,cgUWord] then
@@ -4464,7 +4468,7 @@ case tree^.token.kind of
             lType := lType^.aType
          else
             lType := lType^.pType;
-         ChangePointer(pc_adl, lType^.size, et);
+         ChangePointer(pc_adl, lType, et);
          if expressionType^.kind = arrayType then
             expressionType := MakePointerTo(expressionType^.aType);
          end {if}
@@ -4516,7 +4520,7 @@ case tree^.token.kind of
             end {if}
          else
             {subtract a scalar from a pointer}
-            ChangePointer(pc_sbl, size, UsualUnaryConversions);
+            ChangePointer(pc_sbl, lType^.aType, UsualUnaryConversions);
          expressionType := lType;
          if expressionType^.kind = arrayType then
             expressionType := MakePointerTo(expressionType^.aType);
