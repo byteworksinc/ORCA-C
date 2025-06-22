@@ -120,8 +120,10 @@ NextToken;                              {get the first token in the program}
 while token.kind <> eofsy do begin      {compile the program}
    if doingFunction then
       DoStatement
-   else if token.kind in topLevelDeclarationStart then
-      DoDeclaration(false)
+   else if token.kind in topLevelDeclarationStart then begin
+      nextLocalLabel := 1;
+      DoDeclaration(false);
+      end
    else begin
       Error(26);
       NextToken;
@@ -129,12 +131,7 @@ while token.kind <> eofsy do begin      {compile the program}
    end; {while}
 if doingFunction then                   {check for unclosed function}
    Error(23);
-{init the code generator (if it needs it)}
-if not codegenStarted and (liDCBGS.kFlag <> 0) then begin
-   CodeGenInit (@outFileGS, liDCBGS.kFlag, doingPartial);
-   liDCBGS.kFlag := 3;
-   codegenStarted := true;
-   end; {if}
+EnableCodeGen;                          {init the code generator (if it needs it)}
 DoGlobals;                              {create the ~GLOBALS and ~ARRAYS segments}
 
 {shut down the compiler}

@@ -78,6 +78,11 @@ function MakeCompoundLiteral(tp: typePtr): identPtr;
 {       tp - the type of the compound literal                   }
 
 
+procedure EnableCodeGen;
+
+{  Start and enable code generator, if not already enabled      }
+
+
 procedure InitParser;
 
 { Initialize the parser                                         }
@@ -201,6 +206,7 @@ var
    pfunc: identPtr;                     {func. for which parms are being defined}
    protoType: typePtr;                  {type from a parameter list}
    protoVariable: identPtr;             {variable from a parameter list}
+   parameterCode: codeRef;              {code generated for function params}
 
                                         {attribute processing variables}
                                         {------------------------------}
@@ -1130,6 +1136,7 @@ var
    end; {WhileStatement}
 
 begin {Statement}
+vlaTrees := 0;
 1:
 {if trace names are enabled and a line # is due, generate it}
 if traceBack or debugFlag then
@@ -1445,6 +1452,78 @@ else begin
 end; {AbortTypeInference}
 
 
+procedure ArrayLengthExpression(tPtr: typePtr);
+
+{ Handle an array length expression and fill out relevant parts }
+{ of the array type.                                            }
+{                                                               }
+{ parameters:                                                   }
+{       tPtr - an array ptr with length info not yet filled in  }
+
+begin {ArrayLengthExpression}
+if doingParameters or doingFunction then
+   Expression(autoInitializerExpression, [rbrackch,semicolonch,commach])
+else
+   Expression(integerConstantExpression, [rbrackch,semicolonch,commach]);
+if isConstant then begin
+   if expressionValue <= 0 then begin
+      Error(45);
+      expressionValue := 1;
+      end; {if}
+   tPtr^.isVariableLength := false;
+   tPtr^.elements := expressionValue;
+   end {if}
+else begin
+   tPtr^.isVariableLength := true;
+   tPtr^.size := 1; {dummy size for VLA}
+   tPtr^.sizeTree := initializerTree;
+   tPtr^.elements := 0;
+   end; {else}
+end; {ArrayLengthExpression}
+
+
+procedure ComputeArraySize(tPtr: typePtr);
+
+{ Compute array size, either statically or dynamically.         }
+{                                                               }
+{ For non-VLA array types, this fills in tPtr^.size with the    }
+{ statically computed size.  For VLA types, this generates code }
+{ to compute the size dynamically and store it in the hidden    }
+{ size variable, which will be specified by tPtr^.sizeLLN.      }
+{                                                               }
+{ parameters:                                                   }
+{       tPtr - an array ptr with size info not yet filled in    }
+
+begin {ComputeArraySize}
+if not tPtr^.isVariableLength and not IsVLAType(tPtr^.aType) then
+   tPtr^.size := tPtr^.aType^.size * tPtr^.elements
+else if tPtr^.isVariableLength and (tPtr^.sizeTree = nil) then
+   tPtr^.sizeLLN := 0
+else begin                              {generate VLA size code}
+   EnableCodeGen;                       {init the code generator (if it needs it)}
+   tPtr^.sizeLLN := GetLocalLabel;
+   Gen2(dc_loc, tPtr^.sizeLLN, cgLongSize);
+   if IsVLAType(tPtr^.aType) then
+      Gen2t(pc_lod, tPtr^.aType^.sizeLLN, 0, cgULong)
+   else
+      GenLdcLong(tPtr^.aType^.size);
+   if tPtr^.isVariableLength then begin
+      GenerateCode(tPtr^.sizeTree);
+      AssignmentConversion(uLongPtr, expressionType, false, 0, true, false);
+      end {if}
+   else begin
+      tPtr^.isVariableLength := true;
+      tPtr^.size := 1; {dummy size for VLA}
+      GenLdcLong(tPtr^.elements);
+      end; {else}
+   Gen0(pc_uml);
+   Gen2t(pc_str, tPtr^.sizeLLN, 0, cgULong);
+   if codeGeneration then
+      vlaTrees := vlaTrees + 1;
+   end; {else}
+end; {ComputeArraySize}
+
+
 procedure Declarator(var declSpecifiers: declSpecifiersRecord;
    var variable: identPtr; space: spaceType; doingPrototypes: boolean);
 
@@ -1513,6 +1592,7 @@ var
       parencount: integer;              {for skipping in parm list}
       gotStatic: boolean;               {got 'static' in array declarator?}
       numberOfParameters: integer;      {number of K&R-style parameters}
+      parameterCodeLoc: codeRef;        {code generated for function params}
 
                                         {variables used to preserve states}
                                         { across recursive calls          }
@@ -1661,6 +1741,7 @@ var
       {handle function declarations}
       if token.kind = lparench then begin
 	 PushTable;			{create a symbol table}
+	 parameterCodeLoc := GetCodeLocation;
                                         {determine if it's a function}
          isFunction := lastWasIdentifier or isFunction;
          tPtr2 := pointer(GCalloc(sizeof(typeRecord))); {create the function type}
@@ -1725,6 +1806,8 @@ var
                         wp^.parameterType := protoType;
                         if protoVariable <> nil then begin
                            if not madeFunctionTable then begin
+                              if not doingFunction then
+                                 protoVariable^.pln := GetLocalLabel;
                               protoVariable^.pnext := lastParameter;
                               lastParameter := protoVariable;
                               end; {if}
@@ -1801,10 +1884,13 @@ var
             if not tPtr2^.prototyped then
                Error(105);
          Match(rparench,12);            {insist on a closing ')' token}
+         parameterCodeLoc := RemoveCode(parameterCodeLoc);
          if madeFunctionTable or not lastWasIdentifier then
             PopTable
-         else
+         else begin
             madeFunctionTable := true;
+            parameterCode := parameterCodeLoc;
+            end; {else}
          AttributeSpecifierSequence;
          end {if}
 
@@ -1817,24 +1903,26 @@ var
          {tPtr2^.qualifiers := [];}
          tPtr2^.kind := arrayType;
          {tPtr2^.elements := 0;}
+         {tPtr2^.isVariableLength := false;}
+         {tPtr2^.sizeLLN := 0;}
+         {tPtr2^.sizeTree := nil;}
+         {tPtr2^.aQualifiers := [];}
          NextToken;
          gotStatic := false;
          if doingParameters and (typeStack = nil) then begin
-            tPtr2^.kind := pointerType; {adjust to pointer type}
-            tPtr2^.size := cgPointerSize;
             if token.kind = staticsy then begin
                gotStatic := true;
                NextToken;
                end; {if}
             while token.kind in [constsy,volatilesy,restrictsy] do begin
                if token.kind = constsy then
-                  tPtr2^.qualifiers := tPtr2^.qualifiers + [tqConst]
+                  tPtr2^.aQualifiers := tPtr2^.aQualifiers + [tqConst]
                else if token.kind = volatilesy then begin
-                  tPtr2^.qualifiers := tPtr2^.qualifiers + [tqVolatile];
+                  tPtr2^.aQualifiers := tPtr2^.aQualifiers + [tqVolatile];
                   volatile := true;
                   end {else}
                else {if token.kind = restrictsy then}
-                  tPtr2^.qualifiers := tPtr2^.qualifiers + [tqRestrict];
+                  tPtr2^.aQualifiers := tPtr2^.aQualifiers + [tqRestrict];
                NextToken;
                end; {while}
             if not gotStatic then
@@ -1848,12 +1936,17 @@ var
          typeStack := ttPtr;
          ttPtr^.typeDef := tPtr2;
          if token.kind <> rbrackch then begin
-            Expression(integerConstantExpression, [rbrackch,semicolonch]);
-            if expressionValue <= 0 then begin
-               Error(45);
-               expressionValue := 1;
-               end; {if}
-            tPtr2^.elements := expressionValue;
+            if (token.kind = asteriskch) and (PeekToken = rbrackch) then begin
+               if doingPrototypes and not gotStatic then begin
+                  tPtr2^.isVariableLength := true;
+                  tPtr2^.size := 1; {dummy size for VLA}
+                  end {if}
+               else
+                  Error(200);
+               NextToken;
+               end {if}
+            else
+               ArrayLengthExpression(tPtr2);
             end {if}
          else if gotStatic then
             Error(35);
@@ -1869,6 +1962,7 @@ var
       tPtr2^.saveDisp := 0;
       tPtr2^.qualifiers := cpList^.qualifiers;
       tPtr2^.kind := pointerType;
+      tPtr2^.wasStarVLA := false;
       new(ttPtr);
       ttPtr^.next := typeStack;
       typeStack := ttPtr;
@@ -1909,8 +2003,8 @@ while typeStack <> nil do begin         {reverse the type stack}
             Error(103);
          end;
       arrayType: begin
-         tPtr2^.size := tPtr^.size * tPtr2^.elements;
          tPtr2^.aType := tPtr;
+         ComputeArraySize(tPtr2);
          end;
       otherwise: ;
       end; {case}
@@ -1921,8 +2015,11 @@ if pascalsy in declSpecifiers.declarationModifiers then
    tptr := MakePascalType(tptr);
 
 if doingParameters then                 {adjust array/fn parameters to pointers}
-   if tPtr^.kind = arrayType then
-      tPtr := MakePointerTo(tPtr^.aType)
+   if tPtr^.kind = arrayType then begin
+      tPtr2 := MakePointerTo(tPtr^.aType);
+      tPtr2^.wasStarVLA := tPtr^.isVariableLength and (tPtr^.sizeLLN = 0);
+      tPtr := MakeQualifiedType(tPtr2, tPtr^.aQualifiers);
+      end {if}
    else if tPtr^.kind = functionType then begin
       tPtr := MakePointerTo(tPtr);
       isFunction := false;
@@ -2653,7 +2750,8 @@ var
       if tp^.aType^.kind = arrayType then
          RecomputeSizes(tp^.aType);
       with tp^ do
-         size := aType^.size*elements;
+         if not isVariableLength then
+            size := aType^.size*elements;
       end; {RecomputeSizes}
  
    begin {InitializeTerm}
@@ -2679,6 +2777,14 @@ var
       while ktp^.kind = definedType do
 	 ktp := ktp^.dType;
       kind := ktp^.kind;
+
+      if tp^.isVariableLength then begin
+         {In ORCA/C, initializable variables cannot have VLA types.}
+         if numErrors = 0 then
+            Error(57);
+         errorFound := true;
+         goto 1;
+         end; {if}
 
       {handle arrays initialized with a string constant}
       if (token.kind = stringConst) and (kind = scalarType) then begin
@@ -3177,6 +3283,8 @@ var
          tfl := tfl^.next;
          end; {while}
 1:    variable^.next := fl;
+      if IsVariablyModifiedType(variable^.itype) then
+         Error(201);
       if anonMember <> nil then begin
          variable^.anonMemberField := true;
          variable^.anonMember := anonMember;
@@ -3857,9 +3965,13 @@ while token.kind in allowedTokens do begin
          NextToken;
          Match(lparench, 13);
          if token.kind in specifierQualifierListElement then begin
+            lCodeGeneration := codeGeneration;
+            codeGeneration := false;
             tPtr := TypeName;
+            codeGeneration := lCodeGeneration and (numErrors = 0);
             with tPtr^ do
-               if (size = 0) or ((kind = arrayType) and (elements = 0)) then
+               if (size = 0) or
+                  ((kind = arrayType) and not isVariableLength and (elements = 0)) then
                   Error(133);
             end {if}
          else begin
@@ -3931,6 +4043,7 @@ var
    startLine: longint;                  {line where this declaration starts}
    declSpecifiers: declSpecifiersRecord; {type & specifiers for the declaration}
    parsedInitializer: boolean;          {parsed initializer expression?}
+   paramCode: codeRef;                  {code generated by function parameters}
 
 
    procedure CheckArray (v: identPtr; firstVariable: boolean);
@@ -3950,11 +4063,17 @@ var
    begin {CheckArray}
    if v <> nil then begin               {skip check if there's no variable}
       tp := v^.itype;                   {initialize the type pointer}
+      if tp^.kind = arrayType then      {variables of VLA type are not allowed}
+         if tp^.isVariableLength then begin
+            Error(199);
+            goto 1;
+            end; {if}
       while tp <> nil do begin          {check all types}
-         if tp^.kind = arrayType then   {if it's an array with an unspecified  }
-            begin
-            if tp^.elements = 0 then    { size and an unspecified size is not  }
-               if not firstVariable then { allowed here, flag an error.         }
+         if tp^.kind = arrayType then   {if it's an array with an unspecified }
+            begin                       { size and an unspecified size is not }
+                                        { allowed here, flag an error.        }
+            if (tp^.elements = 0) and not tp^.isVariableLength then 
+               if not firstVariable then 
                   begin
                   Error(49);
                   goto 1;
@@ -4198,6 +4317,10 @@ if isFunction then begin
    if doingParameters then              {a function cannot be a parameter}
       Error(28);
    fnType := variable^.itype;           {get the type of the function}
+   if doingFunction then
+      if declSpecifiers.storageClass <> typedefsy then
+         if IsVariablyModifiedType(fnType) then
+            Error(201);
    while (fnType <> nil) and (fnType^.kind <> functionType) do
       case fnType^.kind of
          arrayType  : fnType := fnType^.aType;
@@ -4292,13 +4415,19 @@ if isFunction then begin
       doingParameters := true;
                                         {declare the parameters}
       lp := lastParameter;              {(save now; it's volatile)}
-      while not (token.kind in [lbracech,eofsy]) do
-         if token.kind in declarationSpecifiersElement then
-            DoDeclaration(false)
-         else begin
-            Error(27);
-            NextToken;
-            end; {else}
+      if token.kind = lbracech then
+         paramCode := parameterCode
+      else begin
+         paramCode := GetCodeLocation;
+         while not (token.kind in [lbracech,eofsy]) do
+            if token.kind in declarationSpecifiersElement then
+               DoDeclaration(false)
+            else begin
+               Error(27);
+               NextToken;
+               end; {else}
+         paramCode := RemoveCode(paramCode);
+         end; {else}
       if not fnType^.prototyped or fnType^.overrideKR then begin
          tlp := lp;
          while tlp <> nil do begin
@@ -4313,6 +4442,21 @@ if isFunction then begin
          end; {if}
       tlp := lp;			{make sure all parameters have an}
       while tlp <> nil do begin		{ identifier and a complete type }
+         tp := tlp^.itype;
+         if (tp^.kind = pointerType) and tp^.wasStarVLA then
+            Error(200)
+         else
+            while tp^.kind in [arrayType,pointerType,functionType,definedType]
+               do begin
+               if (tp^.kind = arrayType)
+                  and tp^.isVariableLength
+                  and (tp^.sizeLLN = 0) then begin
+                  Error(200);
+                  tp := intPtr;
+                  end {if}
+               else
+                  tp := tp^.aType;
+               end; {while}
          if tlp^.name^ = '?' then begin
             Error(113);
             tlp := nil;
@@ -4335,11 +4479,7 @@ if isFunction then begin
       if progress then                  {write progress information}
          writeln('Compiling ', fName^);
       useGlobalPool := false;           {start a local label pool}
-      if not codegenStarted and (liDCBGS.kFlag <> 0) then begin {init the code generator (if it needs it)}
-         CodeGenInit (outFileGS, liDCBGS.kFlag, doingPartial);
-         liDCBGS.kFlag := 3;
-         codegenStarted := true;
-         end; {if}
+      EnableCodeGen;                    {init the code generator (if it needs it)}
       foundFunction := true;            {got one...}
       segType := ord(variable^.class = staticsy) * $4000;
       if (variable^.storage = external) and variable^.inlineDefinition then begin
@@ -4362,7 +4502,6 @@ if isFunction then begin
       if not isAsm then
          Gen1Name(pc_ent, 0, variable^.name);
       functionName := variable^.name;
-      nextLocalLabel := 1;              {initialize GetLocalLabel}
       returnLabel := GenLabel;          {set up an exit point}
       tempList := nil;                  {initialize the work label list}
       if not isAsm then                 {generate traceback, profile code}
@@ -4426,6 +4565,7 @@ if isFunction then begin
             GenParameters(fnType^.parameterList); 
          savedVolatile := volatile;
          functionTable := table;
+         InsertCode(paramCode);
          if fnType^.varargs then begin  {make internal va info for varargs funcs}
             lp := NewSymbol(@'__orcac_va_info', vaInfoPtr, autosy,
                variableSpace, declared, false);
@@ -4447,6 +4587,7 @@ if isFunction then begin
 
 {handle a variable declaration}
 else {if not isFunction then} begin
+   tp := variable^.itype;
    if not declarationSpecifierFound then
       if first then
          Error(26);
@@ -4457,6 +4598,10 @@ else {if not isFunction then} begin
       Error(119);
    if isNoreturn then
       Error(141);
+   if ((tp^.kind = functionType) and (declSpecifiers.storageClass <> typedefsy))
+      or (declSpecifiers.storageClass = externsy)  then
+      if IsVariablyModifiedType(tp) then
+         Error(201);
    if token.kind = eqch then begin
       if declSpecifiers.storageClass = typedefsy then
          Error(52)
@@ -4466,8 +4611,10 @@ else {if not isFunction then} begin
       if doingPrototypes or doingParameters then
          Error(88);
                                         {allocate copy of incomplete array type,}
-      tp := variable^.itype;            {so it can be completed by Initializer}
-      if (tp^.kind = arrayType) and (tp^.elements = 0) then begin
+                                        {so it can be completed by Initializer}
+      if (tp^.kind = arrayType)
+         and not tp^.isVariableLength
+         and (tp^.elements = 0) then begin
          variable^.itype := pointer(Malloc(sizeof(typeRecord)));
          variable^.itype^ := tp^;
          variable^.itype^.saveDisp := 0;
@@ -4508,7 +4655,10 @@ else {if not isFunction then} begin
       Gen2(dc_loc, variable^.lln, long(variable^.itype^.size).lsw);
       if variable^.state = initialized then
          AutoInit(variable, startLine, false); {initialize auto variable}
-      end; {if}
+      end {if}
+   else if variable^.storage = parameter then
+      if not doingPrototypes then
+         variable^.pln := GetLocalLabel;
    if (token.kind = commach) and (not doingPrototypes) then begin
       NextToken;                        {allow multiple variables on one line}
       first := false;
@@ -4608,6 +4758,7 @@ var
          tp^.saveDisp := 0;
          tp^.qualifiers := [];
          tp^.kind := pointerType;
+         tp^.wasStarVLA := false;
          while token.kind in [constsy,volatilesy,restrictsy] do begin
             if token.kind = constsy then
                tp^.qualifiers := tp^.qualifiers + [tqConst]
@@ -4627,20 +4778,17 @@ var
 
          {create an array type}
          NextToken;
-         if token.kind = rbrackch then
-            expressionValue := 0
-         else begin
-            Expression(integerConstantExpression, [rbrackch]);
-            if expressionValue <= 0 then begin
-               Error(45);
-               expressionValue := 1;
-               end; {if}
-            end; {else}
          tp := pointer(Malloc(sizeof(typeRecord)));
          tp^.saveDisp := 0;
          tp^.kind := arrayType;
-         tp^.elements := expressionValue;
+         tp^.isVariableLength := false;
+         tp^.elements := 0;
+         tp^.aQualifiers := [];
          tp^.fType := tl;
+         if token.kind = rbrackch then
+            tp^.elements := 0
+         else
+            ArrayLengthExpression(tp);
          tl := tp;
          Match(rbrackch,24);
          AttributeSpecifierSequence;
@@ -4730,7 +4878,7 @@ while tl <> nil do begin                {reverse the list & compute array sizes}
    tp := tl^.aType;                     {NOTE: assumes aType, pType and fType overlap in typeRecord}
    tl^.aType := declSpecifiers.typeSpec;
    if tl^.kind = arrayType then
-      tl^.size := tl^.elements * declSpecifiers.typeSpec^.size;
+      ComputeArraySize(tl);
    declSpecifiers.typeSpec := tl;
    tl := tp;
    end; {while}
@@ -4980,6 +5128,10 @@ var
 2:       end;
 
       arrayType: begin
+         if iType^.isVariableLength then begin
+            Error(57);
+            goto 1;
+            end; {if}
          elements := itype^.elements;
          if elements = 0 then goto 1;   {don't init flexible array member}
          if itype^.aType^.kind = scalarType then
@@ -5098,6 +5250,7 @@ tp^.size := len;
 {tp^.qualifiers := [];}
 tp^.kind := arrayType;
 tp^.aType := constCharPtr;
+tp^.isVariableLength := false;
 tp^.elements := len;
 id := NewSymbol(@'__func__', tp, staticsy, variableSpace, initialized, false);
 
@@ -5137,6 +5290,8 @@ var
    class: tokenEnum;                    {storage class}
 
 begin {MakeCompoundLiteral}
+if IsVLAType(tp) then
+   Error(199);
 if functionTable <> nil then
    class := autosy
 else
@@ -5155,6 +5310,19 @@ if class = autosy then begin
    compoundLiteralToAllocate := id;
    end;
 end; {MakeCompoundLiteral}
+
+
+procedure EnableCodeGen;
+
+{  Start and enable code generator, if not already enabled      }
+
+begin {EnableCodeGen}
+if not codegenStarted and (liDCBGS.kFlag <> 0) then begin
+   CodeGenInit (outFileGS, liDCBGS.kFlag, doingPartial);
+   liDCBGS.kFlag := 3;
+   codegenStarted := true;
+   end; {if}
+end; {EnableCodeGen}
 
 
 procedure InitParser;

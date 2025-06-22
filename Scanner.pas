@@ -828,6 +828,9 @@ if list or (numErr <> 0) then begin
         196: msg := @'#elif, #elifdef, or #elifndef after #else';
         197: msg := @'type cannot be inferred';
         198: msg := @'underspecified variable used in its own initializer';
+        199: msg := @'variable-length array type is not allowed here';
+        200: msg := @'variable-length array declarator using * is not allowed here';
+        201: msg := @'variably modified type is not allowed here';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);

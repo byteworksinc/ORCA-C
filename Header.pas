@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 50;                 {version number of .sym file format}
+   symFileVersion = 51;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1044,6 +1044,7 @@ procedure EndInclude {chPtr: ptr};
         	  arrayType: begin
         	     WriteLong(tp^.elements);
         	     WriteType(tp^.aType);
+        	     WriteByte(ord(tp^.isVariableLength));
         	     end;
 
         	  pointerType:
@@ -1718,10 +1719,18 @@ var
         	  arrayType: begin
         	     tp^.elements := ReadLong;
         	     ReadType(tp^.aType);
+        	     tp^.isVariableLength := boolean(ReadByte);
+        	     {Remaining fields only matter for array types within a}
+        	     {function definition (parameter declarations or body).}
+        	     tp^.sizeLLN := 0;
+        	     tp^.sizeTree := nil;
+        	     tp^.aQualifiers := [];
         	     end;
 
-        	  pointerType: 
+        	  pointerType: begin
         	     ReadType(tp^.pType);
+        	     tp^.wasStarVLA := false;
+        	     end;
 
         	  functionType: begin
         	     val := ReadByte;

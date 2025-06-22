@@ -817,7 +817,9 @@ var
    opStack: tokenPtr;                   {operation stack}
    parenCount: integer;                 {# of open parenthesis}
    stack: tokenPtr;                     {operand stack}
+   codeLoc: codeRef;                    {code location for sizeof/etc.}
    tType: typePtr;                      {type for cast/sizeof/etc.}
+   lVLATrees: 0..maxint4;               {local copy of vlaTrees}
 
    op,sp: tokenPtr;                     {work pointers}
 
@@ -1768,25 +1770,35 @@ var
          op^.left := Pop;
 
          if op^.token.kind = sizeofsy then begin
-            op^.token.kind := ulongConst;
-            op^.token.class := longConstant;
             kindLeft := op^.left^.token.kind;
-            if kindLeft = stringConst then
-               op^.token.lval := op^.left^.token.sval^.length
-            else begin
-               lCodeGeneration := codeGeneration;
-               codeGeneration := false;
-               GenerateCode(op^.left);
-               if kindLeft = dotch then
-                  if isBitfield then
-                     Error(49);
-               codeGeneration := lCodeGeneration and (numErrors = 0);
-               op^.token.lval := expressionType^.size;
-               with expressionType^ do
-                  if (size = 0) or ((kind = arrayType) and (elements = 0)) then
-                     Error(49);
-               end; {else}
-            op^.left := nil;
+            if kindLeft <> typeofsy then begin
+               if kindLeft = stringConst then begin
+                  op^.token.kind := ulongConst;
+                  op^.token.class := longConstant;
+                  op^.token.lval := op^.left^.token.sval^.length;
+                  end {if}
+               else begin
+                  codeLoc := GetCodeLocation;
+                  GenerateCode(op^.left);
+                  codeLoc := RemoveCode(codeLoc);
+                  if kindLeft = dotch then
+                     if isBitfield then
+                        Error(49);
+                  if (IsVLAType(expressionType)) then begin
+                     op^.castType := expressionType;
+                     op^.vlaCode := pointer(codeLoc);
+                     goto 4;
+                     end; {if}
+                  op^.token.kind := ulongConst;
+                  op^.token.class := longConstant;
+                  op^.token.lval := expressionType^.size;
+                  with expressionType^ do
+                     if (size = 0)
+                        or ((kind = arrayType) and not isVariableLength and (elements = 0)) then
+                        Error(49);
+                  end; {else}
+               op^.left := nil;
+               end; {if}
             end {if sizeofsy}
         
          else if op^.token.kind in [_Alignofsy,alignofsy] then begin
@@ -2134,6 +2146,8 @@ var
          currentType := TypeName;       {get the type name}
          if (currentType^.size = 0) or (currentType^.kind = functionType) then
             Error(133);
+         if IsVariablyModifiedType(currentType) then
+            Error(201);
          tl := typesSeen;               {check if it is a duplicate}
          while tl <> nil do begin
             if StrictCompTypes(currentType, tl^.theType) then begin
@@ -2211,6 +2225,7 @@ var
    var
       id: identPtr;
       sp: tokenPtr;
+      vlaCode: ptr;
    
    begin {DoCompoundLiteral}
    if kind in [preprocessorExpression,integerConstantExpression] then begin
@@ -2224,6 +2239,7 @@ var
       errorFound := true;
       end; {if}
 1:
+   vlaCode := opStack^.vlaCode;
    id := MakeCompoundLiteral(opStack^.castType);
    opStack := opStack^.next;
    
@@ -2241,6 +2257,7 @@ var
    sp^.left := nil;
    sp^.middle := nil;
    sp^.right := nil;
+   sp^.vlaCode := vlaCode;
    stack := sp;
    
    ComplexTerm;
@@ -2357,31 +2374,55 @@ if token.kind in startExpression then begin
                   doingSizeof := true
                else if opStack^.token.kind in [_Alignofsy,alignofsy] then
                   doingAlignof := true;
+            codeLoc := GetCodeLocation;
+            lVLATrees := vlaTrees;
             tType := TypeName;
+            while vlaTrees > lVLATrees + 1 do begin
+               Gen0t(pc_bno, cgULong);
+               vlaTrees := vlaTrees - 1;
+               end; {while}
+            codeLoc := RemoveCode(codeLoc);
+            vlaTrees := lVLATrees;
             Match(rparench,12);
             if (doingSizeof and (token.kind <> lbracech)) or doingAlignof then
                begin
 
-               {handle a sizeof operator}
-               op := opStack;
-               opStack := op^.next;
-               dispose(op);
-               new(sp);
-               sp^.next := stack;
-               sp^.left := nil;
-               sp^.middle := nil;
-               sp^.right := nil;
-               sp^.token.kind := ulongconst;
-               sp^.token.class := longConstant;
-               if doingSizeof then
-                  sp^.token.lval := tType^.size
-               else {if doingAlignof then}
-                  sp^.token.lval := 1;
-               with tType^ do
-                  if (size = 0) or ((kind = arrayType) and (elements = 0)) then
-                     Error(133);
-               sp^.next := stack;
-               stack := sp;
+               {handle a sizeof or alignof operator}
+               if doingAlignof or not IsVLAType(tType) then begin
+                  op := opStack;
+                  opStack := op^.next;
+                  dispose(op);
+                  new(sp);
+                  sp^.next := stack;
+                  sp^.left := nil;
+                  sp^.middle := nil;
+                  sp^.right := nil;
+                  sp^.token.kind := ulongconst;
+                  sp^.token.class := longConstant;
+                  if doingSizeof then
+                     sp^.token.lval := tType^.size
+                  else {if doingAlignof then}
+                     sp^.token.lval := 1;
+                  with tType^ do
+                     if (size = 0)
+                        or ((kind = arrayType) and not isVariableLength and (elements = 0)) then
+                        Error(133);
+                  sp^.next := stack;
+                  stack := sp;
+                  end {if}
+               else begin
+                  {handle sizeof(VLA type)}
+                  new(sp);
+                  sp^.left := nil;
+                  sp^.middle := nil;
+                  sp^.right := nil;
+                  sp^.castType := tType;
+                  sp^.vlaCode := pointer(codeLoc);
+                  sp^.token.kind := typeofsy;
+                  sp^.token.class := reservedWord;
+                  sp^.next := stack;
+                  stack := sp;
+                  end; {else} 
                expectingTerm := false;
                end {if}
             else {doing a cast} begin
@@ -2392,6 +2433,7 @@ if token.kind in startExpression then begin
                op^.middle := nil;
                op^.right := nil;
                op^.castType := tType;
+               op^.vlaCode := pointer(codeLoc);
                op^.token.kind := castoper;
                op^.token.class := reservedWord;
                op^.next := opStack;
@@ -2904,53 +2946,61 @@ var
    size: longint;                       {size of one array element}
 
 begin {ChangePointer}
-size := elementType^.size;
-if size = 0 then
-   Error(122);
 if checkNullPointers then
    Gen0(pc_ckn);
-case tp of
-   cgByte,cgUByte,cgWord,cgUWord: begin
-      if (size = long(size).lsw) and (op = pc_adl)
-         and smallMemoryModel and (tp in [cgUByte,cgUWord]) then begin
-         if size <> 1 then begin
-            Gen1t(pc_ldc, long(size).lsw, cgWord);
-            Gen0(pc_umi);
-            end; {if}
-         Gen0t(pc_ixa, cgUWord);
-         end {if}
-      else if smallMemoryModel and (size = long(size).lsw) then begin
-         if size <> 1 then begin
-            Gen1t(pc_ldc, long(size).lsw, cgWord);
-            Gen0(pc_umi);
-            end; {if}
-         Gen2(pc_cnv, ord(tp), ord(cgLong));
-         Gen0(op);
-         end {else if}
-      else begin
-         Gen2(pc_cnv, ord(tp), ord(cgLong));
+if (elementType^.kind = arrayType) and elementType^.isVariableLength then begin
+   Gen2(pc_cnv, ord(tp), ord(cgLong));
+   Gen2t(pc_lod, elementType^.sizeLLN, 0, cgULong);
+   Gen0(pc_mpl);
+   Gen0(op);
+   end {if}
+else begin
+   size := elementType^.size;
+   if size = 0 then
+      Error(122);
+   case tp of
+      cgByte,cgUByte,cgWord,cgUWord: begin
+         if (size = long(size).lsw) and (op = pc_adl)
+            and smallMemoryModel and (tp in [cgUByte,cgUWord]) then begin
+            if size <> 1 then begin
+               Gen1t(pc_ldc, long(size).lsw, cgWord);
+               Gen0(pc_umi);
+               end; {if}
+            Gen0t(pc_ixa, cgUWord);
+            end {if}
+         else if smallMemoryModel and (size = long(size).lsw) then begin
+            if size <> 1 then begin
+               Gen1t(pc_ldc, long(size).lsw, cgWord);
+               Gen0(pc_umi);
+               end; {if}
+            Gen2(pc_cnv, ord(tp), ord(cgLong));
+            Gen0(op);
+            end {else if}
+         else begin
+            Gen2(pc_cnv, ord(tp), ord(cgLong));
+            if size <> 1 then begin
+               GenLdcLong(size);
+               Gen0(pc_mpl);
+               end; {if}
+            Gen0(op);
+            end;
+         end;
+      cgLong,cgULong,cgQuad,cgUQuad: begin
+         if tp in [cgQuad,cgUQuad] then 
+            Gen2(pc_cnv, ord(tp), ord(cgLong));
          if size <> 1 then begin
             GenLdcLong(size);
-            Gen0(pc_mpl);
+            if tp in [cgLong,cgQuad] then
+               Gen0(pc_mpl)
+            else
+               Gen0(pc_uml);
             end; {if}
          Gen0(op);
          end;
-      end;
-   cgLong,cgULong,cgQuad,cgUQuad: begin
-      if tp in [cgQuad,cgUQuad] then 
-         Gen2(pc_cnv, ord(tp), ord(cgLong));
-      if size <> 1 then begin
-         GenLdcLong(size);
-         if tp in [cgLong,cgQuad] then
-            Gen0(pc_mpl)
-         else
-            Gen0(pc_uml);
-         end; {if}
-      Gen0(op);
-      end;
-   otherwise:
-      Error(66);
-   end; {case}
+      otherwise:
+         Error(66);
+      end; {case}
+   end; {else}
 end; {ChangePointer}
 
 
@@ -3089,11 +3139,14 @@ var
    else if tree^.token.kind = compoundliteral then begin
 
       {evaluate a compound literal and load its address}
+      InsertCode(tree^.vlaCode);
       AutoInit(tree^.id, 0, true);
       tree^.token.kind := ident;
       LoadAddress(tree, false);
       tree^.token.kind := compoundliteral;
       Gen0t(pc_bno, cgULong);
+      if tree^.vlaCode <> nil then
+         Gen0t(pc_bno, cgULong);
       end {if}
    else if tree^.token.kind = uasterisk then begin
 
@@ -3819,6 +3872,7 @@ case tree^.token.kind of
       end;
 
    compoundLiteral: begin
+      InsertCode(tree^.vlaCode);
       AutoInit(tree^.id, 0, true);
       tree^.token.kind := ident;
       ldoDispose := doDispose;
@@ -3830,6 +3884,11 @@ case tree^.token.kind of
          Gen0t(pc_bno, expressionType^.baseType)
       else
          Gen0t(pc_bno, cgULong);
+      if tree^.vlaCode <> nil then
+         if expressionType^.kind = scalarType then
+            Gen0t(pc_bno, expressionType^.baseType)
+         else
+            Gen0t(pc_bno, cgULong);
       end;
 
    intConst,uintConst,shortConst,ushortConst,charConst,scharConst,ucharConst,
@@ -4512,6 +4571,7 @@ case tree^.token.kind of
                Gen0(pc_ckp);
                end; {if}
             Gen0(pc_sbl);
+            {TODO handle VLA}
             if size <> 1 then begin
                GenLdcLong(size);
                Gen0(pc_dvl);
@@ -4758,6 +4818,7 @@ case tree^.token.kind of
          tType^ := StringType(tree^.left^.token.prefix)^;
          tType^.size := tree^.left^.token.sval^.length;
          tType^.saveDisp := 0;
+         tType^.isVariableLength := false;
          tType^.elements := tType^.size div tType^.aType^.size;
          expressionType := MakePointerTo(tType);
          end {if}
@@ -4900,6 +4961,7 @@ case tree^.token.kind of
       end; {case colonch}
 
    castoper: begin                      {(cast)}
+      InsertCode(tree^.vlaCode);
       GenerateCode(tree^.left);
       if lastWasNullPtrConst then
          if expressionType^.kind = scalarType then
@@ -4908,7 +4970,28 @@ case tree^.token.kind of
                   if tree^.castType^.pType^.qualifiers = [] then
                      isNullPtrConst := true;
       Cast(tree^.castType);
+      if tree^.vlaCode <> nil then
+         if tree^.castType^.kind = scalarType then
+            Gen0t(pc_bno, tree^.castType^.baseType)
+         else
+            Gen0t(pc_bno, cgULong);
       end; {case castoper}
+
+   sizeofsy: begin                      {sizeof(VLA type or expression)}
+      if tree^.left^.token.kind = typeofsy then
+         tp := tree^.left
+      else
+         tp := tree;
+      InsertCode(tp^.vlaCode);
+      if tp = tree then
+         Gen0t(pc_pop, cgULong);
+      Gen2t(pc_lod, tp^.castType^.sizeLLN, 0, cgULong);
+      if tp^.vlaCode <> nil then
+         Gen0t(pc_bno, cgULong);
+      if doDispose then
+         dispose(tree^.left);
+      expressionType := uLongPtr;
+      end; {case sizeofsy}
 
    otherwise:
       Error(57);

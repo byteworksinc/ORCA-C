@@ -185,6 +185,26 @@ function IsVoid (tp: typePtr): boolean;
 { Returns: True if the type is void, else false                 }
 
 
+function IsVariablyModifiedType (tp: typePtr): boolean;
+
+{ Check to see if a type is a variable modified type            }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if the type is a VM type, else false            }
+
+
+function IsVLAType (tp: typePtr): boolean;
+
+{ Check to see if a type is a VLA type                          }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if the type is a VLA type, else false           }
+
+
 function CopyType (tp: typePtr): typePtr;
 
 { Make a new copy of a type, so it can be modified.             }
@@ -1263,12 +1283,12 @@ if pp <> nil then begin			{prototyped parameters}
    tk.numString := nil;
    tk.class := identifier;
    while pp <> nil do begin
-      pln := GetLocalLabel;
       tk.name := pp^.parameter^.name;
       tk.symbolPtr := nil;
       sp := FindSymbol(tk, variableSpace, true, false);
       if sp = nil then
          sp := pp^.parameter;
+      pln := sp^.pln;
       if sp^.itype^.kind = arrayType then begin
          size := cgPointerSize;
          Gen3(dc_prm, pln, cgPointerSize, sp^.pdisp);
@@ -1285,7 +1305,6 @@ if pp <> nil then begin			{prototyped parameters}
                end; {if}
 	 Gen3(dc_prm, pln, size, sp^.pdisp);
 	 end; {else}
-      sp^.pln := pln;
       if first then begin
          first := false;
          lastParameterLLN := pln;
@@ -1299,8 +1318,7 @@ else begin				{K&R parameters}
       sp := table^.buckets[i];
       while sp <> nil do begin
 	 if sp^.storage = parameter then begin
-            pln := GetLocalLabel;
-            sp^.pln := pln;
+            pln := sp^.pln;
             if sp^.itype^.kind = arrayType then begin
                size := cgPointerSize;
                Gen3(dc_prm, sp^.lln, cgPointerSize, sp^.pdisp);
@@ -1908,6 +1926,10 @@ with stringTypePtr^ do begin
    kind := arrayType;
    aType := charPtr;
    elements := 0;
+   isVariableLength := false;
+   sizeLLN := 0;
+   sizeTree := nil;
+   aQualifiers := [];
    end; {with}
 new(utf8StringTypePtr);                 {UTF-8 string constant type (C23+)}
 with utf8StringTypePtr^ do begin
@@ -1917,6 +1939,10 @@ with utf8StringTypePtr^ do begin
    kind := arrayType;
    aType := uCharPtr;
    elements := 0;
+   isVariableLength := false;
+   sizeLLN := 0;
+   sizeTree := nil;
+   aQualifiers := [];
    end; {with}
 new(utf16StringTypePtr);                {UTF-16 string constant type}
 with utf16StringTypePtr^ do begin
@@ -1926,6 +1952,10 @@ with utf16StringTypePtr^ do begin
    kind := arrayType;
    aType := uShortPtr;
    elements := 0;
+   isVariableLength := false;
+   sizeLLN := 0;
+   sizeTree := nil;
+   aQualifiers := [];
    end; {with}
 new(utf32StringTypePtr);                {UTF-32 string constant type}
 with utf32StringTypePtr^ do begin
@@ -1935,6 +1965,10 @@ with utf32StringTypePtr^ do begin
    kind := arrayType;
    aType := uLongPtr;
    elements := 0;
+   isVariableLength := false;
+   sizeLLN := 0;
+   sizeTree := nil;
+   aQualifiers := [];
    end; {with}
 new(voidPtr);                           {void}
 with voidPtr^ do begin
@@ -1952,6 +1986,7 @@ with voidPtrPtr^ do begin
    qualifiers := [];
    kind := pointerType;
    pType := voidPtr;
+   wasStarVLA := false;
    end; {with}
 new(charPtrPtr);                        {char *}
 with charPtrPtr^ do begin
@@ -1960,6 +1995,7 @@ with charPtrPtr^ do begin
    qualifiers := [];
    kind := pointerType;
    pType := charPtr;
+   wasStarVLA := false;
    end; {with}
 new(vaInfoPtr);                         {internal varargs info type (char*[2])}
 with vaInfoPtr^ do begin
@@ -1969,6 +2005,10 @@ with vaInfoPtr^ do begin
    kind := arrayType;
    aType := charPtrPtr;
    elements := 2;
+   isVariableLength := false;
+   sizeLLN := 0;
+   sizeTree := nil;
+   aQualifiers := [];
    end; {with}
 new(defaultStruct);                     {default structure}
 with defaultStruct^ do begin            {(for structures with errors)}
@@ -2013,6 +2053,45 @@ else if tp^.kind = scalarType then
    if tp^.baseType = cgVoid then
       IsVoid := true;
 end; {IsVoid}
+
+
+function IsVariablyModifiedType {tp: typePtr): boolean};
+
+{ Check to see if a type is a variable modified type            }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if the type is a VM type, else false            }
+
+label 1;
+
+begin {IsVariablyModifiedType}
+IsVariablyModifiedType := false;
+while tp^.kind in [arrayType,pointerType,functionType,definedType] do begin
+   if tp^.kind = arrayType then
+      if tp^.isVariableLength then begin
+         IsVariablyModifiedType := true;
+         goto 1;
+         end; {if}
+   tp := tp^.aType;
+   end; {while}
+1:
+end; {IsVariablyModifiedType}
+
+
+function IsVLAType {tp: typePtr): boolean};
+
+{ Check to see if a type is a VLA type                          }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if the type is a VLA type, else false           }
+
+begin {IsVLAType}
+IsVLAType := (tp^.kind = arrayType) and tp^.isVariableLength;
+end; {IsVLAType}
 
 
 function CopyType {tp: typePtr): typePtr};
@@ -2085,15 +2164,27 @@ if t1 <> t2 then
                compType^.aType := tType;
                end; {if}
          end; {if}
-      if t2^.kind = arrayType then      {get array size from t1 if needed}
-         if t2^.size = 0 then
-            if t1^.size <> 0 then
-               if t1^.aType^.size = t2^.aType^.size then begin
-                  if compType = t2 then
-                     compType := CopyType(t2);
-                  CompType^.size := t1^.size;
-                  CompType^.elements := t1^.elements;
-                  end; {if}
+      if t2^.kind = arrayType then begin {compose array types}
+         tType := compType^.aType;
+         if (t2^.size <> 0) and not t2^.isVariableLength then
+            compType := t2
+         else if (t1^.size <> 0) and not t1^.isVariableLength then
+            compType := t1
+         else if t2^.isVariableLength and (t2^.sizeLLN <> 0) then
+            compType := t2
+         else if t1^.isVariableLength and (t1^.sizeLLN <> 0) then
+            compType := t1
+         else if t2^.isVariableLength then
+            compType := t2
+         else if t1^.isVariableLength then
+            compType := t1
+         else
+            compType := t2;
+         if compType^.aType <> tType then begin
+            compType := CopyType(compType);
+            compType^.aType := tType;
+            end; {if}
+         end; {if}
       if t2^.kind = functionType then   {compose function parameter types}
          if t1^.prototyped and t2^.prototyped then begin
             if compType = t2 then
@@ -2187,6 +2278,7 @@ tp^.size := cgPointerSize;
 tp^.saveDisp := 0;
 tp^.qualifiers := [];
 tp^.kind := pointerType;
+tp^.wasStarVLA := false;
 tp^.pType := pType;
 MakePointerTo := tp;
 end; {MakePointerTo}
@@ -2382,7 +2474,10 @@ if space <> fieldListSpace then begin   {are we defining a function?}
          or ((class = typedefsy) <> (cs^.class = typedefsy))
          or ((globalTable <> table) 
             and (not (class in [externsy,typedefsy])
-               or not (cs^.class in [externsy,typedefsy]))))
+               or not (cs^.class in [externsy,typedefsy])))
+         or ((class = typedefsy)
+            and (IsVariablyModifiedType(itype)
+               or IsVariablyModifiedType(cs^.itype))))
          and ((not doingParameters) or (cs^.state <> declared))
          then
          Error(42)

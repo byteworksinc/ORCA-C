@@ -270,7 +270,8 @@ type
      token: tokenType;                  {token at this node/leaf}
      case boolean of
         true : (id: identPtr;);         {^symbol table entry for this operand}
-        false: (castType: typePtr;);    {cast type (for type casts only)}
+        false: (castType: typePtr;      {cast type (for casts or VLA sizeof)}
+                vlaCode: ptr;);         {code for VLA type in cast/sizeof/etc.}
      end;
 
                                         {goto label list}
@@ -302,16 +303,21 @@ type
   typeKind = (scalarType,arrayType,pointerType,functionType,enumType,
               enumConst,structType,unionType,definedType);
   typeRecord = record                   {type}
-     size: longint;                     {size of the type in bytes}
+     size: longint;                     {size of the type in bytes (1 for VLA)}
      qualifiers: typeQualifierSet;      {type qualifiers}
      saveDisp: longint;			{disp in symbol file}
      case kind: typeKind of             {NOTE: aType,pType and fType must overlap}
         scalarType  : (baseType: baseTypeEnum;  {our internal type representation}
                        cType: cTypeEnum);       {type in the C type system}
         arrayType   : (aType: typePtr;
-                       elements: longint;
+                       elements: longint;       {number of elements; 0 if unknown}
+                       isVariableLength: boolean;
+                       sizeLLN: integer;        {LLN of VLA size var; 0 for [*]}
+                       sizeTree: tokenPtr;      {used during VLA type construction}
+                       aQualifiers: typeQualifierSet; {qualifiers within []}
                       );
-        pointerType : (pType: typePtr;);
+        pointerType : (pType: typePtr;
+                       wasStarVLA: boolean;);   {adjusted from VLA type with [*]?}
         functionType: (fType: typePtr;          {return type}
                        varargs,                 {are there a variable # of args?}
                        prototyped: boolean;     {is it prototyped?}
@@ -529,6 +535,7 @@ var
    sourceFileGS: gsosOutString;         {presumed source file name}
    strictMode: boolean;                 {strictly follow standard, without extensions?}
    tempList: tempPtr;                   {list of temp work variables}
+   vlaTrees: 0..maxint4;                {number of trees for computing VLA sizes}
    longlong0: longlong;                 {the value 0 as a longlong}
    longlong1: longlong;                 {the value 1 as a longlong}
 

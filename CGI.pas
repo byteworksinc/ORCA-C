@@ -1528,7 +1528,7 @@ else begin
       lcode := DAGhead;
       while (lcode^.next <> start) and (lcode^.next <> nil) do
          lcode := lcode^.next;
-      if lcode^.next = nil then
+      if (lcode^.next = nil) and (start <> nil) then
          Error(cge1);
       lcode^.next := nil;
 {     PrintDAG(@'Removing: ', DAGhead); {debug}
