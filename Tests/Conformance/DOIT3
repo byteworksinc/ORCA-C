@@ -39,5 +39,3 @@
 {1} c11ternary.c
 {1} c11anonsu.c
 {1} c11thrdlcl.c
-{1} c23attrib.c
-{1} c23misc.c
