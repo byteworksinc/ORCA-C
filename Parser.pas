@@ -5318,7 +5318,7 @@ var
 begin {MakeCompoundLiteral}
 if IsVLAType(tp) then
    Error(199);
-if functionTable <> nil then
+if (functionTable <> nil) or ((cStd >= c23) and doingParameters) then
    class := autosy
 else
    class := staticsy;
