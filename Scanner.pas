@@ -831,6 +831,7 @@ if list or (numErr <> 0) then begin
         199: msg := @'variable-length array type is not allowed here';
         200: msg := @'variable-length array declarator using * is not allowed here';
         201: msg := @'variably modified type is not allowed here';
+        202: msg := @'goto or switch enters scope of identifier with variably modified type';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);

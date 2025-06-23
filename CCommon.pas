@@ -278,11 +278,12 @@ type
                                         {---------------}
    gotoPtr = ^gotoRecord;
    gotoRecord = record
-      {Note: if the size changes, see gotoSize}
       next: gotoPtr;
       name: stringPtr;
       lab: integer;
       defined: boolean;
+      lastVMSym: identPtr;              {last variably modified sym before label}
+                                        {(if defined) or first goto (if not)    }
       end;
 
                                         {symbol tables}
@@ -393,6 +394,7 @@ type
      class: tokenEnum;                  {storage class}
      used: boolean;                     {is this identifier used?}
      underspecified: boolean;           {not yet fully specified (need initializer)?}
+     nextVMSym: identPtr;               {previous symbol of variably modified type}
      case storage: storageType of
         stackFrame: (lln: integer;      {local label #}
                      clnext: identPtr); {next compound literal}

@@ -80,6 +80,7 @@ type
       buckets: array[0..hashSize2] of identPtr; {hash buckets}
       next: symbolTablePtr;             {next symbol table}
       isEmpty: boolean;                 {is the pool empty (nothing in buckets)?}
+      lastVMSym: identPtr;              {list symbol of variably modified type}
       case noStatics: boolean of        {no statics/staticNum for this table?}
          false: (staticNum: packed array[1..6] of char); {staticNum for this table}
          true: ();
@@ -274,6 +275,15 @@ function Unqualify (tp: typePtr): typePtr;
 {       tp - the original type                                  }
 {                                                               }
 { returns: pointer to the unqualified type                      }
+
+
+function VariablyModifiedSymInList(vmSym: identPtr; list: identPtr): boolean;
+
+{ Check if a symbol is in a list of variably modified symbols.  }
+{                                                               }
+{ parameters:                                                   }
+{       vmSym - the symbol to check for (or nil for none)       }
+{       list - the list of variably modified symbols            }
 
 
 function NewSymbol (name: stringPtr; itype: typePtr; class: tokenEnum;
@@ -2364,6 +2374,33 @@ if tp^.qualifiers <> [] then
 end; {Unqualify}
 
 
+function VariablyModifiedSymInList{vmSym: identPtr; list: identPtr): boolean};
+
+{ Check if a symbol is in a list of variably modified symbols.  }
+{                                                               }
+{ parameters:                                                   }
+{       vmSym - the symbol to check for (or nil for none)       }
+{       list - the list of variably modified symbols            }
+
+label 1;
+
+begin {VariablyModifiedSymInList}
+if vmSym = nil then
+   VariablyModifiedSymInList := true
+else begin
+   while list <> nil do begin
+      if list = vmSym then begin
+         VariablyModifiedSymInList := true;
+         goto 1;
+         end; {if}
+      list := list^.nextVMSym;
+      end; {while}
+   VariablyModifiedSymInList := false;
+   end; {else}
+1:
+end; {VariablyModifiedSymInList}
+
+
 function NewSymbol {name: stringPtr; itype: typePtr; class: tokenEnum;
                    space: spaceType; state: stateKind; isInline: boolean):
                    identPtr};
@@ -2536,6 +2573,8 @@ if needSymbol then begin
    p^.name := name;                     {record the name}
    {p^.next := nil;}
    {p^.used := false;}                  {unused for now}
+   {p^.underspecified := false;}        {not underspecified}
+   {p^.nextVMSym := nil;}
    if space <> fieldListSpace then      {insert the symbol in the hash bucket}
       begin
       if (itype = nil) or not isGlobal then begin
@@ -2546,6 +2585,12 @@ if needSymbol then begin
          hashPtr := pointer(ord4(globalTable)+Hash(name));
       if space = tagSpace then
          hashPtr := pointer(ord4(hashPtr) + 4*(hashSize+1));
+      if space = variableSpace then
+         if itype <> nil then
+            if IsVariablyModifiedType(itype) then begin
+               p^.nextVMSym := table^.lastVMSym;
+               table^.lastVMSym := p;
+               end; {if}
       p^.next := hashPtr^;
       hashPtr^ := p;
       end; {if}
@@ -2640,6 +2685,10 @@ else begin
    ClearTable(tPtr^);
    tPtr^.isEmpty := true;
    end; {else}
+if table <> nil then
+   tPtr^.lastVMSym := table^.lastVMSym
+else
+   tPtr^.lastVMSym := nil;
 tPtr^.next := table;
 table := tPtr;
 tPtr^.noStatics := true;

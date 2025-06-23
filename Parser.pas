@@ -166,6 +166,7 @@ type
             switchLab: integer;         {branch point}
             switchList: switchPtr;      {list of labels and values}
             switchDefault: integer;     {default branch point}
+            lastVMSym: identPtr;        {variably modified sym before switch}
             );
       end;
 
@@ -306,6 +307,7 @@ gotoList := gt;
 gt^.name := token.name;
 gt^.lab := GenLabel;
 gt^.defined := false;
+gt^.lastVMSym := table^.lastVMSym;
 1:
 if op = dc_lab then begin
    if gt^.defined then
@@ -313,10 +315,17 @@ if op = dc_lab then begin
    else begin
       gt^.defined := true;
       Gen1(dc_lab, gt^.lab);
+      if not VariablyModifiedSymInList(table^.lastVMSym, gt^.lastVMSym) then
+         Error(202);
+      gt^.lastVMSym := table^.lastVMSym;
       end; {else}
    end {if}
-else
+else begin
    Gen1(pc_ujp, gt^.lab);
+   if gt^.defined then
+      if not VariablyModifiedSymInList(gt^.lastVMSym, table^.lastVMSym) then
+         Error(202);
+   end; {else}
 end; {GotoLabel}
 
 
@@ -713,25 +722,27 @@ var
       stPtr := GetSwitchRecord;         {get the proper switch record}
       Expression(integerConstantExpression, [colonch]); {evaluate the branch condition}
       GetLLExpressionValue(val);
-      if stPtr^.size = cgLongSize then begin {convert out-of-range values}
-         if val.lo < 0 then
-            val.hi := -1
-         else
-            val.hi := 0;
-         end {if}
-      else if stPtr^.size = cgWordSize then begin
-         if long(val.lo).lsw < 0 then begin
-            val.hi := -1;
-            val.lo := val.lo | $FFFF0000;
-            end {if}
-         else begin
-            val.hi := 0;
-            val.lo := val.lo & $0000FFFF;
-            end; {else}
-         end; {else if}
       if stPtr = nil then
          Error(72)
       else begin
+         if table^.lastVMSym <> stPtr^.lastVMSym then
+            Error(202);
+         if stPtr^.size = cgLongSize then begin {convert out-of-range values}
+            if val.lo < 0 then
+               val.hi := -1
+            else
+               val.hi := 0;
+            end {if}
+         else if stPtr^.size = cgWordSize then begin
+            if long(val.lo).lsw < 0 then begin
+               val.hi := -1;
+               val.lo := val.lo | $FFFF0000;
+               end {if}
+            else begin
+               val.hi := 0;
+               val.lo := val.lo & $0000FFFF;
+               end; {else}
+            end; {else if}
          new(swPtr2);                   {create the new label table entry}
          swPtr2^.lab := GenLabel;
          Gen1(dc_lab, swPtr2^.lab);
@@ -810,16 +821,18 @@ var
 
    begin {DefaultLabel}
    NextToken;                           {skip the 'default' token}
-   Match(colonch,29);                   {get the colon}
    stPtr := GetSwitchRecord;            {record the presense of a default label}
    if stPtr = nil then
       Error(72)
    else if stPtr^.switchDefault <> 0 then
       Error(74)
    else begin
+      if table^.lastVMSym <> stPtr^.lastVMSym then
+         Error(202);
       stPtr^.switchDefault := GenLabel;
       Gen1(dc_lab, stPtr^.switchDefault);
       end; {else}
+   Match(colonch,29);                   {get the colon}
    end; {DefaultLabel}
 
 
@@ -1061,6 +1074,7 @@ var
    stPtr^.breakLab := stPtr^.switchExit;
    stPtr^.switchList := nil;
    stPtr^.switchDefault := 0;
+   stPtr^.lastVMSym := table^.lastVMSym;
    if c99Scope then PushTable;
    Match(lparench, 13);                 {evaluate the condition}
    Expression(normalExpression,[rparench]);

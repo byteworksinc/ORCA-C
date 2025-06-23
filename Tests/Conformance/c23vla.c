@@ -175,6 +175,26 @@ int main(void) {
         p = (typeof(*(1 ? (int(*)[GOOD_VALUE])0 : (A*)0))){1,2,3};
 #endif
 
+        // Tests of control flow around identifiers with variably modified type
+        goto lab1;
+        {
+lab1:           ;
+                int (*a)[n];
+                goto lab2;
+        }
+lab2:   ;
+
+        switch (n) {
+        case 1:
+                {
+                        int (*a)[n];
+                }
+        case 2:
+        default: ;
+                int (*a)[n];
+        }
+
+        // Verify that array size expressions were evaluated as expected
         if (good_count != expected_good_count)
                 Fail();
         if (bad_count != 0)
