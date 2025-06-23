@@ -1523,6 +1523,9 @@ else begin                              {generate VLA size code}
       GenLdcLong(tPtr^.aType^.size);
    if tPtr^.isVariableLength then begin
       GenerateCode(tPtr^.sizeTree);
+      if expressionType^.kind = scalarType then
+         if expressionType^.baseType = cgWord then
+            expressionType := uIntPtr;  {avoid generating sign extension code}
       AssignmentConversion(uLongPtr, expressionType, false, 0, true, false);
       end {if}
    else begin
