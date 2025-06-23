@@ -1480,7 +1480,13 @@ if doingParameters or doingFunction then
 else
    Expression(integerConstantExpression, [rbrackch,semicolonch,commach]);
 if isConstant then begin
-   if expressionValue <= 0 then begin
+   if (expressionType^.kind <> scalarType)
+      or (expressionType^.baseType in [cgReal,cgDouble,cgComp,cgExtended,cgVoid])
+      then begin
+      Error(47);
+      expressionValue := 1;
+      end {if}
+   else if expressionValue <= 0 then begin
       Error(45);
       expressionValue := 1;
       end; {if}
@@ -1525,7 +1531,10 @@ else begin                              {generate VLA size code}
       GenerateCode(tPtr^.sizeTree);
       if expressionType^.kind = scalarType then
          if expressionType^.baseType = cgWord then
-            expressionType := uIntPtr;  {avoid generating sign extension code}
+            expressionType := uIntPtr   {avoid generating sign extension code}
+         else if expressionType^.baseType in
+            [cgReal,cgDouble,cgComp,cgExtended] then
+            Error(47);
       AssignmentConversion(uLongPtr, expressionType, false, 0, true, false);
       end {if}
    else begin
