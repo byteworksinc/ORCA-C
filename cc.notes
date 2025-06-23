@@ -112,6 +112,14 @@ declares the variable x with type long (because that is the type of 123L) and st
 
 Note that this can change the behavior of code written using the "implicit int" feature of C89/C90, where a declaration with no type specifiers would behave as if the type specifier int was included.  In the "c23compat" language mode, declarations that use auto with no type specifiers but do not meet all the other requirements above will still be processed using the "implicit int" rule.  In "c23" mode or when #pragma lint bit 6 is set, they will produce a lint message.
 
+14. Variable length array types are now supported.  These are array types where the array length expression enclosed in brackets is not an integer constant expression but instead an expression that needs to be evaluated at execution time.  Such array types may occur only in function parameters or within a function body.
+
+The array length expression is normally evaluated when the declaration or type name that contains it appears in the code (or at the beginning of the function, in the case of expressions within function parameter declarations).  It must evaluate to a positive value, and this then determines the size of the array type for as long as it remains in scope.
+
+Functions can be defined as taking variable length array parameters (including multi-dimensional arrays) with the array sizes defined by other function parameters.  Such functions can be used to operate on arrays of various different sizes depending on the parameters passed to them at run time.  This can be useful for functions performing mathematical operations, e.g. matrix multiplies.
+
+Note that ORCA/C does not allow local variables to be declared with variable length array types.  This is an optional feature in the C23 standard, which ORCA/C does not implement.  As an alternative, it is possible to declare a pointer to a variable length array type and then allocate space for the array with malloc() based on the desired size as determined at run time.
+
 
 Library Updates
 ---------------
