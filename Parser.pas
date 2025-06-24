@@ -3256,6 +3256,7 @@ var
    tHaveAttributeSpecifier: boolean;    {local copy of haveAttributeSpecifier}
    
    lCodeGeneration: boolean;            {local copy of codeGeneration}
+   typeofCode: codeRef;                 {code generated from typeof(expression)}
  
    procedure FieldList (tp: typePtr; kind: typeKind);
  
@@ -3957,12 +3958,17 @@ while token.kind in allowedTokens do begin
          if token.kind in specifierQualifierListElement then
             myTypeSpec := TypeName
          else begin
-            lCodeGeneration := codeGeneration;
-            codeGeneration := false;
+            typeofCode := GetCodeLocation;
             Expression(normalExpression, [rparench]);
             {TODO error on bitfield}
-            codeGeneration := lCodeGeneration and (numErrors = 0);
             myTypeSpec := GetFullExpressionType;
+            if not IsVariablyModifiedType(myTypeSpec) then
+               typeofCode := RemoveCode(typeofCode)
+            else begin
+               Gen0t(pc_pop, UsualUnaryConversions);
+               if codeGeneration then
+                  vlaTrees := vlaTrees + 1;
+               end; {else}
             end; {else}
          if ttoken.kind = typeof_unqualsy then
             myTypeSpec := Unqualify(myTypeSpec);
