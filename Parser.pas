@@ -2806,8 +2806,7 @@ var
 
       if tp^.isVariableLength then begin
          {In ORCA/C, initializable variables cannot have VLA types.}
-         if numErrors = 0 then
-            Error(57);
+         {(This error will be reported elsewhere.)                 }
          errorFound := true;
          goto 1;
          end; {if}
