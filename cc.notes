@@ -118,7 +118,7 @@ The array length expression is normally evaluated when the declaration or type n
 
 Functions can be defined as taking variable length array parameters (including multi-dimensional arrays) with the array sizes defined by other function parameters.  Such functions can be used to operate on arrays of various different sizes depending on the parameters passed to them at run time.  This can be useful for functions performing mathematical operations, e.g. matrix multiplies.
 
-Note that ORCA/C does not allow local variables to be declared with variable length array types.  This is an optional feature in the C23 standard, which ORCA/C does not implement.  As an alternative, it is possible to declare a pointer to a variable length array type and then allocate space for the array with malloc() based on the desired size as determined at run time.
+Note that ORCA/C does not allow local variables to have variable length array types.  This is an optional feature in the C23 standard, which ORCA/C does not implement.  As an alternative, it is possible to declare a pointer to a variable length array type and then allocate space for the array with malloc() based on the desired size as determined at run time.
 
 
 Library Updates
@@ -135,7 +135,7 @@ void unreachable(void);
 
 An invocation of this macro indicates that the control-flow path leading to it is unreachable.  This could be used for optimization or to help diagnose errors, but ORCA/C currently ignores it.
 
-3.  The va_start() macro is now defined as:
+3.  The va_start() macro is now defined like:
 
 #include <stdarg.h>
 void va_start(va_list ap, ...);
