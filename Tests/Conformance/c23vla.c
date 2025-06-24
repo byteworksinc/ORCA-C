@@ -117,7 +117,7 @@ int main(void) {
         expected_good_count++;
         
 #if __STDC_VERSION__ >= 202311L
-        sizeof(typeof(char[good()]));
+        n = sizeof(typeof(char[good()]));
         expected_good_count++;
 #endif
 
@@ -155,6 +155,8 @@ int main(void) {
         expected_good_count++;
 
         // Test circumstances where size expressions are not evaluated
+        
+        A *ap;
 
         extern int f(int q, int a[q + bad()]);
         
@@ -165,10 +167,19 @@ int main(void) {
         char alignas(int[bad()]) x;
         
         n = (0 && sizeof(int[bad()]));
+
+#if __STDC_VERSION__ >= 202311L
+        n = (n && sizeof(typeof((*d)[bad()-2])));
+#endif
+
+        int *(*vlafun(void))(int[bad()]);
         
         // Test composite type rules
         
         if (sizeof(*(1 ? (int(*)[])0 : (A*)0)) != sizeof(A))
+                Fail();
+
+        if (sizeof(A) != sizeof(int) * GOOD_VALUE)
                 Fail();
 
 #if __STDC_VERSION__ >= 202311L
@@ -200,7 +211,7 @@ lab2:   ;
         if (bad_count != 0)
                 Fail();
 
-        printf("optional_count = %d\n", optional_count);
+        //printf("optional_count = %d\n", optional_count);
 
         printf ("Passed Conformance Test c23vla\n");
         return 0;
