@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
+#pragma STDC FENV_ROUND FE_DYNAMIC
+
 int main(void) {
         // labels not preceding a statement
         {

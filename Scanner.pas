@@ -832,6 +832,7 @@ if list or (numErr <> 0) then begin
         200: msg := @'variable-length array declarator using * is not allowed here';
         201: msg := @'variably modified type is not allowed here';
         202: msg := @'goto or switch enters scope of identifier with variably modified type';
+        203: msg := @'static rounding direction is not supported';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
@@ -3843,7 +3844,22 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                         if fenvAccess then
                            if doingFunction then
                               fenvAccessInFunction := true;
-                        end
+                        end {else if}
+                     else if (token.name^ = 'FENV_ROUND')
+                        and ((cStd >= c23) or not strictMode) then begin
+                        NextToken;
+                        if token.kind = typedef then
+                           token.kind := ident;
+                        if token.kind <> ident then
+                           Error(9)
+                        else if token.name^ <> 'FE_DYNAMIC' then
+                           Error(203);
+                        if token.kind <> eolsy then begin
+                           NextToken;
+                           if token.kind <> eolsy then
+                              Error(11);
+                           end; {if}
+                        end {else if}
                      else
                         Error(157);
                      expandMacros := true;
