@@ -314,13 +314,13 @@ function lshr (x,y: longint): longint; extern;
 
 function udiv (x,y: longint): longint; extern;
 
-function uge (x,y: longint): longint; extern;
+function uge (x,y: longint): integer; extern;
 
-function ugt (x,y: longint): longint; extern;
+function ugt (x,y: longint): integer; extern;
 
-function ule (x,y: longint): longint; extern;
+function ule (x,y: longint): integer; extern;
 
-function ult (x,y: longint): longint; extern;
+function ult (x,y: longint): integer; extern;
 
 function umod (x,y: longint): longint; extern;
 
