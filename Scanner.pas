@@ -84,6 +84,7 @@ var
    token: tokenType;                    {next token to process}
    doingFakeFile: boolean;              {processing tokens from fake "file" in memory?}
    keywordMask: integer;                {mask of keyword categories to enable}
+   prohibitDefined: boolean;            {prohibit defined preprocessor operator}
 
                                         {#pragma ignore flags}
                                         {--------------------}
@@ -106,6 +107,15 @@ var
 procedure DoDefaultsDotH;
 
 { Handle the defaults.h file					}
+
+
+function DoEmbed (doingHashEmbed: boolean): integer;
+
+{ #embed NAME pp-tokens(opt)                                    }
+{ __has_embed ( NAME pp-tokens(opt) )                           }
+{                                                               }
+{ parameter:                                                    }
+{     doingHashEmbed - true for #embed, false for __has_embed   }
 
 
 procedure Error (err: integer);
@@ -211,6 +221,12 @@ const
    c23keyword   = 2;
    orcacKeyword = 128;
 
+                                        {embed status values}
+                                        {(matching __has_embed results)}
+   embedNotFound = 0;
+   embedFound    = 1;
+   embedEmpty    = 2;
+
                                         {misc}
                                         {----}
    defaultName  = '13:ORCACDefs:Defaults.h'; {default include file name}
@@ -236,6 +252,11 @@ type
       disp: longint;                    {disp of next character to process}
       end;
 
+   closeOSDCB = record                  {Close DCB}
+      pcount: integer;
+      refNum: integer;
+      end;
+
    getFileInfoOSDCB = record
       pcount: integer;
       pathName: gsosInStringPtr;
@@ -250,6 +271,34 @@ type
       blocksUsed: longint;
       resourceEOF: longint;
       resourceBlocks: longint;
+      end;
+
+   openOSDCB = record                   {Open DCB}
+      pcount: integer;
+      refNum: integer;
+      pathName: gsosInStringPtr;
+      requestAccess: integer;
+      resourceNumber: integer;
+      access: integer;
+      fileType: integer;
+      auxType: longint;
+      storageType: integer;
+      createDateTime: timeField;
+      modDateTime: timeField;
+      optionList: optionListPtr;
+      dataEOF: longint;
+      blocksUsed: longint;
+      resourceEOF: longint;
+      resourceBlocks: longint;
+      end;
+      
+   readWriteOSDCB = record              {WriteGS DCB}
+      pcount: integer;
+      refNum: integer;
+      dataBuffer: ptr;
+      requestCount: longint;
+      transferCount: longint;
+      cachePriority: integer;
       end;
 
    expandDevicesDCBGS = record
@@ -278,6 +327,7 @@ var
    dateStr: longStringPtr;              {macro date string}
    doingCommandLine: boolean;           {are we processing the cc= command line?}
    doingDigitSequence: boolean;         {do we want a digit sequence (for #line)?}
+   doingEmbed: boolean;                 {doing #embed directive?}
    doingPPExpression: boolean;          {are we processing a preprocessor expression?}
    doingStringOrCharacter: boolean;     {used to suppress comments in strings}
    errors: array[1..maxErr] of errorType; {errors in this line}
@@ -316,7 +366,29 @@ var
    lintErrors: set of 1..maxLint;       {lint error codes}
    spaceStr: string[2];                 {string ' ' (used in stringization)}
    quoteStr: string[2];                 {string '"' (used in stringization)}
+   comma: char;                         {comma character (used for #embed)}
    numericConstants: set of tokenClass; {token classes for numeric constants}
+
+{---------------------------------------------------------------}
+
+                                        {GS memory manager}
+                                        {-----------------}
+
+procedure DisposeHandle (theHandle: handle); tool ($02, $10);
+
+function NewHandle (blockSize: longint; userID, memAttributes: integer;
+                    memLocation: ptr): handle; tool($02, $09);
+
+                                        {GS/OS calls}
+                                        {------------}
+
+procedure CloseGS (var parms: closeOSDCB); prodos ($2014);
+
+procedure GetFileInfoGS (var parms: getFileInfoOSDCB); prodos ($2006);
+
+procedure OpenGS (var parms: openOSDCB); prodos ($2010);
+
+procedure ReadGS (var parms: readWriteOSDCB); prodos ($2012);
 
 {-- External procedures; see expression evaluator for notes ----}
 
@@ -369,9 +441,6 @@ procedure FlagPragmas (pragma: pragmas); extern;
 {    1. From Header.pas						}
 
 
-procedure GetFileInfoGS (var parms: getFileInfoOSDCB); prodos ($2006);
-
-
 procedure StartInclude (name: gsosOutStringPtr); extern;
 
 { Marks the start of an include file				}
@@ -413,6 +482,10 @@ function CnvULLX (val: longlong): extended; extern;
 {                                                               }
 { parameters:                                                   }
 {       val - the unsigned long long value                      }
+
+function ult (x,y: longint): integer; extern;
+
+{ unsigned 32-bit comparison                                    }
 
 {-- Scanner support --------------------------------------------}
 
@@ -833,6 +906,9 @@ if list or (numErr <> 0) then begin
         201: msg := @'variably modified type is not allowed here';
         202: msg := @'goto or switch enters scope of identifier with variably modified type';
         203: msg := @'static rounding direction is not supported';
+        204: msg := @'error reading embedded file';
+        205: msg := @'duplicate #embed parameter';
+        206: msg := @'unknown #embed parameter';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
@@ -2287,12 +2363,14 @@ saveNumber := false;                    {stop saving numeric strings}
 end; {Expand}
 
 
-function GetFileName (mustExist: boolean): boolean;
+function GetFileName (mustExist, requireSrc, requireEOL: boolean): boolean;
 
 { Read a file name from a directive line			}
 {								}
 { parameters:							}
 {    mustExist - should we look for an existing file?		}
+{    requireSrc - must the file have SRC file type?		}
+{    requireEOL - must the file name be followed by EOL?	}
 {								}
 { Returns true if successful, false if not.			}
 {								}
@@ -2346,11 +2424,13 @@ var
 
    var
       lname: pString;			{local copy of name}
+      fileType: integer;                {file type}
 
    begin {GetLibraryName}
    lname := concat('13:ORCACDefs:', name);
    Expand(lname);
-   if GetFileType(lname) = SRC then begin
+   fileType := GetFileType(lname);
+   if (fileType = SRC) or (not requireSrc and (fileType <> -1)) then begin
       name := lname;
       GetLibraryName := true;
       end {if}
@@ -2371,11 +2451,13 @@ var
    var
       lname: pstring;			{work string}
       pp: pathRecordPtr;		{used to trace the path list}
+      fileType: integer;                {file type}
 
    begin {GetLocalName}
    lname := name;
    Expand(lname);
-   if GetFileType(lname) = SRC then begin
+   fileType := GetFileType(lname);
+   if (fileType = SRC) or (not requireSrc and (fileType <> -1)) then begin
       GetLocalName := true;
       name := lname;
       end {if}
@@ -2384,7 +2466,8 @@ var
       pp := pathList;
       while pp <> nil do begin
          lname := concat(pp^.path^, name);
-         if GetFileType(lname) = SRC then begin
+         fileType := GetFileType(lname);
+         if (fileType = SRC) or (not requireSrc and (fileType <> -1)) then begin
             GetLocalName := true;
             name := lname;
             Expand(name);
@@ -2517,11 +2600,12 @@ else begin
    end; {else}
 while charKinds[ord(ch)] = ch_white	{finish processing the current line}
    do NextCh;
-if charKinds[ord(ch)] <> ch_eol then	{check for extra stuff on the line}
-   begin
-   Error(11);
-   GetFileName := false;
-   end; {if}
+if requireEOL then
+   if charKinds[ord(ch)] <> ch_eol then	{check for extra stuff on the line}
+      begin
+      Error(11);
+      GetFileName := false;
+      end; {if}
 gettingFileName := false;		{not in GetFileName}
 end; {GetFileName}
 
@@ -2575,7 +2659,7 @@ if default then begin			{get the file name}
    gotName := true;
    end {if}
 else
-   gotName := GetFileName(true);
+   gotName := GetFileName(true, true, true);
 
 if gotName then begin			{read the file name from the line}
    OpenFile := true;			{we opened it}
@@ -2618,6 +2702,401 @@ if gotName then begin			{read the file name from the line}
 else
    OpenFile := false;			{we failed to opened it}
 end; {OpenFile}
+
+
+function DoEmbed {doingHashEmbed: boolean): integer};
+
+{ #embed NAME pp-tokens(opt)                                    }
+{ __has_embed ( NAME pp-tokens(opt) )                           }
+{                                                               }
+{ parameter:                                                    }
+{     doingHashEmbed - true for #embed, false for __has_embed   }
+
+label 1;
+
+const
+   eofEncountered = $4C;                {GS/OS error code}
+
+var
+   haveFile: boolean;
+   pathname: gsosInString;              {GS/OS style name}
+   giRec: getFileInfoOSDCB;             {GetFileInfo record}
+   opRec: openOSDCB;                    {OpenGS record}
+   rdRec: readWriteOSDCB;               {ReadGS record}
+   clRec: closeOSDCB;                   {CloseGS record}
+   readSize: longint;                   {size of data to be read from file}
+   bufHandle: handle;                   {buffer to hold data read from file}
+   dataPtr: ptr;                        {work pointer into data buffer}
+   i: longint;                          {index variable}
+   ch: byte;                            {value of a byte read from file}
+   prefix: tokenListRecordPtr;          {tokens from prefix parameter}
+   suffix: tokenListRecordPtr;          {tokens from suffix parameter}
+   ifEmpty: tokenListRecordPtr;         {tokens from if_empty parameter}
+   limit: longint;                      {value from limit parameter}
+   numString: packed array [0..3] of char; {string for one byte value}
+
+
+   procedure DisposeTokens(tokens: tokenListRecordPtr);
+
+   { Dispose a token sequence                                   }
+
+   var
+      tTokens: tokenListRecordPtr;
+   
+   begin {DisposeTokens}
+   while tokens <> nil do begin
+      tTokens := tokens^.next;
+      dispose(tokens);
+      tokens := tTokens;
+      end; {while}
+   end; {DisposeTokens}
+
+
+   procedure EmbedParameters;
+   
+   { handle embed parameters                                    }
+   
+   var 
+      prefixName: stringPtr;
+      paramName: stringPtr;
+      hasArguments: boolean;
+      tokens: tokenListRecordPtr;
+      hasPrefix,hasSuffix,hasIfEmpty,hasLimit: boolean;
+   
+      procedure MakeIdentToken;
+      
+      { Make token into an ident token.  It must be an identifier,      }
+      { typedef name, or reserved word to begin with.                   }
+      
+      begin {MakeIdentToken}
+      if token.class = reservedWord then begin
+         token.name := @reservedWords[token.kind];
+         token.kind := ident;
+         token.class := identifier;
+         end {if}
+      else if token.kind = typedef then
+         token.kind := ident;
+      end; {MakeIdentToken}
+   
+   
+      function BalancedTokens: tokenListRecordPtr;
+      
+      { Parse a balanced token sequence (where all parentheses, }
+      { brackets, and braces are balanced and properly nested). }
+      { The sequence ends with an unmatched ).                  }
+   
+      type
+         delimiterRecPtr = ^delimiterRec;
+         delimiterRec = record
+            endToken: tokenEnum;
+            next: delimiterRecPtr;
+            end;
+   
+      var
+         nestedDelimiters: delimiterRecPtr; {stack of nested delimiters}
+         tDelimiters: delimiterRecPtr;  {work pointer}
+         done: boolean;                 {done with loop?}
+         tokens: tokenListRecordPtr;    {the tokens found}
+         tTokens: tokenListRecordPtr;   {work pointer}
+   
+      begin {BalancedTokens}
+      nestedDelimiters := nil;
+      tokens := nil;
+      done := false;
+      repeat
+         if token.kind in [lparench,lbracech,lbrackch] then begin
+            new(tDelimiters);
+            tDelimiters^.next := nestedDelimiters;
+            case token.kind of
+               lparench: tDelimiters^.endToken := rparench;
+               lbracech: tDelimiters^.endToken := rbracech;
+               lbrackch: tDelimiters^.endToken := rbrackch;
+               end; {case}
+            nestedDelimiters := tDelimiters;
+            end {if}
+         else if token.kind in [rparench,rbracech,rbrackch] then begin
+            if nestedDelimiters = nil then begin
+               if token.kind <> rparench then
+                  Error(194);
+               done := true;
+               end {if}
+            else if nestedDelimiters^.endToken = token.kind then begin
+               tDelimiters := nestedDelimiters;
+               nestedDelimiters := nestedDelimiters^.next;
+               dispose(tDelimiters);
+               end {if}
+            else
+               Error(194);
+            end; {else if}
+         if not done then begin
+            new(tTokens);
+            tTokens^.next := tokens;
+            tTokens^.token := token;
+            tTokens^.tokenStart := tokenStart;
+            tTokens^.tokenEnd := tokenEnd;
+            tokens := tTokens;
+            NextToken;
+            end; {if}
+      until done or (token.kind = eofsy);
+      while nestedDelimiters <> nil do begin
+         tDelimiters := nestedDelimiters;
+         nestedDelimiters := nestedDelimiters^.next;
+         dispose(tDelimiters);      
+         end; {while}
+      BalancedTokens := tokens;
+      end; {BalancedTokens}
+   
+   
+      procedure TokensParameter(var tokens: tokenListRecordPtr);
+
+      { Process a parameter that takes a token sequence argument        }
+
+      begin {TokensParameter}
+      if hasArguments then begin
+         NextToken;
+         tokens := BalancedTokens;
+         NextToken;
+         end {if}
+      else begin
+         tokens := nil;
+         Error(13);
+         end; {else}
+      end; {TokensParameter}
+   
+   
+      procedure NumericParameter(var value: longint);
+
+      { Process a parameter that takes a numeric argument               }
+      
+      begin {NumericParameter}
+      if hasArguments then begin
+         prohibitDefined := true;
+         NextToken;
+         Expression(preprocessorExpression, [eolsy]);
+         value := expressionValue; {TODO adjustments}
+         if value < 0 then
+            if expressionType^.kind = scalarType then
+               if not (expressionType^.baseType in [cgULong,cgUQuad]) then
+                  Error(98);
+         prohibitDefined := false;
+         NextToken;
+         end {if}
+      else begin
+         value := 0;
+         Error(13);
+         end; {else}
+      end; {NumericParameter}
+   
+   
+      procedure UnknownParameter;
+
+      { Process an unknown parameter                                    }
+   
+      var
+         tokens: tokenListRecordPtr;
+      
+      begin {UnknownParameter}
+      if doingHashEmbed then
+         Error(206);
+      haveFile := false;
+      if hasArguments then begin
+         TokensParameter(tokens);
+         DisposeTokens(tokens);
+         end; {if}
+      end; {UnknownParameter}
+   
+   begin {EmbedParameters}
+   hasPrefix := false;
+   hasSuffix := false;
+   hasIfEmpty := false;
+   hasLimit := false;
+   
+   while token.class in [reservedWord,identifier] do begin
+      MakeIdentToken;
+      prefixName := nil;
+      new(paramName);
+      paramName^ := token.name^;
+      NextToken;
+   
+      if token.kind = coloncolonsy then begin
+         NextToken;
+         if token.class in [reservedWord,identifier] then begin
+            MakeIdentToken;
+            prefixName := paramName;
+            new(paramName);
+            paramName^ := token.name^;
+            NextToken;
+            end {if}
+         else
+            Error(9);
+         end; {if}
+   
+      hasArguments := token.kind = lparench;
+   
+      if prefixName = nil then begin
+         if ((paramName^ = 'if_empty') or (paramName^ = '__if_empty__'))
+            then begin
+            if hasIfEmpty then
+               Error(205);
+            hasIfEmpty := true;
+            TokensParameter(ifEmpty);
+            end {if}
+         else if ((paramName^ = 'prefix') or (paramName^ = '__prefix__')) 
+            then begin
+            if hasPrefix then
+               Error(205);
+            hasPrefix := true;
+            TokensParameter(prefix);
+            end {else if}
+         else if ((paramName^ = 'suffix') or (paramName^ = '__suffix__'))
+            then begin
+            if hasSuffix then
+               Error(205);
+            hasSuffix := true;
+            TokensParameter(suffix);
+            end {else if}
+         else if ((paramName^ = 'limit') or (paramName^ = '__limit__'))
+            then begin
+            if hasLimit then
+               Error(205);
+            hasLimit := true;
+            NumericParameter(limit);
+            end {else if}
+         else
+            UnknownParameter;
+         end {if}
+      else
+         UnknownParameter; {else}
+
+      dispose(paramName);
+      if prefixName <> nil then
+         dispose(prefixName);
+      end; {while}
+   end; {EmbedParameters}
+
+
+   procedure EmbedTokens(tokens: tokenListRecordPtr);
+
+   { Insert a token sequence into the token stream              }
+   
+   begin {EmbedTokens}
+   while tokens <> nil do begin
+      if token.kind <> eolsy then
+         PutBackToken(token, false, false);
+      token := tokens^.token;
+      tokenStart := tokens^.tokenStart;
+      tokenEnd := tokens^.tokenEnd;
+      tokens := tokens^.next;
+      end; {while}
+   end; {EmbedTokens}
+
+begin {DoEmbed}
+prefix := nil;
+suffix := nil;
+ifEmpty := nil;
+limit := -1;
+
+haveFile := GetFileName(true, false, false); {get file name}
+pathname.theString := workString;
+pathname.size := length(workString);
+NextToken;
+EmbedParameters;                     {process embed parameters}
+if doingHashEmbed then begin
+   if token.kind <> eolsy then       {check for extra stuff on the line}
+      Error(11);
+   end; {else}
+
+if haveFile then begin
+   giRec.pcount := 9;                {get file length}
+   giRec.pathName := @pathname;
+   giRec.optionList := nil;
+   GetFileInfoGS(giRec);
+   if toolerror <> 0 then
+      haveFile := false
+   else
+      if ult(giRec.dataEOF, limit) <> 0 then
+         readSize := giRec.dataEOF
+      else
+         readSize := limit;
+
+   if doingHashEmbed then begin      {embed the data}
+      if readSize <> 0 then begin
+         bufHandle := NewHandle(readSize, UserID, $C000, nil);
+         if toolerror <> 0 then
+            TermError(5);
+         opRec.pCount := 3;
+         opRec.pathname := @pathname;
+         opRec.requestAccess := 1;
+         OpenGS(opRec);
+         if toolerror <> 0 then begin
+            haveFile := false;
+            goto 1;
+            end; {if}
+         rdRec.pCount := 4;
+         rdRec.refNum := opRec.refNum;
+         rdRec.dataBuffer := bufHandle^;
+         rdRec.requestCount := readSize;
+         ReadGS(rdRec);
+         if (toolerror <> 0) and (toolError <> eofEncountered) then
+            haveFile := false;
+         readSize := rdRec.transferCount;
+         clRec.pCount := 1;
+         clRec.refnum := opRec.refNum;
+         CloseGS(clRec);
+
+         if haveFile and (readSize <> 0) then begin
+            EmbedTokens(suffix);
+            i := readSize - 1;
+            while i >= 0 do begin
+               dataPtr := pointer(ord4(bufHandle^) + i);
+               ch := dataPtr^;
+               if token.kind <> eolsy then
+                  PutBackToken(token, false, false);
+               token.kind := intconst;
+               token.class := intConstant;
+               token.ival := ch;
+               if saveNumber then begin
+                  numString := cnvis(ch);
+                  token.numString := pointer(GMalloc(length(numString)+1));
+                  CopyString(token.numString, @numString);
+                  tokenStart := @token.numString^[1];
+                  tokenEnd := pointer(
+                     ord4(@token.numString^[length(token.numString^)]) + 1);
+                  end {if}
+               else
+                  token.numString := nil;
+               if i <> 0 then begin
+                  PutBackToken(token, false, false);
+                  token.kind := commach;
+                  token.class := reservedSymbol;
+                  tokenStart := @comma;
+                  tokenEnd := pointer(ord4(@comma) + 1);
+                  end; {if}
+               i := i - 1;
+               end; {for}
+            EmbedTokens(prefix);
+            end {if}
+         else
+            EmbedTokens(ifEmpty);
+
+1:          DisposeHandle(bufHandle);
+         end {if}
+      else
+         EmbedTokens(ifEmpty);
+      end {if}
+   end; {if}
+
+DisposeTokens(prefix);
+DisposeTokens(suffix);
+DisposeTokens(ifEmpty);
+
+if not haveFile then
+   DoEmbed := embedNotFound
+else if readSize = 0 then
+   DoEmbed := embedEmpty
+else
+   DoEmbed := embedFound;
+end; {DoEmbed}
 
 
 procedure PreProcess;
@@ -3269,7 +3748,7 @@ var
    { #pragma keep FILENAME                                      }
 
    begin {DoKeep}
-   if GetFileName(false) then begin	{read the file name}
+   if GetFileName(false, false, true) then begin {read the file name}
       FlagPragmas(p_keep);
       if not ignoreSymbols then
          if pragmaKeepFile = nil then begin
@@ -3475,6 +3954,7 @@ var
 
 begin {PreProcess}
 preprocessing := true;
+doingEmbed := false;
 lSuppressMacroExpansions := suppressMacroExpansions; {inhibit token printing}
 suppressMacroExpansions := true;
 lReportEOL := reportEOL;                {we need to see eol's}
@@ -3541,6 +4021,14 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                else if token.name^ = 'error' then begin
                   if tskipping then goto 2;
                   DoError(true);
+                  goto 2;
+                  end {else if}
+               else if (token.name^ = 'embed')
+                  and ((cStd >= c23) or not strictMode) then begin
+                  if tskipping then goto 2;
+                  if DoEmbed(true) = embedNotFound then
+                     Error(204);
+                  doingEmbed := true;
                   goto 2;
                   end; {else if}
             'i':
@@ -3898,8 +4386,9 @@ if not tSkipping then
 expandMacros := false;                  {skip to the end of the line}
 flagOverflows := false;
 skipping := tSkipping;
-while not (token.kind in [eolsy,eofsy]) do
-   NextToken;
+if not doingEmbed then
+   while not (token.kind in [eolsy,eofsy]) do
+      NextToken;
 flagOverflows := true;
 expandMacros := true;
 reportEOL := lReportEOL;                {restore flags}
@@ -4685,6 +5174,7 @@ customDefaultName := nil;               {no custom default name}
 pragmaKeepFile := nil;                  {no #pragma keep file so far}
 doingFakeFile := false;                 {not doing a fake file}
 doingDigitSequence := false;            {not expecting a digit sequence}
+prohibitDefined := false;               {not prohibiting defined}
 preprocessing := false;                 {not preprocessing}
 cStd := c17;                            {default to C17}
 strictMode := false;                    {...with extensions}
@@ -4694,6 +5184,7 @@ strictMode := false;                    {...with extensions}
 lintErrors :=
    [51,104,105,110,124,125,128,129,130,147,151,152,153,154,155,170,185,186];
 
+comma := ',';                           {used for #embed}
 spaceStr := ' ';                        {strings used in stringization}
 quoteStr := '"';
                                         {set of classes for numeric constants}
@@ -5611,7 +6102,11 @@ while charKinds[ord(ch)] in [illegal,ch_white,ch_eol,ch_pound] do begin
    if charKinds[ord(ch)] = ch_pound then begin
       if lastWasReturn or (token.kind = eolsy) then begin
          NextCh;                        {skip the '#' char}
-         PreProcess                     {call the preprocessor}
+         PreProcess;                    {call the preprocessor}
+         if doingEmbed then begin
+            doingEmbed := false;
+            goto 2;
+            end; {if}
          end {if}
       else
          goto 7;
@@ -5827,6 +6322,10 @@ case charKinds[ord(ch)] of
             token.kind := poundch;      {%: digraph}
             if lLastWasReturn then begin
                PreProcess;
+               if doingEmbed then begin
+                  doingEmbed := false;
+                  goto 2;
+                  end; {if}
                goto 5;
                end;
             end;

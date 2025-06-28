@@ -120,6 +120,30 @@ Functions can be defined as taking variable length array parameters (including m
 
 Note that ORCA/C does not allow local variables to have variable length array types.  This is an optional feature in the C23 standard, which ORCA/C does not implement.  As an alternative, it is possible to declare a pointer to a variable length array type and then allocate space for the array with malloc() based on the desired size as determined at run time.
 
+15. The #embed preprocessor directive is now supported.  It can have one of these forms:
+
+   #embed "filename" [parameters]
+   #embed <filename> [parameters]
+
+The #embed directive embeds the bytes from the specified file into the C source file as a comma separated list of integer constants.  For example, if there is a file "testfile" that contains only the word "hello", then the directive
+
+   #embed "testfile"
+
+will expand to the token sequence 104,101,108,108,111 because those numbers correspond to the ASCII values of the characters 'h', 'e', 'l', 'l', and 'o'.
+
+The two forms of the #embed directive search for a file in the same way as the #include directive would, except that the file is not required to have the SRC file type.  Thus, the form with "filename" looks in the current directory first, while the form with <filename> looks in the ORCACDefs directory first.  As with #include, the search path can be modified with #pragma path.
+
+Either form of the #embed directive may also optionally include one or more parameter clauses of the following forms after the file name:
+
+   limit(expression)
+   if_empty(tokens)
+   prefix(tokens)
+   suffix(tokens)
+
+The limit clause takes an integer constant expression which limits the number of bytes to embed from the file.  The if_empty clause contains an alternate token sequence that will be used if no bytes can be embedded from the file, either because it was empty or because limit(0) was specified.  The prefix and suffix clauses specify extra tokens that will be included before or after those embedded from the file, provided that at least one byte is embedded from the file.  In the token sequences in the if_empty, prefix, and suffix clauses, any parentheses, brackets, or braces must be balanced and properly nested.
+
+The #embed directive is primarily useful for embedding the contents of small files into the C program.  For example, it might be used to embed a small image into the program by using the embedded token sequence from an image file to initialize an array.  Note that embedding large files may cause ORCA/C to run out of memory or encounter other limitations; other approaches such as using resources are generally better in those cases.
+
 
 Library Updates
 ---------------

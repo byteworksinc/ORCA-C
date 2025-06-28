@@ -997,6 +997,8 @@ var
    if kind = preprocessorExpression then
       if token.name^ = 'defined' then begin
          {handle the preprocessor 'defined' function}
+         if prohibitDefined then
+            Error(161);
          expandMacros := false;
          NextToken;
          sp^.token.kind := intconst;
