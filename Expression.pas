@@ -1022,15 +1022,29 @@ var
          expandMacros := true;
          goto 1;
          end {if}
-      else if (cStd >= c23) and (token.name^ = 'true') then begin
-         {handle 'true' in the preprocessor for C23}
-         stack^.token.class := longlongConstant;
-         stack^.token.kind := longlongconst;
-         stack^.token.qval := longlong1;
-         stack^.id := nil;
-         NextToken;
-         goto 1;
-         end;
+      else if (cStd >= c23) or not strictMode then begin
+         if token.name^ = '__has_embed' then begin
+            NextToken;
+            if token.kind <> lparench then
+               Error(13);
+            sp^.token.class := longlongConstant;
+            sp^.token.kind := longlongconst;
+            sp^.token.qval.lo := DoEmbed(false);
+            sp^.token.qval.hi := 0;
+            sp^.id := nil;
+            Match(rparench, 12);
+            goto 1;
+            end {if}
+         else if (cStd >= c23) and (token.name^ = 'true') then begin
+            {handle 'true' in the preprocessor for C23}
+            stack^.token.class := longlongConstant;
+            stack^.token.kind := longlongconst;
+            stack^.token.qval := longlong1;
+            stack^.id := nil;
+            NextToken;
+            goto 1;
+            end; {else if}
+         end; {else if}
 
    {check for illegal use}
    id := FindSymbol(token, variableSpace, false, true);

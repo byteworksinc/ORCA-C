@@ -35,6 +35,38 @@ char s5[] = {
 #embed embedfile thelimit
 ,0};
 
+#if __has_embed("c23embed.c") != __STDC_EMBED_FOUND__
+#error "__has_embed error"
+#endif
+
+#if __has_embed("c23embed.c" unsupported::parameter) != __STDC_EMBED_NOT_FOUND__
+#error "__has_embed error"
+#endif
+
+#if __has_embed("c23embed.c" limit(0)) != __STDC_EMBED_EMPTY__
+#error "__has_embed error"
+#endif
+
+#if __has_embed("nonexistent_file" prefix(abc) suffix(xyz)) != __STDC_EMBED_NOT_FOUND__
+#error "__has_embed error"
+#endif
+
+#ifndef __has_embed
+#error "__has_embed not defined"
+#endif
+
+#if !defined(__STDC_EMBED_NOT_FOUND__) || __STDC_EMBED_NOT_FOUND__ != 0
+#error "bad __STDC_EMBED_NOT_FOUND__"
+#endif
+
+#if !defined(__STDC_EMBED_FOUND__) || __STDC_EMBED_FOUND__ != 1
+#error "bad __STDC_EMBED_FOUND__"
+#endif
+
+#if !defined(__STDC_EMBED_EMPTY__) || __STDC_EMBED_EMPTY__ != 2
+#error "bad __STDC_EMBED_EMPTY__"
+#endif
+
 long f(int a, int b) {
         return a*1000L + b;
 }

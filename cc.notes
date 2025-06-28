@@ -144,6 +144,12 @@ The limit clause takes an integer constant expression which limits the number of
 
 The #embed directive is primarily useful for embedding the contents of small files into the C program.  For example, it might be used to embed a small image into the program by using the embedded token sequence from an image file to initialize an array.  Note that embedding large files may cause ORCA/C to run out of memory or encounter other limitations; other approaches such as using resources are generally better in those cases.
 
+The __has_embed preprocessor operator is also available for use within preprocessor expressions.  It is followed by parentheses enclosing a filename and optional parameters, like the arguments for the #embed directive.  It expands to a value that matches one of the following predefined macros, indicating how an #embed directive with the specified filename and parameters would behave:
+
+a) __STDC_EMBED_NOT_FOUND__ (a value of 0), indicating that the file could not be found or an unsupported parameter was used, so a corresponding #embed directive would produce an error
+b) __STDC_EMBED_FOUND__ (a value of 1), indicating that the file was found and the corresponding #embed directive would embed one or more bytes from it
+c) __STDC_EMBED_EMPTY__ (a value of 2), indicating that the file was found, but the file was empty or limit(0) was specified, so the corresponding #embed directive would not embed any bytes from it
+
 
 Library Updates
 ---------------

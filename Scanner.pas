@@ -349,6 +349,7 @@ var
    numErr: 0..maxErr;                   {number of errors in this line}
    oneStr: string[2];                   {string form of __STDC__, etc.}
    zeroStr: string[2];                  {string form of __STDC_HOSTED__ when not hosted}
+   twoStr: string[2];                   {string form of __STDC_EMBED_EMPTY__}
    ispstring: boolean;                  {is the current string a p-string?}
    saveNumber: boolean;                 {save the characters in a number?}
    skipping: boolean;                   {skipping tokens?}
@@ -1305,7 +1306,7 @@ FindMacro := nil;
 bPtr := pointer(ord4(macros)+Hash(name));
 mPtr := bPtr^;
 while mPtr <> nil do begin
-   if mPtr^.name^ = name^ then begin
+   if (mPtr^.name^ = name^) and (mPtr^.algorithm <> 12) then begin
       if mPtr^.parameters = -1 then
 	 FindMacro := mPtr
       else if tokenList = nil then begin
@@ -2172,7 +2173,7 @@ if macro^.readOnly then begin           {handle special macros}
          token.class := intConstant;    {__ORCAC_HAS_LONG_LONG__}
          token.ival := 1;               {__STDC_UTF_16__}
          oneStr := '1';                 {__STDC_UTF_32__}
-         tokenStart := @oneStr[1];
+         tokenStart := @oneStr[1];      {__STDC_EMBED_FOUND__}
          tokenEnd := pointer(ord4(tokenStart)+1);
          end;
 
@@ -2218,6 +2219,26 @@ if macro^.readOnly then begin           {handle special macros}
          tokenEnd := pointer(ord4(tokenStart)+length(stdcVersionStr));
          end;
 
+      10: begin                         {__STDC_EMBED_NOT_FOUND__}
+         token.kind := intConst;
+         token.numString := @zeroStr;
+         token.class := intConstant;
+         token.ival := 0;
+         zeroStr := '0';
+         tokenStart := @zeroStr[1];
+         tokenEnd := pointer(ord4(tokenStart)+1);
+         end;
+
+      11: begin                         {__STDC_EMBED_EMPTY__}
+         token.kind := intConst;
+         token.numString := @twoStr;
+         token.class := intConstant;
+         token.ival := 2;
+         twoStr := '2';
+         tokenStart := @twoStr[1];
+         tokenEnd := pointer(ord4(tokenStart)+1);
+         end;
+
       8: begin                          {_Pragma pseudo-macro}
          if (parms <> nil) and (parms^.tokens <> nil)
             and (parms^.tokens^.token.kind = stringconst)
@@ -2227,6 +2248,7 @@ if macro^.readOnly then begin           {handle special macros}
             Error(179);
          end;
 
+      12,
       otherwise: Error(57);
 
       end; {case}
@@ -5559,6 +5581,48 @@ if strictMode then begin
    mp^.next := bp^;
    bp^ := mp;
    end; {if}
+if (cStd >= c23) or not strictMode then begin
+   new(mp);                             {__STDC_EMBED_NOT_FOUND__}
+   mp^.name := @'__STDC_EMBED_NOT_FOUND__';
+   mp^.parameters := -1;
+   mp^.tokens := nil;
+   mp^.readOnly := true;
+   mp^.saved := true;
+   mp^.algorithm := 10;
+   bp := pointer(ord4(macros) + hash(mp^.name));
+   mp^.next := bp^;
+   bp^ := mp;
+   new(mp);                             {__STDC_EMBED_FOUND__}
+   mp^.name := @'__STDC_EMBED_FOUND__';
+   mp^.parameters := -1;
+   mp^.tokens := nil;
+   mp^.readOnly := true;
+   mp^.saved := true;
+   mp^.algorithm := 5;
+   bp := pointer(ord4(macros) + hash(mp^.name));
+   mp^.next := bp^;
+   bp^ := mp;
+   new(mp);                             {__STDC_EMBED_EMPTY__}
+   mp^.name := @'__STDC_EMBED_EMPTY__';
+   mp^.parameters := -1;
+   mp^.tokens := nil;
+   mp^.readOnly := true;
+   mp^.saved := true;
+   mp^.algorithm := 11;
+   bp := pointer(ord4(macros) + hash(mp^.name));
+   mp^.next := bp^;
+   bp^ := mp;
+   new(mp);                             {__has_embed pseudo-macro}
+   mp^.name := @'__has_embed';
+   mp^.parameters := -1;
+   mp^.tokens := nil;
+   mp^.readOnly := true;
+   mp^.saved := true;
+   mp^.algorithm := 12;
+   bp := pointer(ord4(macros) + hash(mp^.name));
+   mp^.next := bp^;
+   bp^ := mp;
+   end;
 SetKeywordMask;
 end; {InitScanner}
 
