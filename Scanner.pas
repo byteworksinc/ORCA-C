@@ -52,6 +52,11 @@ type
       suppressPrint: boolean;           {suppress printing with #pragma expand?}
       tokenStart,tokenEnd: ptr;         {token start/end markers}
       end;
+
+   macroAlgEnum = (algNone,algLine,algFile,algDate,algTime,algOne,algVersion,
+                   algHosted,algPragma,algStdcVersion,algZero,algTwo,
+                   algPseudoMacro);
+
    macroRecordPtr = ^macroRecord;
    macroRecord = record                 {preprocessor macro definition}
       next: macroRecordPtr;
@@ -61,7 +66,7 @@ type
       isVarargs: boolean;
       tokens: tokenListRecordPtr;
       readOnly: boolean;
-      algorithm: integer;
+      algorithm: macroAlgEnum;
       end;
    macroTable = array[0..hashSize] of macroRecordPtr; {preprocessor macro list}
 
@@ -604,7 +609,7 @@ bPtr := pointer(ord4(macros) + Hash(name));
 mPtr := bPtr^;
 while mPtr <> nil do begin
    if mPtr^.name^ = name^ then begin
-      if mPtr^.algorithm <> 8 then      {if not _Pragma pseudo-macro}
+      if mPtr^.algorithm <> algPragma then {if not _Pragma pseudo-macro}
          IsDefined := true;
       goto 1;
       end; {if}
@@ -1306,7 +1311,7 @@ FindMacro := nil;
 bPtr := pointer(ord4(macros)+Hash(name));
 mPtr := bPtr^;
 while mPtr <> nil do begin
-   if (mPtr^.name^ = name^) and (mPtr^.algorithm <> 12) then begin
+   if (mPtr^.name^ = name^) and (mPtr^.algorithm <> algPseudoMacro) then begin
       if mPtr^.parameters = -1 then
 	 FindMacro := mPtr
       else if tokenList = nil then begin
@@ -2113,7 +2118,7 @@ if macro^.parameters >= 0 then begin    {find the values of the parameters}
 if macro^.readOnly then begin           {handle special macros}
    case macro^.algorithm of
 
-      1: begin                          {__LINE__}
+      algLine: begin                    {__LINE__}
          if lineNumber <= maxint then begin
             token.kind := intconst;
             token.class := intconstant;
@@ -2130,7 +2135,7 @@ if macro^.readOnly then begin           {handle special macros}
          tokenEnd := pointer(ord4(tokenStart)+length(lineStr));
          end;
 
-      2: begin                          {__FILE__}
+      algFile: begin                    {__FILE__}
          token.kind := stringConst;
          token.class := stringConstant;
          token.ispstring := false;
@@ -2145,7 +2150,7 @@ if macro^.readOnly then begin           {handle special macros}
          tokenEnd := pointer(ord4(tokenStart)+sp^.length);
          end;
 
-      3: begin                          {__DATE__}
+      algDate: begin                    {__DATE__}
          token.kind := stringConst;
          token.class := stringConstant;
          token.ispstring := false;
@@ -2156,7 +2161,7 @@ if macro^.readOnly then begin           {handle special macros}
          TermHeader;                    {Don't save stale value in sym file}
          end;                                   
 
-      4: begin                          {__TIME__}
+      algTime: begin                    {__TIME__}
          token.kind := stringConst;
          token.class := stringConstant;
          token.ispstring := false;
@@ -2167,7 +2172,7 @@ if macro^.readOnly then begin           {handle special macros}
          TermHeader;                    {Don't save stale value in sym file}
          end;
 
-      5: begin                          {__STDC__}
+      algOne: begin                     {__STDC__}
          token.kind := intConst;        {__ORCAC__}
          token.numString := @oneStr;    {__STDC_NO_...__}
          token.class := intConstant;    {__ORCAC_HAS_LONG_LONG__}
@@ -2177,7 +2182,7 @@ if macro^.readOnly then begin           {handle special macros}
          tokenEnd := pointer(ord4(tokenStart)+1);
          end;
 
-      6: begin                          {__VERSION__}
+      algVersion: begin                 {__VERSION__}
          token.kind := stringConst;
          token.class := stringConstant;
          token.ispstring := false;
@@ -2187,7 +2192,7 @@ if macro^.readOnly then begin           {handle special macros}
          tokenEnd := pointer(ord4(tokenStart)+versionStrL^.length);
          end;
 
-      7: begin                          {__STDC_HOSTED__}
+      algHosted: begin                  {__STDC_HOSTED__}
          if isNewDeskAcc or isClassicDeskAcc or isCDev or isNBA or isXCMD then
          begin
             token.kind := intConst;
@@ -2209,7 +2214,7 @@ if macro^.readOnly then begin           {handle special macros}
             end {else}
          end;
 
-      9: begin                          {__STDC_VERSION__}
+      algStdcVersion: begin             {__STDC_VERSION__}
          token.kind := longconst;
          token.class := longconstant;
          token.lval := stdcVersion[cStd];
@@ -2219,7 +2224,7 @@ if macro^.readOnly then begin           {handle special macros}
          tokenEnd := pointer(ord4(tokenStart)+length(stdcVersionStr));
          end;
 
-      10: begin                         {__STDC_EMBED_NOT_FOUND__}
+      algZero: begin                    {__STDC_EMBED_NOT_FOUND__}
          token.kind := intConst;
          token.numString := @zeroStr;
          token.class := intConstant;
@@ -2229,7 +2234,7 @@ if macro^.readOnly then begin           {handle special macros}
          tokenEnd := pointer(ord4(tokenStart)+1);
          end;
 
-      11: begin                         {__STDC_EMBED_EMPTY__}
+      algTwo: begin                     {__STDC_EMBED_EMPTY__}
          token.kind := intConst;
          token.numString := @twoStr;
          token.class := intConstant;
@@ -2239,7 +2244,7 @@ if macro^.readOnly then begin           {handle special macros}
          tokenEnd := pointer(ord4(tokenStart)+1);
          end;
 
-      8: begin                          {_Pragma pseudo-macro}
+      algPragma: begin                  {_Pragma pseudo-macro}
          if (parms <> nil) and (parms^.tokens <> nil)
             and (parms^.tokens^.token.kind = stringconst)
             and (parms^.tokens^.next = nil) then
@@ -2248,11 +2253,11 @@ if macro^.readOnly then begin           {handle special macros}
             Error(179);
          end;
 
-      12,
+      algPseudoMacro,
       otherwise: Error(57);
 
       end; {case}
-   if macro^.algorithm <> 8 then        {if not _Pragma}
+   if macro^.algorithm <> algPragma then {if not _Pragma}
       PutBackToken(token, true, false);
    end {if}
 else begin
@@ -3484,7 +3489,7 @@ var
             if tPtr^.next <> nil then
                Error(172);
       mPtr^.readOnly := false;
-      mPtr^.algorithm := 0;
+      mPtr^.algorithm := algNone;
       if IsDefined(mPtr^.name) then begin
          mf := macroFound;
          if mf^.readOnly then
@@ -5219,7 +5224,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 1;
+mp^.algorithm := algLine;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5229,7 +5234,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 2;
+mp^.algorithm := algFile;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5239,7 +5244,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 3;
+mp^.algorithm := algDate;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5249,7 +5254,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 4;
+mp^.algorithm := algTime;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5259,7 +5264,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5269,7 +5274,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5279,7 +5284,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 6;
+mp^.algorithm := algVersion;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5289,7 +5294,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5299,7 +5304,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5309,7 +5314,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5319,7 +5324,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5329,7 +5334,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5339,7 +5344,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5349,7 +5354,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 5;
+mp^.algorithm := algOne;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5359,7 +5364,7 @@ mp^.parameters := -1;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 7;
+mp^.algorithm := algHosted;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5370,7 +5375,7 @@ mp^.isVarargs := true;
 mp^.tokens := nil;
 mp^.readOnly := true;
 mp^.saved := true;
-mp^.algorithm := 8;
+mp^.algorithm := algPragma;
 bp := pointer(ord4(macros) + hash(mp^.name));
 mp^.next := bp^;
 bp^ := mp;
@@ -5554,7 +5559,7 @@ if cStd >= c95 then begin
    mp^.tokens := nil;
    mp^.readOnly := true;
    mp^.saved := true;
-   mp^.algorithm := 9;
+   mp^.algorithm := algStdcVersion;
    bp := pointer(ord4(macros) + hash(mp^.name));
    mp^.next := bp^;
    bp^ := mp;
@@ -5576,7 +5581,7 @@ if strictMode then begin
    mp^.tokens := nil;
    mp^.readOnly := false;
    mp^.saved := true;
-   mp^.algorithm := 0;
+   mp^.algorithm := algNone;
    bp := pointer(ord4(macros) + hash(mp^.name));
    mp^.next := bp^;
    bp^ := mp;
@@ -5588,7 +5593,7 @@ if (cStd >= c23) or not strictMode then begin
    mp^.tokens := nil;
    mp^.readOnly := true;
    mp^.saved := true;
-   mp^.algorithm := 10;
+   mp^.algorithm := algZero;
    bp := pointer(ord4(macros) + hash(mp^.name));
    mp^.next := bp^;
    bp^ := mp;
@@ -5598,7 +5603,7 @@ if (cStd >= c23) or not strictMode then begin
    mp^.tokens := nil;
    mp^.readOnly := true;
    mp^.saved := true;
-   mp^.algorithm := 5;
+   mp^.algorithm := algOne;
    bp := pointer(ord4(macros) + hash(mp^.name));
    mp^.next := bp^;
    bp^ := mp;
@@ -5608,7 +5613,7 @@ if (cStd >= c23) or not strictMode then begin
    mp^.tokens := nil;
    mp^.readOnly := true;
    mp^.saved := true;
-   mp^.algorithm := 11;
+   mp^.algorithm := algTwo;
    bp := pointer(ord4(macros) + hash(mp^.name));
    mp^.next := bp^;
    bp^ := mp;
@@ -5618,7 +5623,7 @@ if (cStd >= c23) or not strictMode then begin
    mp^.tokens := nil;
    mp^.readOnly := true;
    mp^.saved := true;
-   mp^.algorithm := 12;
+   mp^.algorithm := algPseudoMacro;
    bp := pointer(ord4(macros) + hash(mp^.name));
    mp^.next := bp^;
    bp^ := mp;

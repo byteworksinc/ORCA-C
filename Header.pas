@@ -742,7 +742,7 @@ procedure EndInclude {chPtr: ptr};
                WriteByte(mp^.parameters);
                WriteByte(ord(mp^.isVarargs));
                WriteByte(ord(mp^.readOnly));
-               WriteByte(mp^.algorithm);
+               WriteByte(ord(mp^.algorithm));
                tp := mp^.tokens;	{loop over token list}
                while tp <> nil do begin
 		  WriteByte(1);		{write tokenListRecord}
@@ -1423,7 +1423,7 @@ var
          mp^.parameters := mp^.parameters | $FF00;
       mp^.isVarargs := boolean(ReadByte);
       mp^.readOnly := boolean(ReadByte);
-      mp^.algorithm := ReadByte;
+      mp^.algorithm := macroAlgEnum(ReadByte);
       mp^.tokens := nil;
       ep := nil;
       while ReadByte <> 0 do begin
