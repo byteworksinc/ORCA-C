@@ -4464,6 +4464,7 @@ if isFunction then begin
          while tlp <> nil do begin
             if tlp^.itype = nil then begin
                tlp^.itype := intPtr;    {default K&R parm type is int}
+               tlp^.pln := GetLocalLabel;
                if (lint & lintC99Syntax) <> 0 then
                   if (lint & lintNotPrototyped) = 0 then
                      Error(147);        {C99+ require K&R params to be declared}
