@@ -67,11 +67,15 @@ char s5[] = {
 #error "bad __STDC_EMBED_EMPTY__"
 #endif
 
+#embed "c23embed.c" limit(0)
+
 long f(int a, int b) {
         return a*1000L + b;
 }
 
 int main(void) {
+#embed "c23embed.c" limit(0)
+
         if (strcmp(s2, "/*") != 0)
                 goto Fail;
 

@@ -4055,7 +4055,8 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                   if tskipping then goto 2;
                   if DoEmbed(true) = embedNotFound then
                      Error(204);
-                  doingEmbed := true;
+                  if token.kind <> eolsy then
+                     doingEmbed := true;
                   goto 2;
                   end; {else if}
             'i':
