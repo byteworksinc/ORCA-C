@@ -1035,6 +1035,19 @@ var
             Match(rparench, 12);
             goto 1;
             end {if}
+         else if token.name^ = '__has_include' then begin
+            NextToken;
+            if token.kind <> lparench then
+               Error(13);
+            sp^.token.class := longlongConstant;
+            sp^.token.kind := longlongconst;
+            sp^.token.qval.lo := ord(HasInclude);
+            sp^.token.qval.hi := 0;
+            sp^.id := nil;
+            NextToken;
+            Match(rparench, 12);
+            goto 1;
+            end {else if}
          else if (cStd >= c23) and (token.name^ = 'true') then begin
             {handle 'true' in the preprocessor for C23}
             stack^.token.class := longlongConstant;

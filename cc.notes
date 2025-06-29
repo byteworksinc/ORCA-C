@@ -150,6 +150,8 @@ a) __STDC_EMBED_NOT_FOUND__ (a value of 0), indicating that the file could not b
 b) __STDC_EMBED_FOUND__ (a value of 1), indicating that the file was found and the corresponding #embed directive would embed one or more bytes from it
 c) __STDC_EMBED_EMPTY__ (a value of 2), indicating that the file was found, but the file was empty or limit(0) was specified, so the corresponding #embed directive would not embed any bytes from it
 
+16. The __has_include preprocessor operator is available for use within preprocessor expressions.  It is followed by parentheses enclosing a filename in quotes or angle brackets, like the argument for the #include directive.  It searches for a file in the same way the #include directive would and expands to 1 if a file of the specified name is available to include, or 0 if not.  
+
 
 Library Updates
 ---------------

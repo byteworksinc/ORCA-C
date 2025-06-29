@@ -150,6 +150,13 @@ procedure ErrorWithExtraString (err:integer; extraStr: stringPtr);
 { err - error number                                            }
 
 
+function HasInclude: boolean;
+
+{ Parse an include file name and check if the file exists.      }
+{                                                               }
+{ Returns: true if a valid include file exists, false otherwise }
+
+
 procedure InitScanner (start, endPtr: ptr);
 
 { initialize the scanner                                        }
@@ -2729,6 +2736,23 @@ if gotName then begin			{read the file name from the line}
 else
    OpenFile := false;			{we failed to opened it}
 end; {OpenFile}
+
+
+function HasInclude{: boolean};
+
+{ Parse an include file name and check if the file exists.      }
+{                                                               }
+{ Returns: true if a valid include file exists, false otherwise }
+
+const
+   SRC = $B0;                           {source file type}
+
+begin {HasInclude}
+if GetFileName(true, true, false) then
+   HasInclude := GetFileType(workString) = SRC
+else
+   HasInclude := false;
+end; {HasInclude}
 
 
 function DoEmbed {doingHashEmbed: boolean): integer};
@@ -5620,6 +5644,16 @@ if (cStd >= c23) or not strictMode then begin
    bp^ := mp;
    new(mp);                             {__has_embed pseudo-macro}
    mp^.name := @'__has_embed';
+   mp^.parameters := -1;
+   mp^.tokens := nil;
+   mp^.readOnly := true;
+   mp^.saved := true;
+   mp^.algorithm := algPseudoMacro;
+   bp := pointer(ord4(macros) + hash(mp^.name));
+   mp^.next := bp^;
+   bp^ := mp;
+   new(mp);                             {__has_include pseudo-macro}
+   mp^.name := @'__has_include';
    mp^.parameters := -1;
    mp^.tokens := nil;
    mp^.readOnly := true;

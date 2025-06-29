@@ -6,6 +6,14 @@
 
 #pragma STDC FENV_ROUND FE_DYNAMIC
 
+#if __has_include(<stdio.h>) != 1 || __has_include(<nonexistent_file.h>) != 0
+#error "__has_include error"
+#endif
+
+#if __has_include("5:Linker") || !defined(__has_include)
+#error "__has_include error"
+#endif
+
 int main(void) {
         // labels not preceding a statement
         {
