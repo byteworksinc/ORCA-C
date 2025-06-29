@@ -1610,7 +1610,6 @@ var
       cp,cpList: pointerListPtr;        {pointer list}
       done,done2: boolean;              {for loop termination}
       isPtr: boolean;                   {is the parenthesized expr a ptr?}
-      isVoid: boolean;                  {is the type specifier void?}
       wp: parameterPtr;                 {used to build prototype var list}
       pvar: identPtr;                   {work pointer}
       tPtr2: typePtr;                   {work pointer}
@@ -1786,28 +1785,7 @@ var
          ttPtr^.next := typeStack;
          typeStack := ttPtr;
          ttPtr^.typeDef := tPtr2;
-         NextToken;                        {skip the '(' token}
-         isVoid := token.kind = voidsy;
-         if token.kind = typedef then
-            if token.symbolPtr^.itype^.kind = scalarType then
-               if token.symbolPtr^.itype^.baseType = cgVoid then
-                  isVoid := true;
-         if isVoid then begin              {check for a void prototype}
-            lSuppressMacroExpansions := suppressMacroExpansions;
-            suppressMacroExpansions := true;
-            NextToken;
-            suppressMacroExpansions := lSuppressMacroExpansions;
-            if token.kind = rparench then begin
-               PutBackToken(token, false, false);
-               NextToken;
-               tPtr2^.prototyped := true;
-               end
-            else begin
-               PutBackToken(token, false, false);
-               token.kind := voidsy;
-               token.class := reservedSymbol;
-               end; {else}
-            end; {if}
+         NextToken;                     {skip the '(' token}
                                         {see if we are doing a prototyped list}
          if token.kind in prototypeParameterDeclarationStart then begin
             {handle a prototype variable list}
@@ -1825,19 +1803,27 @@ var
                      declaredTagOrEnumConst :=
                         ldeclaredTagOrEnumConst or declaredTagOrEnumConst;
                      if protoType <> nil then begin
-                        wp := pointer(Malloc(sizeof(parameterRecord)));
-                        wp^.next := parameterList;
-                        parameterList := wp;
-                        wp^.parameter := protoVariable;
-                        wp^.parameterType := protoType;
-                        if protoVariable <> nil then begin
-                           if not madeFunctionTable then begin
-                              if not doingFunction then
-                                 protoVariable^.pln := GetLocalLabel;
-                              protoVariable^.pnext := lastParameter;
-                              lastParameter := protoVariable;
+                        if (parameterList = nil)
+                           and StrictCompTypes(protoType, voidPtr)
+                           and ((protoVariable = nil)
+                              or (protoVariable^.name^ = '?'))
+                           and (token.kind = rparench) then
+                           {it is a (void) prototype: no parameters}
+                        else begin
+                           wp := pointer(Malloc(sizeof(parameterRecord)));
+                           wp^.next := parameterList;
+                           parameterList := wp;
+                           wp^.parameter := protoVariable;
+                           wp^.parameterType := protoType;
+                           if protoVariable <> nil then begin
+                              if not madeFunctionTable then begin
+                                 if not doingFunction then
+                                    protoVariable^.pln := GetLocalLabel;
+                                 protoVariable^.pnext := lastParameter;
+                                 lastParameter := protoVariable;
+                                 end; {if}
                               end; {if}
-                           end; {if}
+                           end; {else}
                         end; {if}
                      if token.kind = commach then begin
                         NextToken;
@@ -4853,11 +4839,19 @@ var
                   if token.kind in prototypeParameterDeclarationStart then begin
                      DoDeclaration(true);
                      if protoType <> nil then begin
-                        wp := pointer(Malloc(sizeof(parameterRecord)));
-                        wp^.next := parameterList;
-                        parameterList := wp;
-                        wp^.parameter := protoVariable;
-                        wp^.parameterType := protoType;
+                        if (parameterList = nil)
+                           and StrictCompTypes(protoType, voidPtr)
+                           and ((protoVariable = nil)
+                              or (protoVariable^.name^ = '?'))
+                           and (token.kind = rparench) then
+                           {it is a (void) prototype: no parameters}
+                        else begin
+                           wp := pointer(Malloc(sizeof(parameterRecord)));
+                           wp^.next := parameterList;
+                           parameterList := wp;
+                           wp^.parameter := protoVariable;
+                           wp^.parameterType := protoType;
+                           end; {else}
                         end; {if}
                      if token.kind = commach then begin
                         NextToken;
