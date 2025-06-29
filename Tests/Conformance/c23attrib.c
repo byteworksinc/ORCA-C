@@ -4,6 +4,18 @@
 
 #include <stdio.h>
 
+#if __has_c_attribute(fallthrough) < 0 || __has_c_attribute(_Noreturn) < 0
+#error "__has_c_attribute error"
+#endif
+
+#if __has_c_attribute(nonexistent_attr) || __has_c_attribute(nonexistent::do)
+#error "__has_c_attribute error"
+#endif
+
+#ifndef __has_c_attribute
+#error "__has_c_attribute error"
+#endif
+
 [[]]int a = 1;
 
 static long [[]] b;

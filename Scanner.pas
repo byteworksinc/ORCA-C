@@ -5662,6 +5662,16 @@ if (cStd >= c23) or not strictMode then begin
    bp := pointer(ord4(macros) + hash(mp^.name));
    mp^.next := bp^;
    bp^ := mp;
+   new(mp);                             {__has_c_attribute pseudo-macro}
+   mp^.name := @'__has_c_attribute';
+   mp^.parameters := -1;
+   mp^.tokens := nil;
+   mp^.readOnly := true;
+   mp^.saved := true;
+   mp^.algorithm := algPseudoMacro;
+   bp := pointer(ord4(macros) + hash(mp^.name));
+   mp^.next := bp^;
+   bp^ := mp;
    end;
 SetKeywordMask;
 end; {InitScanner}

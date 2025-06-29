@@ -62,6 +62,8 @@ may be invoked as
 
 7.  Attribute specifiers of the form [[ /*...*/ ]] may appear in certain places in declarations and statements, declaring attributes that appertain to various syntactic elements.  ORCA/C currently ignores all attributes.
 
+The __has_c_attribute preprocessor operator is also available for use within preprocessor expressions.  It is followed by parentheses enclosing an attribute name.  It expands to 0 if the attribute is not supported, or a non-zero value if it is supported.  Since ORCA/C does not currently support any attributes, it always expands to 0 in ORCA/C.
+
 8.  Labels are no longer restricted to appearing only before statements.  They can now appear before declarations (within a function body) or immediately before the closing } of a compound statement.
 
 9.  Character constants can now have the u8 prefix, indicating UTF-8 encoding.  Such character constants have the type unsigned char.  Unless designated by an octal or hexadecimal escape sequence, the character specified by a u8-prefixed character constant must be one that can be represented by a single UTF-8 code unit, i.e. a character within the 7-bit ASCII character set.

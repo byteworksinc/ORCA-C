@@ -1048,6 +1048,27 @@ var
             Match(rparench, 12);
             goto 1;
             end {else if}
+         else if token.name^ = '__has_c_attribute' then begin
+            NextToken;
+            Match(lparench, 13);
+            if token.class in [identifier,reservedWord] then
+               NextToken
+            else
+               Error(9);
+            if token.kind = coloncolonsy then begin
+               NextToken;
+               if token.class in [identifier,reservedWord] then
+                  NextToken
+               else
+                  Error(9);
+               end; {if}
+            sp^.token.class := longlongConstant;
+            sp^.token.kind := longlongconst;
+            sp^.token.qval := longlong0; {no attributes are currently supported}
+            sp^.id := nil;
+            Match(rparench, 12);
+            goto 1;
+            end {else if}
          else if (cStd >= c23) and (token.name^ = 'true') then begin
             {handle 'true' in the preprocessor for C23}
             stack^.token.class := longlongConstant;
