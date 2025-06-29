@@ -3055,7 +3055,7 @@ EmbedParameters;                     {process embed parameters}
 if doingHashEmbed then begin
    if token.kind <> eolsy then       {check for extra stuff on the line}
       Error(11);
-   end; {else}
+   end; {if}
 
 if haveFile then begin
    giRec.pcount := 9;                {get file length}
@@ -3124,17 +3124,17 @@ if haveFile then begin
                   tokenEnd := pointer(ord4(@comma) + 1);
                   end; {if}
                i := i - 1;
-               end; {for}
+               end; {while}
             EmbedTokens(prefix);
             end {if}
          else
             EmbedTokens(ifEmpty);
 
-1:          DisposeHandle(bufHandle);
+1:       DisposeHandle(bufHandle);
          end {if}
       else
          EmbedTokens(ifEmpty);
-      end {if}
+      end; {if}
    end; {if}
 
 DisposeTokens(prefix);
