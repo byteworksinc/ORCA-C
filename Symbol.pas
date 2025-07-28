@@ -689,11 +689,11 @@ case kind1 of
             p1 := t1^.parameterList;
             p2 := t2^.parameterList;
             while (p1 <> nil) and (p2 <> nil) do begin
-               tp1 := p1^.parameterType^;
-               tp2 := p2^.parameterType^;
                if p1^.parameterType = p2^.parameterType then
                   {these parameters are compatible}
                else begin
+                  tp1 := p1^.parameterType^;
+                  tp2 := p2^.parameterType^;
                   tp1.qualifiers := [];
                   tp2.qualifiers := [];
                   if tp1.kind = arrayType then
@@ -717,8 +717,8 @@ case kind1 of
                   if not StrictCompTypes(@tp1, @tp2) then
                      goto 1;
                   end; {else}
-                  p1 := p1^.next;
-                  p2 := p2^.next;
+               p1 := p1^.next;
+               p2 := p2^.next;
                end; {while}
             if p1 <> p2 then
                goto 1;
