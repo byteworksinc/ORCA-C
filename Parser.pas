@@ -2051,12 +2051,14 @@ if checkParms then begin                {check for parameter type conflicts}
                p1 := nil;
                for i := 1 to bitdisp do begin
                   p2 := pfunc^.itype^.parameterList;
-                  while (p2^.next <> p1) and (p2 <> nil) do
+                  while (p2 <> nil) and (p2^.next <> p1) do
                      p2 := p2^.next;
                   p1 := p2;
                   end; {for}
                compatible := false;
-               if CompTypes(p1^.parameterType, tPtr) then
+               if p1 = nil then
+                  {not compatible}
+               else if CompTypes(p1^.parameterType, tPtr) then
                   compatible := true
                else begin
                   tk1 := p1^.parameterType^.kind;
