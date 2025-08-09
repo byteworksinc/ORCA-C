@@ -536,7 +536,9 @@ if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
    else begin {types are the same}
       UsualBinaryConversions := lt;
       if lt = cgWord then               {update types that may have changed}
-         expressionType := intPtr;
+         expressionType := intPtr
+      else if lt = cgUWord then
+         expressionType := uIntPtr;
       end; {else}
    end {if}
 else
@@ -567,7 +569,9 @@ if expressionType^.kind = scalarType then begin
    et := Unary(expressionType^.baseType);
    UsualUnaryConversions := et;
    if et = cgWord then                  {update types that may have changed}
-      expressionType := intPtr;
+      expressionType := intPtr
+   else if et = cgUWord then
+      expressionType := uIntPtr;
    end {if}
 {else if expressionType^.kind in [arrayType,pointerType] then
    UsualUnaryConversions := cgULong};

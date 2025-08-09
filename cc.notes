@@ -197,3 +197,6 @@ Only the va_list argument is required.  The previously-required second argument 
 3. Function parameters can now be declared with function types, which get automatically adjusted to function pointers.
 
 4. If a prototype parameter list appeared as part of a type name (e.g. when type casting a function pointer), it would be ignored and treated as if no prototype was provided.
+
+5. When the unary conversion rules (integer promotions) were applied to an expression of type unsigned short, the resulting type was sometimes unsigned short rather than unsigned int.  This could affect _Generic expressions.
+
