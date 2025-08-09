@@ -101,6 +101,7 @@ var
    allowMixedDeclarations: boolean;     {allow mixed declarations & stmts (C99)?}
    c99Scope: boolean;                   {follow C99 rules for block scopes?}
    looseTypeChecks: boolean;            {loosen some standard type checks?}
+   strictC23Prototypes: boolean;        {strictly follow C23 prototype rules?}
 
                                         {#pragma extensions flags}
                                         {------------------------}
@@ -922,6 +923,7 @@ if list or (numErr <> 0) then begin
         204: msg := @'error reading embedded file';
         205: msg := @'duplicate #embed parameter';
         206: msg := @'unknown #embed parameter';
+        207: msg := @'parameter list not prototyped';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
@@ -4349,6 +4351,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      {     8 - allow // comments                           }
                      {    16 - allow mixed decls & use C99 scope rules     }
                      {    32 - loosen some standard type checks            }
+                     {    64 - loosen C23 rules requiring prototypes       }
                      FlagPragmas(p_ignore);
                      NumericDirective;
                      if expressionType^.kind = scalarType then
@@ -4361,6 +4364,7 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      allowSlashSlashComments := odd(val >> 3);
                      allowMixedDeclarations := odd(val >> 4);
                      looseTypeChecks := odd(val >> 5);
+                     strictC23Prototypes := not odd(val >> 5) and (cStd >= c23);
                      if allowMixedDeclarations <> c99Scope then begin
                         if doingFunction then
                            Error(126)
@@ -5185,6 +5189,7 @@ allowSlashSlashComments := true;        {allow // comments (C99)}
 allowMixedDeclarations := true;         {allow mixed declarations & stmts (C99)}
 c99Scope := true;                       {follow C99 rules for block scopes}
 looseTypeChecks := true;                {loosen some standard type checks}
+strictC23Prototypes := false;           {loosen C23 prototype rules}
 extendedKeywords := true;               {allow extended ORCA/C keywords}
 extendedParameters := true;             {treat all floating params as extended}
 foundFunction := false;                 {no functions found so far}
@@ -5600,6 +5605,8 @@ if strictMode then begin
    looseTypeChecks := false;
    if cStd >= c99 then
       lint := lint | lintC99Syntax;
+   if cStd >= c23 then
+      strictC23Prototypes := true;
    new(mp);                             {add __KeepNamespacePure__ macro}
    mp^.name := @'__KeepNamespacePure__';
    mp^.parameters := -1;

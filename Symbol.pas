@@ -95,6 +95,8 @@ var
    lastParameterLLN: integer;           {label number of last parameter (0 if none)}
    lastParameterSize: integer;          {size of last parameter}
 
+   treatNoParmsFnAsPrototyped: boolean; {force () functions to be treated as prototyped?}
+
                                         {base types}
    charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
       uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
@@ -642,6 +644,15 @@ var
    tp1,tp2: typeRecord;                 {temporary types used in comparison}
 
 
+   function TreatAsPrototyped(tp: typePtr): boolean;
+   
+   { Should a function type be treated as prototyped?           }
+   
+   begin {TreatAsPrototyped}
+   TreatAsPrototyped := tp^.prototyped
+      or (treatNoParmsFnAsPrototyped and (tp^.parameterList = nil));
+   end; {TreatAsPrototyped}
+
 begin {StrictCompTypes}
 if t1 = t2 then begin                   {shortcut}
    StrictCompTypes := true;
@@ -685,7 +696,7 @@ case kind1 of
             goto 1;
          if t1^.varargs <> t2^.varargs then
             goto 1;
-         if t1^.prototyped and t2^.prototyped then begin
+         if TreatAsPrototyped(t1) and TreatAsPrototyped(t2) then begin
             p1 := t1^.parameterList;
             p2 := t2^.parameterList;
             while (p1 <> nil) and (p2 <> nil) do begin
@@ -723,7 +734,7 @@ case kind1 of
             if p1 <> p2 then
                goto 1;
             end {if}
-         else if t1^.prototyped then begin
+         else if TreatAsPrototyped(t1) then begin
             p1 := t1^.parameterList;
             while p1 <> nil do begin
                if p1^.parameterType^.kind = scalarType then
@@ -733,7 +744,7 @@ case kind1 of
                p1 := p1^.next;
                end; {while}
             end {else if}
-         else if t2^.prototyped then begin
+         else if TreatAsPrototyped(t2) then begin
             p2 := t2^.parameterList;
             while p2 <> nil do begin
                if p2^.parameterType^.kind = scalarType then
@@ -1765,6 +1776,7 @@ PushTable;
 globalTable := table;
 globalTable^.isEmpty := false;          {global table is never treated as empty}
 functionTable := nil;
+treatNoParmsFnAsPrototyped := false;
                                         {declare base types}
 new(sCharPtr);                          {signed char}
 with sCharPtr^ do begin

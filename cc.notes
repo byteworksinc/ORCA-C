@@ -154,6 +154,16 @@ c) __STDC_EMBED_EMPTY__ (a value of 2), indicating that the file was found, but 
 
 16. The __has_include preprocessor operator is available for use within preprocessor expressions.  It is followed by parentheses enclosing a filename in quotes or angle brackets, like the argument for the #include directive.  It searches for a file in the same way the #include directive would and expands to 1 if a file of the specified name is available to include, or 0 if not.  
 
+17. (C23 modes only) C23 removes support for function declarators without prototypes.  K&R-style function definitions with a parameter name list are no longer permitted.  Function declarators like f() are still permitted, but a declarator like this is now considered equivalent to f(void) -- that is, it provides a prototype for a function with no parameters.
+
+ORCA/C now supports these rules in C23-based language modes.  However, to provide better compatibility with old code, a new #pragma ignore option is provided that can partially revert to the older rules.  If a C23-based language mode is used but #pragma ignore bit 6 is set, then K&R-style function definitions with parameter name lists will be permitted, and declarations like
+
+   int f();
+
+are largely treated as if they did not provide a prototype.  A call to a function declared like this will be allowed to pass any number of arguments, and a subsequent definition of the function may include parameters.  However, a function definition (not declaration) with an empty parameter list is still treated as providing a prototype for the function with no parameters.  Also, _Generic expressions will use the C23 type compatibility rules for determining which association to use, regardless of the setting of #pragma ignore bit 6.
+
+#pragma ignore bit 6 is set by default in the "c23compat" language mode, but it is clear by default in "c23" mode.  It has no effect in pre-C23 language modes, where the rules from the earlier standards are always followed.
+
 
 Library Updates
 ---------------

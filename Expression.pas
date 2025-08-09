@@ -2198,6 +2198,7 @@ var
             Error(133);
          if IsVariablyModifiedType(currentType) then
             Error(201);
+         treatNoParmsFnAsPrototyped := cStd >= c23;
          tl := typesSeen;               {check if it is a duplicate}
          while tl <> nil do begin
             if StrictCompTypes(currentType, tl^.theType) then begin
@@ -2219,6 +2220,7 @@ var
                end; {if}
             foundMatch := true;
             end; {if}
+         treatNoParmsFnAsPrototyped := false;
          end {if}
       else begin                        {handle default association}
          NextToken;

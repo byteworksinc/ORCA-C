@@ -1857,7 +1857,9 @@ var
          else if token.kind = ident then begin
 
             {handle a K&R variable list}
-            if (lint & lintNotPrototyped) <> 0 then
+            if strictC23Prototypes then
+               Error(207)
+            else if (lint & lintNotPrototyped) <> 0 then
                Error(105);
             if doingFunction or doingPrototypes then
                Error(12)
@@ -1892,9 +1894,13 @@ var
                   done := true;
             until done or (token.kind = eofsy);
             end {else if}
-         else if (lint & lintNotPrototyped) <> 0 then
-            if not tPtr2^.prototyped then
-               Error(105);
+         else
+            if strictC23Prototypes then
+               tPtr2^.prototyped := true
+            else
+               if cStd < c23 then
+                  if (lint & lintNotPrototyped) <> 0 then
+                     Error(105);
          Match(rparench,12);            {insist on a closing ')' token}
          parameterCodeLoc := RemoveCode(parameterCodeLoc);
          if madeFunctionTable or not lastWasIdentifier then
@@ -4447,6 +4453,9 @@ if isFunction then begin
                end; {else}
          paramCode := RemoveCode(paramCode);
          end; {else}
+      if cStd >= c23 then               {empty param list is a prototype in C23}
+         if fnType^.parameterList = nil then
+            fnType^.prototyped := true;
       if not fnType^.prototyped or fnType^.overrideKR then begin
          tlp := lp;
          while tlp <> nil do begin
@@ -4875,7 +4884,12 @@ var
             PopTable;
             end {if prototype}
          else
-            tp^.prototyped := false;
+            if strictC23Prototypes then
+               tp^.prototyped := true
+            else
+               if cStd < c23 then
+                  if (lint & lintNotPrototyped) <> 0 then
+                     Error(105);
 
          tl := tp;
          Match(rparench, 12);

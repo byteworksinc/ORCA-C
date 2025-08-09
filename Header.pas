@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 51;                 {version number of .sym file format}
+   symFileVersion = 52;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -881,7 +881,8 @@ procedure EndInclude {chPtr: ptr};
                         | (ord(allowTokensAfterEndif) << 2)
                         | (ord(allowSlashSlashComments) << 3)
                         | (ord(allowMixedDeclarations) << 4)
-                        | (ord(looseTypeChecks) << 5));
+                        | (ord(looseTypeChecks) << 5)
+                        | (ord(not strictC23Prototypes) << 6));
 
                   p_segment: begin
                      for i := 1 to 10 do begin
@@ -1590,6 +1591,7 @@ var
             allowMixedDeclarations := odd(i >> 4);
             c99Scope := allowMixedDeclarations;
             looseTypeChecks := odd(i >> 5);
+            strictC23Prototypes := not odd(i >> 6);
             end;
          
          p_segment: begin
