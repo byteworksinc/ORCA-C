@@ -97,13 +97,6 @@ var
 
    treatNoParmsFnAsPrototyped: boolean; {force () functions to be treated as prototyped?}
 
-                                        {base types}
-   charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
-      uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
-      floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,utf8StringTypePtr,
-      utf16StringTypePtr,utf32StringTypePtr,voidPtr,voidPtrPtr,charPtrPtr,
-      vaInfoPtr,constCharPtr,defaultStruct: typePtr;
-
 {---------------------------------------------------------------}
 
 procedure CheckStaticFunctions;

@@ -1012,14 +1012,8 @@ case token.kind of
    typedef,
    ident:            write(token.name^);
 
-   charconst,
-   scharconst,
-   ucharconst,
-   shortconst,
-   boolconst,
    intconst:         write(token.ival:1);
 
-   ushortconst,
    uintconst:        write(token.ival:1,'U');
 
    longConst:        write(token.lval:1,'L');
@@ -2131,6 +2125,7 @@ if macro^.readOnly then begin           {handle special macros}
          if lineNumber <= maxint then begin
             token.kind := intconst;
             token.class := intconstant;
+            token.itype := intPtr;
             token.ival := ord(lineNumber);
             end {if}
          else begin
@@ -2185,9 +2180,10 @@ if macro^.readOnly then begin           {handle special macros}
          token.kind := intConst;        {__ORCAC__}
          token.numString := @oneStr;    {__STDC_NO_...__}
          token.class := intConstant;    {__ORCAC_HAS_LONG_LONG__}
+         token.itype := intPtr;         {__STDC_EMBED_FOUND__}
          token.ival := 1;               {__STDC_UTF_16__}
          oneStr := '1';                 {__STDC_UTF_32__}
-         tokenStart := @oneStr[1];      {__STDC_EMBED_FOUND__}
+         tokenStart := @oneStr[1];
          tokenEnd := pointer(ord4(tokenStart)+1);
          end;
 
@@ -2207,6 +2203,7 @@ if macro^.readOnly then begin           {handle special macros}
             token.kind := intConst;
             token.numString := @zeroStr;
             token.class := intConstant;
+            token.itype := intPtr;
             token.ival := 0;
             zeroStr := '0';
             tokenStart := @zeroStr[1];
@@ -2216,6 +2213,7 @@ if macro^.readOnly then begin           {handle special macros}
             token.kind := intConst;
             token.numString := @oneStr;
             token.class := intConstant;
+            token.itype := intPtr;
             token.ival := 1;
             oneStr := '1';
             tokenStart := @oneStr[1];
@@ -2237,6 +2235,7 @@ if macro^.readOnly then begin           {handle special macros}
          token.kind := intConst;
          token.numString := @zeroStr;
          token.class := intConstant;
+         token.itype := intPtr;
          token.ival := 0;
          zeroStr := '0';
          tokenStart := @zeroStr[1];
@@ -2247,6 +2246,7 @@ if macro^.readOnly then begin           {handle special macros}
          token.kind := intConst;
          token.numString := @twoStr;
          token.class := intConstant;
+         token.itype := intPtr;
          token.ival := 2;
          twoStr := '2';
          tokenStart := @twoStr[1];
@@ -3107,6 +3107,7 @@ if haveFile then begin
                   PutBackToken(token, false, false);
                token.kind := intconst;
                token.class := intConstant;
+               token.itype := intPtr;
                token.ival := ch;
                if saveNumber then begin
                   numString := cnvis(ch);
@@ -3777,15 +3778,13 @@ var
    begin {DoFloat}
    FlagPragmas(p_float);
    NextToken;
-   if token.kind in [intconst,uintconst,shortconst,ushortconst,boolconst] then
-      begin
+   if token.kind in [intconst,uintconst] then begin
       floatCard := token.ival;
       NextToken;
       end {if}
    else
       Error(18);
-   if token.kind in [intconst,uintconst,shortconst,ushortconst,boolconst] then
-      begin
+   if token.kind in [intconst,uintconst] then begin
       floatSlot := token.ival;
       NextToken;
       end {if}
@@ -3864,8 +3863,7 @@ var
          NextToken;
          isNegative := true;
          end; {else if}
-      if token.kind in [intconst,uintconst,shortconst,ushortconst,boolconst]
-         then begin
+      if token.kind in [intconst,uintconst] then begin
 	 value := token.ival;
 	 NextToken;
 	 end {if}
@@ -4796,12 +4794,16 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
          token.kind := longConst;
       end {if}
    else begin
-      if unsigned then
-         token.kind := uintConst
-      else
-         token.kind := intConst;
       token.class := intConstant;
-      token.lval := Convertsl(numString);
+      if unsigned then begin
+         token.kind := uintConst;
+         token.itype := uIntPtr;
+         end {if}
+      else begin
+         token.kind := intConst;
+         token.itype := intPtr;
+         end; {else}
+      token.ival := ord(Convertsl(numString));
       end; {else}
    end {else if}
 else begin                            {hex, octal, & binary}
@@ -4884,11 +4886,15 @@ else begin                            {hex, octal, & binary}
    else begin
       if (long(token.qval.lo).lsw & $8000) <> 0 then
          unsigned := true;
-      if unsigned then
-         token.kind := uintConst
-      else
-         token.kind := intConst;
       token.class := intConstant;
+      if unsigned then begin
+         token.kind := uintConst;
+         token.itype := uIntPtr;
+         end {if}
+      else begin
+         token.kind := intConst;
+         token.itype := intPtr;
+         end; {else}
       end; {else}
    end; {else}
 if not atEnd then                       {make sure we read all characters}
@@ -5501,6 +5507,7 @@ repeat
             tPtr^.token.kind := intconst;
             tPtr^.token.numString := @oneStr;
             tPtr^.token.class := intConstant;
+            tPtr^.token.itype := intPtr;
             tPtr^.token.ival := 1;
             end; {else}
          end {if}
@@ -6032,12 +6039,14 @@ var
       else begin
          token.kind := intconst;
          token.class := intConstant;
+         token.itype := intPtr;
          token.ival := long(result).lsw;
          end; {else}
       end {if}
    else if charStrPrefix = prefix_u8 then begin
-      token.kind := ucharconst;
+      token.kind := intconst;
       token.class := intConstant;
+      token.itype := uCharPtr;
       if octHexEscape then
          token.ival := long(result).lsw
       else begin
@@ -6047,8 +6056,9 @@ var
          end; {else}
       end {else if}
    else if charStrPrefix = prefix_u16 then begin
-      token.kind := ushortconst;
+      token.kind := uintconst;
       token.class := intConstant;
+      token.itype := uShortPtr;
       if octHexEscape then
          token.ival := long(result).lsw
       else begin
@@ -6776,6 +6786,7 @@ else if token.kind = ppNumber then
       Error(token.errCode);
       token.kind := intconst;
       token.class := intConstant;
+      token.itype := intPtr;
       token.ival := 0;
       token.numString := @'0';
       end; {if}

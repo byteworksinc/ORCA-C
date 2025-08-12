@@ -2295,8 +2295,7 @@ var
          tree := tree^.left;
          if tree^.token.kind = plusch then begin
             rtree := tree^.right;
-            if rtree^.token.kind in [intconst,uintconst,shortconst,ushortconst,
-               charconst,scharconst,ucharconst,boolconst] then
+            if rtree^.token.kind in [intconst,uintconst] then
                size := rtree^.token.ival
             else if rtree^.token.kind in [longconst,ulongconst] then
                size := rtree^.token.lval
@@ -2540,13 +2539,11 @@ var
             operator := tree^.token.kind;
             while operator in [plusch,minusch] do begin
                with tree^.right^.token do
-                  if kind in [intConst,uintconst,shortconst,ushortconst,
-                     longConst,ulongconst,longlongConst,ulonglongconst,
-                     charconst,scharconst,ucharconst,boolconst] then begin
-                     if kind in [intConst,charconst,scharconst,
-                        ucharconst,shortconst,boolconst] then
+                  if kind in [intConst,uintconst,longConst,ulongconst,
+                     longlongConst,ulonglongconst] then begin
+                     if kind = intConst then
                         offSet2 := ival
-                     else if kind in [uintConst,ushortconst] then
+                     else if kind = uintConst then
                         offset2 := ival & $0000ffff
                      else if kind in [longConst,ulongconst] then begin
                         offset2 := lval;
@@ -2705,6 +2702,7 @@ var
          tk^.right := nil;
          tk^.token.kind := intconst;
          tk^.token.class := intConstant;
+         tk^.token.itype := intPtr;
          tk^.token.ival := 0;
          iPtr^.iTree := tk;
          iPtr^.iType := charPtr;
@@ -4376,9 +4374,7 @@ if isFunction then begin
          with fnType^ do begin
             NextToken;
             Match(lparench,13);
-            if token.kind in [intconst,uintconst,shortconst,ushortconst,
-               charconst,scharconst,ucharconst,boolconst]
-               then begin
+            if token.kind in [intconst,uintconst] then begin
                toolNum := token.ival;
                NextToken;
                end {if}
@@ -4389,9 +4385,7 @@ if isFunction then begin
                dispatcher := token.lval;
                NextToken;
                end {if}
-            else if token.kind in [intconst,uintconst,shortconst,ushortconst,
-               charconst,scharconst,ucharconst,boolconst]
-               then begin
+            else if token.kind in [intconst,uintconst] then begin
                dispatcher := token.ival;
                NextToken;
                end {if}

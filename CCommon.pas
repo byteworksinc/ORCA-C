@@ -175,13 +175,12 @@ type
    tokenEnum = (                        {enumeration of the tokens}
                ident,                   {identifiers}
                                         {constants}
-                                        {Note: compconst and charconst, etc. }
-                                        { are not found in program code.     }
-                                        { They are created only by casts.    }
+                                        {Note: compconst tokens are       }
+                                        { not found in program code.      }
+                                        { They are created only by casts. }
                intconst,uintconst,longconst,ulongconst,longlongconst,
                ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
-               charconst,scharconst,ucharconst,shortconst,ushortconst,
-               boolconst,stringconst,
+               stringconst,
                                         {reserved words}
                _Alignassy,_Alignofsy,_Atomicsy,_BitIntsy,_Boolsy,
                _Complexsy,_Decimal128sy,_Decimal32sy,_Decimal64sy,_Genericsy,
@@ -233,6 +232,7 @@ type
                  longlongConstant,realConstant,stringConstant,otherCharacter,
                  preprocessingNumber,macroParameter);
    identPtr = ^identRecord;             {^ to a symbol table entry}
+   typePtr = ^typeRecord;
    tokenType = record                   {a token}
       kind: tokenEnum;                  {kind of token}
       numString: stringPtr;             {chars in number (macros only)}
@@ -241,7 +241,8 @@ type
          reservedSymbol: (isDigraph: boolean);
          identifier    : (name: stringPtr;
                           symbolPtr: identPtr);
-         intConstant   : (ival: integer);
+         intConstant   : (ival: integer;
+                          itype: typePtr);
          longConstant  : (lval: longint);
          longlongConstant: (qval: longlong);
          realConstant  : (rval: extended);
@@ -262,7 +263,6 @@ type
      initializerExpression,             {static variable initializers}
      autoInitializerExpression,         {auto variable initializers}
      normalExpression);                 {for run-time evaluation}
-  typePtr = ^typeRecord;
   tokenPtr = ^tokenRecord;
   tokenRecord = record                  {for operation, operand stacks}
      next: tokenPtr;                    {next token on the stack}
@@ -583,6 +583,14 @@ var
                                         {---------------------------}
    specifierQualifierListElement: tokenSet;
    topLevelDeclarationStart: tokenSet;
+
+                                        {base types}
+                                        {----------}
+   charPtr,sCharPtr,uCharPtr,shortPtr,uShortPtr,intPtr,uIntPtr,int32Ptr,
+      uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
+      floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,utf8StringTypePtr,
+      utf16StringTypePtr,utf32StringTypePtr,voidPtr,voidPtrPtr,charPtrPtr,
+      vaInfoPtr,constCharPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
 
