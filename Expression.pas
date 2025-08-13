@@ -1170,7 +1170,7 @@ var
 
    { do an operation                                                }
 
-   label 1,2,3,4;
+   label 1,3,4;
 
    var
       baseType: baseTypeEnum;           {base type of value to cast}
@@ -1179,7 +1179,7 @@ var
       kindLeft, kindRight: tokenEnum;	{kinds of operands}
       lCodeGeneration: boolean;         {local copy of codeGeneration}
       op: tokenPtr;                     {work pointer}
-      op1,op2: longint;                 {for evaluating constant expressions}
+      op1: longint;                     {for evaluating constant expressions}
       rop1,rop2: extended;              {for evaluating fp expressions}
       llop1, llop2: longlong;           {for evaluating long long expressions}
       tp: typePtr;                      {cast type}
@@ -1237,22 +1237,6 @@ var
       else
          RealVal := token.rval;
       end; {RealVal}
-
-
-      function IntVal (token: tokenType): longint;
-
-      { convert an operand to a longint value                   }
-
-      begin {IntVal}
-      if token.kind = intconst then
-         IntVal := token.ival
-      else if token.kind = uintconst then begin
-         IntVal := token.ival & $0000FFFF;
-         end {else if}
-      else {if token.kind in [longconst,ulongconst] then} begin
-         IntVal := token.lval;
-         end; {else}
-      end; {IntVal}
 
 
       procedure GetLongLongVal (var result: longlong; token: tokenType);
@@ -1422,153 +1406,6 @@ var
          op^.left := Pop;
          kindRight := op^.right^.token.kind;
          kindLeft := op^.left^.token.kind;
-         if kindRight in [intconst,uintconst,longconst,ulongconst] then begin
-            if kindLeft in [intconst,uintconst,longconst,ulongconst] then begin
-               if kind = preprocessorExpression then
-                  goto 2;
-
-               {do the usual binary conversions}
-               if (kindRight = ulongconst) or (kindLeft = ulongconst) then
-                  ekind := ulongconst
-               else if (kindRight = longconst) or (kindLeft = longconst) then
-                  ekind := longconst
-               else if (kindRight = uintconst) or (kindLeft = uintconst) then
-                  ekind := uintconst
-               else
-                  ekind := intconst;
-
-               {evaluate a constant operation}
-               unsigned := ekind in [uintconst,ulongconst];
-               op1 := IntVal(op^.left^.token);
-               op2 := IntVal(op^.right^.token);
-               dispose(op^.right);
-               op^.right := nil;
-               dispose(op^.left);
-               op^.left := nil;
-               case op^.token.kind of
-                  barbarop    : begin                                   {||}
-                                op1 := ord((op1 <> 0) or (op2 <> 0));
-                                ekind := intconst;
-                                end;
-                  andandop    : begin                                   {&&}
-                                op1 := ord((op1 <> 0) and (op2 <> 0));
-                                ekind := intconst;
-                                end;
-                  carotch     : op1 := op1 ! op2;                       {^}
-                  barch       : op1 := op1 | op2;                       {|}
-                  andch       : op1 := op1 & op2;                       {&}
-                  eqeqop      : begin                                   {==}
-                                op1 := ord(op1 = op2);
-                                ekind := intconst;
-                                end;
-                  exceqop     : begin                                   {!=}
-                                op1 := ord(op1 <> op2);
-                                ekind := intconst;
-                                end;
-                  ltch        : begin                                   {<}
-                                if unsigned then
-                                   op1 := ult(op1,op2)
-                                else
-                                   op1 := ord(op1 < op2);
-                                ekind := intconst;
-                                end;
-                  gtch        : begin                                   {>}
-                                if unsigned then
-                                   op1 := ugt(op1,op2)
-                                else
-                                   op1 := ord(op1 > op2);
-                                ekind := intconst;
-                                end;
-                  lteqop      : begin                                   {<=}
-                                if unsigned then
-                                   op1 := ule(op1,op2)
-                                else
-                                   op1 := ord(op1 <= op2);
-                                ekind := intconst;
-                                end;
-                  gteqop      : begin                                   {>=}
-                                if unsigned then
-                                   op1 := uge(op1,op2)
-                                else
-                                   op1 := ord(op1 >= op2);
-                                ekind := intconst;
-                                end;
-                  ltltop      : begin                                   {<<}
-                                op1 := op1 << op2;
-                                ekind := kindLeft;
-                                end;
-                  gtgtop      : begin                                   {>>}
-                                if kindLeft in [uintconst,ulongconst]
-                                   then
-                                   op1 := lshr(op1,op2)
-                                else
-                                   op1 := op1 >> op2;
-                                ekind := kindLeft;
-                                end;
-                  plusch      : op1 := op1 + op2;                       {+}
-                  minusch     : op1 := op1 - op2;                       {-}
-                  asteriskch  : if unsigned then          		{*}
-                                   op1 := umul(op1,op2)
-                                else
-                                   op1 := op1 * op2;
-                  slashch     : begin                                   {/}
-                                if op2 = 0 then begin
-                                   if not (kind in [normalExpression,
-                                      autoInitializerExpression]) then
-                                      Error(109)
-                                   else if ((lint & lintOverflow) <> 0) then
-                                      Error(129);
-                                   op2 := 1;
-                                   end; {if}
-                                if unsigned then
-                                   op1 := udiv(op1,op2)
-                                else
-                                   op1 := op1 div op2;
-                                end;
-                  percentch   : begin                                   {%}
-                                if op2 = 0 then begin
-                                   if not (kind in [normalExpression,
-                                      autoInitializerExpression]) then
-                                      Error(109)
-                                   else if ((lint & lintOverflow) <> 0) then
-                                      Error(129);
-                                   op2 := 1;
-                                   end; {if}
-                                if unsigned then
-                                   op1 := umod(op1,op2)
-                                else
-                                   op1 := op1 - (op1 div op2) * op2;
-                                end;
-                  otherwise: Error(57);
-                  end; {case}
-               if ((lint & lintOverflow) <> 0) then begin
-                  if op^.token.kind in [plusch,minusch,asteriskch,slashch] then
-                     if ekind = intConst then
-                        if op1 <> long(op1).lsw then
-                           Error(128);
-                  if op^.token.kind in [ltltop,gtgtop] then begin
-                     if ekind in [intConst,uintConst] then
-                        if (op2 < 0) or (op2 > 15) then
-                           Error(130);
-                     if ekind in [longConst,ulongConst] then
-                        if (op2 < 0) or (op2 > 31) then
-                           Error(130);
-                     end; {if}
-                  end; {if}
-               op^.token.kind := ekind;
-               if ekind in [longconst,ulongconst] then begin
-                  op^.token.lval := op1;
-                  op^.token.class := longConstant;
-                  end {if}
-               else begin
-                  op^.token.ival := long(op1).lsw;
-                  op^.token.class := intConstant;
-                  op^.token.itype := intPtr;
-                  end; {else}
-               goto 1;
-               end; {if}
-            end; {if}
-2:
          if kindRight in [intconst,uintconst,longconst,
             ulongconst,longlongconst,ulonglongconst] then begin
             if kindLeft in [intconst,uintconst,longconst,
@@ -1582,10 +1419,18 @@ var
                {do the usual binary conversions}
                if (kindRight = ulonglongconst) or (kindLeft = ulonglongconst) then
                   ekind := ulonglongconst
-               else 
-                  ekind := longlongconst;
+               else if (kindLeft = longlongconst) or (kindRight = longlongconst) then
+                  ekind := longlongconst
+               else if (kindRight = ulongconst) or (kindLeft = ulongconst) then
+                  ekind := ulongconst
+               else if (kindRight = longconst) or (kindLeft = longconst) then
+                  ekind := longconst
+               else if (kindRight = uintconst) or (kindLeft = uintconst) then
+                  ekind := uintconst
+               else
+                  ekind := intconst;
 
-               unsigned := ekind = ulonglongconst;
+               unsigned := ekind in [uintconst,ulongconst,ulonglongconst];
                GetLongLongVal(llop1, op^.left^.token);
                GetLongLongVal(llop2, op^.right^.token);
                
@@ -1665,7 +1510,7 @@ var
                                 ekind := kindLeft;
                                 end;
                   gtgtop      : begin                                   {>>}
-                                if kindleft = ulonglongconst then
+                                if kindleft in [uintconst,ulongconst,ulonglongconst] then
                                    lshr64(llop1, long(llop2.lo).lsw)
                                 else
                                    ashr64(llop1, long(llop2.lo).lsw);
@@ -1709,6 +1554,23 @@ var
                op^.right := nil;
                dispose(op^.left);
                op^.left := nil;
+               if ((lint & lintOverflow) <> 0) then begin
+                  if op^.token.kind in [plusch,minusch,asteriskch,slashch] then
+                     if ekind = intConst then
+                        if llop1.lo <> long(llop1.lo).lsw then
+                           Error(128);
+                  if op^.token.kind in [ltltop,gtgtop] then begin
+                     if ekind in [intConst,uintConst] then
+                        if (llop2.lo < 0) or (llop2.lo > 15) or (llop2.hi <> 0) then
+                           Error(130);
+                     if ekind in [longConst,ulongConst] then
+                        if (llop2.lo < 0) or (llop2.lo > 31) or (llop2.hi <> 0) then
+                           Error(130);
+                     if ekind in [longlongConst,ulonglongConst] then
+                        if (llop2.lo < 0) or (llop2.lo > 63) or (llop2.hi <> 0) then
+                           Error(130);
+                     end; {if}
+                  end; {if}
                op^.token.kind := ekind;
                if ekind in [longlongconst,ulonglongconst] then begin
                   op^.token.qval := llop1;
@@ -1721,7 +1583,11 @@ var
                else begin
                   op^.token.ival := long(llop1.lo).lsw;
                   op^.token.class := intConstant;
-                  op^.token.itype := intPtr;
+                  if ekind = uintconst then
+                     op^.token.itype := uIntPtr
+                  else
+                     op^.token.itype := intPtr;
+
                   end; {else}
                goto 1;
                end; {if}
@@ -1966,40 +1832,7 @@ var
          else if not (op^.token.kind in
             [typedef,plusplusop,minusminusop,opplusplus,opminusminus,uand]) then
             begin
-            if (kind <> preprocessorExpression) and (op^.left^.token.kind
-               in [intconst,uintconst,longconst,ulongconst]) then begin
-
-               {evaluate a constant operation}
-               ekind := op^.left^.token.kind;
-               op1 := IntVal(op^.left^.token);
-               dispose(op^.left);
-               op^.left := nil;
-               case op^.token.kind of
-                  tildech     : op1 := ~op1;                    {~}
-                  excch       : begin                           {!}
-                     op1 := ord(op1 = 0);
-                     ekind := intconst;
-                     end;
-                  uminus      : op1 := -op1;                    {unary -}
-                  uplus       : ;                               {unary +}
-                  uasterisk   : Error(79);                      {unary *}
-                  otherwise: Error(57);
-                  end; {case}
-               op^.token.kind := ekind;
-               if ekind in [longconst,ulongconst] then begin
-                  op^.token.class := longConstant;
-                  op^.token.lval := op1;
-                  end {if}
-               else begin
-                  op^.token.class := intConstant;
-                  op^.token.ival := long(op1).lsw;
-                  if ekind = uintconst then
-                     op^.token.itype := uIntPtr
-                  else
-                     op^.token.itype := intPtr;
-                  end; {else}
-               end {if}
-            else if op^.left^.token.kind in [longlongconst,ulonglongconst,
+            if op^.left^.token.kind in [longlongconst,ulonglongconst,
                intconst,uintconst,longconst,ulongconst] then begin
                
                {evaluate a constant operation with long long operand}
@@ -2015,7 +1848,8 @@ var
                      llop1.hi := ~llop1.hi;
                      end;
                   excch       : begin                           {!}
-                     op1 := ord((llop1.hi = 0) and (llop1.lo = 0));
+                     llop1.lo := ord((llop1.hi = 0) and (llop1.lo = 0));
+                     llop1.hi := 0;
                      ekind := intconst;
                      end;
                   uminus      : begin                           {unary -}
@@ -2034,10 +1868,18 @@ var
                   op^.token.class := longlongConstant;
                   op^.token.qval := llop1;
                   end {if}
+               else if ekind in [longconst,ulongconst] then begin
+                  op^.token.class := longConstant;
+                  op^.token.lval := llop1.lo;
+                  end {if}
                else begin
                   op^.token.class := intConstant;
-                  op^.token.ival := long(op1).lsw;
-                  op^.token.itype := intPtr;
+                  op^.token.ival := long(llop1.lo).lsw;
+                  if ekind = uintconst then
+                     op^.token.itype := uIntPtr
+                  else
+                     op^.token.itype := intPtr;
+
                   end; {else}
                end {else if}
             else if op^.left^.token.kind in
