@@ -1034,6 +1034,7 @@ var
                Error(13);
             sp^.token.class := longlongConstant;
             sp^.token.kind := longlongconst;
+            sp^.token.qtype := longLongPtr;
             sp^.token.qval.lo := DoEmbed(false);
             sp^.token.qval.hi := 0;
             sp^.id := nil;
@@ -1046,6 +1047,7 @@ var
                Error(13);
             sp^.token.class := longlongConstant;
             sp^.token.kind := longlongconst;
+            sp^.token.qtype := longLongPtr;
             sp^.token.qval.lo := ord(HasInclude);
             sp^.token.qval.hi := 0;
             sp^.id := nil;
@@ -1069,6 +1071,7 @@ var
                end; {if}
             sp^.token.class := longlongConstant;
             sp^.token.kind := longlongconst;
+            sp^.token.qtype := longLongPtr;
             sp^.token.qval := longlong0; {no attributes are currently supported}
             sp^.id := nil;
             Match(rparench, 12);
@@ -1078,6 +1081,7 @@ var
             {handle 'true' in the preprocessor for C23}
             stack^.token.class := longlongConstant;
             stack^.token.kind := longlongconst;
+            stack^.token.qtype := longLongPtr;
             stack^.token.qval := longlong1;
             stack^.id := nil;
             NextToken;
@@ -1113,6 +1117,7 @@ var
    if kind = preprocessorExpression then begin
       stack^.token.class := longlongConstant;
       stack^.token.kind := longlongconst;
+      stack^.token.qtype := longLongPtr;
       stack^.token.qval := longlong0;
       id := nil;
       end {if}
@@ -1356,10 +1361,18 @@ var
                   if ekind in [longlongconst,ulonglongconst] then begin
                      op^.token.qval := llop2;
                      op^.token.class := longlongConstant;
+                     if ekind = ulonglongconst then
+                        op^.token.qtype := uLongLongPtr
+                     else
+                        op^.token.qtype := longLongPtr;
                      end {if}
                   else if ekind in [longconst,ulongconst] then begin
                      op^.token.lval := llop2.lo;
                      op^.token.class := longConstant;
+                     if ekind = ulongconst then
+                        op^.token.ltype := uLongPtr
+                     else
+                        op^.token.ltype := longPtr;
                      end {if}
                   else begin
                      op^.token.ival := long(llop2.lo).lsw;
@@ -1575,10 +1588,18 @@ var
                if ekind in [longlongconst,ulonglongconst] then begin
                   op^.token.qval := llop1;
                   op^.token.class := longlongConstant;
+                  if ekind = ulonglongconst then
+                     op^.token.qtype := uLongLongPtr
+                  else
+                     op^.token.qtype := longLongPtr;
                   end {if}
                else if ekind in [longconst,ulongconst] then begin
                   op^.token.lval := llop1.lo;
                   op^.token.class := longConstant;
+                  if ekind = ulongconst then
+                     op^.token.ltype := uLongPtr
+                  else
+                     op^.token.ltype := longPtr;
                   end {if}
                else begin
                   op^.token.ival := long(llop1.lo).lsw;
@@ -1698,6 +1719,7 @@ var
                if kindLeft = stringConst then begin
                   op^.token.kind := ulongConst;
                   op^.token.class := longConstant;
+                  op^.token.ltype := uLongPtr;
                   op^.token.lval := op^.left^.token.sval^.length;
                   end {if}
                else begin
@@ -1714,6 +1736,7 @@ var
                      end; {if}
                   op^.token.kind := ulongConst;
                   op^.token.class := longConstant;
+                  op^.token.ltype := uLongPtr;
                   op^.token.lval := expressionType^.size;
                   with expressionType^ do
                      if (size = 0)
@@ -1729,6 +1752,7 @@ var
             Error(36);
             op^.token.kind := ulongConst;
             op^.token.class := longConstant;
+            op^.token.ltype := uLongPtr;
             op^.token.lval := 1;
             dispose(op^.left);
             end {else if _Alignofsy} 
@@ -1796,21 +1820,25 @@ var
                      else if baseType = cgLong then begin
                         op^.token.kind := longConst;
                         op^.token.class := longConstant;
+                        op^.token.ltype := tp;
                         op^.token.lval := llop1.lo;
                         end {else if}
                      else if baseType = cgULong then begin
                         op^.token.kind := ulongConst;
                         op^.token.class := longConstant;
+                        op^.token.ltype := tp;
                         op^.token.lval := llop1.lo;
                         end {else if}
                      else if baseType = cgQuad then begin
                         op^.token.kind := longlongConst;
                         op^.token.class := longlongConstant;
+                        op^.token.qtype := tp;
                         op^.token.qval := llop1;
                         end {else if}
                      else if baseType = cgUQuad then begin
                         op^.token.kind := ulonglongConst;
                         op^.token.class := longlongConstant;
+                        op^.token.qtype := tp;
                         op^.token.qval := llop1;
                         end {else if}
                      else begin
@@ -1866,11 +1894,19 @@ var
                op^.token.kind := ekind;
                if ekind in [longlongconst,ulonglongconst] then begin
                   op^.token.class := longlongConstant;
-                  op^.token.qval := llop1;
+                  op^.token.qval := llop1;                  
+                  if ekind = ulonglongconst then
+                     op^.token.qtype := uLongLongPtr
+                  else
+                     op^.token.qtype := longLongPtr;
                   end {if}
                else if ekind in [longconst,ulongconst] then begin
                   op^.token.class := longConstant;
-                  op^.token.lval := llop1.lo;
+                  op^.token.lval := llop1.lo;                  
+                  if ekind = ulongconst then
+                     op^.token.ltype := uLongPtr
+                  else
+                     op^.token.ltype := longPtr;
                   end {if}
                else begin
                   op^.token.class := intConstant;
@@ -2286,6 +2322,7 @@ if token.kind in startExpression then begin
                   sp^.right := nil;
                   sp^.token.kind := ulongconst;
                   sp^.token.class := longConstant;
+                  sp^.token.ltype := uLongPtr;
                   if doingSizeof then
                      sp^.token.lval := tType^.size
                   else {if doingAlignof then}

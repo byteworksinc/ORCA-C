@@ -241,10 +241,12 @@ type
          reservedSymbol: (isDigraph: boolean);
          identifier    : (name: stringPtr;
                           symbolPtr: identPtr);
-         intConstant   : (ival: integer;
-                          itype: typePtr);
-         longConstant  : (lval: longint);
-         longlongConstant: (qval: longlong);
+         intConstant   : (itype: typePtr;
+                          ival: integer);
+         longConstant  : (ltype: typePtr;
+                          lval: longint);
+         longlongConstant: (qtype: typePtr;
+                          qval: longlong);
          realConstant  : (rval: extended);
          stringConstant: (sval: longstringPtr;
                           ispstring: boolean;

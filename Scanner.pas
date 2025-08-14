@@ -2131,6 +2131,7 @@ if macro^.readOnly then begin           {handle special macros}
          else begin
             token.kind := longconst;
             token.class := longconstant;
+            token.ltype := longPtr;
             token.lval := lineNumber;
             end; {else}
          token.numString := @lineStr;
@@ -2224,6 +2225,7 @@ if macro^.readOnly then begin           {handle special macros}
       algStdcVersion: begin             {__STDC_VERSION__}
          token.kind := longconst;
          token.class := longconstant;
+         token.ltype := longPtr;
          token.lval := stdcVersion[cStd];
          token.numString := @stdcVersionStr;
          stdcVersionStr := concat(cnvis(token.lval),'L');
@@ -4779,19 +4781,26 @@ else if numString[1] <> '0' then begin {convert a decimal integer}
    if isLongLong then begin
       token.class := longlongConstant;
       Convertsll(token.qval, numString);
-      if unsigned then
-         token.kind := ulonglongConst
+      if unsigned then begin
+         token.kind := ulonglongConst;
+         token.qtype := uLongLongPtr;
+         end {if}
       else begin
          token.kind := longlongConst;
+         token.qtype := longLongPtr;
          end; {else}
       end {if}
    else if isLong then begin
       token.class := longConstant;
       token.lval := Convertsl(numString);
-      if unsigned then
-         token.kind := ulongConst
-      else
+      if unsigned then begin
+         token.kind := ulongConst;
+         token.ltype := uLongPtr;
+         end {if}
+      else begin
          token.kind := longConst;
+         token.ltype := longPtr;
+         end; {else}
       end {if}
    else begin
       token.class := intConstant;
@@ -4870,18 +4879,26 @@ else begin                            {hex, octal, & binary}
       if long(token.qval.lo).msw <> 0 then
          isLong := true;
    if isLongLong then begin
-      if unsigned or (token.qval.hi & $80000000 <> 0) then
-         token.kind := ulonglongConst
-      else
-         token.kind := longlongConst;
       token.class := longlongConstant;
+      if unsigned or (token.qval.hi & $80000000 <> 0) then begin
+         token.kind := ulonglongConst;
+         token.qtype := uLongLongPtr;
+         end {if}
+      else begin
+         token.kind := longlongConst;
+         token.qtype := longLongPtr;
+         end; {else}
       end {if}
    else if isLong then begin
-      if unsigned or (token.qval.lo & $80000000 <> 0) then
-         token.kind := ulongConst
-      else
-         token.kind := longConst;
       token.class := longConstant;
+      if unsigned or (token.qval.lo & $80000000 <> 0) then begin
+         token.kind := ulongConst;
+         token.ltype := uLongPtr;
+         end {if}
+      else begin
+         token.kind := longConst;
+         token.ltype := longPtr;
+         end; {else}
       end {if}
    else begin
       if (long(token.qval.lo).lsw & $8000) <> 0 then
@@ -6034,6 +6051,7 @@ var
       if allowLongIntChar and (cnt >= 3) then begin
          token.kind := longconst;
          token.class := longConstant;
+         token.ltype := longPtr;
          token.lval := result;
          end {if}
       else begin
@@ -6072,6 +6090,7 @@ var
    else if charStrPrefix = prefix_U32 then begin
       token.kind := ulongconst;
       token.class := longConstant;
+      token.ltype := uLongPtr;
       token.lval := result;
       end; {else if}
 
