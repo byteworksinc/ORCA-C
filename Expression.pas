@@ -398,6 +398,33 @@ Unary := tp;
 end; {Unary}
 
 
+function IntegerBinaryConversions(tp1, tp2: typePtr): typePtr;
+
+{ perform the usual arithmetic conversions on two integer types }
+{                                                               }
+{ inputs:                                                       }
+{       tp1, tp2 - integer types                                }
+{                                                               }
+{ result:                                                       }
+{       The type resulting from the usual arithmetic            }
+{       conversions on tp1 and tp2                              }
+
+begin {IntegerBinaryConversions}
+if (tp1^.cType = ctULongLong) or (tp2^.cType = ctULongLong) then
+   IntegerBinaryConversions := uLongLongPtr
+else if (tp1^.cType = ctLongLong) or (tp2^.cType = ctLongLong) then
+   IntegerBinaryConversions := longLongPtr
+else if (tp1^.cType = ctULong) or (tp2^.cType = ctULong) then
+   IntegerBinaryConversions := uLongPtr
+else if (tp1^.cType = ctLong) or (tp2^.cType = ctLong) then
+   IntegerBinaryConversions := longPtr
+else if (tp1^.cType in [ctUInt,ctUShort]) or (tp2^.cType in [ctUInt,ctUShort]) then
+   IntegerBinaryConversions := uIntPtr
+else
+   IntegerBinaryConversions := intPtr;
+end; {IntegerBinaryConversions}
+
+
 function UsualBinaryConversions {lType: typePtr): baseTypeEnum};
 
 { performs the usual binary conversions                         }
@@ -1181,8 +1208,10 @@ var
       baseType: baseTypeEnum;           {base type of value to cast}
       class: tokenClass;                {class of cast token}
       ekind: tokenEnum;                 {kind of constant expression}
+      etype: typePtr;                   {type of constant expression}
       kindLeft, kindRight: tokenEnum;	{kinds of operands}
       lCodeGeneration: boolean;         {local copy of codeGeneration}
+      ltype,rtype: typePtr;             {types of operands}
       op: tokenPtr;                     {work pointer}
       op1: longint;                     {for evaluating constant expressions}
       rop1,rop2: extended;              {for evaluating fp expressions}
@@ -1277,24 +1306,54 @@ var
       end; {LongLongVal}
 
 
-      function PPKind (token: tokenType): tokenEnum;
+      function PPType (tp: typePtr): typePtr;
 
-      { adjust kind of token for use in preprocessor expression }
+      { adjust integer type for use in preprocessor expression  }
 
-      begin {PPKind}
-      if token.kind = intconst then begin
-         if token.itype = uCharPtr then
-            PPKind := ulonglongconst
+      begin {PPType}
+      case tp^.cType of
+         ctUChar,ctUShort,ctUInt,ctUInt32,ctULong,ctULongLong:
+            PPType := uLongLongPtr;
+         otherwise:
+            PPType := longLongPtr;
+         end; {case}
+      end; {PPType}
+
+
+      procedure SetIntToken(var tk: TokenType; val: longlong; tp: typePtr);
+
+      { set tk to an integer constant token with the specified  }
+      { and value (with val truncated to the width of tp).      }
+
+      begin {SetIntToken}
+      if tp^.baseType in [cgQuad,cgUQuad] then begin
+         tk.class := longlongConstant;
+         tk.qval := val;
+         tk.qtype := tp;
+         if tp^.baseType = cgUQuad then
+            tk.kind := ulonglongconst
          else
-            PPKind := longlongconst;
+            tk.kind := longlongconst;
          end {if}
-      else if token.kind = longconst then
-         PPKind := longlongconst
-      else if token.kind in [uintconst,ulongconst] then
-         PPKind := ulonglongconst
-      else
-         PPKind := token.kind;
-      end; {PPKind}
+      else if tp^.baseType in [cgLong,cgULong] then begin
+         tk.class := longConstant;
+         tk.lval := val.lo;
+         tk.ltype := tp;
+         if tp^.baseType = cgULong then
+            tk.kind := ulongconst
+         else
+            tk.kind := longconst;
+         end {if}
+      else begin
+         tk.class := intConstant;
+         tk.ival := long(val.lo).lsw;
+         tk.itype := tp;
+         if tp^.baseType = cgUWord then
+            tk.kind := uintconst
+         else
+            tk.kind := intconst;
+         end; {else}
+      end; {SetIntToken}
 
 
    begin {Operation}
@@ -1335,53 +1394,18 @@ var
                   longconst,ulongconst,longlongconst,ulonglongconst]
                   then begin
                   
-                  kindLeft := op^.middle^.token.kind;
-                  kindRight := op^.right^.token.kind;
-                  
+                  ltype := op^.middle^.token.itype;
+                  rtype := op^.right^.token.itype;
+
                   {do the usual binary conversions}
-                  if (kindRight = ulonglongconst) or (kindLeft = ulonglongconst) then
-                     ekind := ulonglongconst
-                  else if (kindRight = longlongconst) or (kindLeft = longlongconst) then
-                     ekind := longlongconst
-                  else if (kindRight = ulongconst) or (kindLeft = ulongconst) then
-                     ekind := ulongconst
-                  else if (kindRight = longconst) or (kindLeft = longconst) then
-                     ekind := longconst
-                  else if (kindRight = uintconst) or (kindLeft = uintconst) then
-                     ekind := uintconst
-                  else
-                     ekind := intconst;
+                  etype := IntegerBinaryConversions(ltype, rtype);
                   
                   GetLongLongVal(llop1, op^.left^.token);
                   if (llop1.lo <> 0) or (llop1.hi <> 0) then
                      GetLongLongVal(llop2, op^.middle^.token)
                   else
                      GetLongLongVal(llop2, op^.right^.token);
-                  op^.token.kind := ekind;
-                  if ekind in [longlongconst,ulonglongconst] then begin
-                     op^.token.qval := llop2;
-                     op^.token.class := longlongConstant;
-                     if ekind = ulonglongconst then
-                        op^.token.qtype := uLongLongPtr
-                     else
-                        op^.token.qtype := longLongPtr;
-                     end {if}
-                  else if ekind in [longconst,ulongconst] then begin
-                     op^.token.lval := llop2.lo;
-                     op^.token.class := longConstant;
-                     if ekind = ulongconst then
-                        op^.token.ltype := uLongPtr
-                     else
-                        op^.token.ltype := longPtr;
-                     end {if}
-                  else begin
-                     op^.token.ival := long(llop2.lo).lsw;
-                     op^.token.class := intConstant;
-                     if ekind = uintconst then
-                        op^.token.itype := uintPtr
-                     else
-                        op^.token.itype := intPtr;
-                     end; {else}
+                  SetIntToken(op^.token, llop2, etype);
 
                   dispose(op^.left);
                   dispose(op^.right);
@@ -1424,26 +1448,18 @@ var
             if kindLeft in [intconst,uintconst,longconst,
                ulongconst,longlongconst,ulonglongconst] then begin
 
+               ltype := op^.left^.token.itype;
+               rtype := op^.right^.token.itype;
+
                if kind = preprocessorExpression then begin
-                  kindLeft := PPKind(op^.left^.token);
-                  kindRight := PPKind(op^.right^.token);
+                  ltype := PPType(ltype);
+                  rtype := PPType(rtype);
                   end; {if}
 
                {do the usual binary conversions}
-               if (kindRight = ulonglongconst) or (kindLeft = ulonglongconst) then
-                  ekind := ulonglongconst
-               else if (kindLeft = longlongconst) or (kindRight = longlongconst) then
-                  ekind := longlongconst
-               else if (kindRight = ulongconst) or (kindLeft = ulongconst) then
-                  ekind := ulongconst
-               else if (kindRight = longconst) or (kindLeft = longconst) then
-                  ekind := longconst
-               else if (kindRight = uintconst) or (kindLeft = uintconst) then
-                  ekind := uintconst
-               else
-                  ekind := intconst;
+               etype := IntegerBinaryConversions(ltype, rtype);
 
-               unsigned := ekind in [uintconst,ulongconst,ulonglongconst];
+               unsigned := etype^.baseType in [cgUWord,cgULong,cgUQuad];
                GetLongLongVal(llop1, op^.left^.token);
                GetLongLongVal(llop2, op^.right^.token);
                
@@ -1453,14 +1469,14 @@ var
                                    ord((llop1.lo <> 0) or (llop1.hi <> 0) or
                                        (llop2.lo <> 0) or (llop2.hi <> 0));
                                 llop1.hi := 0;
-                                ekind := intconst;
+                                etype := intPtr;
                                 end;
                   andandop    : begin                                   {&&}
                                 llop1.lo :=
                                    ord(((llop1.lo <> 0) or (llop1.hi <> 0)) and
                                        ((llop2.lo <> 0) or (llop2.hi <> 0)));
                                 llop1.hi := 0;
-                                ekind := intconst;
+                                etype := intPtr;
                                 end;
                   carotch     : begin                                   {^}
                                 llop1.lo := llop1.lo ! llop2.lo;
@@ -1478,13 +1494,13 @@ var
                                 llop1.lo := ord((llop1.lo = llop2.lo) and
                                                 (llop1.hi = llop2.hi));
                                 llop1.hi := 0;
-                                ekind := intconst;
+                                etype := intPtr;
                                 end;
                   exceqop     : begin                                   {!=}
                                 llop1.lo := ord((llop1.lo <> llop2.lo) or
                                                 (llop1.hi <> llop2.hi));
                                 llop1.hi := 0;
-                                ekind := intconst;
+                                etype := intPtr;
                                 end;
                   ltch        : begin                                   {<}
                                 if unsigned then
@@ -1492,7 +1508,7 @@ var
                                 else
                                    llop1.lo := slt64(llop1, llop2);
                                 llop1.hi := 0;
-                                ekind := intconst;
+                                etype := intPtr;
                                 end;
                   gtch        : begin                                   {>}
                                 if unsigned then
@@ -1500,7 +1516,7 @@ var
                                 else
                                    llop1.lo := sgt64(llop1, llop2);
                                 llop1.hi := 0;
-                                ekind := intconst;
+                                etype := intPtr;
                                 end;
                   lteqop      : begin                                   {<=}
                                 if unsigned then
@@ -1508,7 +1524,7 @@ var
                                 else
                                    llop1.lo := sle64(llop1, llop2);
                                 llop1.hi := 0;
-                                ekind := intconst;
+                                etype := intPtr;
                                 end;
                   gteqop      : begin                                   {>=}
                                 if unsigned then
@@ -1516,18 +1532,18 @@ var
                                 else
                                    llop1.lo := sge64(llop1, llop2);
                                 llop1.hi := 0;
-                                ekind := intconst;
+                                etype := intPtr;
                                 end;
                   ltltop      : begin                                   {<<}
                                 shl64(llop1, long(llop2.lo).lsw);
-                                ekind := kindLeft;
+                                etype := op^.left^.token.itype;
                                 end;
                   gtgtop      : begin                                   {>>}
                                 if kindleft in [uintconst,ulongconst,ulonglongconst] then
                                    lshr64(llop1, long(llop2.lo).lsw)
                                 else
                                    ashr64(llop1, long(llop2.lo).lsw);
-                                ekind := kindLeft;
+                                etype := op^.left^.token.itype;
                                 end;
                   plusch      : add64(llop1, llop2);                    {+}
                   minusch     : sub64(llop1, llop2);                    {-}
@@ -1569,47 +1585,22 @@ var
                op^.left := nil;
                if ((lint & lintOverflow) <> 0) then begin
                   if op^.token.kind in [plusch,minusch,asteriskch,slashch] then
-                     if ekind = intConst then
+                     if etype^.baseType = cgWord then
                         if llop1.lo <> long(llop1.lo).lsw then
                            Error(128);
                   if op^.token.kind in [ltltop,gtgtop] then begin
-                     if ekind in [intConst,uintConst] then
+                     if etype^.baseType in [cgWord,cgUWord] then
                         if (llop2.lo < 0) or (llop2.lo > 15) or (llop2.hi <> 0) then
                            Error(130);
-                     if ekind in [longConst,ulongConst] then
+                     if etype^.baseType in [cgLong,cgULong] then
                         if (llop2.lo < 0) or (llop2.lo > 31) or (llop2.hi <> 0) then
                            Error(130);
-                     if ekind in [longlongConst,ulonglongConst] then
+                     if etype^.baseType in [cgQuad,cgUQuad] then
                         if (llop2.lo < 0) or (llop2.lo > 63) or (llop2.hi <> 0) then
                            Error(130);
                      end; {if}
                   end; {if}
-               op^.token.kind := ekind;
-               if ekind in [longlongconst,ulonglongconst] then begin
-                  op^.token.qval := llop1;
-                  op^.token.class := longlongConstant;
-                  if ekind = ulonglongconst then
-                     op^.token.qtype := uLongLongPtr
-                  else
-                     op^.token.qtype := longLongPtr;
-                  end {if}
-               else if ekind in [longconst,ulongconst] then begin
-                  op^.token.lval := llop1.lo;
-                  op^.token.class := longConstant;
-                  if ekind = ulongconst then
-                     op^.token.ltype := uLongPtr
-                  else
-                     op^.token.ltype := longPtr;
-                  end {if}
-               else begin
-                  op^.token.ival := long(llop1.lo).lsw;
-                  op^.token.class := intConstant;
-                  if ekind = uintconst then
-                     op^.token.itype := uIntPtr
-                  else
-                     op^.token.itype := intPtr;
-
-                  end; {else}
+               SetIntToken(op^.token, llop1, etype);
                goto 1;
                end; {if}
             end; {if}
@@ -1864,9 +1855,10 @@ var
                intconst,uintconst,longconst,ulongconst] then begin
                
                {evaluate a constant operation with long long operand}
-               ekind := op^.left^.token.kind;
+               etype := op^.left^.token.itype;
                if kind = preprocessorExpression then
-                  ekind := PPKind(op^.left^.token);
+                  etype := PPType(etype);
+               etype := IntegerBinaryConversions(etype, etype);
                GetLongLongVal(llop1, op^.left^.token);
                dispose(op^.left);
                op^.left := nil;
@@ -1878,7 +1870,7 @@ var
                   excch       : begin                           {!}
                      llop1.lo := ord((llop1.hi = 0) and (llop1.lo = 0));
                      llop1.hi := 0;
-                     ekind := intconst;
+                     etype := intPtr;
                      end;
                   uminus      : begin                           {unary -}
                      llop1.lo := ~llop1.lo;
@@ -1891,33 +1883,9 @@ var
                   uasterisk   : Error(79);                      {unary *}
                   otherwise: Error(57);
                   end; {case}
-               op^.token.kind := ekind;
-               if ekind in [longlongconst,ulonglongconst] then begin
-                  op^.token.class := longlongConstant;
-                  op^.token.qval := llop1;                  
-                  if ekind = ulonglongconst then
-                     op^.token.qtype := uLongLongPtr
-                  else
-                     op^.token.qtype := longLongPtr;
-                  end {if}
-               else if ekind in [longconst,ulongconst] then begin
-                  op^.token.class := longConstant;
-                  op^.token.lval := llop1.lo;                  
-                  if ekind = ulongconst then
-                     op^.token.ltype := uLongPtr
-                  else
-                     op^.token.ltype := longPtr;
-                  end {if}
-               else begin
-                  op^.token.class := intConstant;
-                  op^.token.ival := long(llop1.lo).lsw;
-                  if ekind = uintconst then
-                     op^.token.itype := uIntPtr
-                  else
-                     op^.token.itype := intPtr;
+                  SetIntToken(op^.token, llop1, etype);
+               end {if}
 
-                  end; {else}
-               end {else if}
             else if op^.left^.token.kind in
                [floatconst,doubleconst,extendedconst,compconst] then begin
                if fenvAccess then
