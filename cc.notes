@@ -200,3 +200,4 @@ Only the va_list argument is required.  The previously-required second argument 
 
 5. When the unary conversion rules (integer promotions) were applied to an expression of type unsigned short, the resulting type was sometimes unsigned short rather than unsigned int.  This could affect _Generic expressions.
 
+6. In certain circumstances where the value of a 16-bit signed integer variable was converted to a wider type following an earlier access to the 16-bit variable, negative values might not be converted correctly if native code peephole optimizations and register optimizations were both enabled.
