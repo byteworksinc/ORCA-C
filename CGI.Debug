@@ -136,6 +136,15 @@ opt[pc_rbo] := 'rbo';
 opt[pc_rev] := 'rev';
 opt[pc_ckp] := 'ckp';
 opt[pc_ckn] := 'ckn';
+opt[pc_sxi] := 'sxi';
+opt[pc_sxl] := 'sxl';
+opt[pc_sxq] := 'sxq';
+opt[pc_zxi] := 'zxi';
+opt[pc_zxl] := 'zxl';
+opt[pc_zxq] := 'zxq';
+opt[pc_zni] := 'zni';
+opt[pc_znl] := 'znl';
+opt[pc_znq] := 'znq';
 end; {InitWriteCode}
 
 
@@ -320,7 +329,8 @@ with code^ do
          write(' ', q:1);
          end;
 
-      dc_lab,pc_fjp,pc_tjp,pc_ujp,pc_add:
+      dc_lab,pc_fjp,pc_tjp,pc_ujp,pc_add,
+      pc_sxi,pc_sxl,pc_sxq,pc_zxi,pc_zxl,pc_zxq,pc_zni,pc_znl,pc_znq:
          write('  ', q:1);
 
       pc_ldc: begin

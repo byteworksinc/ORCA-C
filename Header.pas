@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 54;                 {version number of .sym file format}
+   symFileVersion = 55;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -800,6 +800,8 @@ procedure EndInclude {chPtr: ptr};
          scalarType: begin
             WriteByte(ord(tp^.baseType));
             WriteByte(ord(tp^.cType));
+            if tp^.cType in [ctBitInt,ctUBitInt] then
+               WriteByte(tp^.bitIntWidth);
             end;
 
          arrayType: begin
@@ -1489,6 +1491,10 @@ var
             scalarType: begin
                tp^.baseType := baseTypeEnum(ReadByte);
                tp^.cType := cTypeEnum(ReadByte);
+               if tp^.cType in [ctBitInt,ctUBitInt] then
+                  tp^.bitIntWidth := ReadByte
+               else
+                  tp^.bitIntWidth := 0;
                end;
 
             arrayType: begin

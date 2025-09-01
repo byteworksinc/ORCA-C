@@ -686,6 +686,22 @@
 {  value being saved.						}
 {                                                               }
 {                                                               }
+{  pc_sxi - integer sign extension                              }
+{  pc_sxl - long sign extension                                 }
+{  pc_sxq - long long sign extension                            }
+{                                                               }
+{  Gen1(pc_sxi, N)      cgWord                                  }
+{  Gen1(pc_sxl, N)      cgLong                                  }
+{  Gen1(pc_sxq, N)      cgQuad                                  }
+{                                                               }
+{  The value on the top of the evaluation stack is removed.     }
+{  The low order N bits of it are treated as a signed integer   }
+{  (two's complement).  That value is sign-extended to the full }
+{  width of cgWord, cgLong, or cgQuad, and the result is placed }
+{  back on the stack.  N must be in the range 1-16 for pc_sxi,  }
+{  17-32 for pc_sxl, or 33-64 for pc_sxq.                       }
+{                                                               }
+{                                                               }
 {  pc_tri - C trinary operator                                  }
 {                                                               }
 {  Gen0t(pc_tri, type)                                          }
@@ -700,6 +716,24 @@
 {								}
 {  Internally, pc_bno is used for the right operand; the	}
 {  operands for pc_bno are the two expressions.			}
+{                                                               }
+{                                                               }
+{  pc_zxi,pc_zni - integer zero extension                       }
+{  pc_zxl,pc_znl - long zero extension                          }
+{  pc_zxq,pc_znq - long long zero extension                     }
+{                                                               }
+{  Gen1(pc_zxi, N)      cgUWord                                 }
+{  Gen1(pc_zni, N)      cgUWord                                 }
+{  Gen1(pc_zxl, N)      cgULong                                 }
+{  Gen1(pc_znl, N)      cgULong                                 }
+{  Gen1(pc_zxq, N)      cgUQuad                                 }
+{  Gen1(pc_znq, N)      cgUQuad                                 }
+{                                                               }
+{  A value on the stack is truncated to N bits, with higher     }
+{  order bits being zeroed.  pc_zxi, pc_zxl, and pc_znq operate }
+{  on tos; pc_zni, pc_znl, and pc_znq operate on tos-1.  N must }
+{  be in the range 1-16 for pc_zxi/pc_zni, 17-32 for            }
+{  pc_zxl/pc_znl, or 33-64 for pc_zxq/pc_znq.                   }
 {                                                               }
 {-- Flow of control --------------------------------------------}
 {                                                               }

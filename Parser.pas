@@ -160,7 +160,7 @@ type
          switchSt: (
             maxVal: longint;            {max switch value}
             ln: integer;                {temp var number}
-            size: integer;              {temp var size}
+            tp: typePtr;                {temp var type}
             labelCount: integer;        {# of switch labels}
             switchExit: integer;        {branch point}
             switchLab: integer;         {branch point}
@@ -727,13 +727,13 @@ var
       else begin
          if table^.lastVMSym <> stPtr^.lastVMSym then
             Error(202);
-         if stPtr^.size = cgLongSize then begin {convert out-of-range values}
+         if stPtr^.tp^.size = cgLongSize then begin {convert out-of-range values}
             if val.lo < 0 then
                val.hi := -1
             else
                val.hi := 0;
             end {if}
-         else if stPtr^.size = cgWordSize then begin
+         else if stPtr^.tp^.size = cgWordSize then begin
             if long(val.lo).lsw < 0 then begin
                val.hi := -1;
                val.lo := val.lo | $FFFF0000;
@@ -743,6 +743,7 @@ var
                val.lo := val.lo & $0000FFFF;
                end; {else}
             end; {else if}
+         ExtendBitIntValue(val, stPtr^.tp);
          new(swPtr2);                   {create the new label table entry}
          swPtr2^.lab := GenLabel;
          Gen1(dc_lab, swPtr2^.lab);
@@ -1060,6 +1061,7 @@ var
    var
       stPtr: statementPtr;              {work pointer}
       tp: typePtr;                      {for checking type}
+      baseType: baseTypeEnum;           {base type of controlling expression}
  
    begin {SwitchStatement}
    NextToken;                           {skip the 'switch' token}
@@ -1078,6 +1080,7 @@ var
    if c99Scope then PushTable;
    Match(lparench, 13);                 {evaluate the condition}
    Expression(normalExpression,[rparench]);
+   baseType := UsualUnaryConversions;
    Match(rparench, 12);
    tp := expressionType;                {make sure the expression is integral}
    while tp^.kind = definedType do
@@ -1085,33 +1088,18 @@ var
    case tp^.kind of
 
       scalarType:
-         if tp^.baseType in [cgQuad,cgUQuad] then begin
-            stPtr^.size := cgQuadSize;
-            stPtr^.ln := GetTemp(cgQuadSize);
-            Gen2t(pc_str, stPtr^.ln, 0, cgQuad);
-            end {if}
-         else if tp^.baseType in [cgLong,cgULong] then begin
-            stPtr^.size := cgLongSize;
-            stPtr^.ln := GetTemp(cgLongSize);
-            Gen2t(pc_str, stPtr^.ln, 0, cgLong);
-            end {if}
-         else if tp^.baseType in [cgByte,cgUByte,cgWord,cgUWord] then begin
-            stPtr^.size := cgWordSize;
-            stPtr^.ln := GetTemp(cgWordSize);
-            Gen2t(pc_str, stPtr^.ln, 0, cgWord);
-            end {else if}
-         else
+         if not (tp^.baseType in [cgQuad,cgUQuad,cgLong,cgULong,cgWord,cgUWord,
+            cgByte,cgUByte]) then
             Error(71);
 
-      enumType: begin
-         stPtr^.size := cgWordSize;
-         stPtr^.ln := GetTemp(cgWordSize);
-         Gen2t(pc_str, stPtr^.ln, 0, cgWord);
-         end;
+      enumType: {OK};
 
       otherwise:
          Error(71);
       end; {case}
+   stPtr^.tp := tp;                     {record controlling type}
+   stPtr^.ln := GetTemp(ord(tp^.size)); {save controlling value in temp}
+   Gen2t(pc_str, stPtr^.ln, 0, baseType);
    Gen1(pc_ujp, stPtr^.switchLab);      {branch to the xjp instruction}
    if c99Scope then PushTable;
    Statement(false);                    {process the loop body statement}
@@ -1343,8 +1331,8 @@ begin {EndSwitchStatement}
 if c99Scope then PopTable;
 stPtr := statementList;                 {get the statement record}
 exitLab := stPtr^.switchExit;           {get the exit label}
-isLong := stPtr^.size = cgLongSize;     {get the long flag}
-isLongLong := stPtr^.size = cgQuadSize; {get the long long flag}
+isLong := stPtr^.tp^.size = cgLongSize; {get the long flag}
+isLongLong := stPtr^.tp^.size = cgQuadSize; {get the long long flag}
 swPtr := stPtr^.switchList;             {Skip further generation if there were}
 if swPtr <> nil then begin              { no labels.                          }
    default := stPtr^.switchDefault;     {get a default label}
@@ -1412,7 +1400,7 @@ else begin
 
    Gen1(dc_lab, exitLab);               {generate the default label}
    end; {else}
-FreeTemp(stPtr^.ln, stPtr^.size);       {release temp variable}
+FreeTemp(stPtr^.ln, ord(stPtr^.tp^.size)); {release temp variable}
 statementList := stPtr^.next;           {pop the statement record}
 dispose(stPtr);
 if c99Scope then PopTable;
@@ -2428,6 +2416,7 @@ var
                         iPtr^.qVal.hi := 0;
                if tp^.cType = ctBool then
                   iPtr^.iVal := ord(expressionValue <> 0);
+               ExtendBitIntValue(iPtr^.qval, tp);
                goto 2;
                end; {if}
             if bKind in [cgReal,cgDouble,cgComp,cgExtended] then begin
@@ -2454,6 +2443,7 @@ var
                   CnvXULL(iPtr^.qVal, realExpressionValue)
                else
                   CnvXLL(iPtr^.qVal, realExpressionValue);
+               ExtendBitIntValue(iPtr^.qval, tp);
                goto 2;
                end;
             Error(47);
@@ -3244,6 +3234,7 @@ var
    myStorageClass: tokenEnum;           {storage class}
    
    isLongLong: boolean;                 {is this a "long long" type?}
+   bitIntWidth: integer;                {width of _BitInt type}
    tHaveAttributeSpecifier: boolean;    {local copy of haveAttributeSpecifier}
    
    lCodeGeneration: boolean;            {local copy of codeGeneration}
@@ -3394,8 +3385,7 @@ var
             if (tPtr^.kind <> scalarType)
                or not (tPtr^.baseType in
                   [cgByte,cgUByte,cgWord,cgUWord,cgLong,cgULong])
-               or (expressionValue > tPtr^.size*8)
-               or ((expressionValue > 1) and (tPtr^.cType = ctBool)) then
+               or (expressionValue > Width(tPtr)) then
                Error(115);
             if _Alignassy in fieldDeclSpecifiers.declarationModifiers then
                Error(142);
@@ -3557,6 +3547,15 @@ var
       or (typeSpecifiers = [boolsy]) then begin
       myTypeSpec := boolPtr;
       end {else if}
+   else if (typeSpecifiers = [_BitIntsy])
+      or (typeSpecifiers = [signedsy,_BitIntsy]) then
+      {OK - myTypeSpec will be set elsewhere}
+   else if typeSpecifiers = [unsignedsy,_BitIntsy] then begin
+      if bitIntWidth <> 0 then
+         myTypeSpec := GetBitIntType(true, bitIntWidth)
+      else
+         {OK - myTypeSpec will be set elsewhere}
+      end {else if}
    else
       Error(badNextTokenError);
    end; {ResolveType}
@@ -3616,6 +3615,7 @@ typeQualifiers := [];
 typeSpecifiers := [];
 typeDone := false;
 isLongLong := false;
+bitIntWidth := 0;
 inferType := false;
 while token.kind in allowedTokens do begin
    case token.kind of
@@ -3690,7 +3690,7 @@ while token.kind in allowedTokens do begin
 
       {type specifiers}
       unsignedsy,signedsy,intsy,longsy,charsy,shortsy,floatsy,doublesy,voidsy,
-      compsy,extendedsy,_Boolsy,boolsy: begin
+      compsy,extendedsy,_Boolsy,boolsy,_BitIntsy: begin
          GotTypeSpecifier;
          if typeDone then
             Error(badNextTokenError)
@@ -3711,7 +3711,22 @@ while token.kind in allowedTokens do begin
             typeSpecifiers := typeSpecifiers + [token.kind];
             ResolveType;
             end; {else}
-         NextToken;
+         if token.kind = _BitIntsy then begin
+            NextToken;
+            Match(lparench, 13);
+            Expression(integerConstantExpression,[rparench]);
+            if (expressionValue < 1) or (expressionValue > 64) then begin
+               Error(208);
+               bitIntWidth := 16;
+               end {if}
+            else
+               bitIntWidth := ord(expressionValue);
+            Match(rparench, 12);
+            myTypeSpec :=
+               GetBitIntType(unsignedsy in typeSpecifiers, bitIntWidth);
+            end {if}
+         else
+            NextToken;
          end;
 
       _Complexsy,_Imaginarysy: begin
@@ -4024,6 +4039,9 @@ if myTypeSpec = nil then begin
       if (lint & lintC99Syntax) <> 0 then
          Error(151);
    end; {if}
+if bitIntWidth = 1 then
+   if myTypeSpec^.cType = ctBitInt then
+      Error(208);
 declSpecifiers.inferType := inferType;
 declSpecifiers.typeSpec :=              {apply type qualifiers}
    MakeQualifiedType(myTypeSpec, typeQualifiers);
@@ -5390,8 +5408,8 @@ anonNumber := 0;                        {no anonymous structs/unions yet}
 typeSpecifierStart := 
    [voidsy,charsy,shortsy,intsy,longsy,floatsy,doublesy,signedsy,unsignedsy,
     extendedsy,compsy,_Boolsy,boolsy,_Complexsy,_Imaginarysy,_Atomicsy,
-    _Decimal32sy,_Decimal64sy,_Decimal128sy,structsy,unionsy,enumsy,typeofsy,
-    typeof_unqualsy,typedef];
+    _BitIntsy,_Decimal32sy,_Decimal64sy,_Decimal128sy,structsy,unionsy,enumsy,
+    typeofsy,typeof_unqualsy,typedef];
 
 storageClassSpecifiers :=
    [typedefsy,externsy,staticsy,_Thread_localsy,thread_localsy,autosy,registersy];

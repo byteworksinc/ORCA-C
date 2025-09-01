@@ -623,7 +623,7 @@ NeedsCondition := opcode in
     pc_lli,pc_gil,pc_gli,pc_gdl,pc_gld,pc_iil,pc_ili,pc_idl,pc_ild,
     pc_cop,pc_cpo,pc_cpi,pc_dvi,pc_mpi,pc_adi,pc_sbi,pc_mod,pc_bno,
     pc_udi,pc_uim,pc_umi,pc_cnv,pc_rbo,pc_shl,pc_shr,pc_usr,pc_lbf,
-    pc_lbu,pc_cbf,pc_tri];
+    pc_lbu,pc_cbf,pc_tri,pc_sxi];
 end; {NeedsCondition}
 
 
@@ -5130,6 +5130,117 @@ case optype of
 end; {GenStrCop}
 
 
+procedure GenSxiZxi (op: icptr);
+
+{ generate a pc_sxi or pc_zxi					}
+
+var
+   mask: integer;
+   lab1: integer;                       {label number}
+
+begin {GenSxiZxi}
+GenTree(op^.left);
+mask := (1 << op^.q) - 1;
+GenNative(m_and_imm, immediate, mask, nil, 0);
+if op^.opcode = pc_sxi then begin
+   GenNative(m_bit_imm, immediate, 1 << (op^.q - 1), nil, 0);
+   lab1 := GenLabel;
+   GenNative(m_beq, relative, lab1, nil, 0);
+   GenNative(m_ora_imm, immediate, ~mask, nil, 0);
+   GenLab(lab1);
+   end; {if}
+end; {GenSxiZxi}
+
+
+procedure GenSxlZxl (op: icptr);
+
+{ generate a pc_sxl or pc_zxl					}
+
+var
+   mask: integer;
+   lab1: integer;                       {label number}
+
+begin {GenSxlZxl}
+if (gLong.preference & A_X) <> 0 then
+   gLong.preference := A_X
+else
+   gLong.preference := onStack;
+GenTree(op^.left);
+if gLong.where = A_X then begin
+   GenImplied(m_tay);
+   GenImplied(m_txa);
+   end {if}
+else
+   GenNative(m_lda_s, direct, 3, nil, 0);
+
+mask := (1 << (op^.q - 16)) - 1;
+GenNative(m_and_imm, immediate, mask, nil, 0);
+if op^.opcode = pc_sxl then begin
+   GenNative(m_bit_imm, immediate, 1 << (op^.q - 16 - 1), nil, 0);
+   lab1 := GenLabel;
+   GenNative(m_beq, relative, lab1, nil, 0);
+   GenNative(m_ora_imm, immediate, ~mask, nil, 0);
+   GenLab(lab1);
+   end; {if}
+
+if gLong.where = A_X then begin
+   GenImplied(m_tax);
+   GenImplied(m_tya);
+   end {if}
+else
+   GenNative(m_sta_s, direct, 3, nil, 0);
+end; {GenSxlZxl}
+
+
+procedure GenSxqZxq (op: icptr);
+
+{ generate a pc_sxq or pc_zxq					}
+
+var
+   mask: integer;
+   offset: integer;
+   lab1: integer;                       {label number}
+
+begin {GenSxqZxq}
+gQuad.preference := onStack;
+GenTree(op^.left);
+
+if op^.q <= 48 then begin
+   offset := 32;
+   GenNative(m_lda_s, direct, 5, nil, 0);
+   end {if}
+else begin
+   offset := 48;
+   GenNative(m_lda_s, direct, 7, nil, 0);
+   end; {else}
+
+mask := (1 << (op^.q - offset)) - 1;
+if mask <> $ffff then
+   GenNative(m_and_imm, immediate, mask, nil, 0);
+if op^.opcode = pc_sxq then begin
+   if offset = 32 then
+      GenNative(m_ldx_imm, immediate, 0, nil, 0);
+   GenNative(m_bit_imm, immediate, 1 << (op^.q - offset - 1), nil, 0);
+   lab1 := GenLabel;
+   GenNative(m_beq, relative, lab1, nil, 0);
+   if mask <> $ffff then
+      GenNative(m_ora_imm, immediate, ~mask, nil, 0);
+   if offset = 32 then
+      GenImplied(m_dex);
+   GenLab(lab1);
+   end; {if}
+
+if offset = 32 then begin
+   GenNative(m_sta_s, direct, 5, nil, 0);
+   if op^.opcode = pc_sxq then
+      GenImplied(m_txa)
+   else
+      GenNative(m_lda_imm, immediate, 0, nil, 0);
+   end; {if}
+GenNative(m_sta_s, direct, 7, nil, 0);
+end; {GenSxqZxq}
+
+
 procedure GenUnaryLong (op: icptr);
 
 { generate a pc_bnl or pc_ngl					}
@@ -7718,6 +7829,9 @@ case op^.opcode of
    pc_sro,pc_cpo: GenSroCpo(op);
    pc_sto,pc_cpi: GenStoCpi(op);
    pc_str,pc_cop: GenStrCop(op);
+   pc_sxi,pc_zxi: GenSxiZxi(op);
+   pc_sxl,pc_zxl: GenSxlZxl(op);
+   pc_sxq,pc_zxq: GenSxqZxq(op);
    pc_tl1: GenTl1(op);
    pc_tri: GenTri(op);
    pc_ujp: GenNative(m_brl, longrelative, op^.q, nil, 0);

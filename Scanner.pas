@@ -455,6 +455,17 @@ procedure FlagPragmas (pragma: pragmas); extern;
 {    1. From Header.pas						}
 
 
+function GetBitIntType (isUnsigned: boolean; width: integer): typePtr; extern;
+
+{ Get a _BitInt type of specified signedness and with           }
+{                                                               }
+{ Parameters:                                                   }
+{    isUnsigned - is the type unsigned?                         }
+{    width - width of type                                      }
+{                                                               }
+{ Returns: Pointer to the specified _BitInt type                }
+
+
 procedure StartInclude (name: gsosOutStringPtr); extern;
 
 { Marks the start of an include file				}
@@ -500,6 +511,8 @@ function CnvULLX (val: longlong): extended; extern;
 function ult (x,y: longint): integer; extern;
 
 { unsigned 32-bit comparison                                    }
+
+procedure lshr64 (var x: longlong; y: integer); extern;
 
 {-- Scanner support --------------------------------------------}
 
@@ -562,11 +575,6 @@ if length(name) <> 0 then begin
    end; {if}
 end; {AddPath}
 
-
-function Convertsl(var str: pString): longint; extern;
-
-{ Return the integer equivalent of the string.  Assumes a valid }
-{ 4-byte integer string; supports unsigned values.              }
 
 procedure Convertsll(var qval: longlong; var str: pString); extern;
 
@@ -924,6 +932,7 @@ if list or (numErr <> 0) then begin
         205: msg := @'duplicate #embed parameter';
         206: msg := @'unknown #embed parameter';
         207: msg := @'parameter list not prototyped';
+        208: msg := @'invalid _BitInt width';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);
@@ -4551,6 +4560,7 @@ var
    isHex: boolean;                      {is the value a hex number?}
    isLong: boolean;                     {is the value a long number?}
    isLongLong: boolean;                 {is the value a long long number?}
+   isBitInt: boolean;                   {is the value a _BitInt number?}
    isFloat: boolean;                    {is the value a number of type float?}
    isReal: boolean;                     {is the value a real number?}
    numIndex: 0..maxLine;                {index into workString}
@@ -4633,7 +4643,27 @@ var
       end; {while}
    token.qval.lo := token.qval.lo | nextDigit;
    end; {ShiftAndOrValue}
+
+
+   function BitWidth (val: longlong): integer;
    
+   {  Get the number of bits needed to represent val            }
+   {  (interpreted as an unsigned integer).                     }
+
+   var
+      width: integer;
+      remainingBits: longlong;
+
+   begin {BitWidth}
+   width := 0;
+   remainingBits := val;
+   repeat
+      width := width + 1;
+      lshr64(remainingBits, 1);
+   until (remainingBits.hi = 0) and (remainingBits.lo = 0);
+   BitWidth := width;
+   end; {BitWidth}
+
 
 begin {DoNumber}
 atEnd := false;                         {not at end}
@@ -4642,6 +4672,7 @@ isHex := false;                         {assume it's not hex}
 isReal := false;                        {assume it's an integer}
 isLong := false;                        {assume a short integer}
 isLongLong := false;
+isBitInt := false;
 isFloat := false;
 unsigned := false;                      {assume signed numbers}
 err := 0;                               {no error so far}
@@ -4707,9 +4738,9 @@ if (not isHex and (c2 in ['e','E']))    {handle an exponent}
       end; {else}
    end; {if}
 1:
-while c2 in ['l','u','L','U'] do        {check for long or unsigned}
+while c2 in ['l','u','w','L','U','W'] do {check for long, unsigned, or _BitInt}
    if c2 in ['l','L'] then begin   
-      if isLong or isLongLong then
+      if isLong or isLongLong or isBitInt then
          FlagError(156);
       c1 := c2;
       NextChar;
@@ -4722,14 +4753,27 @@ while c2 in ['l','u','L','U'] do        {check for long or unsigned}
       else
          isLong := true;
       end {if}
-   else {if c2 in ['u','U'] then} begin
+   else if c2 in ['u','U'] then begin
       NextChar;
       if unsigned then
          FlagError(156)
       else if isReal then
          FlagError(91);
       unsigned := true;
-      end; {else}
+      end {else if}
+   else if c2 in ['w','W'] then begin
+      c1 := c2;
+      NextChar;
+      if ((cStd >= c23) or not strictMode) and
+         (((c1 = 'w') and (c2 = 'b')) or ((c1 = 'W') and (c2 = 'B'))) then begin
+         NextChar;
+         if isLong or isLongLong or isReal or isBitInt then
+            FlagError(156);
+         isBitInt := true;
+         end {if}
+      else
+         FlagError(189);
+      end; {else if}
 if c2 in ['f','F'] then begin           {allow F designator on reals}
    if not isReal then begin
       FlagError(100);
@@ -4761,158 +4805,162 @@ if isReal then begin                    {convert a real constant}
    else
       token.rval := cnvsd(numString);
    end {if}
-else if numString[1] <> '0' then begin {convert a decimal integer}
-   if (stringIndex > 5)
-      or (not unsigned and (stringIndex = 5) and (numString > '32767'))
-      or (unsigned and (stringIndex = 5) and (numString > '65535')) then
-      isLong := true;
-   if (stringIndex > 10)
-      or (not unsigned and (stringIndex = 10) and (numString > '2147483647'))
-      or (unsigned and (stringIndex = 10) and (numString > '4294967295')) then
-      isLongLong := true;
-   if (not unsigned and ((stringIndex > 19) or
-      ((stringIndex = 19) and (numString > '9223372036854775807')))) or
-      (unsigned and ((stringIndex > 20) or
-      ((stringIndex = 20) and (numString > '18446744073709551615')))) then begin
-      numString := '0';
-      if flagOverflows then
-         FlagError(6);
-      end; {if}
-   if isLongLong then begin
-      token.class := longlongConstant;
-      Convertsll(token.qval, numString);
-      if unsigned then begin
-         token.kind := ulonglongConst;
-         token.qtype := uLongLongPtr;
-         end {if}
-      else begin
-         token.kind := longlongConst;
-         token.qtype := longLongPtr;
-         end; {else}
-      end {if}
-   else if isLong then begin
-      token.class := longConstant;
-      token.lval := Convertsl(numString);
-      if unsigned then begin
-         token.kind := ulongConst;
-         token.ltype := uLongPtr;
-         end {if}
-      else begin
-         token.kind := longConst;
-         token.ltype := longPtr;
-         end; {else}
-      end {if}
-   else begin
-      token.class := intConstant;
-      if unsigned then begin
-         token.kind := uintConst;
-         token.itype := uIntPtr;
-         end {if}
-      else begin
-         token.kind := intConst;
-         token.itype := intPtr;
-         end; {else}
-      token.ival := ord(Convertsl(numString));
-      end; {else}
-   end {else if}
-else begin                            {hex, octal, & binary}
-   token.qval.lo := 0;
-   token.qval.hi := 0;
-   if isHex then begin
-      i := 3;
-      if length(numString) < 3 then
-         FlagError(189);
-      while i <= length(numString) do begin
-         if token.qval.hi & $F0000000 <> 0 then begin
-            i := maxint;
-            if flagOverflows then
-               FlagError(6);
-            end {if}
-         else begin
-            if numString[i] > '9' then
-               val := (ord(numString[i])-7) & $000F
-            else
-               val := ord(numString[i]) & $000F;
-            ShiftAndOrValue(4, val);
-            i := i+1;
-            end; {else}
-         end; {while}
-      end {if}
-   else if isBin then begin
-      i := 3;
-      if length(numString) < 3 then
-         FlagError(189);
-      while i <= length(numString) do begin
-         if token.qval.hi & $80000000 <> 0 then begin
-            i := maxint;
-            if flagOverflows then
-               FlagError(6);
-            end {if}
-         else begin
-            if not (numString[i] in ['0','1']) then
-               FlagError(121);
-            ShiftAndOrValue(1, ord(numString[i]) & $0001);
-            i := i+1;
-            end; {else}
-         end; {while}
-      end {if}
-   else begin
-      i := 2;
-      while i <= length(numString) do begin
-         if token.qval.hi & $E0000000 <> 0 then begin
-            i := maxint;
-            if flagOverflows then
-               FlagError(6);
-            end {if}
-         else begin
-            if numString[i] in ['8','9'] then
-               if not doingDigitSequence then
-                  FlagError(7);
-            ShiftAndOrValue(3, ord(numString[i]) & $0007);
-            i := i+1;
-            end; {else}
-         end; {while}
-      end; {else}
-   if token.qval.hi <> 0 then
-      isLongLong := true;
-   if not isLongLong then
-      if long(token.qval.lo).msw <> 0 then
+else begin
+   if numString[1] <> '0' then begin    {convert a decimal integer}
+      if (stringIndex > 5)
+         or (not unsigned and (stringIndex = 5) and (numString > '32767'))
+         or (unsigned and (stringIndex = 5) and (numString > '65535')) then
          isLong := true;
-   if isLongLong then begin
-      token.class := longlongConstant;
-      if unsigned or (token.qval.hi & $80000000 <> 0) then begin
-         token.kind := ulonglongConst;
-         token.qtype := uLongLongPtr;
+      if (stringIndex > 10)
+         or (not unsigned and (stringIndex = 10) and (numString > '2147483647'))
+         or (unsigned and (stringIndex = 10) and (numString > '4294967295')) then
+         isLongLong := true;
+      if (not unsigned and ((stringIndex > 19) or
+         ((stringIndex = 19) and (numString > '9223372036854775807')))) or
+         (unsigned and ((stringIndex > 20) or
+         ((stringIndex = 20) and (numString > '18446744073709551615')))) then begin
+         numString := '0';
+         if flagOverflows then
+            FlagError(6);
+         end; {if}
+      Convertsll(token.qval, numString);
+      if isLongLong then begin
+         if unsigned then
+            token.qtype := uLongLongPtr
+         else
+            token.qtype := longLongPtr;
          end {if}
+      else if isLong then begin
+         if unsigned then
+            token.ltype := uLongPtr
+         else
+            token.ltype := longPtr;
+         end {else if}
       else begin
-         token.kind := longlongConst;
-         token.qtype := longLongPtr;
+         if unsigned then
+            token.itype := uIntPtr
+         else
+            token.itype := intPtr;
          end; {else}
-      end {if}
-   else if isLong then begin
-      token.class := longConstant;
-      if unsigned or (token.qval.lo & $80000000 <> 0) then begin
-         token.kind := ulongConst;
-         token.ltype := uLongPtr;
+      end {else if}
+   else begin                           {hex, octal, & binary}
+      token.qval.lo := 0;
+      token.qval.hi := 0;
+      if isHex then begin
+         i := 3;
+         if length(numString) < 3 then
+            FlagError(189);
+         while i <= length(numString) do begin
+            if token.qval.hi & $F0000000 <> 0 then begin
+               i := maxint;
+               if flagOverflows then
+                  FlagError(6);
+               end {if}
+            else begin
+               if numString[i] > '9' then
+                  val := (ord(numString[i])-7) & $000F
+               else
+                  val := ord(numString[i]) & $000F;
+               ShiftAndOrValue(4, val);
+               i := i+1;
+               end; {else}
+            end; {while}
+         end {if}
+      else if isBin then begin
+         i := 3;
+         if length(numString) < 3 then
+            FlagError(189);
+         while i <= length(numString) do begin
+            if token.qval.hi & $80000000 <> 0 then begin
+               i := maxint;
+               if flagOverflows then
+                  FlagError(6);
+               end {if}
+            else begin
+               if not (numString[i] in ['0','1']) then
+                  FlagError(121);
+               ShiftAndOrValue(1, ord(numString[i]) & $0001);
+               i := i+1;
+               end; {else}
+            end; {while}
          end {if}
       else begin
-         token.kind := longConst;
-         token.ltype := longPtr;
+         i := 2;
+         while i <= length(numString) do begin
+            if token.qval.hi & $E0000000 <> 0 then begin
+               i := maxint;
+               if flagOverflows then
+                  FlagError(6);
+               end {if}
+            else begin
+               if numString[i] in ['8','9'] then
+                  if not doingDigitSequence then
+                     FlagError(7);
+               ShiftAndOrValue(3, ord(numString[i]) & $0007);
+               i := i+1;
+               end; {else}
+            end; {while}
          end; {else}
-      end {if}
-   else begin
-      if (long(token.qval.lo).lsw & $8000) <> 0 then
-         unsigned := true;
-      token.class := intConstant;
-      if unsigned then begin
-         token.kind := uintConst;
-         token.itype := uIntPtr;
+      if token.qval.hi <> 0 then
+         isLongLong := true;
+      if not isLongLong then
+         if long(token.qval.lo).msw <> 0 then
+            isLong := true;
+      if isLongLong then begin
+         if unsigned or (token.qval.hi & $80000000 <> 0) then
+            token.qtype := uLongLongPtr
+         else
+            token.qtype := longLongPtr;
          end {if}
+      else if isLong then begin
+         if unsigned or (token.qval.lo & $80000000 <> 0) then
+            token.ltype := uLongPtr
+         else
+            token.ltype := longPtr;
+         end {else if}
       else begin
-         token.kind := intConst;
-         token.itype := intPtr;
+         if unsigned or ((long(token.qval.lo).lsw & $8000) <> 0) then
+            token.itype := uIntPtr
+         else
+            token.itype := intPtr;
          end; {else}
       end; {else}
+   if isBitInt then
+      if unsigned then
+         token.itype := GetBitIntType(true, BitWidth(token.qval))
+      else
+         token.itype := GetBitIntType(false, BitWidth(token.qval) + 1);
+   case token.itype^.baseType of
+      cgWord: begin
+         token.class := intConstant;
+         token.kind := intconst;
+         end;
+      cgUWord: begin
+         token.class := intConstant;
+         token.kind := uintconst;
+         end;
+      cgLong: begin
+         token.class := longConstant;
+         token.kind := longconst;
+         end;
+      cgULong: begin
+         token.class := longConstant;
+         token.kind := ulongconst;
+         end;
+      cgQuad: begin
+         token.class := longlongConstant;
+         token.kind := longlongconst;
+         end;
+      cgUQuad: begin
+         token.class := longlongConstant;
+         token.kind := ulonglongconst;
+         end;
+      otherwise: begin
+         token.class := intConstant;
+         token.kind := intconst;
+         Error(57);
+         end;
+      end; {case}
    end; {else}
 if not atEnd then                       {make sure we read all characters}
    FlagError(189);

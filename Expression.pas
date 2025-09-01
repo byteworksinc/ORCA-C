@@ -145,6 +145,12 @@ procedure Expression (kind: expressionKind; stopSym: tokenSet);
 {       expressionType - type of the constant expression        }
 
 
+procedure ExtendBitIntValue (var val: longlong; tp: typePtr);
+
+{ If tp is a _BitInt type, truncate val to the width of that    }
+{ type and then sign-extend or zero-extend it.                  }
+
+
 procedure FreeTemp(labelNum, size: integer);
 
 { place a temporary label in the available label list           }
@@ -409,19 +415,110 @@ function IntegerBinaryConversions(tp1, tp2: typePtr): typePtr;
 {       The type resulting from the usual arithmetic            }
 {       conversions on tp1 and tp2                              }
 
+label 1;
+
+var
+   rank1, rank2: integer;               {integer conversion ranks of tp1,tp2}
+   signed1, signed2: boolean;           {are tp1,tp2 signed integer types?}
+   tType: typePtr;                      {temp type}
+   reversed: boolean;                   {were types reversed}
+
+
+   function ConversionRank (tp: typePtr): integer;
+
+   { Get the integer conversion rank of an integer type.        }
+   { (This only applies to types after the integer promotions.) }
+
+   begin {ConversionRank}
+   case tp^.cType of
+      ctInt,ctUInt:
+         ConversionRank := 17;
+      ctInt32,ctUInt32:
+         ConversionRank := 34;
+      ctLong,ctULong:
+         ConversionRank := 35;
+      ctLongLong,ctULongLong:
+         ConversionRank := 68;
+      ctBitInt,ctUBitInt:
+         if tp^.bitIntWidth in [1..16] then
+            ConversionRank := tp^.bitIntWidth
+         else if tp^.bitIntWidth in [17..32] then
+            ConversionRank := tp^.bitIntWidth + 1
+         else
+            ConversionRank := tp^.bitIntWidth + 3;
+      otherwise: begin
+         ConversionRank := 17;
+         Error(57);
+         end; {otherwise}
+      end; {case}
+   end; {ConversionRank}
+
+
+   function CorrespondingUnsignedType (tp: typePtr): typePtr;
+
+   { Get unsigned type corresponding to a signed integer type.  }
+
+   begin {CorrespondingUnsignedType}
+   case tp^.cType of
+      ctInt:
+         CorrespondingUnsignedType := uIntPtr;
+      ctInt32:
+         CorrespondingUnsignedType := uInt32Ptr;
+      ctLong:
+         CorrespondingUnsignedType := uLongPtr;
+      ctLongLong:
+         CorrespondingUnsignedType := uLongLongPtr;
+      ctBitInt:
+         CorrespondingUnsignedType := GetBitIntType(true, tp^.bitIntWidth);
+      otherwise: begin
+         CorrespondingUnsignedType := uIntPtr;
+         Error(57);
+         end; {otherwise}
+      end; {case}
+   end; {CorrespondingUnsignedType}
+
+
 begin {IntegerBinaryConversions}
-if (tp1^.cType = ctULongLong) or (tp2^.cType = ctULongLong) then
-   IntegerBinaryConversions := uLongLongPtr
-else if (tp1^.cType = ctLongLong) or (tp2^.cType = ctLongLong) then
-   IntegerBinaryConversions := longLongPtr
-else if (tp1^.cType = ctULong) or (tp2^.cType = ctULong) then
-   IntegerBinaryConversions := uLongPtr
-else if (tp1^.cType = ctLong) or (tp2^.cType = ctLong) then
-   IntegerBinaryConversions := longPtr
-else if (tp1^.cType in [ctUInt,ctUShort]) or (tp2^.cType in [ctUInt,ctUShort]) then
-   IntegerBinaryConversions := uIntPtr
+                                        {perform integer promotions}
+if tp1^.cType in [ctBool,ctChar,ctUChar,ctSChar,ctShort] then
+   tp1 := intPtr
+else if tp1^.cType = ctUShort then
+   tp1 := uIntPtr;
+if tp2^.cType in [ctBool,ctChar,ctUChar,ctSChar,ctShort] then
+   tp2 := intPtr
+else if tp2^.cType = ctUShort then
+   tp2 := uIntPtr;
+
+if tp1 = tp2 then begin                 {shortcut}
+   IntegerBinaryConversions := Unqualify(tp1);
+   goto 1;
+   end; {if}
+
+rank1 := ConversionRank(tp1);           {order types so tp1 is top-ranked}
+rank2 := ConversionRank(tp2);
+if rank2 > rank1 then begin
+   tType := tp1;
+   tp1 := tp2;
+   tp2 := tType;
+   reversed := true;
+   end {if}
 else
-   IntegerBinaryConversions := intPtr;
+   reversed := false;
+
+signed1 := IsSignedType(tp1);
+signed2 := IsSignedType(tp2);
+
+if signed1 = signed2 then               {apply conversion rules}
+   IntegerBinaryConversions := Unqualify(tp1)
+else if not signed1 then
+   IntegerBinaryConversions := Unqualify(tp1)
+else if (rank1 = rank2) and not signed2 then
+   IntegerBinaryConversions := Unqualify(tp2)
+else if Width(tp1) > Width(tp2) then
+   IntegerBinaryConversions := Unqualify(tp1)
+else
+   IntegerBinaryConversions := CorrespondingUnsignedType(tp1);
+1:
 end; {IntegerBinaryConversions}
 
 
@@ -443,7 +540,7 @@ function UsualBinaryConversions {lType: typePtr): baseTypeEnum};
 
 var
    rType: typePtr;                      {right type}
-   lt,rt: baseTypeEnum;                 {work variables}
+   lt,rt,et: baseTypeEnum;              {work variables}
 
 
    function CommonRealType (lt, rt: baseTypeEnum): baseTypeEnum;
@@ -476,6 +573,20 @@ var
    end; {CommonRealType}
 
 
+   procedure ZeroExtend (width: integer; zxi,zxl,zxq: pcodes);
+
+   { Zero-extend a value of specified width                     }
+
+   begin {ZeroExtend}
+   if width in [1..15] then
+      Gen1(zxi, width)
+   else if width in [17..31] then
+      Gen1(zxl, width)
+   else if width in [33..63] then
+      Gen1(zxq, width);
+   end; {ZeroExtend}
+
+
 begin {UsualBinaryConversions}
 UsualBinaryConversions := cgULong;
 if lType^.kind = pointerType then
@@ -496,76 +607,29 @@ else if rType^.kind = scalarType then
 if (lType^.kind = scalarType) and (rType^.kind = scalarType) then begin
    lt := Unary(lType^.baseType);
    rt := Unary(rType^.baseType);
-   if lt <> rt then begin
-      if lt in [cgReal,cgDouble,cgExtended,cgComp] then begin
-         if rt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
-            Gen2(pc_cnv, ord(rt), ord(cgExtended));
-         UsualBinaryConversions := CommonRealType(lt, rt);
-         end {if}
-      else if rt in [cgReal,cgDouble,cgExtended,cgComp] then begin
-         if lt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
-            Gen2(pc_cnn, ord(lt), ord(cgExtended));
-         UsualBinaryConversions := CommonRealType(lt, rt);
-         end {else if}
-      else if lt = cgUQuad then begin
-         if rt in [cgWord,cgUWord,cgLong,cgULong] then
-            Gen2(pc_cnv, ord(rt), ord(cgUQuad));
-         UsualBinaryConversions := cgUQuad;
-         expressionType := uLongLongPtr;
-         end {else if}
-      else if rt = cgUQuad then begin
-         if lt in [cgWord,cgUWord,cgLong,cgULong] then
-            Gen2(pc_cnn, ord(lt), ord(cgUQuad));
-         UsualBinaryConversions := cgUQuad;
-         expressionType := uLongLongPtr;
-         end {else if}
-      else if lt = cgQuad then begin
-         if rt in [cgWord,cgUWord,cgLong,cgULong] then
-            Gen2(pc_cnv, ord(rt), ord(cgQuad));
-         UsualBinaryConversions := cgQuad;
-         expressionType := longLongPtr;
-         end {else if}
-      else if rt = cgQuad then begin
-         if lt in [cgWord,cgUWord,cgLong,cgULong] then
-            Gen2(pc_cnn, ord(lt), ord(cgQuad));
-         UsualBinaryConversions := cgQuad;
-         expressionType := longLongPtr;
-         end {else if}
-      else if lt = cgULong then begin
-         if rt in [cgWord,cgUWord] then
-            Gen2(pc_cnv, ord(rt), ord(cgULong));
-         UsualBinaryConversions := cgULong;
-         expressionType := uLongPtr;
-         end {else if}
-      else if rt = cgULong then begin
-         if lt in [cgWord,cgUWord] then
-            Gen2(pc_cnn, ord(lt), ord(cgULong));
-         UsualBinaryConversions := cgULong;
-         expressionType := uLongPtr;
-         end {else if}
-      else if lt = cgLong then begin
-         if rt in [cgWord,cgUWord] then
-            Gen2(pc_cnv, ord(rt), ord(cgLong));
-         UsualBinaryConversions := cgLong;
-         expressionType := longPtr;
-         end {else if}
-      else if rt = cgLong then begin
-         if lt in [cgWord,cgUWord] then
-            Gen2(pc_cnn, ord(lt), ord(cgLong));
-         UsualBinaryConversions := cgLong;
-         expressionType := longPtr;
-         end {else if}
-      else {one operand is unsigned in and the other is int} begin
-         UsualBinaryConversions := cgUWord;
-         expressionType := uIntPtr;
-         end; {else}
+   if lt in [cgReal,cgDouble,cgExtended,cgComp] then begin
+      if rt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
+         Gen2(pc_cnv, ord(rt), ord(cgExtended));
+      UsualBinaryConversions := CommonRealType(lt, rt);
       end {if}
-   else begin {types are the same}
-      UsualBinaryConversions := lt;
-      if lt = cgWord then               {update types that may have changed}
-         expressionType := intPtr
-      else if lt = cgUWord then
-         expressionType := uIntPtr;
+   else if rt in [cgReal,cgDouble,cgExtended,cgComp] then begin
+      if lt in [cgWord,cgUWord,cgLong,cgULong,cgQuad,cgUQuad] then
+         Gen2(pc_cnn, ord(lt), ord(cgExtended));
+      UsualBinaryConversions := CommonRealType(lt, rt);
+      end {else if}
+   else begin
+      expressionType := IntegerBinaryConversions(ltype, rtype);
+      et := expressionType^.baseType;
+      if TypeSize(et) <> TypeSize(lt) then
+         Gen2(pc_cnn, ord(lt), ord(et))
+      else if TypeSize(et) <> TypeSize(rt) then
+         Gen2(pc_cnv, ord(rt), ord(et));
+      if expressionType^.cType = ctUBitInt then
+         if IsSignedType(lType) then
+            ZeroExtend(expressionType^.bitIntWidth, pc_zni, pc_znl, pc_znq)
+         else if IsSignedType(rType) then
+            ZeroExtend(expressionType^.bitIntWidth, pc_zxi, pc_zxl, pc_zxq);
+      UsualBinaryConversions := et;
       end; {else}
    end {if}
 else
@@ -595,13 +659,16 @@ UsualUnaryConversions := cgULong;
 if expressionType^.kind = scalarType then begin
    et := Unary(expressionType^.baseType);
    UsualUnaryConversions := et;
-   if et = cgWord then                  {update types that may have changed}
-      expressionType := intPtr
-   else if et = cgUWord then
-      expressionType := uIntPtr;
-   end {if}
-{else if expressionType^.kind in [arrayType,pointerType] then
-   UsualUnaryConversions := cgULong};
+   if et = cgWord then begin            {update types that may have changed}
+      if not (expressionType^.cType in [ctBitInt,ctUBitInt]) then
+         expressionType := intPtr;
+      end {if}
+   else if et = cgUWord then begin
+      if not (expressionType^.cType in [ctBitInt,ctUBitInt]) then
+         expressionType := uIntPtr;
+      end; {else if}
+   end; {if}
+expressionType := Unqualify(expressionType);
 end; {UsualUnaryConversions}
 
 
@@ -639,6 +706,97 @@ if expressionType^.kind = arrayType then
 else if expressionType^.kind = functionType then
    expressionType := MakePointerTo(expressionType);
 end; {ValueExpressionConversions}
+
+
+procedure ExtendBitIntValue {var val: longlong; tp: typePtr};
+
+{ If tp is a _BitInt type, truncate val to the width of that    }
+{ type and then sign-extend or zero-extend it.                  }
+
+var
+   mask: longlong;
+   bitpos: longlong;
+
+begin {ExtendBitIntValue}
+if tp^.kind = scalarType then
+   if tp^.cType in [ctBitInt,ctUBitInt] then begin
+      bitpos := longlong1;
+      shl64(bitpos, tp^.bitIntWidth - 1);
+      mask := bitpos;
+      shl64(mask, 1);
+      sub64(mask, longlong1);
+      val.hi := val.hi & mask.hi;
+      val.lo := val.lo & mask.lo;
+      if tp^.cType = ctBitInt then
+         if ((val.hi & bitpos.hi) <> 0) or ((val.lo & bitpos.lo) <> 0) then
+            begin
+            val.hi := val.hi | ~mask.hi;
+            val.lo := val.lo | ~mask.lo;
+            end; {if}
+      end; {if}
+end; {ExtendBitIntValue}
+
+
+procedure SignExtendBitInt (tp: typePtr);
+
+{ Sign-extend a signed _BitInt.  This has no effect if tp is    }
+{ not a signed _BitInt type.                                    }
+
+begin {SignExtendBitInt}
+if tp^.kind = scalarType then
+   if tp^.cType = ctBitInt then
+      if not (tp^.bitIntWidth in [16,32,64]) then
+         case tp^.baseType of
+            cgWord: Gen1(pc_sxi, tp^.bitIntWidth);
+            cgLong: Gen1(pc_sxl, tp^.bitIntWidth);
+            cgQuad: Gen1(pc_sxq, tp^.bitIntWidth);
+            otherwise: Error(57);
+            end; {case}
+end; {SignExtendBitInt}
+
+
+procedure TruncateUBitInt (tp: typePtr);
+
+{ Truncate high-order bits beyond the width of an unsigned      }
+{ _BitInt.  This has no effect if tp is not an unsigned _BitInt }
+{ type.                                                         }
+
+begin {TruncateUBitInt}
+if tp^.kind = scalarType then
+   if tp^.cType = ctUBitInt then
+      if not (tp^.bitIntWidth in [16,32,64]) then
+         case tp^.baseType of
+            cgUWord: Gen1(pc_zxi, tp^.bitIntWidth);
+            cgULong: Gen1(pc_zxl, tp^.bitIntWidth);
+            cgUQuad: Gen1(pc_zxq, tp^.bitIntWidth);
+            otherwise: Error(57);
+            end; {case}
+end; {TruncateUBitInt}
+
+
+procedure BitIntConversion (t1, t2: typePtr);
+
+{ Performs the _BitInt-related portion of a conversion from     }
+{ t2 to t1.  This has no effect if t1 is not a _BitInt type.    }
+{ If t1 is a _BitInt type, this will truncate the high-order    }
+{ value bits beyond the width of the _BitInt type and then      }
+{ sign-extend or zero-extend the value, if necessary.           }
+{                                                               }
+{ parameters:                                                   }
+{       t1 - type being converted to                            }
+{       t2 - type being converted from                          }
+
+begin {BitIntConversion}
+if t1^.kind = scalarType then
+   if t1^.ctype = ctBitInt then begin
+      if (Width(t2) > t1^.bitIntWidth) or
+         ((Width(t2) = t1^.bitIntWidth) and not IsSignedType(t2)) then
+         SignExtendBitInt(t1);
+      end {if}
+   else if t1^.ctype = ctUBitInt then
+      if (Width(t2) > t1^.bitIntWidth) or IsSignedType(t2) then
+         TruncateUBitInt(t1);
+end; {BitIntConversion}
 
 
 procedure AssignmentConversion {t1, t2: typePtr; isConstant: boolean;
@@ -753,6 +911,8 @@ else if kind2 in
             end {else if}
          else
             Error(47);
+         if genCode then
+            BitIntConversion(t1, t2);
          end;
 
       arrayType: ;
@@ -1273,11 +1433,15 @@ var
       end; {RealVal}
 
 
-      procedure GetLongLongVal (var result: longlong; token: tokenType);
+      procedure GetLongLongVal (var result: longlong; token: tokenType;
+                                tp: typePtr);
 
-      { convert an operand to a long long value                 }
+      { get the value of token (converted to tp) as a long long }
 
-      begin {LongLongVal}
+      var
+         mask: longlong;
+
+      begin {GetLongLongVal}
       if token.kind = intconst then begin
          result.lo := token.ival;
          if result.lo < 0 then
@@ -1303,7 +1467,15 @@ var
       else {if token.kind in [longlongconst,ulonglongconst] then} begin
          result := token.qval;
          end; {else}
-      end; {LongLongVal}
+      if tp^.kind = scalarType then
+         if not IsSignedType(tp) then begin
+            mask := longlong1;
+            shl64(mask, Width(tp));
+            sub64(mask, longlong1);
+            result.hi := result.hi & mask.hi;
+            result.lo := result.lo & mask.lo;
+            end; {if}
+      end; {GetLongLongVal}
 
 
       function PPType (tp: typePtr): typePtr;
@@ -1324,6 +1496,9 @@ var
 
       { set tk to an integer constant token with the specified  }
       { and value (with val truncated to the width of tp).      }
+
+      var
+         mask: longlong;
 
       begin {SetIntToken}
       if tp^.baseType in [cgQuad,cgUQuad] then begin
@@ -1353,6 +1528,17 @@ var
          else
             tk.kind := intconst;
          end; {else}
+      if tp^.cType = ctUBitInt then begin
+         mask := longlong1;
+         shl64(mask, tp^.bitIntWidth);
+         sub64(mask, longlong1);
+         if tk.class = longlongConstant then
+            tk.qval.hi := tk.qval.hi & mask.hi
+         else if tk.class = longConstant then
+            tk.lval := tk.lval & mask.lo
+         else
+            tk.ival := tk.ival & long(mask.lo).lsw;
+         end; {if}
       end; {SetIntToken}
 
 
@@ -1400,11 +1586,11 @@ var
                   {do the usual binary conversions}
                   etype := IntegerBinaryConversions(ltype, rtype);
                   
-                  GetLongLongVal(llop1, op^.left^.token);
+                  GetLongLongVal(llop1, op^.left^.token, etype);
                   if (llop1.lo <> 0) or (llop1.hi <> 0) then
-                     GetLongLongVal(llop2, op^.middle^.token)
+                     GetLongLongVal(llop2, op^.middle^.token, etype)
                   else
-                     GetLongLongVal(llop2, op^.right^.token);
+                     GetLongLongVal(llop2, op^.right^.token, etype);
                   SetIntToken(op^.token, llop2, etype);
 
                   dispose(op^.left);
@@ -1460,8 +1646,8 @@ var
                etype := IntegerBinaryConversions(ltype, rtype);
 
                unsigned := etype^.baseType in [cgUWord,cgULong,cgUQuad];
-               GetLongLongVal(llop1, op^.left^.token);
-               GetLongLongVal(llop2, op^.right^.token);
+               GetLongLongVal(llop1, op^.left^.token, etype);
+               GetLongLongVal(llop2, op^.right^.token, etype);
                
                case op^.token.kind of
                   barbarop    : begin                                   {||}
@@ -1537,6 +1723,7 @@ var
                   ltltop      : begin                                   {<<}
                                 shl64(llop1, long(llop2.lo).lsw);
                                 etype := op^.left^.token.itype;
+                                ExtendBitIntValue(llop1, etype);
                                 end;
                   gtgtop      : begin                                   {>>}
                                 if kindleft in [uintconst,ulongconst,ulonglongconst] then
@@ -1772,7 +1959,7 @@ var
                            CnvXLL(llop1, rop1);
                         end {if}
                      else begin                      {handle integer constants}
-                        GetLongLongVal(llop1, op^.left^.token);
+                        GetLongLongVal(llop1, op^.left^.token, tp);
                         if op^.left^.token.kind = ulonglongconst then
                            rop1 := CnvULLX(llop1)
                         else
@@ -1780,6 +1967,7 @@ var
                         end; {else if}
                      dispose(op^.left);
                      op^.left := nil;
+                     ExtendBitIntValue(llop1, tp);
                      if baseType in [cgByte,cgWord] then begin
                         op^.token.kind := intConst;
                         op^.token.class := intConstant;
@@ -1859,7 +2047,7 @@ var
                if kind = preprocessorExpression then
                   etype := PPType(etype);
                etype := IntegerBinaryConversions(etype, etype);
-               GetLongLongVal(llop1, op^.left^.token);
+               GetLongLongVal(llop1, op^.left^.token, etype);
                dispose(op^.left);
                op^.left := nil;
                case op^.token.kind of
@@ -2709,6 +2897,7 @@ else if expressionType^.kind in [structType,unionType] then begin
    end {else if}
 else
    Error(40);
+BitIntConversion(tp, expressionType);
 expressionType := tp;
 end; {Cast}
 
@@ -3126,7 +3315,7 @@ var
       begin {IncOrDec}
       case expressionType^.kind of
 
-         scalarType:
+         scalarType: begin
             case tp of
 
                cgByte,cgUByte,cgWord,cgUWord: begin
@@ -3168,6 +3357,8 @@ var
                otherwise: Error(57);
 
                end; {case}
+            TruncateUBitInt(expressionType);
+            end;
 
          pointerType,arrayType: begin
             if checkNullPointers then
@@ -3202,9 +3393,9 @@ var
             iSize := 1;
             baseType := iType^.baseType;
             if (baseType in [cgReal,cgDouble,cgComp,cgExtended,cgQuad,cgUQuad])
-               or (iType^.cType = ctBool) then begin
+               or (iType^.cType in [ctBool,ctUBitInt]) then begin
 
-               {do real or bool inc or dec}
+               {do real, bool, or unsigned _BitInt inc or dec}
                LoadScalar(tree^.id);    {load the value}
                if pc_l in [pc_lli,pc_lld] then
                   if iType^.cType in [ctBool,ctFloat,ctDouble,ctLongDouble,
@@ -3213,7 +3404,7 @@ var
                      Gen2t(pc_cop, t1, 0, iType^.baseType);
                      end; {if}
                tp := baseType;
-               expressionType := iType;
+               expressionType := Unqualify(iType);
                IncOrDec(pc_l in [pc_lli,pc_lil]); {do the ++ or --}
                case storage of          {save the result}
                   stackFrame, parameter:
@@ -3233,14 +3424,6 @@ var
                      end {if}
                   else
                      IncOrDec(pc_l = pc_lld);
-               if iType^.cType = ctBool then
-                  expressionType := boolPtr
-               else if baseType = cgQuad then
-                  expressionType := longLongPtr
-               else if baseType = cgUQuad then
-                  expressionType := ulongLongPtr
-               else
-                  expressionType := doublePtr;
                goto 1;
                end {if}
             else if baseType = cgVoid then
@@ -3288,7 +3471,7 @@ var
                Gen2tName(pc_g, iSize, 0, baseType, name);
             otherwise: ;
             end; {case}
-         expressionType := itype;
+         expressionType := Unqualify(itype);
          end {with}
    else begin
 
@@ -3312,7 +3495,7 @@ var
          tp := UsualUnaryConversions;
          end; {else}
       if (tp in [cgByte,cgUByte,cgWord,cgUword])
-         and (expressionType^.cType <> ctBool)
+         and not (expressionType^.cType in [ctBool,ctUBitInt])
          and not isBitField then
          Gen0t(pc_i, tp)                {do indirect inc/dec}
       else if tp = cgVoid then
@@ -3794,26 +3977,20 @@ case tree^.token.kind of
 
    longConst,ulongConst: begin
       GenLdcLong(tree^.token.lval);
-      if tree^.token.kind = longConst then
-         expressionType := longPtr
-      else
-         expressionType := ulongPtr;
       isConst := true;
       lastconst := tree^.token.lval;
       isNullPtrConst := tree^.token.lval = 0;
+      expressionType := tree^.token.ltype;
       end; {case longConst}
 
    longlongConst,ulonglongConst: begin
       GenLdcQuad(tree^.token.qval);
-      if tree^.token.kind = longlongConst then
-         expressionType := longlongPtr
-      else
-         expressionType := ulonglongPtr;
       if (tree^.token.qval.hi = 0) and (tree^.token.qval.lo >= 0) then begin
          isConst := true;
          lastconst := tree^.token.qval.lo;
          end; {if}
       isNullPtrConst := (tree^.token.qval.hi = 0) and (tree^.token.qval.lo = 0);
+      expressionType := tree^.token.qtype;
       end; {case longlongConst}
 
    floatConst: begin
@@ -4341,6 +4518,8 @@ case tree^.token.kind of
             error(66);
          end; {case}
       expressionType := lType;
+      TruncateUBitInt(expressionType);
+      SignExtendBitInt(expressionType);
       if ((lint & lintOverflow) <> 0) then
          CheckShiftOverflow(tree^.right^.token, expressionType);
       end; {case ltltop}
@@ -4423,6 +4602,7 @@ case tree^.token.kind of
             otherwise:
                error(66);
             end; {case}
+         TruncateUBitInt(expressionType);
          end; {else}
       end; {case plusch}
 
@@ -4479,6 +4659,7 @@ case tree^.token.kind of
             otherwise:
                error(66);
             end; {case}
+         TruncateUBitInt(expressionType);
          end; {else}
       end; {case minusch}
 
@@ -4506,6 +4687,7 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
+      TruncateUBitInt(expressionType);
       end; {case asteriskch}
 
    slashch: begin                       {/}
@@ -4611,6 +4793,7 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
+      TruncateUBitInt(expressionType);
       end; {case uminus}
 
    uplus: begin                         {unary +}
@@ -4640,6 +4823,7 @@ case tree^.token.kind of
          otherwise:
             error(66);
          end; {case}
+      TruncateUBitInt(expressionType);
       end; {case tildech}
 
    excch: begin                         {!}
@@ -4975,12 +5159,12 @@ else begin                              {record the expression for an initialize
          end {else if}
       else if tree^.token.kind = longconst then begin
          expressionValue := tree^.token.lval;
-         expressionType := longPtr;
+         expressionType := tree^.token.ltype;
          isConstant := true;
          end {else if}
       else if tree^.token.kind = ulongconst then begin
          expressionValue := tree^.token.lval;
-         expressionType := ulongPtr;
+         expressionType := tree^.token.ltype;
          isConstant := true;
          end {else if}
       else if tree^.token.kind = longlongconst then begin
@@ -4993,7 +5177,7 @@ else begin                              {record the expression for an initialize
             expressionValue := $80000000
          else
             expressionValue := $7fffffff;
-         expressionType := longLongPtr;
+         expressionType := tree^.token.qtype;
          isConstant := true;
          end {else if}
       else if tree^.token.kind = ulonglongconst then begin
@@ -5003,7 +5187,7 @@ else begin                              {record the expression for an initialize
             expressionValue := llExpressionValue.lo
          else
             expressionValue := $FFFFFFFF;
-         expressionType := ulongLongPtr;
+         expressionType := tree^.token.qtype;
          isConstant := true;
          end {else if}
       else if tree^.token.kind in 

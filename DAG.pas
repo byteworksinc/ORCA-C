@@ -2806,24 +2806,25 @@ case op^.opcode of
 
    pc_nop, pc_bnt, pc_ngi, pc_not, pc_adi, pc_and, pc_lnd, pc_bnd,
    pc_bor, pc_bxr, pc_dvi, pc_equ, pc_geq, pc_grt, pc_leq, pc_les,
-   pc_neq, pc_ior, pc_lor, pc_mod, pc_mpi, pc_sbi, pc_shl, pc_shr:
+   pc_neq, pc_ior, pc_lor, pc_mod, pc_mpi, pc_sbi, pc_shl, pc_shr,
+   pc_sxi:
       TypeOf := cgWord;
 
-   pc_udi, pc_uim, pc_umi, pc_usr, pc_rbo:
+   pc_udi, pc_uim, pc_umi, pc_usr, pc_rbo, pc_zxi:
       TypeOf := cgUWord;
                          
    pc_bnl, pc_ngl, pc_adl, pc_bal, pc_blr, pc_blx, pc_dvl, pc_mdl,
-   pc_mpl, pc_sbl, pc_sll, pc_slr:
+   pc_mpl, pc_sbl, pc_sll, pc_slr, pc_sxl:
       TypeOf := cgLong;
 
-   pc_udl, pc_ulm, pc_uml, pc_vsr:
+   pc_udl, pc_ulm, pc_uml, pc_vsr, pc_zxl:
       TypeOf := cgULong;
 
    pc_bnq, pc_ngq, pc_bqr, pc_bqx, pc_baq, pc_adq, pc_sbq, pc_mpq,
-   pc_dvq, pc_mdq, pc_slq, pc_sqr:
+   pc_dvq, pc_mdq, pc_slq, pc_sqr, pc_sxq:
       TypeOf := cgQuad;
 
-   pc_umq, pc_udq, pc_uqm, pc_wsr:
+   pc_umq, pc_udq, pc_uqm, pc_wsr, pc_zxq:
       TypeOf := cgUQuad;
 
    pc_ngr, pc_adr, pc_dvr, pc_mpr, pc_sbr:
@@ -5494,7 +5495,8 @@ case code^.opcode of
    pc_bnt, pc_bnl, pc_cnv, pc_dec, pc_inc, pc_ind, pc_lbf, pc_lbu,
    pc_ngi, pc_ngl, pc_ngr, pc_not, pc_stk, pc_cop, pc_cpo, pc_tl1,
    pc_sro, pc_str, pc_fjp, pc_tjp, pc_xjp, pc_cup, pc_pop, pc_iil,
-   pc_ili, pc_idl, pc_ild, pc_bnq, pc_ngq, pc_rbo, pc_rev, pc_ckp:
+   pc_ili, pc_idl, pc_ild, pc_bnq, pc_ngq, pc_rbo, pc_rev, pc_ckp,
+   pc_sxi, pc_sxl, pc_sxq, pc_zxi, pc_zxl, pc_zxq:
       begin
       code^.left := Pop;
       Push(code);
@@ -5541,6 +5543,33 @@ case code^.opcode of
    pc_cnn:
       begin
       code^.opcode := pc_cnv;
+      temp := Pop;
+      code^.left := Pop;
+      Push(code);
+      Push(temp);
+      end;
+
+   pc_zni:
+      begin
+      code^.opcode := pc_zxi;
+      temp := Pop;
+      code^.left := Pop;
+      Push(code);
+      Push(temp);
+      end;
+
+   pc_znl:
+      begin
+      code^.opcode := pc_zxl;
+      temp := Pop;
+      code^.left := Pop;
+      Push(code);
+      Push(temp);
+      end;
+
+   pc_znq:
+      begin
+      code^.opcode := pc_zxq;
       temp := Pop;
       code^.left := Pop;
       Push(code);

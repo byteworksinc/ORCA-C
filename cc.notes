@@ -38,7 +38,7 @@ The following C23 language features are currently implemented:
    _Decimal32
    _Decimal64
 
-Of these, alignas, alignof, bool, static_assert, and thread_local are equivalent to the existing _Alignas, _Alignof, _Bool, _Static_assert, and _Thread_local keywords, respectively.  true, false, typeof, and typeof_unqual are described below.  The other new C23 keywords are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.
+Of these, alignas, alignof, bool, static_assert, and thread_local are equivalent to the existing _Alignas, _Alignof, _Bool, _Static_assert, and _Thread_local keywords, respectively.  true, false, typeof, typeof_unqual, and _BitInt are described below.  The other new C23 keywords are recognized as keywords, but the corresponding language features are not yet supported, so any attempt to use them will produce an error message.
 
 2.  (C23 modes only) Trigraphs are no longer supported, and character sequences that would have been interpreted as trigraphs can now be used normally, e.g. within string literals.
 
@@ -164,6 +164,14 @@ are largely treated as if they did not provide a prototype.  A call to a functio
 
 #pragma ignore bit 6 is set by default in the "c23compat" language mode, but it is clear by default in "c23" mode.  It has no effect in pre-C23 language modes, where the rules from the earlier standards are always followed.
 
+18. Bit-precise integer types are now supported.  These are designated by type specifiers of the form _BitInt(N) or unsigned _BitInt(N), where N is an integer constant expression.  The value of N gives the width of the type (the number of value bits).  _BitInt(N) designates a signed N-bit integer type using two's-complement representation; N can range from 2 to 64.  unsigned _BitInt(N) designates an unsigned N-bit integer type; N can range from 1 to 64.  These types are distinct from the traditional C integer types (e.g. int), even though they may sometimes have the same width.
+
+In ORCA/C, bit-precise integer types are stored in memory using 16, 32, or 64 bits, whichever is needed to fit them.  If N is not exactly one of those values, then the N-bit value is sign-extended (for signed _BitInt types) or zero-extended (for unsigned _BitInt types) to the width used to store it.
+
+Note that the unary and binary conversion rules do not apply to _BitInt types in the same way that they do to other integer types.  In particular, _BitInt types narrower than int are not automatically promoted to int or unsigned int.  For example, the result of adding two _BitInt(4) values has type _BitInt(4) and is restricted to the range of _BitInt(4).  (If the resulting value would overflow that range, the behavior is undefined.)
+
+A suffix of wb or WB can be used on an integer constant to give it a _BitInt type that is just wide enough to hold the specified value.  If a wb or WB suffix is used together with u or U, then the constant has an unsigned _BitInt type just wide enough to hold the value.  For example, 6wb has the type _BitInt(4), while 6WBU has the type unsigned _BitInt(3).
+
 
 Library Updates
 ---------------
@@ -201,3 +209,5 @@ Only the va_list argument is required.  The previously-required second argument 
 5. When the unary conversion rules (integer promotions) were applied to an expression of type unsigned short, the resulting type was sometimes unsigned short rather than unsigned int.  This could affect _Generic expressions.
 
 6. In certain circumstances where the value of a 16-bit signed integer variable was converted to a wider type following an earlier access to the 16-bit variable, negative values might not be converted correctly if native code peephole optimizations and register optimizations were both enabled.
+
+7. Division or remainder operations with constant operands might be evaluated incorrectly if one operand was a negative integer and the other had an unsigned type, because the usual arithmetic conversions were not applied properly.

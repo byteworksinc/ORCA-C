@@ -47,6 +47,7 @@
 #define ULONG_WIDTH     32
 #define LLONG_WIDTH     64
 #define ULLONG_WIDTH    64
+#define BITINT_MAXWIDTH 64
 #endif
 
 #endif

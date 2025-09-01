@@ -956,7 +956,7 @@ orcacKeyword equ 128
          dc     i1'c17keyword+c23keyword'               _Alignas
          dc     i1'c17keyword+c23keyword'               _Alignof
          dc     i1'c17keyword+c23keyword'               _Atomic
-         dc     i1'c23keyword'                          _BitInt
+         dc     i1'c23keyword+orcacKeyword'             _BitInt
          dc     i1'c17keyword+c23keyword'               _Bool
          dc     i1'c17keyword+c23keyword'               _Complex
          dc     i1'c23keyword'                          _Decimal128

@@ -166,9 +166,31 @@ procedure GenSymbols (sym: symbolTablePtr; doGlobals: boolean);
 {       symLength - length of debug symbol table                }
 
 
+function GetBitIntType (isUnsigned: boolean; width: integer): typePtr;
+
+{ Get a _BitInt type of specified signedness and with           }
+{                                                               }
+{ Parameters:                                                   }
+{    isUnsigned - is the type unsigned?                         }
+{    width - width of type                                      }
+{                                                               }
+{ Returns: Pointer to the specified _BitInt type                }
+
+
 procedure InitSymbol;
 
 { Initialize the symbol table module                            }
+
+
+function IsSignedType (tp: typePtr): boolean;
+
+{ Check if tp is a signed type                                  }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if tp is an arithmetic type that can hold       }
+{       negative values, else false                             }
 
 
 function IsVoid (tp: typePtr): boolean;
@@ -270,6 +292,16 @@ function Unqualify (tp: typePtr): typePtr;
 {       tp - the original type                                  }
 {                                                               }
 { returns: pointer to the unqualified type                      }
+
+
+function Width (tp: typePtr): integer;
+
+{ Get the width of a type                                       }
+{                                                               }
+{ parameters:                                                   }
+{       tp - the type                                           }
+{                                                               }
+{ returns: the width (number of integer value bits) of tp       }
 
 
 function VariablyModifiedSymInList(vmSym: identPtr; list: identPtr): boolean;
@@ -567,7 +599,11 @@ else
             CompTypes := t1^.baseType = t2^.baseType;
             if t1^.cType <> t2^.cType then
                if (not looseTypeChecks) 
-                  or (t1^.cType = ctBool) or (t2^.cType = ctBool) then
+                  or (t1^.cType in [ctBool,ctBitInt,ctUBitInt])
+                  or (t2^.cType in [ctBool,ctBitInt,ctUBitInt]) then
+                  CompTypes := false;
+            if t1^.cType in [ctBitInt,ctUBitInt] then
+               if t1^.bitIntWidth <> t2^.bitIntWidth then
                   CompTypes := false;
             end {if}
          else if kind2 = enumType then
@@ -667,6 +703,9 @@ case kind1 of
       if kind2 = scalarType then begin
          StrictCompTypes :=
             (t1^.baseType = t2^.baseType) and (t1^.cType = t2^.cType);
+         if t1^.cType in [ctBitInt,ctUBitInt] then
+            if t1^.bitIntWidth <> t2^.bitIntWidth then
+               StrictCompTypes := false;
          end {if}
       else if kind2 = enumType then
          StrictCompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);
@@ -1752,6 +1791,54 @@ if doGlobals then			{do globals}
 end; {GenSymbols}
 
 
+function GetBitIntType {isUnsigned: boolean; width: integer): typePtr};
+
+{ Get a _BitInt type of specified signedness and with           }
+{                                                               }
+{ Parameters:                                                   }
+{    isUnsigned - is the type unsigned?                         }
+{    width - width of type                                      }
+{                                                               }
+{ Returns: Pointer to the specified _BitInt type                }
+
+var
+   tp: typePtr;
+
+begin
+tp := pointer(Calloc(sizeof(typeRecord)));
+{tp^.qualifiers := [];}
+{tp^.saveDisp := 0;}
+tp^.kind := scalarType;
+if width <= cgWordSize * 8 then begin
+   if isUnsigned then
+      tp^.baseType := cgUWord
+   else
+      tp^.baseType := cgWord;
+   tp^.size := cgWordSize;
+   end {if}
+else if width <= cgLongSize * 8 then begin
+   if isUnsigned then
+      tp^.baseType := cgULong
+   else
+      tp^.baseType := cgLong;
+   tp^.size := cgLongSize;
+   end {else if}
+else begin
+   if isUnsigned then
+      tp^.baseType := cgUQuad
+   else
+      tp^.baseType := cgQuad;
+   tp^.size := cgQuadSize;
+   end; {else}
+if isUnsigned then
+   tp^.cType := ctUBitInt
+else
+   tp^.cType := ctBitInt;
+tp^.bitIntWidth := width;
+GetBitIntType := tp;
+end;
+
+
 procedure InitSymbol;
 
 { Initialize the symbol table module                            }
@@ -2049,6 +2136,31 @@ new(constCharPtr);                      {const char}
 constCharPtr^ := charPtr^;
 constCharPtr^.qualifiers := [tqConst];
 end; {InitSymbol}
+
+
+function IsSignedType {tp: typePtr): boolean};
+
+{ Check if tp is a signed type                                  }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if tp is an arithmetic type that can hold       }
+{       negative values, else false                             }
+
+begin {IsSignedType}
+case tp^.kind of
+   scalarType:
+      IsSignedType := tp^.ctype in [ctSChar,ctShort,ctInt,ctLong,ctLongLong,
+         ctFloat,ctDouble,ctLongDouble,ctComp,ctInt32,ctBitInt];
+
+   enumType:
+      IsSignedType := true;
+
+   otherwise:
+      IsSignedType := false;
+   end; {case}
+end; {IsSignedType}
 
 
 function IsVoid {tp: typePtr): boolean};
@@ -2377,6 +2489,45 @@ if tp^.qualifiers <> [] then
       Unqualify := tp2;
       end;
 end; {Unqualify}
+
+
+function Width {tp: typePtr): integer};
+
+{ Get the width of a type                                       }
+{                                                               }
+{ parameters:                                                   }
+{       tp - the type                                           }
+{                                                               }
+{ returns: the width (number of integer value bits) of tp       }
+
+begin {Width}
+case tp^.kind of
+   scalarType:
+      if tp^.ctype = ctBool then
+         Width := 1
+      else if tp^.ctype in [ctBitInt,ctUBitInt] then
+         Width := tp^.bitIntWidth
+      else
+         case tp^.basetype of
+            cgByte,cgUByte:                     Width := cgByteSize * 8;
+            cgWord,cgUWord:                     Width := cgWordSize * 8;
+            cgLong,cgULong:                     Width := cgLongSize * 8;
+            cgQuad,cgUQuad:                     Width := cgQuadSize * 8;
+            cgReal,cgDouble,cgComp,cgExtended:  Width := maxint;
+            cgString,ccPointer:                 Width := cgPointerSize * 8;
+            cgVoid:                             Width := 0;
+            end; {case}
+
+   enumType:
+      Width := cgWordSize * 8;
+
+   pointerType,arrayType:
+      Width := cgPointerSize * 8;
+
+   otherwise:
+      Width := 0;
+   end; {case}
+end; {Width}
 
 
 function VariablyModifiedSymInList{vmSym: identPtr; list: identPtr): boolean};

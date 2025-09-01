@@ -302,59 +302,6 @@ retval   ds    10
 
 ****************************************************************
 *
-*  Convertsl - Convert a string to a long integer
-*
-*  Inputs:
-*        str - pointer to the string
-*
-*  Outputs:
-*        Returns the value.
-*
-*  Notes:
-*        Assumes the string is valid.
-*
-****************************************************************
-*
-Convertsl start scanner
-
-val      equ   0                        return value
-
-         subroutine (4:str),4
-
-         stz   val                      initialize the number to zero
-         stz   val+2
-         lda   [str]                    set X to the number of characters
-         and   #$00FF
-         tax
-         ldy   #1                       Y is the disp into the string
-lb1      asl   val                      val := val*10
-         rol   val+2
-         ph2   val+2
-         lda   val
-         asl   val
-         rol   val+2
-         asl   val
-         rol   val+2
-         adc   val
-         sta   val
-         pla
-         adc   val+2
-         sta   val+2
-         lda   [str],Y                  add in the new digit
-         and   #$000F
-         adc   val
-         sta   val
-         bcc   lb2
-         inc   val+2
-lb2      iny                            next character
-         dex
-         bne   lb1
-
-         return 4:val
-         end
-
-****************************************************************
-*
 *  Convertsll - Convert a string to a long long integer
 *
 *  Inputs:

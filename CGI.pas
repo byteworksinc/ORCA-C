@@ -259,7 +259,7 @@ type
        dc_prm,pc_nat,pc_bno,pc_nop,pc_psh,pc_ili,pc_iil,pc_ild,pc_idl,
        pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,pc_mpq,pc_umq,pc_dvq,
        pc_udq,pc_mdq,pc_uqm,pc_slq,pc_sqr,pc_wsr,pc_rbo,pc_fix,pc_rev,pc_ckp,
-       pc_ckn);
+       pc_ckn,pc_sxi,pc_sxl,pc_sxq,pc_zxi,pc_zxl,pc_zxq,pc_zni,pc_znl,pc_znq);
 
                                         {intermediate code}
                                         {-----------------}

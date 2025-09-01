@@ -166,7 +166,8 @@ type
 
    cTypeEnum = (ctChar, ctSChar, ctUChar, ctShort, ctUShort, ctInt, ctUInt,
                 ctLong, ctULong, ctFloat, ctDouble, ctLongDouble, ctComp,
-                ctVoid, ctInt32, ctUInt32, ctBool, ctLongLong, ctULongLong);
+                ctVoid, ctInt32, ctUInt32, ctBool, ctLongLong, ctULongLong,
+                ctBitInt, ctUBitInt);
 
                                         {tokens}
                                         {------}
@@ -237,6 +238,8 @@ type
       kind: tokenEnum;                  {kind of token}
       numString: stringPtr;             {chars in number (macros only)}
       case class: tokenClass of         {token info}
+                                        {Note: itype/ltype/qtype and low bits}
+                                        { of ival/lval/qval must overlap     }
          reservedWord  : ();
          reservedSymbol: (isDigraph: boolean);
          identifier    : (name: stringPtr;
@@ -311,7 +314,8 @@ type
      saveDisp: longint;			{disp in symbol file}
      case kind: typeKind of             {NOTE: aType,pType and fType must overlap}
         scalarType  : (baseType: baseTypeEnum;  {our internal type representation}
-                       cType: cTypeEnum);       {type in the C type system}
+                       cType: cTypeEnum;        {type in the C type system}
+                       bitIntWidth: integer);   {width of a _BitInt type}
         arrayType   : (aType: typePtr;
                        elements: longint;       {number of elements; 0 if unknown}
                        isVariableLength: boolean;
