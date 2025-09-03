@@ -157,7 +157,7 @@
 {  Gen0(pc_bnq)         cgQuad,cgUQuad                          }
 {                                                               }
 {  The value on the top of the evaluation stack is removed,     }
-{  exclusive ored with $FFFF, and replaced.  (One's compliment.)}
+{  exclusive ored with $FFFF, and replaced.  (One's complement.)}
 {                                                               }
 {                                                               }
 {  pc_bor - bitwise or                                          }
@@ -196,7 +196,7 @@
 {  a SIZE bit value.  Extra bits are dropped.                   }
 {                                                               }
 {                                                               }
-{  pc_ckp - check for null pointer                              }
+{  pc_ckp,pc_ckn - check for null pointer                       }
 {                                                               }
 {  Gen0(pc_ckp)                                                 }
 {  Gen0(pc_ckn)                                                 }
@@ -541,7 +541,7 @@
 {  Gen0(pc_ngr)         cgReal,cgDouble,cgComp,cgExtended       }
 {                                                               }
 {  The value on the top of the evaluation stack is removed,     }
-{  subtracted from 0, and replaced.  (Two's compliment.)        }
+{  subtracted from 0, and replaced.  (Two's complement.)        }
 {                                                               }
 {                                                               }
 {  Gen0(pc_nop)                                                 }
