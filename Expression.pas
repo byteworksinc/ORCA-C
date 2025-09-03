@@ -4622,7 +4622,10 @@ case tree^.token.kind of
                Error(122)
                             {NOTE: assumes aType & pType overlap in typeRecord}
             else if not CompTypes(lType^.aType, expressionType^.aType) then
-               Error(47);
+               Error(47)
+            else if not looseTypeChecks then
+               if expressionType^.aType^.size = 0 then
+                  Error(122);
             if checkNullPointers then begin
                Gen0(pc_ckn);
                Gen0(pc_ckp);
