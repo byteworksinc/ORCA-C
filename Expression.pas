@@ -1939,7 +1939,7 @@ var
             class := op^.left^.token.class;
             if class in [intConstant,longConstant,longlongconstant,
                realConstant] then begin
-               tp := op^.castType;
+               tp := Unqualify(op^.castType);
                while tp^.kind = definedType do
                   tp := tp^.dType;
                if tp^.kind = scalarType then begin
@@ -3266,7 +3266,7 @@ var
 
       {load the address of a field of a record}
       LoadAddress(tree^.left, nullCheck);
-      expressionType := tree^.castType;
+      expressionType := Unqualify(tree^.castType);
       if expressionType^.kind <> arrayType then
          expressionType := MakePointerTo(expressionType);
       end {else if}
@@ -5030,7 +5030,7 @@ case tree^.token.kind of
                if IsVoid(tree^.castType^.pType) then
                   if tree^.castType^.pType^.qualifiers = [] then
                      isNullPtrConst := true;
-      Cast(tree^.castType);
+      Cast(Unqualify(tree^.castType));
       if tree^.vlaCode <> nil then
          if tree^.castType^.kind = scalarType then
             Gen0t(pc_bno, tree^.castType^.baseType)
@@ -5132,7 +5132,7 @@ else begin                              {record the expression for an initialize
             begin
             expressionValue := castValue^.token.ival;
             isConstant := true;
-            expressionType := tree^.castType;
+            expressionType := Unqualify(tree^.castType);
             if (castValue^.token.kind = uintconst)
                or (expressionType^.kind = pointerType) then
                expressionValue := expressionValue & $0000FFFF;
@@ -5141,7 +5141,7 @@ else begin                              {record the expression for an initialize
          if castValue^.token.kind in [longconst,ulongconst] then begin
             expressionValue := castValue^.token.lval;
             isConstant := true;
-            expressionType := tree^.castType;
+            expressionType := Unqualify(tree^.castType);
             goto 1;
             end; {if}
          end; {if}
