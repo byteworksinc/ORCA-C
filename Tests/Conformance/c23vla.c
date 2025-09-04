@@ -205,6 +205,13 @@ lab2:   ;
                 int (*a)[n];
         }
 
+        // Test pointer arithmetic on pointers to VLA types
+        ap = malloc(sizeof(A) * 10);
+        if (ap == NULL)
+                Fail();
+        if (&ap[9] - (ap+3) != 6)
+                Fail();
+
         // Verify that array size expressions were evaluated as expected
         if (good_count != expected_good_count)
                 Fail();

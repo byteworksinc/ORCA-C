@@ -4631,8 +4631,12 @@ case tree^.token.kind of
                Gen0(pc_ckp);
                end; {if}
             Gen0(pc_sbl);
-            {TODO handle VLA}
-            if size <> 1 then begin
+            if (lType^.aType^.kind = arrayType)
+               and lType^.aType^.isVariableLength then begin
+               Gen2t(pc_lod, lType^.aType^.sizeLLN, 0, cgULong);
+               Gen0(pc_dvl);
+               end {if}
+            else if size <> 1 then begin
                GenLdcLong(size);
                Gen0(pc_dvl);
                end; {if}
