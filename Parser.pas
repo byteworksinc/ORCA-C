@@ -2514,7 +2514,8 @@ var
       end {if}
    else begin
       if ((tp^.kind = pointerType)
-         or ((tp^.kind = scalarType) and (tp^.baseType in [cgLong,cgULong])))
+         or ((tp^.kind = scalarType)
+            and ((tp^.baseType in [cgLong,cgULong]) or (tp^.cType = ctBool))))
          and (bitsize = 0)
          then begin
          iPtr^.basetype := ccPointer;
@@ -2647,6 +2648,10 @@ var
                Error(47);
                errorFound := true;
                end; {else}
+            if tp^.cType = ctBool then begin
+               iPtr^.basetype := cgWord;
+               iPtr^.ival := 1;
+               end; {if}
             DisposeTree(initializerTree);
             goto 1;
             end; {if}

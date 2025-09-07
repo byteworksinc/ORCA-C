@@ -92,8 +92,9 @@ int main(void) {
         static _Bool b4 = 0x100000000;
         static _Bool b5 = 0.0001;
         static _Bool b6 = -0.0;
+        static _Bool b7 = &main;
         
-        if (b1 != 1 || b2 != 1 || b3 != 0 || b4 != 1 || b5 != 1 || b6 != 0)
+        if (b1 != 1 || b2 != 1 || b3 != 0 || b4 != 1 || b5 != 1 || b6 != 0 || b7 != 1)
                 goto Fail;
 
         printf ("Passed Conformance Test c99bool\n");
