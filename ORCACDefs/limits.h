@@ -35,6 +35,7 @@
 #define ULLONG_MAX      18446744073709551615u
 #endif
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define BOOL_MAX        1
 #define BOOL_WIDTH      1
 #define CHAR_WIDTH      8
 #define SCHAR_WIDTH     8
