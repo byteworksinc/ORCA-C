@@ -33,6 +33,11 @@ typedef struct {long quot,rem;} ldiv_t;
 typedef struct {long long quot,rem;} lldiv_t;
 #endif
 
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+typedef short once_flag;
+#define ONCE_FLAG_INIT 0
+#endif
+
 #ifndef __KeepNamespacePure__
    #define clalloc(x,y)    calloc((x),(y))
    #define cfree(x)        free(x)
@@ -53,6 +58,9 @@ long long       atoll(const char *);
 #endif
 void           *bsearch(const void *, const void *, size_t, size_t, int (*__compar)(const void *, const void *));
 void           *calloc(size_t, size_t);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+void            call_once(once_flag *, void (*)(void));
+#endif
 div_t           div(int, int);
 void            exit(int);
 void            _exit(int);

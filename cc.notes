@@ -194,6 +194,15 @@ void va_start(va_list ap, ...);
 
 Only the va_list argument is required.  The previously-required second argument giving the name of the last fixed parameter is no longer required and is ignored if present.
 
+4.  The call_once function has been added:
+
+#include <stdlib.h>
+typedef short once_flag;
+#define ONCE_FLAG_INIT 0
+void call_once(once_flag *flag, void (*func)(void));
+
+The call_once function uses a condition variable of type once_flag to ensure that a function is called exactly once.  If the condition variable pointed to by flag has been initialized with the value ONCE_FLAG_INIT and not subsequently modified, call_once will call func() and also set *flag to a different value that indicates func() has been called; otherwise, it will not call func().  Thus, if call_once is invoked one or more times with the same condition variable, it will ensure that func() is called exactly once.  Any call to call_once will only return once func() has completed, whether from that call to call_once or a previous one.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
