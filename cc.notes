@@ -203,6 +203,13 @@ void call_once(once_flag *flag, void (*func)(void));
 
 The call_once function uses a condition variable of type once_flag to ensure that a function is called exactly once.  If the condition variable pointed to by flag has been initialized with the value ONCE_FLAG_INIT and not subsequently modified, call_once will call func() and also set *flag to a different value that indicates func() has been called; otherwise, it will not call func().  Thus, if call_once is invoked one or more times with the same condition variable, it will ensure that func() is called exactly once.  Any call to call_once will only return once func() has completed, whether from that call to call_once or a previous one.
 
+5.  The memset_explicit function has been added:
+
+#include <string.h>
+void *memset_explicit(void *ptr, int val, size_t len);
+
+This does the same thing as memset, but is intended for use when clearing sensitive data.  Some compilers may optimize out certain calls to memset; using memset_explicit instead indicates that they should not do that.  ORCA/C does not perform such optimizations, so it just treats the two functions as equivalent.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.

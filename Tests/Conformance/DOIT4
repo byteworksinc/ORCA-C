@@ -5,3 +5,4 @@
 {1} c23embed.c
 {1} c23bitint.c
 {1} c23stdlib.c
+{1} c23string.c

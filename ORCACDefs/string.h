@@ -30,6 +30,9 @@ int             memcmp(const void *, const void *, size_t);
 void           *memcpy(void *, const void *, size_t);
 void           *memmove(void *, const void *, size_t);
 void           *memset(void *, int, size_t);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+void           *memset_explicit(void *, int, size_t);
+#endif
 #ifndef __KeepNamespacePure__
    char        *p2cstr(const char *);
 #endif
