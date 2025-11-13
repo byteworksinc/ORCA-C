@@ -210,6 +210,13 @@ void *memset_explicit(void *ptr, int val, size_t len);
 
 This does the same thing as memset, but is intended for use when clearing sensitive data.  Some compilers may optimize out certain calls to memset; using memset_explicit instead indicates that they should not do that.  ORCA/C does not perform such optimizations, so it just treats the two functions as equivalent.
 
+6.  The memccpy function has been added:
+
+#include <string.h>
+void *memccpy(void *restrict dest, const void *restrict src, int c, size_t n);
+
+This function copies bytes from src to dest until the byte value c (converted to unsigned char) is copied or until n bytes have been copied, whichever happens first.  If the byte c was copied, it returns a pointer to immediately after that byte in dest; otherwise, it returns a null pointer.  If the source and destination memory areas overlap, the results are unpredictable.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.

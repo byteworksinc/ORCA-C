@@ -27,6 +27,9 @@ typedef unsigned long size_t;
 #endif
 void           *memchr(const void *, int, size_t);
 int             memcmp(const void *, const void *, size_t);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+void           *memccpy(void *, const void *, int, size_t);
+#endif
 void           *memcpy(void *, const void *, size_t);
 void           *memmove(void *, const void *, size_t);
 void           *memset(void *, int, size_t);
