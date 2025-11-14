@@ -217,6 +217,14 @@ void *memccpy(void *restrict dest, const void *restrict src, int c, size_t n);
 
 This function copies bytes from src to dest until the byte value c (converted to unsigned char) is copied or until n bytes have been copied, whichever happens first.  If the byte c was copied, it returns a pointer to immediately after that byte in dest; otherwise, it returns a null pointer.  If the source and destination memory areas overlap, the results are unpredictable.
 
+7.  The free_sized and free_aligned_size functions have been added:
+
+#include <stdlib.h>
+void free_sized(void *ptr, size_t size);
+void free_aligned_sized(void *ptr, size_t alignment, size_t size);
+
+The free_sized function is like free, except that it includes a parameter giving the originally requested size of the allocation; it may be used to free memory allocated with malloc, calloc, or realloc.  The free_aligned_sized function is similar, but also includes the originally requested alignment; it may be used to free memory allocated with aligned_alloc.  The size and (if applicable) alignment must match those requested when allocating the memory; if they do not, the behavior is undefined.  In some implementations these functions may be faster than free, but in ORCA/C they are not.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.

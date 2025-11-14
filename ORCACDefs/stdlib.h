@@ -66,6 +66,10 @@ void            exit(int);
 void            _exit(int);
 void            _Exit(int);
 void            free(void *);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+void            free_aligned_sized(void *, size_t, size_t);
+void            free_sized(void *, size_t);
+#endif
 char           *getenv(const char *);
 long            labs(long);
 ldiv_t          ldiv(long, long);

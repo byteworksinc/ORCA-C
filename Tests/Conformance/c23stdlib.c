@@ -23,6 +23,17 @@ int main(void) {
         if (count != 1)
                 goto Fail;
 
+        /* check that free_sized and free_aligned_sized can be called */
+        void *p = malloc(123);
+        if (!p)
+                goto Fail;
+        free_sized(p, 123);
+
+        p = aligned_alloc(_Alignof(long), 1234);
+        if (!p)
+                goto Fail;
+        free_aligned_sized(p, _Alignof(long), 1234);
+
         printf ("Passed Conformance Test c23stdlib\n");
         return 0;
 
