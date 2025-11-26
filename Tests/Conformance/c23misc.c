@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 
 #pragma STDC FENV_ROUND FE_DYNAMIC
 
@@ -82,6 +83,9 @@ int main(void) {
 #endif
         if (y != 2)
                 goto Fail;
+
+        // comma in assert argument
+        assert((int[]){y, 0}[0]);
 
         printf ("Passed Conformance Test c23misc\n");
         return 0;
