@@ -95,4 +95,8 @@ unsigned long long strtoull(const char * restrict, char ** restrict, int);
 #endif
 int             system(const char *);
 
+#if __STDC_VERSION__ >= 202311L
+#define bsearch(k,b,...) ((typeof(0 ? (void*)1 : (b)))bsearch(k,b,__VA_ARGS__))
+#endif
+
 #endif

@@ -5,6 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define assert_type(e,t) (void)_Generic((e), t:0)
+
+int cmp(const void *ap, const void *bp) {
+        int a = *(const int *)ap;
+        int b = *(const int *)bp;
+        
+        return a < b ? -1 : a > b;
+}
+
 int count = 0;
 
 void once_func(void) {
@@ -33,6 +42,26 @@ int main(void) {
         if (!p)
                 goto Fail;
         free_aligned_sized(p, _Alignof(long), 1234);
+
+#if __STDC_VERSION__ >= 202311L
+        /* test bsearch generic function */
+        static int a[] = {1,2,3,4,5,6};
+        if (bsearch(&(int){3}, a, 6, sizeof(int), cmp) != a+2)
+                goto Fail;
+        if (bsearch(&(int){3}, (const int *)a, 6, sizeof(int), cmp) != a+2)
+                goto Fail;
+
+        assert_type(bsearch(&(int){3}, a, 6, sizeof(int), cmp), void *);
+        assert_type(bsearch(&(int){3}, (const int *)a, 6, sizeof(int), cmp), const void *);
+        assert_type(bsearch(&(int){3}, (void *)a, 6, sizeof(int), cmp), void *);
+        assert_type(bsearch(&(int){3}, (const void *)a, 6, sizeof(int), cmp), const void *);
+
+        assert_type((bsearch)(&(int){3}, (const int *)a, 6, sizeof(int), cmp), void *);
+        assert_type((bsearch)(&(int){3}, (const void *)a, 6, sizeof(int), cmp), void *);
+
+        assert_type(bsearch(&(int){3}, 0, 6, sizeof(int), cmp), void *);
+        assert_type(bsearch(&(int){3}, (void*)0, 6, sizeof(int), cmp), void *);
+#endif
 
         printf ("Passed Conformance Test c23stdlib\n");
         return 0;
