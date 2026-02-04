@@ -3105,8 +3105,18 @@ var
       end {else if}
 
    {handle single-valued types}
-   else if kind in [scalarType,pointerType,enumType] then
-      GetInitializerValue(tp, bitsize, bitdisp)
+   else if kind in [scalarType,pointerType,enumType] then begin
+      if braces then                    {handle empty initialization}
+         if token.kind = rbracech then
+            if (cStd >= c23) or not strictMode then begin
+               PutBackToken(token, false, true);
+               token.kind := intconst;
+               token.class := intConstant;
+               token.itype := intPtr;
+               token.ival := 0;
+               end; {if}
+      GetInitializerValue(tp, bitsize, bitdisp);
+      end {else if}
 
    else begin
       Error(47);

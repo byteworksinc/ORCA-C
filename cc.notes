@@ -172,6 +172,8 @@ Note that the unary and binary conversion rules do not apply to _BitInt types in
 
 A suffix of wb or WB can be used on an integer constant to give it a _BitInt type that is just wide enough to hold the specified value.  If a wb or WB suffix is used together with u or U, then the constant has an unsigned _BitInt type just wide enough to hold the value.  For example, 6wb has the type _BitInt(4), while 6WBU has the type unsigned _BitInt(3).
 
+19. The empty initializer {} is now supported.  This functions similarly to the initializer {0}, but when initializing structures or unions it also guarantees that any padding is initialized to zero bits.
+
 
 Library Updates
 ---------------
