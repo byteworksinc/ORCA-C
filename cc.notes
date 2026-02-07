@@ -250,3 +250,5 @@ will have the type const void *, rather than void *.  This avoids the previous s
 6. In certain circumstances where the value of a 16-bit signed integer variable was converted to a wider type following an earlier access to the 16-bit variable, negative values might not be converted correctly if native code peephole optimizations and register optimizations were both enabled.
 
 7. Division or remainder operations with constant operands might be evaluated incorrectly if one operand was a negative integer and the other had an unsigned type, because the usual arithmetic conversions were not applied properly.
+
+8. A spurious error would be reported for certain comparisons involving expressions of function type, e.g. *function_pointer == function_name.

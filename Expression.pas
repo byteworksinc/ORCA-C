@@ -3788,13 +3788,11 @@ var
    {    equality - is this for an (in)equality comparison?      }
 
    begin {CompareCompatible}
-   if (t1^.kind = functionType) or (t2^.kind = functionType) then begin
-      if not CompTypes(t1, t2) then
-         Error(47)
-      else if not looseTypeChecks and not equality then
-         Error(47);
-      end {if}
-   else if t1^.kind in [pointerType,arrayType] then begin
+   if t1^.kind = functionType then
+      t1 := MakePointerTo(t1);
+   if t2^.kind = functionType then
+      t2 := MakePointerTo(t2);
+   if t1^.kind in [pointerType,arrayType] then begin
       if t2^.kind in [pointerType,arrayType] then begin
          if CompTypes(t1^.ptype, t2^.ptype) then begin
             if not looseTypeChecks and not equality then
