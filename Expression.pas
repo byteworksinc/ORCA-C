@@ -3490,7 +3490,8 @@ var
          else
             tp := UsualUnaryConversions
       else begin
-         if expressionType^.kind in [structType,unionType,definedType] then
+         if expressionType^.kind in
+            [structType,unionType,definedType,functionType] then
             Error(66);
          tp := UsualUnaryConversions;
          end; {else}
