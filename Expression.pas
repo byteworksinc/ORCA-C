@@ -945,6 +945,9 @@ else if kind2 in
             else
                Error(47);
             end {else if}
+         else if kind2 = functionType then
+            AssignmentConversion(t1, MakePointerTo(t2), isConstant, value,
+               genCode, checkConst)
          else
             Error(47);
          end;
