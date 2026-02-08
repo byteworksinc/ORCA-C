@@ -903,7 +903,7 @@ else if kind2 in
                end {else if}
             end {else if}
          else if (t1^.cType = ctBool)
-            and (kind2 in [pointerType,arrayType]) then begin
+            and (kind2 in [pointerType,arrayType,functionType]) then begin
             if genCode then begin
                expressionType := t2;
                CompareToZero(pc_neq);
@@ -2684,7 +2684,7 @@ var
    bt: baseTypeEnum;                    {base type of loaded value}
 
 begin {CompareToZero}
-if expressionType^.kind in [pointerType,arrayType] then
+if expressionType^.kind in [pointerType,arrayType,functionType] then
    expressionType := uLongPtr;
 if expressionType^.kind = scalarType then begin
    bt := UsualUnaryConversions;
