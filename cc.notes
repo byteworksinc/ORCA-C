@@ -251,4 +251,4 @@ will have the type const void *, rather than void *.  This avoids the previous s
 
 7. Division or remainder operations with constant operands might be evaluated incorrectly if one operand was a negative integer and the other had an unsigned type, because the usual arithmetic conversions were not applied properly.
 
-8. A spurious error would be reported for certain comparisons involving expressions of function type, e.g. *function_pointer == function_name.
+8. Spurious errors would be reported for some operations involving expressions of function type, including comparisons like *function_pointer == function_name.

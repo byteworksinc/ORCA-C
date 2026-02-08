@@ -2864,9 +2864,9 @@ else if tp^.kind = pointerType then begin
          else if doDispose then
             Error(40);
 
-      arrayType,pointerType: ;
+      arrayType,pointerType,functionType: ;
 
-      functionType,enumConst,enumType,definedType,structType,unionType:
+      enumConst,enumType,definedType,structType,unionType:
          if doDispose then
             Error(40);
 
@@ -2874,7 +2874,7 @@ else if tp^.kind = pointerType then begin
 
       end; {case}
    end {else if}
-else if expressionType^.kind in [pointerType,arrayType] then begin
+else if expressionType^.kind in [pointerType,arrayType,functionType] then begin
    case tp^.kind of  
 
       scalarType:
