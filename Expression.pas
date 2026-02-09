@@ -421,7 +421,6 @@ var
    rank1, rank2: integer;               {integer conversion ranks of tp1,tp2}
    signed1, signed2: boolean;           {are tp1,tp2 signed integer types?}
    tType: typePtr;                      {temp type}
-   reversed: boolean;                   {were types reversed}
 
 
    function ConversionRank (tp: typePtr): integer;
@@ -500,10 +499,7 @@ if rank2 > rank1 then begin
    tType := tp1;
    tp1 := tp2;
    tp2 := tType;
-   reversed := true;
-   end {if}
-else
-   reversed := false;
+   end; {if}
 
 signed1 := IsSignedType(tp1);
 signed2 := IsSignedType(tp2);
