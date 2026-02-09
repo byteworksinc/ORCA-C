@@ -3733,7 +3733,7 @@ var
       doDispose := ldoDispose;
       codeGeneration := lCodeGeneration and (numErrors = 0);
       ftype := expressionType;
-      while ftype^.kind in [pointerType,arrayType] do
+      if ftype^.kind = pointerType then
          ftype := ftype^.ptype;
       end; {if}
 
