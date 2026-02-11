@@ -567,7 +567,8 @@ if not doingFunction then begin         {if so, finish it off}
                           Gen1Name(pc_lao, 0, structReturnVar^.name);
                           Gen0t(pc_rev, cgULong);
                           end;
-            pointerType : Gen0t(pc_ret, cgULong);
+            pointerType ,
+            nullptrType : Gen0t(pc_ret, cgULong);
             functionType: ;
             enumConst   : ;
             enumType    : Gen0t(pc_ret, cgWord);
@@ -1033,7 +1034,8 @@ var
                         else
                            ReturnValue(fType^.baseType);
          enumType:      ReturnValue(cgWord);
-         pointerType:   ReturnValue(cgULong);
+         pointerType,
+         nullptrType:   ReturnValue(cgULong);
          structType,
          unionType:     begin
                         Gen2(pc_mov, long(size).msw, long(size).lsw);
@@ -2496,10 +2498,19 @@ var
                iPtr^.basetype := cgULong;
                iPtr^.pval := expressionValue;
                end {else if}
+            else if etype^.kind = nullptrType then begin
+               iPtr^.basetype := cgULong;
+               iPtr^.iVal := 0;
+               end {else if}
             else begin
                Error(48);
                errorFound := true;
                end; {else}
+
+         nullptrType: begin
+            iPtr^.basetype := cgULong;
+            iPtr^.iVal := 0;
+            end;
 
          structType,unionType,enumType: begin
             Error(46);
@@ -3105,7 +3116,7 @@ var
       end {else if}
 
    {handle single-valued types}
-   else if kind in [scalarType,pointerType,enumType] then begin
+   else if kind in [scalarType,pointerType,nullptrType,enumType] then begin
       if braces then                    {handle empty initialization}
          if token.kind = rbracech then
             if (cStd >= c23) or not strictMode then begin
@@ -5125,7 +5136,7 @@ var
       itype := itype^.dType;
    case itype^.kind of
 
-      scalarType,pointerType,enumType,functionType: begin
+      scalarType,pointerType,nullptrType,enumType,functionType: begin
          tree := iptr^.itree;           
          if tree = nil then goto 2;     {don't generate code in error case}
          LoadAddress;                   {load the destination address}
@@ -5189,7 +5200,7 @@ var
                   Gen0t(pc_sto, itype^.baseType);
             enumType:
                Gen0t(pc_sto, cgWord);
-            pointerType,functionType:
+            pointerType,nullptrType,functionType:
                Gen0t(pc_sto, cgULong);
             end; {case}
          if isCompoundLiteral then

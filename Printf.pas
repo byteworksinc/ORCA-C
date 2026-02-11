@@ -335,7 +335,7 @@ var
    begin {expect_pointer}
    ty := popType;
    if ty <> nil then begin
-      if not (ty^.kind in [pointerType,arrayType]) then begin
+      if not (ty^.kind in [pointerType,arrayType,nullptrType]) then begin
          Warning(@'expected pointer');
          end; {if}
       end {if}

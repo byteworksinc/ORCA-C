@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 55;                 {version number of .sym file format}
+   symFileVersion = 56;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1545,7 +1545,7 @@ var
                tp^.flexibleArrayMember := boolean(ReadByte);
                end;
 
-            enumType: ;
+            enumType, nullptrType: ;
 
             otherwise: begin
                PurgeSymbols;

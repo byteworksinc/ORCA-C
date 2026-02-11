@@ -306,8 +306,8 @@ type
   typeQualifierEnum = (tqConst, tqVolatile, tqRestrict);
   typeQualifierSet = set of typeQualifierEnum;
 
-  typeKind = (scalarType,arrayType,pointerType,functionType,enumType,
-              enumConst,structType,unionType,definedType);
+  typeKind = (scalarType,arrayType,pointerType,nullptrType,functionType,
+              enumType,enumConst,structType,unionType,definedType);
   typeRecord = record                   {type}
      size: longint;                     {size of the type in bytes (1 for VLA)}
      qualifiers: typeQualifierSet;      {type qualifiers}
@@ -325,6 +325,7 @@ type
                       );
         pointerType : (pType: typePtr;
                        wasStarVLA: boolean;);   {adjusted from VLA type with [*]?}
+        nullptrType : ();
         functionType: (fType: typePtr;          {return type}
                        varargs,                 {are there a variable # of args?}
                        prototyped: boolean;     {is it prototyped?}
@@ -596,7 +597,7 @@ var
       uInt32Ptr,longPtr,uLongPtr,longLongPtr,uLongLongPtr,boolPtr,
       floatPtr,doublePtr,compPtr,extendedPtr,stringTypePtr,utf8StringTypePtr,
       utf16StringTypePtr,utf32StringTypePtr,voidPtr,voidPtrPtr,charPtrPtr,
-      vaInfoPtr,constCharPtr,defaultStruct: typePtr;
+      vaInfoPtr,constCharPtr,nullptr_tPtr,defaultStruct: typePtr;
 
 {---------------------------------------------------------------}
 

@@ -84,6 +84,9 @@ procedure AssignmentConversion (t1, t2: typePtr; isConstant: boolean;
 {       value - if isConstant = true, then this is the value    }
 {       genCode - should conversion code be generated?          }
 {       checkConst - check for assignments to constants?        }
+{                                                               }
+{ variables:                                                    }
+{       lastWasNullPtrConst - (input) is rhs a null ptr const?  }
 
 
 procedure CompareToZero(op: pcodes);
@@ -811,6 +814,9 @@ procedure AssignmentConversion {t1, t2: typePtr; isConstant: boolean;
 {       value - if isConstant = true, then this is the value    }
 {       genCode - should conversion code be generated?          }
 {       checkConst - check for assignments to constants?        }
+{                                                               }
+{ variables:                                                    }
+{       lastWasNullPtrConst - (input) is rhs a null ptr const?  }
 
 var
    baseType1,baseType2: baseTypeEnum;   {temp variables (for speed)}
@@ -866,8 +872,8 @@ if kind2 = definedType then
    AssignmentConversion(t1, t2^.dType, false, 0, genCode, checkConst)
 else if kind1 = definedType then
    AssignmentConversion(t1^.dType, t2, false, 0, genCode, checkConst)
-else if kind2 in
-   [scalarType,pointerType,enumType,structType,unionType,arrayType,functionType] then
+else if kind2 in [scalarType,pointerType,nullptrType,enumType,structType,
+   unionType,arrayType,functionType] then
    case kind1 of
 
       scalarType: begin
@@ -899,7 +905,8 @@ else if kind2 in
                end {else if}
             end {else if}
          else if (t1^.cType = ctBool)
-            and (kind2 in [pointerType,arrayType,functionType]) then begin
+            and (kind2 in [pointerType,nullptrType,arrayType,functionType])
+            then begin
             if genCode then begin
                expressionType := t2;
                CompareToZero(pc_neq);
@@ -944,6 +951,20 @@ else if kind2 in
          else if kind2 = functionType then
             AssignmentConversion(t1, MakePointerTo(t2), isConstant, value,
                genCode, checkConst)
+         else if kind2 = nullptrType then
+            {OK}
+         else
+            Error(47);
+         end;
+
+      nullptrType: begin
+         if kind2 = nullptrType then
+            {OK}
+         else if lastWasNullPtrConst then begin
+            if kind2 = scalarType then
+               if genCode then
+                  Gen2(pc_cnv, ord(t2^.baseType), ord(cgULong));
+            end {else if}
          else
             Error(47);
          end;
@@ -2680,7 +2701,7 @@ var
    bt: baseTypeEnum;                    {base type of loaded value}
 
 begin {CompareToZero}
-if expressionType^.kind in [pointerType,arrayType,functionType] then
+if expressionType^.kind in [pointerType,nullptrType,arrayType,functionType] then
    expressionType := uLongPtr;
 if expressionType^.kind = scalarType then begin
    bt := UsualUnaryConversions;
@@ -2792,7 +2813,7 @@ var
 begin {LoadScalar}
 if id^.itype^.kind = scalarType then
    tp := id^.itype^.baseType
-else {if id^.itype^.kind in [pointerType,arrayType] then}
+else {if id^.itype^.kind in [pointerType,nullptrType,arrayType] then}
    tp := cgULong;
 case id^.storage of
    stackFrame, parameter:
@@ -2813,6 +2834,7 @@ procedure Cast(tp: typePtr);
 {                                                               }
 { inputs:                                                       }
 {         expressionType - type of the expression to cast       }
+{         lastWasNullPtrConst - is expression a null ptr const? }
 {                                                               }
 { outputs:                                                      }
 {         expressionType - set to result type                   }
@@ -2860,7 +2882,7 @@ else if tp^.kind = pointerType then begin
          else if doDispose then
             Error(40);
 
-      arrayType,pointerType,functionType: ;
+      arrayType,pointerType,nullptrType,functionType: ;
 
       enumConst,enumType,definedType,structType,unionType:
          if doDispose then
@@ -2869,6 +2891,16 @@ else if tp^.kind = pointerType then begin
       otherwise: Error(57);
 
       end; {case}
+   end {else if}
+else if tp^.kind = nullptrType then begin
+   if expressionType^.kind = nullptrType then
+      {OK}
+   else if lastWasNullPtrConst then begin
+      if expressionType^.kind = scalarType then
+         Gen2(pc_cnv, ord(Unary(expressionType^.baseType)), ord(cgULong));
+      end {else if}
+   else
+      Error(40);
    end {else if}
 else if expressionType^.kind in [pointerType,arrayType,functionType] then begin
    case tp^.kind of  
@@ -2887,7 +2919,7 @@ else if expressionType^.kind in [pointerType,arrayType,functionType] then begin
          Error(40);
       end; {case}
    end {else if}
-else if expressionType^.kind in [structType,unionType] then begin
+else if expressionType^.kind in [structType,unionType,nullptrType] then begin
    if tp^.kind = scalarType then
       if tp^.baseType = cgVoid then
          Gen0t(pc_pop, UsualUnaryConversions)
@@ -3490,7 +3522,7 @@ var
             tp := UsualUnaryConversions
       else begin
          if expressionType^.kind in
-            [structType,unionType,definedType,functionType] then
+            [structType,unionType,definedType,functionType,nullptrType] then
             Error(66);
          tp := UsualUnaryConversions;
          end; {else}
@@ -3823,13 +3855,47 @@ var
             Error(47);
          t2 := ulongPtr;
          end {if}
+      else if t2^.kind = nullptrType then begin
+         if not equality then
+            Error(47);
+         t2 := ulongPtr;
+         end {else if}
       else if not lastWasNullPtrConst
          or (not equality and not looseTypeChecks) then
          Error(47);
       t1 := ulongPtr;
       end {if}
    else if t2^.kind in [pointerType,arrayType] then begin
-      if not equality or not tlastWasNullPtrConst then
+      if t1^.kind = nullptrType then begin
+         if not equality then
+            Error(47);
+         t1 := ulongPtr;
+         end {if}
+      else if not equality or not tlastWasNullPtrConst then
+         Error(47);
+      t2 := ulongPtr;
+      end {else if}
+   else if t1^.kind = nullptrType then begin
+      if equality then begin
+         if t2^.kind = nullptrType then
+            t2 := ulongPtr
+         else if lastWasNullPtrConst then
+            {OK}
+         else
+            Error(47);
+         end {if}
+      else
+         Error(47);
+      t1 := ulongPtr;
+      end {else if}
+   else if t2^.kind = nullptrType then begin
+      if equality then begin
+         if tlastWasNullPtrConst then
+            {OK}
+         else
+            Error(47);
+         end {if}
+      else
          Error(47);
       t2 := ulongPtr;
       end; {else if}
@@ -3915,7 +3981,7 @@ case tree^.token.kind of
             expressionType := tree^.id^.itype;
             end;
 
-         pointerType: begin
+         pointerType,nullptrType: begin
             LoadScalar(tree^.id);                          
             expressionType := tree^.id^.itype;
             end;
@@ -4017,6 +4083,12 @@ case tree^.token.kind of
       stringConstSize := tree^.token.sval^.length;
       end; {case stringConst}
 
+   nullptrsy: begin
+      GenLdcLong(0);
+      isNullPtrConst := true;
+      expressionType := nullptr_tPtr;
+      end; {case nullptrsy}
+
    eqch: begin                          {=}
       L_Value(tree^.left);
       with tree^.left^ do begin
@@ -4028,10 +4100,10 @@ case tree^.token.kind of
             if id^.storage = parameter then
                kind := pointerType;
          if (token.kind = ident)
-            and (kind in [scalarType,pointerType]) then begin
+            and (kind in [scalarType,pointerType,nullptrType]) then begin
             GenerateCode(tree^.right);
             with tree^.left^.id^ do begin
-               if itype^.kind in [pointerType,arrayType] then
+               if itype^.kind in [pointerType,nullptrType,arrayType] then
                   lType := uLongPtr
                else
                   lType := itype;
@@ -4068,7 +4140,7 @@ case tree^.token.kind of
                   else
                      Gen0t(pc_cpi, lType^.baseType);
 
-               pointerType:
+               pointerType,nullptrType:
                   Gen0t(pc_cpi, cgULong);
 
                structType,unionType:
@@ -4345,7 +4417,7 @@ case tree^.token.kind of
 
    barbarop: begin                      {||}
       GenerateCode(tree^.left);
-      if expressionType^.kind in [pointerType,arrayType] then
+      if expressionType^.kind in [pointerType,nullptrType,arrayType] then
          expressionType := uLongPtr
       else begin
          et := UsualUnaryConversions;
@@ -4362,7 +4434,7 @@ case tree^.token.kind of
          end; {else}
       lType := expressionType;
       GenerateCode(tree^.right);
-      if expressionType^.kind in [pointerType,arrayType] then
+      if expressionType^.kind in [pointerType,nullptrType,arrayType] then
          expressionType := uLongPtr
       else begin
          et := UsualUnaryConversions;
@@ -4390,7 +4462,7 @@ case tree^.token.kind of
 
    andandop: begin                      {&&}
       GenerateCode(tree^.left);
-      if expressionType^.kind in [pointerType,arrayType] then
+      if expressionType^.kind in [pointerType,nullptrType,arrayType] then
          expressionType := uLongPtr
       else begin
          et := UsualUnaryConversions;
@@ -4407,7 +4479,7 @@ case tree^.token.kind of
          end; {else}
       lType := expressionType;
       GenerateCode(tree^.right);
-      if expressionType^.kind in [pointerType,arrayType] then
+      if expressionType^.kind in [pointerType,nullptrType,arrayType] then
          expressionType := uLongPtr
       else begin
          et := UsualUnaryConversions;
@@ -4833,7 +4905,7 @@ case tree^.token.kind of
 
    excch: begin                         {!}
       GenerateCode(tree^.left);
-      if expressionType^.kind = pointerType then
+      if expressionType^.kind in [pointerType,nullptrType] then
          expressionType := uLongPtr;
       case UsualUnaryConversions of
 
@@ -4910,7 +4982,7 @@ case tree^.token.kind of
                Gen2(pc_cnv, cgULong, cgVoid)
             else
                Gen2t(pc_ind, ord(isVolatile), 0, lType^.baseType)
-         else if lType^.kind = pointerType then
+         else if lType^.kind in [pointerType,nullptrType] then
             Gen2t(pc_ind, ord(isVolatile), 0, cgULong)
          else if not
             ((lType^.kind in [functionType,arrayType,structType,unionType])
@@ -4986,6 +5058,10 @@ case tree^.token.kind of
                Gen2(pc_cnv, ord(expressionType^.baseType), ord(cgULong));
             expressionType := lType;
             end {if}
+         else if lType^.kind = nullptrType then
+            {OK}
+         else if expressionType^.kind = nullptrType then
+            expressionType := lType
          else if lType^.kind <> expressionType^.kind then {not both pointers}
             Error(47)
          else if IsVoid(lType^.pType) or IsVoid(expressionType^.pType) then begin
@@ -5010,6 +5086,10 @@ case tree^.token.kind of
             Error(47);
          et := cgULong;
          end {if}
+      else if (lType^.kind = nullptrType) and (expressionType^.kind = nullptrType)
+         then begin
+         et := cgULong;
+         end {else if}
       else if lType^.kind in [structType, unionType] then begin
          if not CompTypes(lType, expressionType) then
             Error(47);
@@ -5224,6 +5304,11 @@ else begin                              {record the expression for an initialize
             Error(47);
             end; {if}
          end {else if}
+      else if tree^.token.kind = nullptrsy then begin
+         expressionValue := 0;
+         expressionType := nullptr_tPtr;
+         isConstant := true;
+         end {else if}
       else if kind in [integerConstantExpression,preprocessorExpression] then begin
          DisposeTree(initializerTree);
          expressionValue := 1;
@@ -5286,7 +5371,7 @@ procedure InitExpression;
 begin {InitExpression}
 startTerm := [ident,intconst,uintconst,longconst,ulongconst,longlongconst,
               ulonglongconst,floatconst,doubleconst,extendedconst,compconst,
-              stringconst,truesy,falsesy];
+              stringconst,truesy,falsesy,nullptrsy];
 startExpression:= startTerm +
              [lparench,asteriskch,andch,plusch,minusch,excch,tildech,sizeofsy,
               plusplusop,minusminusop,typedef,_Alignofsy,alignofsy,_Genericsy];

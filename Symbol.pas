@@ -632,6 +632,9 @@ else
             if t2^.ptype^.kind = functionType then
                CompTypes := CompTypes(t1, t2^.ptype);
 
+      nullptrType:
+         CompTypes := kind2 = nullptrType;
+
       pointerType: begin
          if IsVoid(t1^.ptype) or IsVoid(t2^.ptype) then begin
             CompTypes := true;
@@ -792,6 +795,9 @@ case kind1 of
    pointerType:
       if kind2 = pointertype then
          StrictCompTypes := StrictCompTypes(t1^.ptype, t2^.ptype);
+
+   nullptrType:
+         StrictCompTypes := kind2 = nullptrType;
 
    enumType:
       if kind2 = scalarType then
@@ -1135,7 +1141,7 @@ procedure DoGlobals;
       sp := table^.buckets[i];
       while sp <> nil do begin
          if sp^.storage in [global,private] then
-            if sp^.itype^.kind in [scalarType,pointerType] then begin
+            if sp^.itype^.kind in [scalarType,pointerType,nullptrType] then begin
                if sp^.state = initialized then begin
                   Gen2Name(dc_glb, 0, ord(sp^.storage = private), sp^.name);
                   ip := sp^.iPtr;
@@ -1607,6 +1613,18 @@ var
       end; {WritePointerType}
 
 
+      procedure WriteNullptrType (subscripts: integer);
+
+      { write a type field for nullptr_t			}
+      {								}
+      { parameters:						}
+      {    subscripts - number of subscript fields		}
+      
+      begin {WriteNullptrType}
+      WritePointerType(voidPtrPtr, subscripts);
+      end; {WriteNullptrType}
+
+
       procedure ExpandPointerType (tp: typePtr); forward;
       
 
@@ -1666,6 +1684,8 @@ var
          WriteScalarType(intPtr, 0, count)
       else if tp2^.kind = pointerType then
          WritePointerType(tp2, count)
+      else if tp2^.kind = nullptrType then
+         WriteNullptrType(count)
       else begin
          CnOut(12);
          CnOut2(count);
@@ -1704,8 +1724,8 @@ var
       tp := tp^.ptype;
       while tp^.kind = definedType do
          tp := tp^.dType;
-      if tp^.kind in [pointerType,arrayType,structType,unionType] then
-         begin
+      if tp^.kind in [pointerType,nullptrType,arrayType,structType,unionType]
+         then begin
          symLength := symLength+12;
          CnOut2(0); CnOut2(0);
          CnOut2(0); CnOut2(0);
@@ -1715,6 +1735,7 @@ var
          		   	WritePointerType(tp, 0);
                            	ExpandPointerType(tp);
                            	end;
+            nullptrType:        WriteNullptrType(0);
             arrayType:		WriteArrays(tp);
             structType,
             unionType:		begin
@@ -1739,7 +1760,7 @@ var
    while tPtr^.kind = definedType do
       tPtr := tPtr^.dType;
    if tPtr^.kind in
-      [scalarType,arrayType,pointerType,enumType,structType,unionType]
+      [scalarType,arrayType,pointerType,nullptrType,enumType,structType,unionType]
       then begin
       symLength := symLength+12;        {update length of symbol table}
       WriteName(ip);			{write the name field}
@@ -1751,6 +1772,7 @@ var
          		WritePointerType(tPtr, 0);
                         ExpandPointerType(tPtr);
                         end;
+         nullptrType:   WriteNullptrType(0);
          arrayType:	WriteArrays(tPtr);
          structType,
          unionType:	begin
@@ -2098,6 +2120,13 @@ with charPtrPtr^ do begin
    kind := pointerType;
    pType := charPtr;
    wasStarVLA := false;
+   end; {with}
+new(nullptr_tPtr);                      {nullptr_t (type of nullptr)}
+with nullptr_tPtr^ do begin
+   size := cgPointerSize;
+   saveDisp := 0;
+   qualifiers := [];
+   kind := nullptrType;
    end; {with}
 new(vaInfoPtr);                         {internal varargs info type (char*[2])}
 with vaInfoPtr^ do begin

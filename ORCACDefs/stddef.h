@@ -28,6 +28,10 @@ typedef long max_align_t;
 
 typedef unsigned short wchar_t;
 
+#if __STDC_VERSION__ >= 202311L
+typedef typeof_unqual(nullptr) nullptr_t;
+#endif
+
 #define offsetof(type,member) ((size_t) (&(((type *)0L)->member)))
 
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
