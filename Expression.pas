@@ -52,6 +52,18 @@ uses CCommon, Table, CGI, Scanner, Symbol, MM, Printf;
 
 {$segment 'EXP'}
 
+const
+   enumTypeUsed = 57;                   {error for unexpected use of enum type}
+                                        {Note: Types with kind = enumType are      }
+                                        {currently only used for enum type tags.   }
+                                        {Error(enumTypeUsed) acts as an assertion  }
+                                        {that enumType is not used in other places,}
+                                        {such as for expression or variable types. }
+                                        {There is commented-out code for handling  }
+                                        {enumType in some other places, but it has }
+                                        {not been used for a long time (if ever)   }
+                                        {and should be considered untested.        }
+
 var
    startExpression: tokenSet;           {tokens that can start an expression}
 
@@ -888,8 +900,9 @@ else if kind2 in [scalarType,pointerType,nullptrType,enumType,structType,
          else if baseType1 = cgVoid then
             Error(65)
          else if kind2 = enumType then begin
-            if genCode then
-               Gen2(pc_cnv, ord(cgWord), ord(baseType1));
+            Error(enumTypeUsed);
+            {if genCode then
+               Gen2(pc_cnv, ord(cgWord), ord(baseType1));}
             end {else if}
          else if kind2 = scalarType then begin
             baseType2 := t2^.baseType;
@@ -970,7 +983,8 @@ else if kind2 in [scalarType,pointerType,nullptrType,enumType,structType,
          end;
 
       enumType: begin
-         if kind2 = scalarType then begin
+         Error(enumTypeUsed);
+         {if kind2 = scalarType then begin
             if ((lint & lintConstantRange) <> 0) then
                if isConstant then
                   CheckConstantRange(intPtr, value);
@@ -980,8 +994,8 @@ else if kind2 in [scalarType,pointerType,nullptrType,enumType,structType,
             else if genCode then
                Gen2(pc_cnv, ord(baseType2), ord(cgWord));
             end {if}
-         else if kind2 <> enumType then
-            Error(47);
+         {else if kind2 <> enumType then
+            Error(47);}
          end;
 
       definedType:
@@ -2856,20 +2870,22 @@ else if (tp^.kind = scalarType) and (expressionType^.kind = scalarType) then beg
          Error(40);
    end {if}
 else if (tp^.kind = enumType) and (expressionType^.kind = scalarType) then begin
-   if expressionType^.baseType <> cgVoid then begin
+   Error(enumTypeUsed);
+   {if expressionType^.baseType <> cgVoid then begin
       rt := cgWord;
       et := Unary(expressionType^.baseType);
       if rt <> et then
          Gen2(pc_cnv, ord(et), ord(rt));
       end {if}
-   else
-      Error(40);
+   {else
+      Error(40);}
    end {if}
 else if (tp^.kind = scalarType) and (expressionType^.kind = enumType) then begin
-   rt := Unary(tp^.baseType);
+   Error(enumTypeUsed);
+   {rt := Unary(tp^.baseType);
    et := cgWord;
    if rt <> et then
-      Gen2(pc_cnv, ord(et), ord(rt));
+      Gen2(pc_cnv, ord(et), ord(rt));}
    end {if}
 else if tp^.kind = pointerType then begin
    case expressionType^.kind of
@@ -5028,8 +5044,10 @@ case tree^.token.kind of
             end {if}
          else if kind = pointerType then
             Gen2t(pc_ind, ord(isVolatile), long(size).lsw, cgULong)
-         else if kind = enumType then
-            Gen2t(pc_ind, ord(isVolatile), long(size).lsw, cgWord)
+         else if kind = enumType then begin
+            Error(enumTypeUsed);
+            {Gen2t(pc_ind, ord(isVolatile), long(size).lsw, cgWord)}
+            end {else if}
          else if size <> 0 then
             Gen1t(pc_inc, long(size).lsw, cgULong);
          end {if}

@@ -548,8 +548,9 @@ if not doingFunction then begin         {if so, finish it off}
                end; {else if}
             end {if}
          else if fType^.kind = enumType then begin
-            Gen1t(pc_ldc, 0, cgWord);
-            Gen2t(pc_str, 0, 0, cgWord);
+            Error(enumTypeUsed);
+            {Gen1t(pc_ldc, 0, cgWord);
+            Gen2t(pc_str, 0, 0, cgWord);}
             end; {else if}
          end; {if}
       Gen1(dc_lab, returnLabel);
@@ -571,7 +572,7 @@ if not doingFunction then begin         {if so, finish it off}
             nullptrType : Gen0t(pc_ret, cgULong);
             functionType: ;
             enumConst   : ;
-            enumType    : Gen0t(pc_ret, cgWord);
+            enumType    : Error(enumTypeUsed); {Gen0t(pc_ret, cgWord);}
             definedType : ;
             otherwise: Error(57);
             end; {case}
@@ -1033,7 +1034,7 @@ var
                            Gen0t(pc_sto, fType^.baseType)
                         else
                            ReturnValue(fType^.baseType);
-         enumType:      ReturnValue(cgWord);
+         enumType:      Error(enumTypeUsed); {ReturnValue(cgWord);}
          pointerType,
          nullptrType:   ReturnValue(cgULong);
          structType,
@@ -5199,7 +5200,7 @@ var
                else
                   Gen0t(pc_sto, itype^.baseType);
             enumType:
-               Gen0t(pc_sto, cgWord);
+               Error(enumTypeUsed); {Gen0t(pc_sto, cgWord);}
             pointerType,nullptrType,functionType:
                Gen0t(pc_sto, cgULong);
             end; {case}
