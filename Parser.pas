@@ -3820,16 +3820,9 @@ while token.kind in allowedTokens do begin
             declaredTagOrEnumConst := true;
             NextToken;                  {skip the '{'}
             repeat                      {declare the enum constants}
-               tPtr := pointer(Malloc(sizeof(typeRecord)));
-               tPtr^.size := cgWordSize;
-               tPtr^.saveDisp := 0;
-               tPtr^.qualifiers := [];
-               tPtr^.kind := enumConst;
-               if token.kind = ident then begin
-                  variable := NewSymbol(token.name, tPtr, ident, variableSpace,
-                     defined, false);
-                  NextToken;
-                  end {if}
+               ttoken := token;
+               if ttoken.kind in [ident,typedef] then
+                  NextToken
                else
                   Error(9);
                AttributeSpecifierSequence;
@@ -3844,7 +3837,16 @@ while token.kind in allowedTokens do begin
                         if expressionType^.baseType in [cgULong,cgUQuad] then
                            Error(6);
                   end; {if}
-               tPtr^.eval := enumVal;   {set the enumeration constant value}
+               if ttoken.kind in [ident,typedef] then begin
+                  tPtr := pointer(Malloc(sizeof(typeRecord)));
+                  tPtr^.size := cgWordSize;
+                  tPtr^.saveDisp := 0;
+                  tPtr^.qualifiers := [];
+                  tPtr^.kind := enumConst;
+                  tPtr^.eval := enumVal;   {set the enumeration constant value}
+                  variable := NewSymbol(ttoken.name, tPtr, ident, variableSpace,
+                     defined, false);
+                  end; {if}
                enumVal := enumVal+1;    {inc the default enumeration value}
                if token.kind = commach then {next enumeration...}
                   begin

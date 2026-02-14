@@ -254,3 +254,14 @@ will have the type const void *, rather than void *.  This avoids the previous s
 7. Division or remainder operations with constant operands might be evaluated incorrectly if one operand was a negative integer and the other had an unsigned type, because the usual arithmetic conversions were not applied properly.
 
 8. Spurious errors would be reported for some operations involving expressions of function type, including comparisons like *function_pointer == function_name.
+
+9. Spurious errors would be reported if an enumeration constant defined in an inner scope had the same name as a typedef defined in an outer scope.
+
+10. The scope of an enumeration constant should only begin after the full enumerator that defines it.  Thus, within the expression giving the enumeration constant value (if present), any definition of the same enumeration constant name from an outer scope should still be visible and usable.  Therefore, code like the following should work as indicated:
+
+   enum {X = 123};
+   void f(void) {
+           enum {X = X + 12};
+           /* X has the value 135 here */
+   }
+
