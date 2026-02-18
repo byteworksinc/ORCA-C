@@ -4019,8 +4019,9 @@ case tree^.token.kind of
             end;
 
          enumConst: begin
-            Gen1t(pc_ldc, tree^.id^.itype^.eval, cgWord);  
-            expressionType := intPtr;
+            Error(enumTypeUsed);
+            {Gen1t(pc_ldc, tree^.id^.itype^.eval, cgWord);  
+            expressionType := intPtr;}
             end;
 
          end; {case}
