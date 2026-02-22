@@ -265,3 +265,4 @@ will have the type const void *, rather than void *.  This avoids the previous s
            /* X has the value 135 here */
    }
 
+11. The type of an expression using the , operator should be exactly that of its right operand, not subject to the unary conversion rules (integer promotions).

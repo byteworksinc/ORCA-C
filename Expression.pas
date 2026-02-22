@@ -4428,8 +4428,9 @@ case tree^.token.kind of
       if expressionType^.baseType <> cgVoid then
          Gen0t(pc_pop, UsualUnaryConversions);
       GenerateCode(tree^.right);
+      tType := expressionType;
       Gen0t(pc_bno, UsualUnaryConversions);
-      {result type is already in expressionType}
+      expressionType := tType;
       end; {case commach}
 
    barbarop: begin                      {||}
