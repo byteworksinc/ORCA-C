@@ -52,18 +52,6 @@ uses CCommon, Table, CGI, Scanner, Symbol, MM, Printf;
 
 {$segment 'EXP'}
 
-const
-   enumTypeUsed = 57;                   {error for unexpected use of enum type}
-                                        {Note: Types with kind = enumType are      }
-                                        {currently only used for enum type tags.   }
-                                        {Error(enumTypeUsed) acts as an assertion  }
-                                        {that enumType is not used in other places,}
-                                        {such as for expression or variable types. }
-                                        {There is commented-out code for handling  }
-                                        {enumType in some other places, but it has }
-                                        {not been used for a long time (if ever)   }
-                                        {and should be considered untested.        }
-
 var
    startExpression: tokenSet;           {tokens that can start an expression}
 

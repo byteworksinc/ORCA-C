@@ -72,6 +72,16 @@ uses CCommon, CGI, MM, Scanner;
 
 const
    staticNumLen = 5;                    {length of staticNum name prefix}
+   enumTypeUsed = 57;                   {error for unexpected use of enum type}
+                                        {Note: Types with kind = enumType are      }
+                                        {currently only used for enum type tags.   }
+                                        {Error(enumTypeUsed) acts as an assertion  }
+                                        {that enumType is not used in other places,}
+                                        {such as for expression or variable types. }
+                                        {There is commented-out code for handling  }
+                                        {enumType in some other places, but it has }
+                                        {not been used for a long time (if ever)   }
+                                        {and should be considered untested.        }
 
 type
    symbolTablePtr = ^symbolTable;
@@ -1603,7 +1613,7 @@ var
          tp := tp^.dType;
       case tp^.kind of
          scalarType:	WriteScalarType(tp, $80, subscripts);
-         enumType,
+         enumType:      Error(enumTypeUsed);
          functionType:  WriteScalarType(intPtr, $80, subscripts);
          otherwise:	begin
         		CnOut(11);
@@ -1681,7 +1691,7 @@ var
          else
             WriteScalarType(tp2, 0, count)
       else if tp2^.kind = enumType then
-         WriteScalarType(intPtr, 0, count)
+         Error(enumTypeUsed) {WriteScalarType(intPtr, 0, count)}
       else if tp2^.kind = pointerType then
          WritePointerType(tp2, count)
       else if tp2^.kind = nullptrType then
@@ -1767,7 +1777,7 @@ var
       WriteAddress(ip);			{write the address field}
       case tPtr^.kind of
          scalarType:	WriteScalarType(tPtr, 0, 0);
-         enumType:	WriteScalarType(intPtr, 0, 0);
+         enumType:	Error(enumTypeUsed); {WriteScalarType(intPtr, 0, 0);}
          pointerType:	begin
          		WritePointerType(tPtr, 0);
                         ExpandPointerType(tPtr);
