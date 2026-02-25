@@ -5218,6 +5218,10 @@ else begin                              {record the expression for an initialize
       codeGeneration := lCodeGeneration and (numErrors = 0);
                                         {record the expression}
       if tree^.token.kind = castoper then begin
+         if kind = integerConstantExpression then
+            if tree^.castType^.kind = scalarType then
+               if tree^.castType^.basetype = cgVoid then
+                  Error(47);
          castValue := tree^.left;
          while castValue^.token.kind = castoper do
             castValue := castValue^.left;
