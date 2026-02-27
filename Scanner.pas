@@ -933,6 +933,11 @@ if list or (numErr <> 0) then begin
         206: msg := @'unknown #embed parameter';
         207: msg := @'parameter list not prototyped';
         208: msg := @'invalid _BitInt width';
+        209: msg := @'''{'' or '';'' expected';
+        210: msg := @'invalid underlying type for enum';
+        211: msg := @'invalid enum declaration';
+        212: msg := @'illegally nested enum declaration';
+        213: msg := @'incompatible redefinition of enum type or constant';
          end; {case}
        if extraStr <> nil then begin
           extraStr^ := concat(msg^,extraStr^);

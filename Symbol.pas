@@ -81,7 +81,7 @@ const
                                         {There is commented-out code for handling  }
                                         {enumType in some other places, but it has }
                                         {not been used for a long time (if ever)   }
-                                        {and should be considered untested.        }
+                                        {and has not been updated for C23.         }
 
 type
    symbolTablePtr = ^symbolTable;
@@ -190,6 +190,27 @@ function GetBitIntType (isUnsigned: boolean; width: integer): typePtr;
 procedure InitSymbol;
 
 { Initialize the symbol table module                            }
+
+
+function InRangeOfType (val: i65; tp: typePtr): boolean;
+
+{ Check if a value is in the range of an integer type           }
+{                                                               }
+{ Parameters:                                                   }
+{    val - the value                                            }
+{    tp - integer type to check                                 }
+{                                                               }
+{ Returns: True if val is in range of tp, else false            }
+
+
+function IsComplete (tp: typePtr): boolean;
+
+{ Check if tp is a complete type                                }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if tp is a complete object type, else false     }
 
 
 function IsSignedType (tp: typePtr): boolean;
@@ -381,6 +402,12 @@ function StringType(prefix: charStrPrefixEnum): typePtr;
 { parameters:                                                   }
 {       prefix - the prefix                                     }
 
+{-- External 65-bit math routines ------------------------------}
+
+function Ge65(a,b: i65): boolean; extern;
+
+function Le65(a,b: i65): boolean; extern;
+
 {---------------------------------------------------------------}
 
 implementation
@@ -492,6 +519,15 @@ procedure SaveBF (addr: ptr; bitdisp, bitsize: integer; val: longint); extern;
 {       bitdisp - displacement past the address                 }
 {       bitsize - number of bits                                }
 {       val - value to copy                                     }
+
+{-- External 64-bit math routines ------------------------------}
+{ Procedures for arithmetic and shifts compute "x := x OP y".   }
+
+procedure sub64 (var x: longlong; y: longlong); extern;
+
+procedure shl64 (var x: longlong; y: integer); extern;
+
+procedure lshr64 (var x: longlong; y: integer); extern;
 
 {---------------------------------------------------------------}
 
@@ -617,7 +653,8 @@ else
                   CompTypes := false;
             end {if}
          else if kind2 = enumType then
-            CompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);
+            Error(enumTypeUsed);
+            {CompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);}
 
       arrayType:
          if kind2 = arrayType then begin
@@ -657,10 +694,11 @@ else
          end;
 
       enumType:
-         if kind2 = scalarType then
+         Error(enumTypeUsed);
+         {if kind2 = scalarType then
             CompTypes := (t2^.baseType = cgWord) and (t2^.cType = ctInt)
          else if kind2 = enumType then
-            CompTypes := true;
+            CompTypes := true;}
 
       structType,unionType:
          CompTypes := t1 = t2;
@@ -721,7 +759,8 @@ case kind1 of
                StrictCompTypes := false;
          end {if}
       else if kind2 = enumType then
-         StrictCompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);
+         Error(enumTypeUsed);
+         {StrictCompTypes := (t1^.baseType = cgWord) and (t1^.cType = ctInt);}
 
    arrayType:
       if kind2 = arrayType then begin
@@ -810,10 +849,11 @@ case kind1 of
          StrictCompTypes := kind2 = nullptrType;
 
    enumType:
-      if kind2 = scalarType then
+      Error(enumTypeUsed);
+      {if kind2 = scalarType then
          StrictCompTypes := (t2^.baseType = cgWord) and (t2^.cType = ctInt)
       else if kind2 = enumType then
-         StrictCompTypes := true;
+         StrictCompTypes := true;}
 
    structType,unionType:
       StrictCompTypes := t1 = t2;
@@ -2177,6 +2217,53 @@ constCharPtr^.qualifiers := [tqConst];
 end; {InitSymbol}
 
 
+function InRangeOfType {val: i65; tp: typePtr): boolean};
+
+{ Check if a value is in the range of an integer type           }
+{                                                               }
+{ Parameters:                                                   }
+{    val - the value                                            }
+{    tp - integer type to check                                 }
+{                                                               }
+{ Returns: True if val is in range of tp, else false            }
+
+var
+   minVal,maxVal: i65;                  {min/max values in type}
+
+begin {InRangeOfType}
+maxVal.ll := longlong1;                 {compute min/max values for type}
+shl64(maxVal.ll, Width(tp));
+sub64(maxVal.ll, longlong1);
+maxVal.sign := 0;
+if IsSignedType(tp) then begin
+   lshr64(maxVal.ll, 1);
+   minVal.ll := longlong0;
+   sub64(minVal.ll, maxVal.ll);
+   sub64(minVal.ll, longlong1);
+   minVal.sign := -1;
+   end {if}
+else begin
+   minVal.ll := longlong0;
+   minVal.sign := 0;
+   end; {else}
+InRangeOfType := Ge65(val, minVal) and Le65(val, maxVal);
+end; {InRangeOfType}
+
+
+function IsComplete {tp: typePtr): boolean};
+
+{ Check if tp is a complete type                                }
+{                                                               }
+{ Parameters:                                                   }
+{    tp - type to check                                         }
+{                                                               }
+{ Returns: True if tp is a complete object type, else false     }
+
+begin {IsComplete}
+IsComplete := tp^.size <> 0;
+end; {IsComplete}
+
+
 function IsSignedType {tp: typePtr): boolean};
 
 { Check if tp is a signed type                                  }
@@ -2194,7 +2281,7 @@ case tp^.kind of
          ctFloat,ctDouble,ctLongDouble,ctComp,ctInt32,ctBitInt];
 
    enumType:
-      IsSignedType := true;
+      IsSignedType := IsSignedType(tp^.underlyingType);
 
    otherwise:
       IsSignedType := false;
@@ -2558,7 +2645,7 @@ case tp^.kind of
             end; {case}
 
    enumType:
-      Width := cgWordSize * 8;
+      Width := Width(tp^.underlyingType);
 
    pointerType,arrayType:
       Width := cgPointerSize * 8;

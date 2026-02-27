@@ -176,6 +176,16 @@ A suffix of wb or WB can be used on an integer constant to give it a _BitInt typ
 
 20. (C23 modes only) The new keyword nullptr denotes a predefined null pointer constant.  It can be assigned or converted to any pointer type, yielding a null pointer value of that type.  The type of nullptr is nullptr_t, which is given by a typedef in <stddef.h>.  It is possible to create variables of type nullptr_t, but this is rarely useful; the only value they can hold is nullptr.
 
+21. Enumeration types have been enhanced in several ways.  First, it is now possible to explicitly specify the underlying integer type that the enumeration type will be be compatible with.  This is done by including a : and then a type name denoting an integer type in between the enum tag (if present) and the { beginning the enumerator list (if present).  When this is done, the enumeration and the enumeration constants within it will have a type compatible with that integer type, and the constants can have any values within the range of that type.  For example, this enumeration specifier declares an enumeration type compatible with long and three enumeration constants of that type:
+
+   enum X : long {A = 1000000, B, C}
+
+Second, even if the underlying type is not specified explicitly, enumeration constant values are no longer limited to the range of int.  In this case, the underlying integer type will be automatically selected to be able to hold all the values in the enumeration.  In ORCA/C, it will be the first type from the following list that can hold all the values: int, unsigned int, long, unsigned long, long long, unsigned long long.  Thus, in ORCA/C, this enumeration specifier functions similarly to the above one, also declaring an enumeration type compatible with long and three enumeration constants of that type:
+
+   enum X {A = 1000000, B, C}
+
+Furthermore, it it now permitted to redeclare an enumeration type and its enumeration constants within the same scope.  That is, two or more full enumeration specifiers for the same type may appear in the same scope.  They must agree in the names and values of the enumeration constants, and if any of them include an explicitly specified underlying type, they must all do so.
+
 
 Library Updates
 ---------------

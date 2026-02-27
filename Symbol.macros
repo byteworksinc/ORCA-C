@@ -116,3 +116,8 @@
 .j
  rtl
  mend
+ MACRO
+&LAB BGT &BP
+&LAB BEQ *+4
+ BGE &BP
+ MEND

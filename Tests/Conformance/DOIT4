@@ -7,3 +7,4 @@
 {1} c23stdlib.c
 {1} c23string.c
 {1} c23nullptr.c
+{1} c23enum.c

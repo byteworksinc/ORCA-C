@@ -119,6 +119,7 @@ type
                                         {-----}
    long = record lsw,msw: integer; end; {for extracting words from longints}
    longlong = record lo,hi: longint; end; {64-bit integer representation}
+   i65 = record ll: longlong; sign: -1..0; end; {65-bit integer (two's-complement)}
  
    cString = packed array [1..256] of char; {null terminated string}
    cStringPtr = ^cString;
@@ -335,8 +336,13 @@ type
                        toolNum: integer;        {non-zero for tool functions}
                        dispatcher: longint;     {dispatch addr}
                       );
-        enumConst   : (eval: integer;);
-        enumType    : ();
+        enumConst   : (ecType: typePtr;         {type of this enum const}
+                       containingEnum: typePtr; {containing enum type (if tagged)}
+                       eval: i65;);             {value of enum const}
+        enumType    : (underlyingType: typePtr; {underlying integer type}
+                       fixedUnderlyingType: boolean; {has fixed underlying type?}
+                       ecCount: longint;        {number of enum constants}
+                       doingEnumerators: boolean;); {currently parsing the enumerators?}
         definedType : (dType: typePtr;);
         structType,
         unionType   : (fieldList: identPtr;	{field list}
@@ -547,6 +553,8 @@ var
    vlaTrees: 0..maxint4;                {number of trees for computing VLA sizes}
    longlong0: longlong;                 {the value 0 as a longlong}
    longlong1: longlong;                 {the value 1 as a longlong}
+   i65_zero: i65;                       {the value 0 as an i65}
+   i65_minus1: i65;                     {the value -1 as an i65}
 
                                         {expression results}
                                         {------------------}
@@ -928,6 +936,11 @@ longlong0.hi := 0;
 longlong0.lo := 0;
 longlong1.hi := 0;
 longlong1.lo := 1;
+i65_zero.sign := 0;
+i65_zero.ll := longlong0;
+i65_minus1.sign := -1;
+i65_minus1.ll.hi := -1;
+i65_minus1.ll.lo := -1;
 end; {InitCCommon}
 
 

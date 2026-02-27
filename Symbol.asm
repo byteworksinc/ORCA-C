@@ -26,6 +26,92 @@ lb1      sta   [table],Y
 
 ****************************************************************
 *
+*  function Ge65(a,b: i65): boolean;
+*
+****************************************************************
+*
+Ge65     start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #8
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      blt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
+*  function Le65(a,b: i65): boolean;
+*
+****************************************************************
+*
+Le65     start exp
+result   equ   0
+
+         subroutine (4:a,4:b),2
+
+         stz   result
+         ldy   #8
+         lda   [a],y
+         eor   [b],y
+         bpl   lb0
+         lda   [b],y
+         cmp   [a],y
+         bra   lb1
+
+lb0      dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         dey
+         dey
+         lda   [a],y
+         cmp   [b],y
+         bne   lb1
+         lda   [a]
+         cmp   [b]
+lb1      bgt   lb2
+         inc   result
+
+lb2      return 2:result
+         end
+
+****************************************************************
+*
 *  SaveBF - save a value to a bit-field
 *
 *  Inputs:

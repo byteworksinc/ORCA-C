@@ -244,6 +244,12 @@ procedure GetLLExpressionValue (var val: longlong);
 { long long (whether it had long long type or not).             }
 
 
+procedure GetI65ExpressionValue (var val: i65);
+
+{ get the value of the last integer constant expression as an   }
+{ i65 (whether it had long long type or not).                   }
+
+
 function GetFullExpressionType: typePtr;
 
 { Get the full type of the last expression.                     }
@@ -1366,10 +1372,39 @@ var
       errorFound := true;
       end {else if}
    else if id^.itype^.kind = enumConst then begin
-      stack^.token.class := intConstant;
-      stack^.token.kind := intconst;
-      stack^.token.itype := intPtr;
-      stack^.token.ival := id^.itype^.eval;
+      case id^.itype^.ecType^.baseType of
+         cgWord,cgByte,cgUByte: begin
+            stack^.token.class := intConstant;
+            stack^.token.kind := intconst;
+            end;
+
+         cgUWord: begin
+            stack^.token.class := intConstant;
+            stack^.token.kind := uintconst;
+            end;
+
+         cgLong: begin
+            stack^.token.class := longConstant;
+            stack^.token.kind := longconst;
+            end;
+
+         cgULong: begin
+            stack^.token.class := longConstant;
+            stack^.token.kind := ulongconst;
+            end;
+
+         cgQuad: begin
+            stack^.token.class := longlongConstant;
+            stack^.token.kind := longlongconst;
+            end;
+
+         cgUQuad: begin
+            stack^.token.class := longlongConstant;
+            stack^.token.kind := ulonglongconst;
+            end;
+         end; {case}
+      stack^.token.itype := id^.itype^.ecType;
+      stack^.token.qval := id^.itype^.eval.ll;
       end; {else if}
 
    if id <> nil then
@@ -5349,6 +5384,23 @@ begin {GetLLExpressionValue}
       end;
 end; {GetLLExpressionValue}
 
+
+procedure GetI65ExpressionValue {var val: i65};
+
+{ get the value of the last integer constant expression as an   }
+{ i65 (whether it had long long type or not).                   }
+
+begin {GetI65ExpressionValue}
+   GetLLExpressionValue(val.ll);
+   if (expressionType^.kind = scalarType)
+      and (expressionType^.baseType = cgUQuad) then
+      val.sign := 0
+   else
+      if val.ll.hi >= 0 then
+         val.sign := 0
+      else
+         val.sign := -1;
+end; {GetI65ExpressionValue}
 
 function GetFullExpressionType{: typePtr};
 

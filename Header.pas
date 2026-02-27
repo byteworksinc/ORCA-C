@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 56;                 {version number of .sym file format}
+   symFileVersion = 57;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -822,8 +822,19 @@ procedure EndInclude {chPtr: ptr};
             WriteParm(tp^.parameterList);
             end;
 
-         enumConst:
-            WriteWord(tp^.eval);
+         enumConst: begin
+            WriteType(tp^.ecType);
+            WriteType(tp^.containingEnum);
+            WriteLong(tp^.eval.ll.lo);
+            WriteLong(tp^.eval.ll.hi);
+            WriteWord(tp^.eval.sign);
+            end;
+
+         enumType: begin
+            WriteType(tp^.underlyingType);
+            WriteByte(ord(tp^.fixedUnderlyingType));
+            WriteLong(tp^.ecCount);
+            end;
 
          definedType:
             WriteType(tp^.dType);
@@ -1524,8 +1535,20 @@ var
                ReadParm(tp^.parameterList);
                end;
 
-            enumConst:
-               tp^.eval := ReadWord;
+            enumConst: begin
+               ReadType(tp^.ecType);
+               ReadType(tp^.containingEnum);
+               tp^.eval.ll.lo := ReadLong;
+               tp^.eval.ll.hi := ReadLong;
+               tp^.eval.sign := ReadWord;
+               end;
+
+            enumType: begin
+               ReadType(tp^.underlyingType);
+               tp^.fixedUnderlyingType := boolean(ReadByte);
+               tp^.ecCount := ReadLong;
+               tp^.doingEnumerators := false;
+               end;
 
             definedType:
                ReadType(tp^.dType);
@@ -1545,7 +1568,7 @@ var
                tp^.flexibleArrayMember := boolean(ReadByte);
                end;
 
-            enumType, nullptrType: ;
+            nullptrType: ;
 
             otherwise: begin
                PurgeSymbols;

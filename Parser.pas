@@ -257,6 +257,22 @@ else
 end; {Match}
 
 
+function PeekToken: tokenEnum;
+
+{ peek at next token and get its kind                           }
+
+var
+   tToken: tokenType;                   {temporary copy of current token}
+
+begin {PeekToken}
+tToken := token;
+NextToken;
+PeekToken := token.kind;
+PutBackToken(token, false, true);
+token := tToken;
+end; {PeekToken}
+
+
 procedure SkipStatement;
 
 { Skip the remainder of the current statement                   }
@@ -1642,22 +1658,6 @@ var
       newName := nil;
       unnamedParm := true;
       end; {MakeUnnamedParameter}
-
-
-      function PeekToken: tokenEnum;
-      
-      { peek at next token and get its kind                     }
-
-      var
-         tToken: tokenType;             {temporary copy of current token}
-
-      begin {PeekToken}
-      tToken := token;
-      NextToken;
-      PeekToken := token.kind;
-      PutBackToken(token, false, true);
-      token := tToken;
-      end; {PeekToken}
 
 
    begin {StackDeclarations}
@@ -3233,13 +3233,10 @@ procedure DeclarationSpecifiers (var declSpecifiers: declSpecifiersRecord;
 {       declaredTagOrEnumConst - set if a tag or an enum const  }
 {               is declared (otherwise unchanged)               }
 
-label 1,2,3;
+label 2,3;
 
 var
-   done: boolean;                       {for loop termination}
-   enumVal: integer;                    {default value for the next enum constant}
    tPtr: typePtr;                       {for building types}
-   variable: identPtr;                  {enumeration variable}
  
    structPtr: identPtr;                 {structure identifier}
    structTypePtr: typePtr;              {structure type}
@@ -3506,6 +3503,359 @@ var
    isForwardDeclared := lisForwardDeclared; {restore the forward flag}
    doingParameters := ldoingParameters; {restore the parameters flag}
    end; {FieldList}
+
+
+   function EnumSpecifier: typePtr;
+   
+   { Handle an enum specifier                                   }
+   {                                                            }
+   { Returns the enum type                                      }
+
+   label 1;
+
+   type
+      enumConstListPtr = ^enumConstList;
+      enumConstList = record            {list of enum constants}
+         eConst: identPtr;
+         next: enumConstListPtr;
+         end;
+
+   var
+      done: boolean;                    {for loop termination}
+      variable: identPtr;               {enumeration variable}
+      ecPtr: typePtr;                   {enumeration constant type}
+      ttoken: tokenType;                {temp variable to save names}
+      enumVal: i65;                     {default value for the next enum constant}
+      enumConstType: typePtr;           {default type for the next enum constant}
+      enumTypeSpec: declSpecifiersRecord; {specifiers for enum underlying type}
+      haveEnumTypeSpec: boolean;        {is there an explicit enum type specifier?}
+      existingEnumConst: identPtr;      {existing enum const being redefined}
+      minVal,maxVal: i65;               {minimum and maximum enum const values}
+      underlyingType: typePtr;          {underlying integer type}
+      eType: typePtr;                   {enum type being declared or referenced}
+      ecList: enumConstListPtr;         {list of enum constants}
+      tList: enumConstListPtr;          {temp pointer}
+      originalECCount: longint;         {# of existing enum constants in type}
+      redefCount: longint;              {# of enum const redefinitions}
+      ldoingEnumerators: boolean;       {local copy of eType^.doingEnumerators}
+
+      function Eq65 (val1, val2: i65): boolean;
+
+      { Check if two 65-bit integers are equal                  }
+
+      begin {Eq65}
+      Eq65 := (val1.ll.lo = val2.ll.lo) and (val1.ll.hi = val2.ll.hi)
+         and (val1.sign = val2.sign);
+      end; {Eq65}
+
+
+      procedure Inc65 (var val: i65);
+      
+      { Increment a 65-bit integer                              }
+      
+      begin {Inc65}
+      val.ll.lo := val.ll.lo + 1;
+      if val.ll.lo = 0 then begin
+         val.ll.hi := val.ll.hi + 1;
+         if val.ll.hi = 0 then
+            val.sign := -ord(val.sign = 0);
+         end; {if}
+      end; {Inc65}
+
+
+      function SubrangeOfTypeRange (min, max: i65; tp: typePtr): boolean;
+
+      { Check if the range [min..max] is within the range of an }
+      { integer type.                                           }
+
+      begin {SubrangeOfTypeRange}
+      SubrangeOfTypeRange := InRangeOfType(min, tp) and InRangeOfType(max, tp);
+      end; {SubrangeOfTypeRange}
+
+
+   begin {EnumSpecifier}
+   NextToken;                           {skip the 'enum' token}
+   AttributeSpecifierSequence;
+   tHaveAttributeSpecifier := haveAttributeSpecifier;
+   ttoken := token;
+   if ttoken.kind in [ident,typedef] then
+      NextToken;
+                                        {check for enum type specifier}
+   haveEnumTypeSpec := false;
+   if (cStd >= c23) or not strictMode then
+      if token.kind = colonch then
+         if PeekToken in specifierQualifierListElement then
+            haveEnumTypeSpec := true;
+   eType := nil;
+   underlyingType := intPtr;
+                                        {handle a tagged enum type}
+   if ttoken.kind in [ident,typedef] then begin
+      variable := FindSymbol(ttoken, tagSpace,
+         (token.kind = lbracech) or haveEnumTypeSpec, true);
+      if variable <> nil then
+         if variable^.itype^.kind = enumType then begin
+            eType := variable^.itype;
+            underlyingType := eType^.underlyingType;
+            end; {if}
+                                        {handle an enum tag definition}
+      if (token.kind = lbracech) or haveEnumTypeSpec then begin
+         if eType <> nil then begin
+            if (cStd < c23) and strictMode and not looseTypeChecks then
+               Error(53)
+            else if haveEnumTypeSpec <> eType^.fixedUnderlyingType then
+               Error(213);
+            end;
+         end {if}
+                                        {handle reference to existing enum type}
+      else if eType <> nil then begin
+         if looseTypeChecks then
+            declaredTagOrEnumConst := true;
+         if not IsComplete(eType) then
+            Error(171);
+         if tHaveAttributeSpecifier then
+            Error(192);
+         goto 1;
+         end {if}
+      else begin
+         {ORCA/C extension: allow "enum ident" without prior declaration}
+         {to declare a complete enum type that is compatible with int   }
+         if not looseTypeChecks then
+            Error(171);
+         end; {else}
+      end; {if}
+                                        {create enum type and tag if needed}
+   if eType = nil then begin
+      eType := pointer(Malloc(sizeof(typeRecord)));
+      eType^.saveDisp := 0;
+      eType^.qualifiers := [];
+      eType^.kind := enumType;
+      eType^.ecCount := 0;
+      eType^.doingEnumerators := false;
+      eType^.size := 0;                 {will change later}
+      eType^.underlyingType := voidPtr; {will change later}
+      eType^.fixedUnderlyingType := haveEnumTypeSpec;
+      if ttoken.kind in [ident,typedef] then
+         variable := NewSymbol(ttoken.name, eType, ident, tagSpace, defined,
+            false);
+      end; {if}
+                                        {handle enum type specifier}
+   if haveEnumTypeSpec then begin
+      NextToken;
+      DeclarationSpecifiers(enumTypeSpec,
+         specifierQualifierListElement, 209);
+      if _Alignassy in enumTypeSpec.declarationModifiers then
+         Error(142);
+      enumTypeSpec.typeSpec := Unqualify(enumTypeSpec.typeSpec);
+      if (enumTypeSpec.typeSpec^.kind <> scalarType)
+         or not (enumTypeSpec.typeSpec^.cType in
+            [ctChar,ctSChar,ctUChar,ctShort,ctUShort,ctInt,ctUInt,ctLong,
+             ctULong,ctInt32,ctUInt32,ctBool,ctLongLong,ctULongLong])
+         or (enumsy in enumTypeSpec.declarationModifiers)
+         then begin
+         Error(210);
+         enumTypeSpec.typeSpec := intPtr;
+         end; {if}
+      underlyingType := enumTypeSpec.typeSpec;
+      if IsComplete(eType) then
+         if not StrictCompTypes(eType^.underlyingType, underlyingType) then
+            if eType^.fixedUnderlyingType then
+               Error(213);
+      eType^.underlyingType := underlyingType;
+      eType^.size := underlyingType^.size;
+      if not (token.kind in [lbracech,semicolonch]) then
+         Error(209)
+      else if token.kind = semicolonch then
+         if myDeclarationModifiers <> [] then
+            Error(211);
+      end; {if}
+                                        {handle enum constant definitions}
+   if token.kind = lbracech then begin
+      enumVal := i65_minus1;            {set the default value and type}
+      enumConstType := underlyingType;
+      ecList := nil;                    {no enum constants so far}
+      originalECCount := eType^.ecCount;
+      redefCount := 0;
+      minVal := i65_zero;               {initialize min/max values}
+      maxVal := i65_zero;
+      ldoingEnumerators := eType^.doingEnumerators;
+      eType^.doingEnumerators := true;
+      if ldoingEnumerators then         {check for nested enumerator lists}
+         Error(212);
+      NextToken;                        {skip the '{'}
+      repeat                            {declare the enum constants}
+         existingEnumConst := nil;
+         ttoken := token;
+         if token.kind in [ident,typedef] then begin
+                                        {identify existing enum const, if any}
+            if originalECCount <> 0 then begin
+               existingEnumConst := FindSymbol(token, variableSpace, true, true);
+               if existingEnumConst = nil then begin
+                  {ORCA/C extension: allow enum redeclarations to define new}
+                  {constants (must be in range of existing underlying type) }
+                  if not looseTypeChecks then
+                     Error(213);
+                  end {if}
+               else if existingEnumConst^.itype^.kind <> enumConst then
+                  existingEnumConst := nil
+               else if existingEnumConst^.itype^.containingEnum <> eType then
+                  existingEnumConst := nil
+               else begin               {check for duplicate enumerators}
+                  tList := ecList;
+                  done := false;
+                  while (tList <> nil) and not done do
+                     if tList^.eConst^.name = token.name then
+                        done := true
+                     else
+                        tList := tList^.next;
+                  if tList <> nil then
+                     Error(42)
+                  else begin
+                     new(tList);
+                     tList^.next := ecList;
+                     tList^.eConst := existingEnumConst;
+                     ecList := tList;
+                     redefCount := redefCount + 1;
+                     end; {if}
+                  end; {else}
+               end; {if}
+            NextToken;
+            end {if}
+         else
+            Error(9);
+         AttributeSpecifierSequence;
+                                        {handle explicit enumeration values}
+         if token.kind = eqch then begin
+            NextToken;
+            Expression(integerConstantExpression,[commach,rbracech]);
+            GetI65ExpressionValue(enumVal);
+            if existingEnumConst <> nil then begin
+               if not Eq65(enumVal, existingEnumConst^.itype^.eval) then
+                  Error(213);
+               end {if}
+            else if IsComplete(eType) then begin
+               if not InRangeOfType(enumVal, underlyingType) then
+                  Error(6);
+               end {else if}
+            else if InRangeOfType(enumVal, intPtr) then
+               enumConstType := intPtr
+            else begin
+               if (cStd < c23) and strictMode then
+                  Error(6);
+               enumConstType := expressionType;
+               end; {else}
+            end {if}
+         else begin                     {handle implicitly incremented values}
+            Inc65(enumVal);
+            if existingEnumConst <> nil then
+               if not Eq65(enumVal, existingEnumConst^.itype^.eval) then
+                  Error(213);
+            if not InRangeOfType(enumVal, enumConstType) then begin
+               if IsComplete(eType) then
+                  Error(6)
+               else if IsSignedType(enumConstType) then begin
+                  if (enumVal.sign = 0) and (enumVal.ll.hi < 0) then
+                     Error(6);
+                  enumConstType := longLongPtr;
+                  end {else if}
+               else begin
+                  if enumVal.sign < 0 then
+                     Error(6);
+                  enumConstType := uLongLongPtr;
+                  end; {else}
+               end;
+            end; {if}
+                                        {set the enumeration constant value}
+         if existingEnumConst = nil then
+            if ttoken.kind in [ident,typedef] then begin
+               ecPtr := pointer(Malloc(sizeof(typeRecord)));
+               ecPtr^.saveDisp := 0;
+               ecPtr^.qualifiers := [];
+               ecPtr^.kind := enumConst;
+               ecPtr^.eval := enumVal;
+               ecPtr^.ecType := enumConstType;
+               ecPtr^.size := enumConstType^.size;
+               ecPtr^.containingEnum := eType;
+               if eType^.saveDisp <> 0 then
+                  TermHeader;
+               eType^.ecCount := eType^.ecCount + 1;
+               variable := NewSymbol(ttoken.name, ecPtr, ident, variableSpace,
+                  defined, false);
+               new(tList);
+               tList^.next := ecList;
+               tList^.eConst := variable;
+               ecList := tList;
+               end; {if}
+                                        {update min/max values}
+         if Ge65(enumVal, maxVal) then
+            maxVal := enumVal
+         else if Le65(enumVal, minVal) then
+            minVal := enumVal;
+                                        {next enumeration constant}
+         if token.kind = commach then begin
+            NextToken;
+            done := token.kind = rbracech;
+            end {if}
+         else
+            done := true;
+      until done or (token.kind = eofsy);
+      eType^.doingEnumerators := ldoingEnumerators;
+
+      {ORCA/C extension: do not require all enum constants to be}
+      {redefined in an enum redeclaration.                      }
+      if not looseTypeChecks then
+         if originalECCount <> 0 then
+            if redefCount <> originalECCount then
+               Error(213);
+                                        {compute final underlying type}
+      if not IsComplete(eType) then begin
+         if SubrangeOfTypeRange(minVal, maxVal, intPtr) then
+            underlyingType := intPtr
+         else if SubrangeOfTypeRange(minVal, maxVal, uIntPtr) then
+            underlyingType := uIntPtr
+         else if SubrangeOfTypeRange(minVal, maxVal, longPtr) then
+            underlyingType := longPtr
+         else if SubrangeOfTypeRange(minVal, maxVal, uLongPtr) then
+            underlyingType := uLongPtr
+         else if SubrangeOfTypeRange(minVal, maxVal, longLongPtr) then
+            underlyingType := longLongPtr
+         else if SubrangeOfTypeRange(minVal, maxVal, uLongLongPtr) then
+            underlyingType := uLongLongPtr
+         else
+            Error(6);
+         eType^.underlyingType := underlyingType;
+         eType^.size := underlyingType^.size;
+         tList := ecList;               {update types of enum constants}
+         while tList <> nil do begin
+            tList^.eConst^.iType^.ecType := underlyingType;
+            tList^.eConst^.iType^.size := underlyingType^.size;
+            tList := tList^.next;
+            end; {while}
+         end; {if}
+      while ecList <> nil do begin      {dispose ecList}
+         tList := ecList;
+         ecList := tList^.next;
+         dispose(tList);
+         end; {while}
+      if token.kind = rbracech then
+         NextToken
+      else begin
+         Error(23);
+         SkipStatement;
+         end; {else}
+      end {if}
+   else begin                           {handle enum with no enumerator list}
+      if not (ttoken.kind in [ident,typedef]) then
+         Error(27);
+      if eType^.size = 0 then begin
+         eType^.underlyingType := underlyingType;
+         eType^.size := underlyingType^.size;
+         end; {if}
+      if tHaveAttributeSpecifier then
+         Error(192);
+      end; {else}
+   declaredTagOrEnumConst := true;      {either true, or error already reported}
+1: EnumSpecifier := underlyingType;
+   end; {EnumSpecifier}
 
 
    procedure ResolveType;
@@ -3778,97 +4128,8 @@ while token.kind in allowedTokens do begin
             Error(badNextTokenError)
          else if restrictsy in myDeclarationModifiers then
             Error(143);
-         NextToken;                     {skip the 'enum' token}
-         AttributeSpecifierSequence;
-         tHaveAttributeSpecifier := haveAttributeSpecifier;
-         if token.kind in [ident,typedef] then begin {handle a type definition}
-            ttoken := token;
-            NextToken;
-            variable :=
-               FindSymbol(ttoken, tagSpace, token.kind = lbracech, true);
-            if token.kind = lbracech then begin
-               if (variable <> nil) and (variable^.itype^.kind = enumType) then
-                  if not looseTypeChecks then
-                     Error(53);
-               end {if}
-            else
-               if (variable <> nil) and (variable^.itype^.kind = enumType) then
-                  begin
-                  if looseTypeChecks then
-                     declaredTagOrEnumConst := true;
-                  if tHaveAttributeSpecifier then
-                     Error(192);
-                  goto 1;
-                  end {if}
-               else begin
-                  declaredTagOrEnumConst := true;
-                  if not looseTypeChecks then
-                     Error(171);
-                  end; {else}
-            tPtr := pointer(Malloc(sizeof(typeRecord)));
-            tPtr^.size := cgWordSize;
-            tPtr^.saveDisp := 0;
-            tPtr^.qualifiers := [];
-            tPtr^.kind := enumType;
-            variable :=
-               NewSymbol(ttoken.name, tPtr, ident, tagSpace, defined, false);
-            end {if}
-         else if token.kind <> lbracech then
-            Error(9);
-         enumVal := 0;                  {set the default value}
-         if token.kind = lbracech then begin
-            declaredTagOrEnumConst := true;
-            NextToken;                  {skip the '{'}
-            repeat                      {declare the enum constants}
-               ttoken := token;
-               if ttoken.kind in [ident,typedef] then
-                  NextToken
-               else
-                  Error(9);
-               AttributeSpecifierSequence;
-               if token.kind = eqch then begin {handle explicit enumeration values}
-                  NextToken;
-                  Expression(integerConstantExpression,[commach,rbracech]);
-                  enumVal := long(expressionValue).lsw;
-                  if enumVal <> expressionValue then
-                     Error(6)
-                  else if enumVal < 0 then
-                     if expressionType^.kind = scalarType then
-                        if expressionType^.baseType in [cgULong,cgUQuad] then
-                           Error(6);
-                  end; {if}
-               if ttoken.kind in [ident,typedef] then begin
-                  tPtr := pointer(Malloc(sizeof(typeRecord)));
-                  tPtr^.size := cgWordSize;
-                  tPtr^.saveDisp := 0;
-                  tPtr^.qualifiers := [];
-                  tPtr^.kind := enumConst;
-                  tPtr^.eval := enumVal;   {set the enumeration constant value}
-                  variable := NewSymbol(ttoken.name, tPtr, ident, variableSpace,
-                     defined, false);
-                  end; {if}
-               enumVal := enumVal+1;    {inc the default enumeration value}
-               if token.kind = commach then {next enumeration...}
-                  begin
-                  done := false;
-                  NextToken;
-                  {kws -- allow trailing , in enum }
-                  { C99 6.7.2.2 Enumeration specifiers }
-                  if token.kind = rbracech then done := true;
-                  end {if}
-               else
-                  done := true;
-            until done or (token.kind = eofsy);
-            if token.kind = rbracech then
-               NextToken
-            else begin
-               Error(23);
-               SkipStatement;
-               end; {else}
-            end {if}
-         else if tHaveAttributeSpecifier then
-            Error(192);
-1:       myTypeSpec := intPtr;
+         myTypeSpec := EnumSpecifier;
+         myDeclarationModifiers := myDeclarationModifiers + [enumsy];
          typeDone := true;
          end;
   
