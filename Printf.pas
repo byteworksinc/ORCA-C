@@ -395,10 +395,10 @@ var
    if ty <> nil then
       if (ty^.kind = pointerType) or (ty^.kind = arrayType) then begin
          baseTy := ty^.pType;
-         if (baseTy <> nil)
-            and (baseTy^.kind = scalarType)
-            and (baseTy^.baseType in expected)
-            then ok := true;
+         if baseTy <> nil then
+            if baseTy^.kind = scalarType then
+               if baseTy^.baseType in expected then
+                  ok := true;
          end; {if}
 
    if not ok then begin

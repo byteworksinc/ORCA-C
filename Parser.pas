@@ -5545,9 +5545,10 @@ else
 if variable^.class <> staticsy then begin
    if traceBack or debugFlag then
       if nameFound or debugFlag then
-         if (statementList <> nil) and not statementList^.doingDeclaration then
-            if lineNumber <> 0 then
-               RecordLineNumber(line);
+         if statementList <> nil then
+            if not statementList^.doingDeclaration then
+               if lineNumber <> 0 then
+                  RecordLineNumber(line);
    while iPtr <> nil do begin
       InitializeOneElement;
       iPtr := iPtr^.next;

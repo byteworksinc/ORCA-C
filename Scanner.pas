@@ -2364,8 +2364,9 @@ else begin
                      if not tcPtr^.expandEnabled then
                         inhibit := true;
                      if tcPtr = pptr^.tokens then
-                        if (mPtr <> nil) and (mPtr^.parameters >= 0) then
-                           inhibit := true;
+                        if mPtr <> nil then
+                           if mPtr^.parameters >= 0 then
+                              inhibit := true;
                      if (mPtr <> nil) and (not inhibit) then
                         Expand(mPtr)
                      else begin
