@@ -2270,10 +2270,13 @@ if macro^.readOnly then begin           {handle special macros}
          end;
 
       algPragma: begin                  {_Pragma pseudo-macro}
-         if (parms <> nil) and (parms^.tokens <> nil)
-            and (parms^.tokens^.token.kind = stringconst)
-            and (parms^.tokens^.next = nil) then
-            Do_Pragma(parms^.tokens^.token)
+         if (parms <> nil) and (parms^.tokens <> nil) then begin
+            if (parms^.tokens^.token.kind = stringconst)
+               and (parms^.tokens^.next = nil) then
+               Do_Pragma(parms^.tokens^.token)
+            else
+               Error(179);
+            end {if}
          else
             Error(179);
          end;

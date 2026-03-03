@@ -2709,6 +2709,7 @@ var
    needSymbol: boolean;                 {do we need to declare it?}
    np: stringPtr;                       {for forming static name}
    p: identPtr;                         {work pointer}
+   redeclOK: boolean;                   {is redeclaration of existing sym OK?}
    tk: tokenType;                       {fake token; for FindSymbol}
 
 
@@ -2786,21 +2787,23 @@ if space <> fieldListSpace then begin   {are we defining a function?}
       end; {else if}
    cs := FindSymbol(tk, space, true, true); {check for duplicates}
    if cs <> nil then begin
-      if ((itype = nil)
-         or (cs^.itype = nil)
-         or (not CompTypes(cs^.itype, itype))
-         or ((cs^.state = initialized) and (state = initialized))
-         or ((class = typedefsy) <> (cs^.class = typedefsy))
-         or ((globalTable <> table) 
-            and (not (class in [externsy,typedefsy])
-               or not (cs^.class in [externsy,typedefsy])))
-         or ((class = typedefsy)
-            and (IsVariablyModifiedType(itype)
-               or IsVariablyModifiedType(cs^.itype))))
-         and ((not doingParameters) or (cs^.state <> declared))
-         then
-         Error(42)
-      else begin
+      redeclOK := true;
+      if (not doingParameters) or (cs^.state <> declared) then begin
+         if (itype = nil) or (cs^.itype = nil) then
+            redeclOK := false
+         else if (not CompTypes(cs^.itype, itype))
+            or ((cs^.state = initialized) and (state = initialized))
+            or ((class = typedefsy) <> (cs^.class = typedefsy))
+            or ((globalTable <> table) 
+               and (not (class in [externsy,typedefsy])
+                  or not (cs^.class in [externsy,typedefsy])))
+            or ((class = typedefsy)
+               and (IsVariablyModifiedType(itype)
+                  or IsVariablyModifiedType(cs^.itype)))
+            then
+            redeclOK := false;
+         end; {if}
+      if redeclOK then begin
          itype := MakeCompositeType(cs^.itype, itype);
          if class = externsy then
             if cs^.class = staticsy then
@@ -2815,7 +2818,9 @@ if space <> fieldListSpace then begin   {are we defining a function?}
                         UnInline;
          p := cs;
          needSymbol := false;
-         end; {else}
+         end {if}
+      else
+         Error(42);
       end {if}
    else if class = externsy then        {check for outer decl of same object/fn}
       if table <> globalTable then begin

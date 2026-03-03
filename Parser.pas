@@ -3056,7 +3056,9 @@ var
                   end; {else}
                end; {if}
 
-            if (ip = nil) or (ip^.itype^.size = 0) then
+            if ip = nil then
+               goto 2;
+            if ip^.itype^.size = 0 then
                goto 2;
             if ip^.isForwardDeclared then
                ResolveForwardReference(ip);
@@ -3086,8 +3088,12 @@ var
                while (ip <> nil) and ip^.anonMemberField do
                   ip := ip^.next;
                end; {else}
-            if ((ip = nil) or (ip^.itype^.size = 0)) and not braces then
-               goto 2;
+            if not braces then begin
+               if ip = nil then
+                  goto 2;
+               if ip^.itype^.size = 0 then
+                  goto 2;
+               end; {if}
             if token.kind = commach then begin
                NextToken;
                if token.kind = commach then
