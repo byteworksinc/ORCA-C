@@ -4763,7 +4763,8 @@ if isFunction then begin
          end; {else}
       if cStd >= c23 then               {empty param list is a prototype in C23}
          if fnType^.parameterList = nil then
-            fnType^.prototyped := true;
+            if lp = nil then
+               fnType^.prototyped := true;
       if not fnType^.prototyped or fnType^.overrideKR then begin
          tlp := lp;
          while tlp <> nil do begin
