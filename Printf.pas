@@ -733,6 +733,9 @@ var
       begin {do_printf_format}
       state := st_text;
       if c in format_set then begin
+         if c = 'b' then
+            if cStd < c23 then
+               c := 'P';
          case c of
             'p': begin
                if has_length <> default then
@@ -740,10 +743,10 @@ var
                expect_pointer;
                end;
 
-             { %b: orca-specific - pascal string }
-            'b', 'P': begin
+             { %P: orca-specific - pascal string }
+            'P': begin
                if has_length <> default then
-                  Warning(@'length modifier may not be used with %b or %P');
+                  Warning(@'length modifier may not be used here');
                expect_pointer_to([cgByte, cgUByte], @'char');
                end;
             
@@ -799,7 +802,7 @@ var
                   end;
 
             { chars are passed as ints so %hhx can be ignored here. }
-            'd', 'i', 'o', 'x', 'X', 'u':
+            'd', 'i', 'o', 'x', 'X', 'u', 'B', 'b':
                if has_length in [l, z, t] then begin
                   expect_long;
                   end
@@ -840,7 +843,7 @@ var
    number_set := ['0' .. '9'];
    length_set := ['h', 'l', 'j', 't', 'z', 'L']; 
    flag_set := ['#', '0', '-', '+', ' '];
-   format_set := ['%', 'b', 'c', 's', 'd', 'i', 'o', 'x', 'X', 'u', 
+   format_set := ['%', 'b', 'B', 'c', 's', 'd', 'i', 'o', 'x', 'X', 'u', 
       'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G', 'n', 'p', 'P'];
 
    for i := 1 to s^.length do begin
