@@ -32,6 +32,14 @@
 {  current location.                                            }
 {                                                               }
 {                                                               }
+{  dc_ref - generate strong reference to a global label         }
+{                                                               }
+{  Gen0Name(dc_ref, name)                                       }
+{                                                               }
+{  Generates a reference to global label NAME, forcing that     }
+{  label to be linked into the executable program.              }
+{                                                               }
+{                                                               }
 {  pc_lnm - line number                                         }
 {                                                               }
 {  Gen2Name(pc_lnm, lc, flag, nil)                              }

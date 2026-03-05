@@ -593,6 +593,9 @@ if not doingFunction then begin         {if so, finish it off}
             otherwise: Error(57);
             end; {case}
       end; {if}
+   if doingMain then
+      if standardFlag <> nil then       {gen reference to flag for std version}
+         Gen0Name(dc_ref, standardFlag);
    Gen0 (dc_enp);                       {finish the segment}
    CheckGotoList;                       {make sure all labels are declared}
    while tempList <> nil do begin       {dump the local labels}

@@ -145,6 +145,7 @@ opt[pc_zxq] := 'zxq';
 opt[pc_zni] := 'zni';
 opt[pc_znl] := 'znl';
 opt[pc_znq] := 'znq';
+opt[dc_ref] := 'REF';
 end; {InitWriteCode}
 
 
@@ -345,7 +346,7 @@ with code^ do
             write('***');
          end;
 
-      pc_cup,pc_lad: begin
+      pc_cup,pc_lad,dc_ref: begin
          WriteType(optype);
          write(' ', lab^);
          end;

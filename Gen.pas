@@ -7739,6 +7739,15 @@ procedure GenTree {op: icptr};
    end; {DirEnp}
 
 
+   procedure DirRef (op: icptr);
+
+   { Generate code for a dc_ref					}
+
+   begin {DirRef}
+   GenNative(d_ref, special, 0, op^.lab, 0);
+   end; {DirRef}
+
+
    procedure DirStr (op: icptr);
 
    { Generate code for a dc_str					}
@@ -7771,6 +7780,7 @@ case op^.opcode of
    dc_loc,dc_prm: ;
    dc_glb: GenNative(d_lab, gnrLabel, op^.r, op^.lab, isPrivate*op^.q);
    dc_pin: GenNative(d_pin, special, 0, nil, 0);
+   dc_ref: DirRef(op);
    dc_str: DirStr(op);
    dc_sym: DirSym(op);
    pc_add: GenNative(d_add, genaddress, op^.q, nil, 0);

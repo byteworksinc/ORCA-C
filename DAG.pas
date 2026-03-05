@@ -423,7 +423,7 @@ procedure RemoveDeadCode (op: icptr);
 
 begin {RemoveDeadCode}
 while not (op^.next^.opcode in [dc_lab, dc_enp, dc_cns, dc_glb,
-   dc_dst, dc_str, dc_pin, pc_ent, dc_loc, dc_prm, dc_sym]) do begin
+   dc_dst, dc_str, dc_pin, pc_ent, dc_loc, dc_prm, dc_sym, dc_ref]) do begin
    op^.next := op^.next^.next;
    rescan := true;
    end; {while}
@@ -5520,7 +5520,7 @@ case code^.opcode of
    pc_gil, pc_gli, pc_gdl, pc_gld, pc_lil, pc_lli, pc_ldl, pc_lld,
    pc_lad, pc_lao, pc_lca, pc_lda, pc_ldc, pc_ldo, pc_lod, pc_nop,
    dc_cns, dc_glb, dc_dst, pc_lnm, pc_nam, pc_nat, dc_lab, pc_add,
-   pc_ujp, dc_pin, pc_ent, dc_sym, pc_fix:
+   pc_ujp, dc_pin, pc_ent, dc_ref, dc_sym, pc_fix:
       Push(code);
 
    pc_ret:

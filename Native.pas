@@ -787,6 +787,8 @@ case mode of
          blkCnt := blkCnt-2;
          segDisp := blkCnt;
          end {if}
+      else if opcode = d_ref then
+         RefName(name, 0, 0, 0)
       else if opcode = d_sym then begin
          CnOut(m_cop);
          CnOut(5);
@@ -2404,6 +2406,16 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       end; {SetDataBank}
 
 
+      procedure SetStandard;
+
+      { gen object code to set the standard to use, if needed   }
+
+      begin {SetStandard}
+      if standardFlag <> nil then
+         RefName(standardFlag, 0, 0, 0);
+      end; {SetStandard}      
+
+
    begin {RootFile}
    {open the initial object module}
    fname2.theString.theString := concat(fname1.theString.theString, '.root');
@@ -2478,6 +2490,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       RefName(initName, 0, 3, 0);
       CnOut(m_plb);
       CnOut(m_rtl);
+      SetStandard;
       isJSL := false;
       end
 
@@ -2523,6 +2536,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       RefName(@'~DAID', 0, 3, 0);
       CnOut(m_plb);
       CnOut(m_rtl);
+      SetStandard;
       isJSL := false;
       end
 
@@ -2557,6 +2571,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       RefName(openName,0,3,0);
       CnOut(m_jml);                     {clean up and return to caller}
       RefName(@'~CDEVCLEANUP', 0, 3, 0);
+      SetStandard;
       end
 
    {NBA initialization}
@@ -2570,6 +2585,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       CnOut(m_jsl);
       RefName(@'~NBASHUTDOWN', 0, 3, 0);
       CnOut(m_rtl);
+      SetStandard;
       end
 
    {XCMD initialization}
@@ -2581,6 +2597,7 @@ procedure InitFile {keepName: gsosOutStringPtr; keepFlag: integer; partial: bool
       CnOut(m_jsl);
       RefName(@'~XCMDSHUTDOWN', 0, 3, 0);
       CnOut(m_rtl);
+      SetStandard;
       end
 
    {normal program initialization}
@@ -2705,33 +2722,39 @@ var
 
 begin {RefName}
 Purge;                                  {clear any constant bytes}
-if isJSL then                           {expression header}
-   Out(243)
+if len <> 0 then begin
+   if isJSL then                        {expression header}
+      Out(243)
+   else
+      Out(235);
+   Out(len);
+   Out(131);
+   pc := pc+len;
+   end {if}
 else
-   Out(235);
-Out(len);
-Out(131);
-pc := pc+len;
+   Out(229);
 slen := length(lab^);
 Out(slen);
 for i := 1 to slen do
    Out(ord(lab^[i]));
-if disp <> 0 then begin                 {if there is a disp, add it in}
-   Out(129);
-   Out2(disp);
-   Out2(0);
-   Out(1);
-   end; {end}
-if shift <> 0 then begin                {if there is a shift, add it in}
-   Out(129);
-   Out2(shift);
-   if shift < 0 then
-      Out2(-1)
-   else
+if len <> 0 then begin
+   if disp <> 0 then begin              {if there is a disp, add it in}
+      Out(129);
+      Out2(disp);
       Out2(0);
-   Out(7);
+      Out(1);
+      end; {end}
+   if shift <> 0 then begin             {if there is a shift, add it in}
+      Out(129);
+      Out2(shift);
+      if shift < 0 then
+         Out2(-1)
+      else
+         Out2(0);
+      Out(7);
+      end; {if}
+   Out(0);                              {end of expression}
    end; {if}
-Out(0);                                 {end of expression}
 end; {RefName}
 
 end.

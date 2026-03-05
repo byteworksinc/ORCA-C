@@ -212,8 +212,9 @@ const
    d_dcb                  =    264;
    d_dcw                  =    265;
    d_dcl                  =    266;
+   d_ref                  =    267;
 
-   max_opcode             =    266;
+   max_opcode             =    267;
    
    asmFlag                =  $8000;     {or'd with opcode to indicate asm code}
 
@@ -251,7 +252,7 @@ type
        pc_xjp,pc_cup,pc_equ,pc_geq,pc_grt,pc_lda,pc_ldc,pc_ldl,pc_leq,pc_les,
        pc_lil,pc_lld,pc_lli,pc_lod,pc_neq,pc_str,pc_ujp,pc_add,pc_lnm,pc_nam,
        pc_cui,pc_lad,pc_tjp,dc_lab,pc_usr,pc_umi,pc_udi,
-       pc_uim,dc_enp,pc_stk,dc_glb,dc_dst,dc_str,pc_cop,pc_cpo,pc_tl1,
+       pc_uim,dc_enp,pc_stk,dc_glb,dc_dst,dc_ref,dc_str,pc_cop,pc_cpo,pc_tl1,
        dc_pin,pc_shl,pc_shr,pc_bnd,pc_bor,pc_bxr,pc_bnt,pc_bnl,pc_mpl,pc_dvl,
        pc_mdl,pc_sll,pc_slr,pc_bal,pc_ngl,pc_adl,pc_sbl,pc_blr,pc_blx,
        dc_sym,pc_lnd,pc_lor,pc_vsr,pc_uml,pc_udl,pc_ulm,pc_pop,pc_gil,
@@ -373,6 +374,7 @@ var
    toolParms: boolean;                  {generate tool format parameters?}
    volatile: boolean;			{has a volatile qualifier been used?}
    hasVarargsCall: boolean;             {does current function call any varargs fns?}
+   standardFlag: stringPtr;             {flag indicating language standard}
    
                                         {desk accessory variables}
                                         {------------------------}
@@ -882,6 +884,10 @@ rtl := false;                           {return with a ~QUIT}
 floatCard := 0;                         {use SANE}
 floatSlot := 0;                         {default to slot 0}
 stringSize := 0;			{no strings, yet}
+if cStd >= c23 then                     {init label for standard flag}
+   standardFlag := @'~C23ORLATER'
+else
+   standardFlag := nil;
 
 rangeCheck := false;                    {don't generate range checks}
 profileFlag := false;                   {don't generate profiling code}
