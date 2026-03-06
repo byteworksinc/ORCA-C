@@ -3651,6 +3651,7 @@ var
          tp: tokenPtr;                  {work pointers}
          fp, tfp: fmtArgPtr;
          fmt: fmt_type;
+         argString: longStringPtr;
 
 
          procedure Reverse;
@@ -3693,7 +3694,7 @@ var
       fmt := fmt_none;
       fp := nil;
 
-      if (lint & lintPrintf) <> 0 then
+      if adjustFormat_b or ((lint & lintPrintf) <> 0) then
          if fType^.varargs then
             if not indirect then
                if ftree^.id^.storage <> private then
@@ -3717,7 +3718,7 @@ var
                Error(85);
          end; {if}
 
-        tp := parms;
+      tp := parms;
 
       {generate the parameters}
       numParms := 0;
@@ -3725,6 +3726,14 @@ var
       doDispose := false;
       while tp <> nil do begin
          if tp^.middle <> nil then begin
+            if fmt <> fmt_none then
+               if adjustFormat_b then
+                  if tp^.middle^.token.kind = stringconst then begin
+                     argString := pointer(Malloc(
+                        tp^.middle^.token.sval^.length + sizeof(integer)));
+                     CopyLongString(argString,tp^.middle^.token.sval);
+                     tp^.middle^.token.sval := argString;
+                     end; {if}
             GenerateCode(tp^.middle);
             if expressionType^.kind in [structType,unionType,definedType]
                then begin

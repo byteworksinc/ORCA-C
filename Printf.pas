@@ -130,67 +130,69 @@ var
       ch: char;
 
    begin {Warning}
-   if error_count = 0 then begin
-      WriteLine;
-      Error(124);
-      WriteLine;
-      if s <> nil then begin
-         Write('   > "');
-         for i := 1 to s^.length-1 do begin
-            ch := s^.str[i];
-            if ch in [' '..'~'] then begin
-               if ch in ['"','\','?'] then
-                  write('\');
-               write(ch);
-               end {if}
-            else
-               case ord(ch) of
-                  7: write('\a');
-                  8: write('\b');
-                  9: write('\t');
-                  10: write('\n');
-                  11: write('\v');
-                  12: write('\f');
-                  13: write('\r');
-                  otherwise: begin
+   if (lint & lintPrintf) <> 0 then begin
+      if error_count = 0 then begin
+         WriteLine;
+         Error(124);
+         WriteLine;
+         if s <> nil then begin
+            Write('   > "');
+            for i := 1 to s^.length-1 do begin
+               ch := s^.str[i];
+               if ch in [' '..'~'] then begin
+                  if ch in ['"','\','?'] then
                      write('\');
-                     write((ord(ch)>>6):1);
-                     write(((ord(ch)>>3) & $0007):1);
-                     write((ord(ch) & $0007):1);
-                     end;
-                  end; {case}
-            end; {for}
-         WriteLn('"');
+                  write(ch);
+                  end {if}
+               else
+                  case ord(ch) of
+                     7: write('\a');
+                     8: write('\b');
+                     9: write('\t');
+                     10: write('\n');
+                     11: write('\v');
+                     12: write('\f');
+                     13: write('\r');
+                     otherwise: begin
+                        write('\');
+                        write((ord(ch)>>6):1);
+                        write(((ord(ch)>>3) & $0007):1);
+                        write((ord(ch) & $0007):1);
+                        end;
+                     end; {case}
+               end; {for}
+            WriteLn('"');
+            end; {if}
          end; {if}
-      end; {if}
-   error_count := error_count + 1;
-   Write('     ');
-   if offset = 0 then
-      if s <> nil then begin
-         offset := s^.length-1;
-         write(' ');
-         end; {if}
-   if s <> nil then begin
-      if offset > 0 then begin
-         if offset > s^.length-1 then
+      error_count := error_count + 1;
+      Write('     ');
+      if offset = 0 then
+         if s <> nil then begin
             offset := s^.length-1;
-         for i := 1 to offset do begin
-            ch := s^.str[i];
-            if ch in [' '..'~'] then begin
-               if ch in ['"','\','?'] then
+            write(' ');
+            end; {if}
+      if s <> nil then begin
+         if offset > 0 then begin
+            if offset > s^.length-1 then
+               offset := s^.length-1;
+            for i := 1 to offset do begin
+               ch := s^.str[i];
+               if ch in [' '..'~'] then begin
+                  if ch in ['"','\','?'] then
+                     write(' ');
                   write(' ');
-               write(' ');
-               end {if}
-            else
-               case ord(ch) of
-                  7,8,9,10,11,12,13: write('  ');
-                  otherwise: write('    ');
-                  end; {case}
-            end; {for}
+                  end {if}
+               else
+                  case ord(ch) of
+                     7,8,9,10,11,12,13: write('  ');
+                     otherwise: write('    ');
+                     end; {case}
+               end; {for}
+            end; {if}
+         Write('^ ');
          end; {if}
-      Write('^ ');
+      WriteLn(msg^);
       end; {if}
-   WriteLn(msg^);
    end; {Warning}
 
 
@@ -221,6 +223,14 @@ var
    dispose(msg);
    end; {WarningExtraArgs}
 
+
+   function peekType: typePtr;
+   { Return the token type without advancing the linked list. }
+   begin {peekType}
+   peekType := nil;
+   if args <> nil then
+      peekType := args^.ty;
+   end; {peekType}
 
 
    function popType: typePtr;
@@ -730,12 +740,23 @@ var
       procedure do_printf_format;
       { check an individual printf argument. }
 
+      var
+         argType: typePtr;
+
       begin {do_printf_format}
       state := st_text;
       if c in format_set then begin
-         if c = 'b' then
+         if c = 'b' then begin
+            if adjustFormat_b then
+               if has_length = default then begin
+                  argType := peekType;
+                  if argType <> nil then
+                     if argType^.kind in [pointerType,arrayType] then
+                        s^.str[i] := 'P';
+                  end;
             if cStd < c23 then
                c := 'P';
+            end; {if}
          case c of
             'p': begin
                if has_length <> default then

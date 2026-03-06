@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 57;                 {version number of .sym file format}
+   symFileVersion = 58;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -1088,7 +1088,8 @@ procedure EndInclude {chPtr: ptr};
                   
                   p_extensions:
                      WriteByte(ord(extendedKeywords)
-                        | (ord(extendedParameters) << 1));
+                        | (ord(extendedParameters) << 1)
+                        | (ord(adjustFormat_b) << 2));
 
                   end; {case}
                end; {if}
@@ -1889,6 +1890,7 @@ var
             i := ReadByte;
             extendedKeywords := odd(i);
             extendedParameters := odd(i >> 1);
+            adjustFormat_b := odd(i >> 2);
             SetKeywordMask;
             end;
 

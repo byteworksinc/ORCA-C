@@ -107,6 +107,7 @@ var
                                         {------------------------}
    extendedKeywords: boolean;           {recognize ORCA/C-specific keywords?}
    extendedParameters: boolean;         {change all floating params to extended?}
+   adjustFormat_b: boolean;             {adjust format 'b' to 'P' for pstrings?}
 
 {---------------------------------------------------------------}
 
@@ -4276,11 +4277,13 @@ if ch in ['a','d','e','i','l','p','u','w'] then begin
                      { extensions bits:                            }
                      {     1 - extended ORCA/C keywords            }
                      {     2 - change floating params to extended  }
+                     {     3 - adjust 'b' conversions for pstrings }
                      FlagPragmas(p_extensions);
                      NumericDirective;
                      val := long(expressionValue).lsw;
                      extendedKeywords := odd(val);
                      extendedParameters := odd(val >> 1);
+                     adjustFormat_b := odd(val >> 2);
                      SetKeywordMask;
                      if token.kind <> eolsy then
                         Error(11);
@@ -5272,6 +5275,7 @@ looseTypeChecks := true;                {loosen some standard type checks}
 strictC23Prototypes := false;           {loosen C23 prototype rules}
 extendedKeywords := true;               {allow extended ORCA/C keywords}
 extendedParameters := true;             {treat all floating params as extended}
+adjustFormat_b := true;                 {adjust format 'b' to 'P' for pstrings}
 foundFunction := false;                 {no functions found so far}
 fileList := nil;                        {no included files}
 gettingFileName := false;               {not in GetFileName}
@@ -5683,6 +5687,7 @@ if cStd < c99 then begin
 if strictMode then begin
    extendedKeywords := false;
    extendedParameters := false;
+   adjustFormat_b := false;
    looseTypeChecks := false;
    if cStd >= c99 then
       lint := lint | lintC99Syntax;
