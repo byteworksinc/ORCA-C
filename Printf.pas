@@ -469,6 +469,7 @@ var
       var
          expected: types;
          name: stringPtr;
+         argType: typePtr;
 
       begin {do_scanf_format}
 
@@ -476,7 +477,20 @@ var
 
       state := st_text;
       if c in format_set then begin
-
+         if c = 'b' then begin
+            if adjustFormat_b then
+               if has_length = default then begin
+                  argType := peekType;
+                  if argType <> nil then
+                     if argType^.kind in [pointerType,arrayType] then
+                        if argType^.ptype^.kind = scalarType then
+                           if argType^.ptype^.cType in [ctChar,ctUChar,ctSChar]
+                              then
+                              s^.str[i] := 'P';
+                  end;
+            if cStd < c23 then
+               c := 'P';
+            end; {if}
          case c of
 
             '%': begin
@@ -485,9 +499,9 @@ var
                has_suppress := true;
                end;
 
-            'b', 'P': begin
+            'P': begin
                if has_length <> default then
-                  Warning(@'length modifier may not be used with %b or %P');
+                  Warning(@'length modifier may not be used here');
                expected := [cgByte, cgUByte];
                name := @'char';
                end;
@@ -512,7 +526,7 @@ var
                if c = '[' then state := st_set_1;
                end;
 
-            'd', 'i', 'u', 'o', 'x', 'X': begin
+            'd', 'i', 'u', 'o', 'x', 'X', 'b': begin
                case has_length of
                   hh: begin
                      expected := [cgByte, cgUByte];
