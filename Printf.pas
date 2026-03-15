@@ -53,13 +53,16 @@ const
    feature_s_long = false;
    feature_n_size = true;
    feature_scanf_ld = true;
+   max_w_width = 64;
 
 type
-   length_modifier = (default, h, hh, l, ll, j, z, t, ld);
+   length_modifier = (default, h, hh, l, ll, j, z, t, ld, w, wf);
 
    state_enum = (st_text, st_flag, st_width,
       st_precision_dot, st_precision, st_precision_number,
-      st_length, st_length_h, st_length_l, st_format,
+      st_length, st_length_h, st_length_l, 
+      st_length_w, st_length_wf, st_length_w_digits,
+      st_format,
       { scanf }
       st_suppress, st_set, st_set_1, st_set_2,
       st_error);
@@ -108,6 +111,7 @@ var
    s: longstringPtr;
    state: state_enum;
    has_length: length_modifier;
+   w_width: integer;
    error_count: integer;
    expected: integer;
    offset: integer;
@@ -437,9 +441,34 @@ var
       'z': has_length := z;
       't': has_length := t;
       'L': has_length := ld;
+      'w': begin
+         has_length := w;
+         state := st_length_w;
+         end;
       end; {case}
    end; {do_length}
 
+
+   procedure resolve_w_length;
+   { resolve wN or wfN length modifier to another equivalent one }
+   { and report errors.                                          }
+
+   begin {resolve_w_length}
+   if has_length in [w,wf] then
+      case w_width of
+         8:  if has_length = wf then
+                has_length := h
+             else
+                has_length := hh;
+         16: has_length := h;
+         32: has_length := z;
+         64: has_length := ll;
+         otherwise: begin
+            Warning(@'unsupported width in ''w'' or ''wf'' modifier');
+            has_length := default;
+            end;
+         end; {case}
+   end; {resolve_w_length}
 
 
    procedure FormatScanf;
@@ -473,6 +502,7 @@ var
 
       begin {do_scanf_format}
 
+      resolve_w_length;
       name := nil;
 
       state := st_text;
@@ -657,7 +687,7 @@ var
    offset := 0;
 
    number_set := ['0' .. '9'];
-   length_set := ['h', 'l', 'j', 't', 'z', 'L']; 
+   length_set := ['h', 'l', 'j', 't', 'z', 'L', 'w']; 
    flag_set := ['#', '0', '-', '+', ' '];
    format_set := ['%', '[', 'b', 'c', 's', 'd', 'i', 'o', 'x', 'X', 'u', 
       'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G', 'n', 'p', 'P'];
@@ -702,6 +732,40 @@ var
                state := st_format;
                if not feature_ll then
                   Warning(@'ll modifier is not currently supported');
+               end {if}
+            else do_scanf_format;
+
+         st_length_w: { f?[1-9][0-9]* format }
+            if c = 'f' then begin
+               has_length := wf;
+               state := st_length_wf;
+               end {if}
+            else if c in ['1'..'9'] then begin
+               w_width := ord(c) - ord('0');
+               state := st_length_w_digits;
+               end {else if}
+            else begin
+               Warning(@'''w'' length modifier must include width');
+               has_length := default;
+               do_scanf_format;
+               end; {else}
+
+         st_length_wf: { [1-9][0-9]* format }
+            if c in ['1'..'9'] then begin
+               w_width := ord(c) - ord('0');
+               state := st_length_w_digits;
+               end {else if}
+            else begin
+               Warning(@'''wf'' length modifier must include width');
+               has_length := default;
+               do_scanf_format;
+               end; {else}
+
+         st_length_w_digits: { [0-9]* format }
+            if c in ['0'..'9'] then begin
+               w_width := w_width * 10 + (ord(c) - ord('0'));
+               if w_width > max_w_width then
+                  w_width := max_w_width + 1;   {avoid overflows}
                end {if}
             else do_scanf_format;
 
@@ -758,6 +822,7 @@ var
          argType: typePtr;
 
       begin {do_printf_format}
+      resolve_w_length;
       state := st_text;
       if c in format_set then begin
          if c = 'b' then begin
@@ -876,7 +941,7 @@ var
    offset := 0;
 
    number_set := ['0' .. '9'];
-   length_set := ['h', 'l', 'j', 't', 'z', 'L']; 
+   length_set := ['h', 'l', 'j', 't', 'z', 'L', 'w']; 
    flag_set := ['#', '0', '-', '+', ' '];
    format_set := ['%', 'b', 'B', 'c', 's', 'd', 'i', 'o', 'x', 'X', 'u', 
       'f', 'F', 'e', 'E', 'a', 'A', 'g', 'G', 'n', 'p', 'P'];
@@ -960,6 +1025,40 @@ var
                if not feature_ll then
                   Warning(@'ll modifier is not currently supported');
                end
+            else do_printf_format;
+
+         st_length_w: { f?[1-9][0-9]* format }
+            if c = 'f' then begin
+               has_length := wf;
+               state := st_length_wf;
+               end {if}
+            else if c in ['1'..'9'] then begin
+               w_width := ord(c) - ord('0');
+               state := st_length_w_digits;
+               end {else if}
+            else begin
+               Warning(@'''w'' length modifier must include width');
+               has_length := default;
+               do_printf_format;
+               end; {else}
+
+         st_length_wf: { [1-9][0-9]* format }
+            if c in ['1'..'9'] then begin
+               w_width := ord(c) - ord('0');
+               state := st_length_w_digits;
+               end {else if}
+            else begin
+               Warning(@'''wf'' length modifier must include width');
+               has_length := default;
+               do_printf_format;
+               end; {else}
+
+         st_length_w_digits: { [0-9]* format }
+            if c in ['0'..'9'] then begin
+               w_width := w_width * 10 + (ord(c) - ord('0'));
+               if w_width > max_w_width then
+                  w_width := max_w_width + 1;   {avoid overflows}
+               end {if}
             else do_printf_format;
 
          st_format: do_printf_format;
