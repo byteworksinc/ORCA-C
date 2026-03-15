@@ -190,7 +190,7 @@ Furthermore, it it now permitted to redeclare an enumeration type and its enumer
 Library Updates
 ---------------
 
-ORCA/C now includes some new library functions and features specified by the C23 standards:
+ORCA/C now includes some new library functions and features specified by the C23 standard:
 
 1.  The <limits.h> and <stdint.h> headers contain new *_WIDTH macros, giving the width (number of value bits) of various integer types.
 
@@ -245,6 +245,31 @@ The free_sized function is like free, except that it includes a parameter giving
 
 will have the type const void *, rather than void *.  This avoids the previous situation where these functions would return a pointer into the same array passed to them but would discard any const qualifier that might apply to the data in that array.  This behavior is implemented via macros; if the use of a macro is suppressed to access the actual functions, they will have the same return types as previously and will not be generic functions.
 
+9.  The fprintf() and fscanf() families of functions now support some new and updated conversion specifiers and length modifiers:
+
+In programs compiled using C23 language modes, the 'b' conversion specifiers have a new meaning in the fprintf and fscanf families of functions.  These conversion specifiers are now used for output and input of integers in binary format.  The corresponding parameter should be an unsigned integer (for fprintf) or a pointer to an unsigned integer (for fscanf).  The integer type to use defaults to unsigned int but may be modified by length modifiers in the same way as for 'x' conversions.  If the precision is specified in fprintf 'b' conversions, it works the same way as for 'x' conversions.  If the # flag is used in fprintf 'b' conversions, the number is preceded by a leading 0b unless the value is 0; the + and space flags are not used.  fscanf 'b' conversions accept an optional leading sign, then an optional leading 0b or 0B, then a sequence of binary digits (0 or 1).
+
+Note that this differs from the historical ORCA/C usage of 'b' conversion specifiers for output and input of strings with a leading length byte (p-strings).  The older behavior is still available for programs compiled using C17 or earlier language modes, but to support C23 modes code should be changed to use 'P' conversion specifiers instead.  These work exactly like the historical ORCA/C 'b' conversion specifiers, even in C23 modes.
+
+To enhance compatibility with existing code using the historical ORCA/C 'b' conversions, a new #pragma extensions flag (bit 2) has also been introduced.  This will analyze the format strings and arguments passed to the fprintf and fscanf families of functions and identify places where 'b' conversions are used for p-strings.  When it finds such usages, it will automatically change the 'b' to a 'P' in the format string.  This allows most code relying on the historical 'b' conversions to continue working without changes; however, it only works when the function is called directly (not via a function pointer) and the format string is a string constant.  #pragma extensions bit 2 is enabled by default in c23compat mode.  (If #pragma lint bit 4 is enabled in C23 language modes, it will still produce lint messages about any 'b' conversions used for p-strings.)
+
+The 'B' conversion specifier is also now supported in the fprintf family of functions.  This is identical to the C23 'b' conversion specifier, except that the prefix (if called for using the # flag) will be 0B rather than 0b.  The 'B' conversion specifier is an optional feature of C23, so it may not be available in some other implementations, but in ORCA/C it is always available, even in pre-C23 language modes.
+
+In programs compiled using C23 language modes, the 'i' conversion specifier in the fscanf family of functions has also been updated to accept binary numbers identified by a 0b or 0B prefix, in addition to the decimal, hexadecimal, and octal formats it already accepted.
+
+In addition to the new and updated conversion specifiers, several new length modifiers are also now supported in the fprintf and fscanf families of functions.  These length modifiers consist of 'w' or 'wf' followed by a number, and they correspond to integer types defined in <stdint.h>, as follows:
+
+   w8 corresponds to int8_t, int_least8_t, uint8_t, or uint_least8_t.
+   w16 corresponds to int16_t, int_least16_t, uint16_t, or uint_least16_t.
+   w32 corresponds to int32_t, int_least32_t, uint32_t, or uint_least32_t.
+   w64 corresponds to int64_t, int_least64_t, uint64_t, or uint_least64_t.
+   wf8 corresponds to int_fast8_t or uint_fast8_t.
+   wf16 corresponds to int_fast16_t or uint_fast16_t.
+   wf32 corresponds to int_fast32_t or uint_fast32_t.
+   wf64 corresponds to int_fast64_t or uint_fast64_t.
+
+These may be used with d, i, o, u, x, X, B, or (in C23 modes) b conversions in the fprintf family of functions, in which case the corresponding argument must have one of the indicated types.  They may also be used with n conversions in the fprintf family of functions, or with d, i, o, u, x, X, n, or (in C23 modes) b conversions in the fscanf family of functions; in these cases, the corresponding argument must be a pointer to one of the indicated types.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
@@ -276,3 +301,5 @@ will have the type const void *, rather than void *.  This avoids the previous s
    }
 
 11. The type of an expression using the , operator should be exactly that of its right operand, not subject to the unary conversion rules (integer promotions).
+
+12. In the scanf() family of functions, if the input to an 'i' conversion was in hexadecimal format (starting with 0x or 0X), the next character after the number might be altered while processing that conversion.  This might cause it not to properly match the next element of the scanf format string (if any), or might cause a subsequent input operation to read the wrong character.
