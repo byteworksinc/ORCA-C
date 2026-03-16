@@ -106,6 +106,40 @@
 #define PRIXMAX         "jX"    /* uintmax_t */
 #define PRIXPTR         "lX"    /* uintptr_t */
 
+#if __STDC_VERSION__ >= 202311L
+#define PRIb8           "hhb"   /* uint8_t */
+#define PRIb16          "b"     /* uint16_t */
+#define PRIb32          "lb"    /* uint32_t */
+#define PRIb64          "llb"   /* uint64_t */
+#define PRIbLEAST8      "hhb"   /* uint_least8_t */
+#define PRIbLEAST16     "b"     /* uint_least16_t */
+#define PRIbLEAST32     "lb"    /* uint_least32_t */
+#define PRIbLEAST64     "llb"   /* uint_least64_t */
+#define PRIbFAST8       "b"     /* uint_fast8_t */
+#define PRIbFAST16      "b"     /* uint_fast16_t */
+#define PRIbFAST32      "lb"    /* uint_fast32_t */
+#define PRIbFAST64      "llb"   /* uint_fast64_t */
+#define PRIbMAX         "jb"    /* uintmax_t */
+#define PRIbPTR         "lb"    /* uintptr_t */
+#endif
+
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define PRIB8           "hhB"   /* uint8_t */
+#define PRIB16          "B"     /* uint16_t */
+#define PRIB32          "lB"    /* uint32_t */
+#define PRIB64          "llB"   /* uint64_t */
+#define PRIBLEAST8      "hhB"   /* uint_least8_t */
+#define PRIBLEAST16     "B"     /* uint_least16_t */
+#define PRIBLEAST32     "lB"    /* uint_least32_t */
+#define PRIBLEAST64     "llB"   /* uint_least64_t */
+#define PRIBFAST8       "B"     /* uint_fast8_t */
+#define PRIBFAST16      "B"     /* uint_fast16_t */
+#define PRIBFAST32      "lB"    /* uint_fast32_t */
+#define PRIBFAST64      "llB"   /* uint_fast64_t */
+#define PRIBMAX         "jB"    /* uintmax_t */
+#define PRIBPTR         "lB"    /* uintptr_t */
+#endif
+
 /* fscanf macros for signed integers */
 
 #define SCNd8           "hhd"   /* int8_t */
@@ -184,6 +218,23 @@
 #define SCNxFAST64      "llx"   /* uint_fast64_t */
 #define SCNxMAX         "jx"    /* uintmax_t */
 #define SCNxPTR         "lx"    /* uintptr_t */
+
+#if __STDC_VERSION__ >= 202311L
+#define SCNb8           "hhb"   /* uint8_t */
+#define SCNb16          "hb"    /* uint16_t */
+#define SCNb32          "lb"    /* uint32_t */
+#define SCNb64          "llb"   /* uint64_t */
+#define SCNbLEAST8      "hhb"   /* uint_least8_t */
+#define SCNbLEAST16     "hb"    /* uint_least16_t */
+#define SCNbLEAST32     "lb"    /* uint_least32_t */
+#define SCNbLEAST64     "llb"   /* uint_least64_t */
+#define SCNbFAST8       "hb"    /* uint_fast8_t */
+#define SCNbFAST16      "hb"    /* uint_fast16_t */
+#define SCNbFAST32      "lb"    /* uint_fast32_t */
+#define SCNbFAST64      "llb"   /* uint_fast64_t */
+#define SCNbMAX         "jb"    /* uintmax_t */
+#define SCNbPTR         "lb"    /* uintptr_t */
+#endif
 
 #if defined(__ORCAC_HAS_LONG_LONG__) || __STDC_VERSION__ >= 199901L
 typedef struct {intmax_t quot,rem;} imaxdiv_t;
