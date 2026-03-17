@@ -272,6 +272,30 @@ These may be used with d, i, o, u, x, X, B, or (in C23 modes) b conversions in t
 
 10. In programs compiled using C23 language modes, the strto(u)l, strto(u)ll, strtoimax, and strtoumax functions have been updated to better support numbers in binary (base two) format.  If the base parameter is 0, they can now accept binary numbers identified by a 0b or 0B prefix, in addition to the decimal, hexadecimal, and octal formats that were already accepted.  An optional 0b or 0B prefix is also now permitted if the base parameter is 2.
 
+11. The timespec_getres function has been added:
+
+#include <time.h>
+int timespec_getres(struct timespec *ts, int base);
+
+This function sets the structure *ts to represent the resolution of the time base indicated by the base parameter (which should be a macro value defined in <time.h>).  That is, it indicates how frequently the time value for that time base will be updated.  If the specified time base is supported, it returns the value of base; otherwise, it returns 0.
+
+The only time base supported by ORCA/C is TIME_UTC, which has a resolution of one second.  The time in that time base can be obtained using timespec_get(); see its documentation for more information.
+
+12. The localtime_r and gmtime_r functions have been added:
+
+#include <time.h>
+struct tm *localtime_r(const time_t *t, struct tm *tmptr);
+struct tm *gmtime_r(const time_t *t, struct tm *tmptr);
+
+These are the same as localtime and gmtime, except that they write the broken-down time to *tmptr, rather than to an internal static buffer.  They return tmptr.
+
+13. The timegm function has been added:
+
+#include <time.h>
+time_t timegm(struct tm *tmptr);
+
+This is similar to mktime, except that the input time structure is taken as representing UTC time rather than local time.  By default, ORCA/C assumes local time is the same as UTC time, so timegm will return the same value as mktime.  If __useTimeTool has been set to a non-zero value, ORCA/C will instead use the third-party Time Tool Set to get the offset between local time and UTC time and adjust the returned value accordingly.  See the description of __useTimeTool for more information about the Time Tool Set.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
@@ -307,3 +331,8 @@ These may be used with d, i, o, u, x, X, B, or (in C23 modes) b conversions in t
 12. In the scanf() family of functions, if the input to an 'i' conversion was in hexadecimal format (starting with 0x or 0X), the next character after the number might be altered while processing that conversion.  This might cause it not to properly match the next element of the scanf format string (if any), or might cause a subsequent input operation to read the wrong character.
 
 13. In the strto(u)l, strto(u)ll, strtoimax, or strtoumax functions, if base is 0 or 16 and the numeric part of the string (after any leading white space and/or sign) starts with 0x or 0X but is not followed by a hexadecimal digit, only the 0 should be taken as part of the number.  Thus, the result should be 0, errno should not be set (this is not an error), and if the second parameter (ptr) is non-null, *ptr should be set to point to the x or X.
+
+14. The localtime() function might not set the tm_isdst field correctly in programs that use the large memory model.
+
+15. The localtime(), gmtime(), and mktime() functions were unnecessarily slow.  They are now significantly faster.
+

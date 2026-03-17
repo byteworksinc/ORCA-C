@@ -61,9 +61,19 @@ char           *ctime(const time_t *);
 double          difftime(time_t, time_t);
 struct tm      *gmtime(const time_t *);
 struct tm      *localtime(const time_t *);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+struct tm      *gmtime_r(const time_t *, struct tm *);
+struct tm      *localtime_r(const time_t *, struct tm *);
+#endif
 time_t          mktime(struct tm *);
 size_t          strftime(char *, size_t, const char *, const struct tm *);
 time_t          time(time_t *);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+time_t          timegm(struct tm *);
+#endif
 int             timespec_get(struct timespec *, int);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+int             timespec_getres(struct timespec *, int);
+#endif
 
 #endif
