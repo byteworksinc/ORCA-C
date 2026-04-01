@@ -8,3 +8,7 @@
 {1} c23string.c
 {1} c23nullptr.c
 {1} c23enum.c
+{1} c23printf.c
+{1} c23scanf.c
+{1} c23strto.c
+{1} c23time.c
