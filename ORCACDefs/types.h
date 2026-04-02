@@ -30,13 +30,13 @@
 #ifndef TRUE
 #define TRUE 1
 #endif
-#ifndef true
+#if !defined(true) && __STDC_VERSION__ < 202311L
 #define true 1
 #endif
 #ifndef FALSE
 #define FALSE 0
 #endif
-#ifndef false
+#if !defined(false) && __STDC_VERSION__ < 202311L
 #define false 0
 #endif
 
