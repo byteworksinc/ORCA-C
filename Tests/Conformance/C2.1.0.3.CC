@@ -7,6 +7,7 @@ int main (void)
   {
    char a;
 
+#if __STDC_VERSION__ < 202311L
    a = '??=';                          /* ??= is '#' */
    if (a != '#')
        goto Fail;
@@ -42,6 +43,7 @@ int main (void)
    a = '??>';                          /* ??> is '}' */
    if (a != '}')
        goto Fail;
+#endif
 
    printf ("Passed Conformance Test 2.1.0.3\n");
    return 0;

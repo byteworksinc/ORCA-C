@@ -9,8 +9,13 @@ int main (void)
   {
    char a [] = "??=??/boh??'??!??-??(??<??)??>boy";
 
+#if __STDC_VERSION__ < 202311L
    if ((strcmp (a, "#\boh^|~[{]}boy")) != 0)
        goto Fail;
+#else
+   if ((strcmp (a, "?" "?=?" "?/boh?" "?'?" "?!?" "?-?" "?(?" "?<?" "?)?" "?>boy")) != 0)
+       goto Fail;
+#endif
 
    printf ("Passed Conformance Test 2.1.0.4\n");
    return 0;

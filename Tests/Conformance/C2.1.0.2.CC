@@ -4,6 +4,8 @@
 
 int printf(const char *, ...);
 
+#if __STDC_VERSION__ < 202311L
+
 ??=define ten 10                       /* ??= is '#' */
 
 int main (void)
@@ -43,3 +45,12 @@ int main (void)
 Fail:
    printf ("Failed Conformance Test 2.1.0.2\n");
   ??>                                  /* ??> is '}' */
+
+#else
+
+int main (void)
+  {
+  printf ("Passed Conformance Test 2.1.0.2\n");
+  }
+
+#endif
