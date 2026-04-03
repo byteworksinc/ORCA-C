@@ -4903,8 +4903,11 @@ case optype of
 	 if op^.opcode = pc_str then
 	    gLong.preference :=
                A_X+onStack+inPointer+localAddress+globalLabel+constant
-	 else
-	    gLong.preference := onStack;
+         else {if op^.opcode = pc_cop then}
+            if (A_X & gLong.preference) <> 0 then
+               gLong.preference := A_X
+            else
+               gLong.preference := onStack;
 	 GenTree(op^.left);
 	 case gLong.where of
 
