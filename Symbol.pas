@@ -100,11 +100,6 @@ var
    table: symbolTablePtr;               {current symbol table}
    globalTable: symbolTablePtr;         {global symbol table}
    functionTable: symbolTablePtr;       {table for top level of current function}
-
-                                        {output from GenParameters}
-   lastParameterLLN: integer;           {label number of last parameter (0 if none)}
-   lastParameterSize: integer;          {size of last parameter}
-
    treatNoParmsFnAsPrototyped: boolean; {force () functions to be treated as prototyped?}
 
 {---------------------------------------------------------------}
@@ -158,10 +153,6 @@ procedure GenParameters (pp: parameterPtr);
 {								}
 { parameters:							}
 {    pp - pointer to first parameter				}
-{                                                               }
-{ variables:                                                    }
-{     lastParameterLLN - label number of last parameter         }
-{     lastParameterSize - size of last parameter                }
           
 
 procedure GenSymbols (sym: symbolTablePtr; doGlobals: boolean);
@@ -1372,10 +1363,6 @@ procedure GenParameters {pp: parameterPtr};
 {								}
 { parameters:							}
 {    pp - pointer to first parameter				}
-{                                                               }
-{ variables:                                                    }
-{     lastParameterLLN - label number of last parameter         }
-{     lastParameterSize - size of last parameter                }
 
 var
    i: 0..hashSize;                      {loop variable}
@@ -1383,10 +1370,8 @@ var
    size: integer;                       {size of the parameter}
    sp: identPtr;			{symbol pointer}
    tk: tokenType;			{symbol name token}
-   first: boolean;                      {first iteration of loop over params?}
 
 begin {GenParameters}
-first := true;
 if pp <> nil then begin			{prototyped parameters}
    tk.kind := ident;
    tk.numString := nil;
@@ -1414,11 +1399,6 @@ if pp <> nil then begin			{prototyped parameters}
                end; {if}
 	 Gen3(dc_prm, pln, size, sp^.pdisp);
 	 end; {else}
-      if first then begin
-         first := false;
-         lastParameterLLN := pln;
-         lastParameterSize := size;
-         end; {if}
       pp := pp^.next;
       end; {while}
    end {if}
@@ -1444,19 +1424,10 @@ else begin				{K&R parameters}
                      end; {if}
                Gen3(dc_prm, sp^.lln, size, sp^.pdisp);
                end; {else}
-            if first then begin
-               first := false;
-               lastParameterLLN := pln;
-               lastParameterSize := size;
-               end; {if}
             end; {if}
 	 sp := sp^.next;
 	 end; {while}
       end; {for}
-   if first then begin
-      lastParameterLLN := 0;
-      lastParameterSize := 0;
-      end; {if}
    end; {else}
 end; {GenParameters}
 

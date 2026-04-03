@@ -497,6 +497,14 @@
 {  value being loaded.						}
 {                                                               }
 {                                                               }
+{  pc_lva - load variable arguments address                     }
+{                                                               }
+{  Gen0(pc_lva)                                                 }
+{                                                               }
+{  Loads the starting address of the variable part of the       }
+{  of the parameter list (corresponding to ...).                }
+{                                                               }
+{                                                               }
 {  pc_mod - integer remainder                                   }
 {  pc_uim - unsigned integer modulus/remainder                  }
 {  pc_mdl - long remainder                                      }

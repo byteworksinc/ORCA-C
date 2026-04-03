@@ -6770,6 +6770,27 @@ procedure GenTree {op: icptr};
    end; {GenLorLnd}
 
 
+   procedure GenLva;
+
+   { Generate code for a pc_lva					}
+
+   begin {GenLva}
+   GenImplied(m_tdc);
+   GenImplied(m_clc);
+   GenNative(m_adc_imm, immediate, localSize + parameterSize + returnSize + 1,
+      nil, 0);
+   if (A_X & gLong.preference) <> 0 then begin
+      gLong.where := A_X;
+      GenNative(m_ldx_imm, immediate, 0, nil, 0);
+      end {else if}
+   else begin
+      gLong.where := onStack;
+      GenNative(m_pea, immediate, 0, nil, 0);
+      GenImplied(m_pha);
+      end; {else}
+   end; {GenLva}
+
+
    procedure GenMov (op: icptr; duplicate: boolean);
 
    { Generate code for a pc_mov					}
@@ -7822,6 +7843,7 @@ case op^.opcode of
    pc_lnm: GenLnm(op);
    pc_lod: GenLod(op);  
    pc_lor,pc_lnd: GenLorLnd(op);
+   pc_lva: GenLva;
    pc_mov: GenMov(op, true);
    pc_mpi,pc_umi: GenMpi(op);
    pc_nam: GenNam(op);

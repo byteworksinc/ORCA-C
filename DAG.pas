@@ -2801,7 +2801,7 @@ case op^.opcode of
    pc_tri, pc_cup, pc_cui:
       TypeOf := op^.optype;
 
-   pc_lad, pc_lao, pc_lca, pc_lda, pc_psh, pc_ixa:
+   pc_lad, pc_lao, pc_lca, pc_lda, pc_lva, pc_psh, pc_ixa:
       TypeOf := cgULong;
 
    pc_nop, pc_bnt, pc_ngi, pc_not, pc_adi, pc_and, pc_lnd, pc_bnd,
@@ -4615,7 +4615,7 @@ var
         	  [pc_adi,pc_adl,pc_adr,pc_and,pc_lnd,pc_bnd,pc_bal,
                    pc_bnt,pc_bnl,pc_bor,pc_blr,pc_bxr,pc_blx,pc_bno,
                    pc_dec,pc_dvi,pc_udi,pc_dvl,pc_udl,pc_dvr,pc_equ,pc_neq,
-                   pc_grt,pc_les,pc_geq,pc_leq,pc_inc,pc_ior,pc_lor,
+                   pc_grt,pc_les,pc_geq,pc_leq,pc_inc,pc_ior,pc_lor,pc_lva,
                    pc_ixa,pc_lad,pc_lao,pc_lca,pc_lda,pc_ldc,pc_mod,pc_uim,
                    pc_mdl,pc_ulm,pc_mpi,pc_umi,pc_mpl,pc_uml,pc_mpr,pc_ngi,
                    pc_ngl,pc_ngr,pc_not,pc_pop,pc_sbi,pc_sbl,pc_sbr,
@@ -5520,7 +5520,7 @@ case code^.opcode of
    pc_gil, pc_gli, pc_gdl, pc_gld, pc_lil, pc_lli, pc_ldl, pc_lld,
    pc_lad, pc_lao, pc_lca, pc_lda, pc_ldc, pc_ldo, pc_lod, pc_nop,
    dc_cns, dc_glb, dc_dst, pc_lnm, pc_nam, pc_nat, dc_lab, pc_add,
-   pc_ujp, dc_pin, pc_ent, dc_ref, dc_sym, pc_fix:
+   pc_ujp, dc_pin, pc_ent, dc_ref, dc_sym, pc_fix, pc_lva:
       Push(code);
 
    pc_ret:

@@ -186,6 +186,12 @@ Second, even if the underlying type is not specified explicitly, enumeration con
 
 Furthermore, it it now permitted to redeclare an enumeration type and its enumeration constants within the same scope.  That is, two or more full enumeration specifiers for the same type may appear in the same scope.  They must agree in the names and values of the enumeration constants, and if any of them include an explicitly specified underlying type, they must all do so.
 
+22. Functions taking a variable number of arguments are no longer required to have any fixed parameters.  For example, a function can be defined like:
+
+   void f(...) { /*...*/ }
+
+The arguments can be accessed within the function using va_start, va_arg, and va_end, as in other functions taking a variable number of arguments.  (Note that the name of the last fixed parameter no longer needs to be passed to va_start; see below under "Library Updates".)
+
 
 Library Updates
 ---------------

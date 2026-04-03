@@ -1888,6 +1888,13 @@ var
                   done := true;
             until done or (token.kind = eofsy);
             end {else if}
+         else if token.kind = dotdotdotsy then begin
+            tPtr2^.prototyped := true;
+            tPtr2^.varargs := true;
+            if (cStd < c23) and strictMode then
+               Error(26);
+            NextToken;
+            end {else if}
          else
             if strictC23Prototypes then
                tPtr2^.prototyped := true
@@ -4913,7 +4920,7 @@ if isFunction then begin
             lp^.lln := GetLocalLabel;
             lp^.used := true;
             Gen2(dc_loc, lp^.lln, ord(vaInfoPtr^.size));
-            Gen2(pc_lda, lastParameterLLN, lastParameterSize);
+            Gen0(pc_lva);
             Gen2t(pc_cop, lp^.lln, 0, cgULong);
             Gen2t(pc_str, lp^.lln, cgPointerSize, cgULong);
             vaInfoLLN := lp^.lln;
@@ -5195,6 +5202,13 @@ var
                end; {with}
             PopTable;
             end {if prototype}
+         else if token.kind = dotdotdotsy then begin
+            tp^.prototyped := true;
+            tp^.varargs := true;
+            if (cStd < c23) and strictMode then
+               Error(26);
+            NextToken;
+            end {else if}
          else
             if strictC23Prototypes then
                tp^.prototyped := true

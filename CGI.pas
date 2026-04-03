@@ -257,7 +257,7 @@ type
        pc_mdl,pc_sll,pc_slr,pc_bal,pc_ngl,pc_adl,pc_sbl,pc_blr,pc_blx,
        dc_sym,pc_lnd,pc_lor,pc_vsr,pc_uml,pc_udl,pc_ulm,pc_pop,pc_gil,
        pc_gli,pc_gdl,pc_gld,pc_cpi,pc_tri,pc_lbu,pc_lbf,pc_sbf,pc_cbf,dc_cns,
-       dc_prm,pc_nat,pc_bno,pc_nop,pc_psh,pc_ili,pc_iil,pc_ild,pc_idl,
+       dc_prm,pc_lva,pc_nat,pc_bno,pc_nop,pc_psh,pc_ili,pc_iil,pc_ild,pc_idl,
        pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,pc_mpq,pc_umq,pc_dvq,
        pc_udq,pc_mdq,pc_uqm,pc_slq,pc_sqr,pc_wsr,pc_rbo,pc_fix,pc_rev,pc_ckp,
        pc_ckn,pc_sxi,pc_sxl,pc_sxq,pc_zxi,pc_zxl,pc_zxq,pc_zni,pc_znl,pc_znq);

@@ -145,6 +145,7 @@ opt[pc_zxq] := 'zxq';
 opt[pc_zni] := 'zni';
 opt[pc_znl] := 'znl';
 opt[pc_znq] := 'znq';
+opt[pc_lva] := 'lva';
 opt[dc_ref] := 'REF';
 end; {InitWriteCode}
 
@@ -293,7 +294,7 @@ with code^ do
       pc_bnt,pc_blx,pc_bnl,pc_ngi,pc_ngl,pc_ngr,pc_ixa,pc_mdl,
       pc_udi,pc_udl,pc_bqr,pc_bqx,pc_baq,pc_bnq,pc_ngq,pc_adq,pc_sbq,
       pc_mpq,pc_umq,pc_dvq,pc_udq,pc_mdq,pc_uqm,pc_slq,pc_sqr,pc_wsr,
-      pc_rbo,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr,pc_ckp,pc_ckn: ;
+      pc_rbo,pc_sll,pc_shr,pc_usr,pc_slr,pc_vsr,pc_ckp,pc_ckn,pc_lva: ;
 
 
       dc_prm:
