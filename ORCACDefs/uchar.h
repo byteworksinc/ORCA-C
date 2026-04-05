@@ -17,6 +17,9 @@ typedef unsigned long mbstate_t;
 typedef unsigned long size_t;
 #endif
 
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+typedef unsigned char char8_t;
+#endif
 typedef unsigned short char16_t;
 typedef unsigned long char32_t;
 
