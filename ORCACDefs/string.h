@@ -45,6 +45,10 @@ int             strcmp(const char *, const char *);
 int             strcoll(const char *, const char *);
 char           *strcpy(char *, const char *);
 size_t          strcspn(const char *, const char *);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+char           *strdup(const char *);
+char           *strndup(const char *, size_t);
+#endif
 char           *strerror(int);
 size_t          strlen(const char *);
 char           *strncat(char *, const char *, size_t);

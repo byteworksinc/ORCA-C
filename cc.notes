@@ -309,6 +309,14 @@ size_t memalignment(const void *p);
 
 This returns the maximum alignment satisfied by the address p.  That is, it returns the greatest power of two which the ordinal value of p is a multiple of.  If p is a null pointer, it returns 0. 
 
+15. The strdup and strndup functions have been added:
+
+#include <string.h>
+char *strdup(const char *s);
+char *strndup(const char *s, size_t n);
+
+The strdup function makes a copy of the string s in memory allocated by malloc.  The strndup function is similar, but copies a maximum of n characters from s.  (The resulting string is null-terminated, even if s does not include a null terminator within the first n characters.)  These functions return a pointer to the copied string, or NULL if memory cannot be allocated for the copy.  Like any allocation from malloc, the memory containing the copied string can be deallocated by calling free.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.

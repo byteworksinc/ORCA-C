@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #define assert_type(e,t) (void)_Generic((e), t:0)
 
@@ -145,6 +146,32 @@ int main(void) {
         assert_type(strrpbrk(0, "xy"), char *);
         assert_type(strrpbrk((void *)0, "xy"), char *);
 #endif
+#endif
+
+        /* test strdup and strndup */
+        char s[] = "hello world";
+        char *dup;
+        dup = strdup(s);
+        if (dup == NULL || strcmp(dup, "hello world") != 0)
+                goto Fail;
+        free(dup);
+        dup = strndup(s, 100);
+        if (dup == NULL || strcmp(dup, "hello world") != 0)
+                goto Fail;
+        free(dup);
+        dup = strndup(s, 10);
+        if (dup == NULL || strcmp(dup, "hello worl") != 0)
+                goto Fail;
+        free(dup);
+        dup = strndup(s, 0);
+        if (dup == NULL || strcmp(dup, "") != 0)
+                goto Fail;
+        free(dup);
+#ifdef __ORCAC__
+        dup = strndup(s, 1000000000);
+        if (dup == NULL || strcmp(dup, "hello world") != 0)
+                goto Fail;
+        free(dup);
 #endif
 
         printf ("Passed Conformance Test c23string\n");
