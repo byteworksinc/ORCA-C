@@ -302,6 +302,13 @@ time_t timegm(struct tm *tmptr);
 
 This is similar to mktime, except that the input time structure is taken as representing UTC time rather than local time.  By default, ORCA/C assumes local time is the same as UTC time, so timegm will return the same value as mktime.  If __useTimeTool has been set to a non-zero value, ORCA/C will instead use the third-party Time Tool Set to get the offset between local time and UTC time and adjust the returned value accordingly.  See the description of __useTimeTool for more information about the Time Tool Set.
 
+14. The memalignment function has been added:
+
+#include <stdlib.h>
+size_t memalignment(const void *p);
+
+This returns the maximum alignment satisfied by the address p.  That is, it returns the greatest power of two which the ordinal value of p is a multiple of.  If p is a null pointer, it returns 0. 
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.

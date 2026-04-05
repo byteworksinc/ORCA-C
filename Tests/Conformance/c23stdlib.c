@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 #define assert_type(e,t) (void)_Generic((e), t:0)
 
@@ -61,6 +62,23 @@ int main(void) {
 
         assert_type(bsearch(&(int){3}, 0, 6, sizeof(int), cmp), void *);
         assert_type(bsearch(&(int){3}, (void*)0, 6, sizeof(int), cmp), void *);
+#endif
+
+        /* test memalignment function */
+        char c[2];
+        if (memalignment(NULL) != 0)
+                goto Fail;
+        if (memalignment(&c[0]) != 1 && memalignment(&c[1]) != 1)
+                goto Fail;
+#ifdef __ORCAC__
+        if (memalignment((void*)0x0000ab10) != 0x10)
+                goto Fail;
+        if (memalignment((void*)0x00e1a600) != 0x0200)
+                goto Fail;
+        if (memalignment((void*)0x00030000) != 0x00010000)
+                goto Fail;
+        if (memalignment((void*)0x00e00000) != 0x00200000)
+                goto Fail;
 #endif
 
         printf ("Passed Conformance Test c23stdlib\n");

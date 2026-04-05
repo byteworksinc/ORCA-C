@@ -79,6 +79,9 @@ lldiv_t         lldiv(long long, long long);
 #endif
 void           *malloc(size_t);
 int             mblen(const char *, size_t);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+size_t          memalignment(const void *);
+#endif
 void            qsort(void *, size_t, size_t, int (*__compar)(const void *, const void *));
 void            quick_exit(int);
 int             rand(void);
