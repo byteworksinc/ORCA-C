@@ -97,6 +97,8 @@ extern FILE *stdout;
 #define FOPEN_MAX       32767           /* max # open files */
 #define FILENAME_MAX    1024            /* recommended file name length */
 
+#define _PRINTF_NAN_LEN_MAX 9           /* max length of printed NaNs */
+
 /*
  *  Other types
  */
