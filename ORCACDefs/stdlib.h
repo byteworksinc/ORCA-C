@@ -87,6 +87,11 @@ void            quick_exit(int);
 int             rand(void);
 void           *realloc(void *, size_t);
 void            srand(unsigned);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+int             strfromd(char *, size_t, const char *, double);
+int             strfromf(char *, size_t, const char *, float);
+int             strfroml(char *, size_t, const char *, long double);
+#endif
 double          strtod(const char *, char **);
 float           strtof(const char *, char **);
 long double     strtold(const char *, char **);

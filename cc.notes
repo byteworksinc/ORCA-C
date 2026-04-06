@@ -317,6 +317,24 @@ char *strndup(const char *s, size_t n);
 
 The strdup function makes a copy of the string s in memory allocated by malloc.  The strndup function is similar, but copies a maximum of n characters from s.  (The resulting string is null-terminated, even if s does not include a null terminator within the first n characters.)  These functions return a pointer to the copied string, or NULL if memory cannot be allocated for the copy.  Like any allocation from malloc, the memory containing the copied string can be deallocated by calling free.
 
+16. The strfromd, strfromf, and strfroml functions have been added:
+
+#include <stdlib.h>
+int strfromd(char *restrict s, size_t n, const char *restrict format,
+             double val);
+int strfromf(char *restrict s, size_t n, const char *restrict format,
+             float val);
+int strfroml(char *restrict s, size_t n, const char *restrict format,
+             long double val);
+
+These functions produce a string representation of a floating-point number.  They behave equivalently to snprintf(s, n, format, val), except that the format string must consist only of a single conversion specification with the following elements:
+
+- the initial %
+- optionally, a precision of the form .number (not containing a *)
+- one of the following conversion specifiers: a, A, e, E, f, F, g, or G
+
+The conversion specification is taken as applying to the type of val, even though it does not include a length modifier.  If the format string is not of the form specified above, the behavior is undefined.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
