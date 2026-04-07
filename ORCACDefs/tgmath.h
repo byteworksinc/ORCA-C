@@ -101,4 +101,8 @@
 #define tgamma(x)       __tg_real_x(tgamma,(x))
 #define trunc(x)        __tg_real_x(trunc,(x))
 
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define llogb(x)        __tg_real_x(llogb,(x))
+#endif
+
 #endif

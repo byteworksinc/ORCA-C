@@ -26,6 +26,10 @@ typedef long double double_t;
 
 #define FP_ILOGB0   (-32767-1)
 #define FP_ILOGBNAN (-32767-1)
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define FP_LLOGB0   (-2147483647-1)
+#define FP_LLOGBNAN (-2147483647-1)
+#endif
 
 #define MATH_ERRNO       1
 #define MATH_ERREXCEPT   2
@@ -239,5 +243,11 @@ long double     tgammal(long double);
 double          trunc(double);
 float           truncf(float);
 long double     truncl(long double);
+
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+long            llogb(double);
+long            llogbf(float);
+long            llogbl(long double);
+#endif
 
 #endif
