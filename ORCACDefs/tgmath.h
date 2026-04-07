@@ -121,6 +121,7 @@
 #define fsqrt(x,y)      __tg_real_x_no_f(fsqrt,(x))
 #define fsub(x,y)       __tg_real_x_y_no_f(fsub,(x),(y))
 #define llogb(x)        __tg_real_x(llogb,(x))
+#define pown(x,y)       __tg_real_x_y(pown,(x),(y))
 #endif
 
 #endif

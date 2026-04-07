@@ -263,6 +263,9 @@ float           fsubl(long double, long double);
 long            llogb(double);
 long            llogbf(float);
 long            llogbl(long double);
+double          pown(double, long long int);
+float           pownf(float, long long int);
+long double     pownl(long double, long long int);
 #endif
 
 #endif
