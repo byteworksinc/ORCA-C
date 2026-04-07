@@ -17,6 +17,10 @@
    long double: fn##l, \
    default: fn)(x)
 
+#define __tg_real_x_no_f(fn,x) _Generic((x), \
+   long double: fn##l, \
+   default: fn)(x)
+
 #define __tg_real_x_other(fn,x,other) _Generic((x), \
    float: fn##f, \
    long double: fn##l, \
@@ -24,6 +28,10 @@
 
 #define __tg_real_x_y(fn,x,y) _Generic((x), \
    float: _Generic((y), float: fn##f, long double: fn##l, default: fn), \
+   long double: fn##l, \
+   default: _Generic((y), long double: fn##l, default: fn))((x),(y))
+
+#define __tg_real_x_y_no_f(fn,x,y) _Generic((x), \
    long double: fn##l, \
    default: _Generic((y), long double: fn##l, default: fn))((x),(y))
 
@@ -102,6 +110,16 @@
 #define trunc(x)        __tg_real_x(trunc,(x))
 
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define dadd(x,y)       daddl((x),(y))
+#define ddiv(x,y)       ddivl((x),(y))
+#define dmul(x,y)       dmull((x),(y))
+#define dsqrt(x)        dsqrtl(x)
+#define dsub(x,y)       dsubl((x),(y))
+#define fadd(x,y)       __tg_real_x_y_no_f(fadd,(x),(y))
+#define fdiv(x,y)       __tg_real_x_y_no_f(fdiv,(x),(y))
+#define fmul(x,y)       __tg_real_x_y_no_f(fmul,(x),(y))
+#define fsqrt(x,y)      __tg_real_x_no_f(fsqrt,(x))
+#define fsub(x,y)       __tg_real_x_y_no_f(fsub,(x),(y))
 #define llogb(x)        __tg_real_x(llogb,(x))
 #endif
 

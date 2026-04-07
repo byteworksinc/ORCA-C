@@ -335,7 +335,7 @@ These functions produce a string representation of a floating-point number.  The
 
 The conversion specification is taken as applying to the type of val, even though it does not include a length modifier.  If the format string is not of the form specified above, the behavior is undefined.
 
-17. Several new <math.h> functions have been added.  Like other <math.h> functions, these have three versions operating on the three floating-point types (but for most of these functions the three versions will behave identically).  Also note that under ORCA/C these functions report errors via the floating-point environment (accessible using <fenv.h> functions), not by setting errno.
+17. Several new <math.h> functions have been added.  Like other <math.h> functions, most of these have three versions operating on the three floating-point types (but for most of these functions the three versions will behave identically).  Also note that under ORCA/C these functions report errors via the floating-point environment (accessible using <fenv.h> functions), not by setting errno.
 
 #include <math.h>
 long        llogb(double x);
@@ -343,6 +343,25 @@ long        llogbf(float x);
 long        llogbl(long double x);
 
 These functions extract the binary exponent of x as a long integer, treating denormalized numbers as if they were normalized.  If x is 0, infinite, or NaN, they return the macro values FP_LLOGB0, LONG_MAX, or FP_LLOGBNAN, respectively.
+
+#include <math.h>
+float       fadd(double x, double y);
+float       faddl(long double x, long double y);
+double      daddl(long double x, long double y);
+float       fsub(double x, double y);
+float       fsubl(long double x, long double y);
+double      dsubl(long double x, long double y);
+float       fmul(double x, double y);
+float       fmull(long double x, long double y);
+double      dmull(long double x, long double y);
+float       fdiv(double x, double y);
+float       fdivl(long double x, long double y);
+double      ddivl(long double x, long double y);
+float       fsqrt(double x);
+float       fsqrtl(long double x);
+double      dsqrtl(long double x);
+
+These functions perform the indicated operation (addition, subtraction, multiplication, division, or square root) on the operand(s) and round the result once to the range and precision of the result type.  This has a similar effect to performing the arithmetic operations normally and then casting to the result type, but using these functions instead avoids double rounding.
 
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 

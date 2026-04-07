@@ -245,6 +245,21 @@ float           truncf(float);
 long double     truncl(long double);
 
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+double          daddl(long double, long double);
+double          ddivl(long double, long double);
+double          dmull(long double, long double);
+double          dsqrtl(long double);
+double          dsubl(long double, long double);
+float           fadd(double, double);
+float           faddl(long double, long double);
+float           fdiv(double, double);
+float           fdivl(long double, long double);
+float           fmul(double, double);
+float           fmull(long double, long double);
+float           fsqrt(double);
+float           fsqrtl(long double);
+float           fsub(double, double);
+float           fsubl(long double, long double);
 long            llogb(double);
 long            llogbf(float);
 long            llogbl(long double);
