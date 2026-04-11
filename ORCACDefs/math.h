@@ -245,6 +245,9 @@ float           truncf(float);
 long double     truncl(long double);
 
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+double          compoundn(double, long long);
+float           compoundnf(float, long long);
+long double     compoundnl(long double, long long);
 double          daddl(long double, long double);
 double          ddivl(long double, long double);
 double          dmull(long double, long double);

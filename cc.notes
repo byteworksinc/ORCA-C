@@ -370,6 +370,13 @@ long double pownl(long double x, long long n);
 
 These functions compute x^n.  They are similar to pow(), put these functions use the type long long for the exponent (and as such it is restricted to integer values).
 
+#include <math.h>
+double      compoundn(double x, long long n);
+float       compoundnf(float x, long long n);
+long double compoundnl(long double x, long long n);
+
+These functions compute (1+x)^n.  If x < -1, a domain error occurs: the functions will return a NaN and raise the "invalid" floating-point exception.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.

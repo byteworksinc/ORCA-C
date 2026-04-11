@@ -110,6 +110,7 @@
 #define trunc(x)        __tg_real_x(trunc,(x))
 
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define compoundn(x,y)  __tg_real_x_y(compoundn,(x),(y))
 #define dadd(x,y)       daddl((x),(y))
 #define ddiv(x,y)       ddivl((x),(y))
 #define dmul(x,y)       dmull((x),(y))
