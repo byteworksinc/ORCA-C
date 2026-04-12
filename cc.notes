@@ -377,6 +377,13 @@ long double compoundnl(long double x, long long n);
 
 These functions compute (1+x)^n.  If x < -1, a domain error occurs: the functions will return a NaN and raise the "invalid" floating-point exception.
 
+#include <math.h>
+double      logp1(double x);
+float       logp1f(float x);
+long double logp1l(long double x);
+
+These functions return the natural logarithm of 1+x.  (They are equivalent to the existing log1p functions.)
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
