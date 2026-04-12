@@ -384,6 +384,13 @@ long double logp1l(long double x);
 
 These functions return the natural logarithm of 1+x.  (They are equivalent to the existing log1p functions.)
 
+#include <math.h>
+double      log2p1(double x);
+float       log2p1f(float x);
+long double log2p1l(long double x);
+
+These functions return the base-2 logarithm of 1+x.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
