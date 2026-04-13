@@ -117,6 +117,7 @@
 #define dsqrt(x)        dsqrtl(x)
 #define dsub(x,y)       dsubl((x),(y))
 #define exp10(x)        __tg_real_x(exp10,(x))
+#define exp2m1(x)       __tg_real_x(exp2m1,(x))
 #define fadd(x,y)       __tg_real_x_y_no_f(fadd,(x),(y))
 #define fdiv(x,y)       __tg_real_x_y_no_f(fdiv,(x),(y))
 #define fmul(x,y)       __tg_real_x_y_no_f(fmul,(x),(y))
