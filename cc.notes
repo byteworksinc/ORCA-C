@@ -392,6 +392,13 @@ long double log2p1l(long double x);
 These functions return the base-2 logarithm of 1+x.
 
 #include <math.h>
+double      log10p1(double x);
+float       log10p1f(float x);
+long double log10p1l(long double x);
+
+These functions return the base-10 logarithm of 1+x.
+
+#include <math.h>
 double      exp10(double x);
 float       exp10f(float x);
 long double exp10l(long double x);
