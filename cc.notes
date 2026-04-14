@@ -405,6 +405,13 @@ long double exp2m1l(long double x);
 
 These functions return 2^x - 1.
 
+#include <math.h>
+double      exp10m1(double x);
+float       exp10m1f(float x);
+long double exp10m1l(long double x);
+
+These functions return 10^x - 1.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
