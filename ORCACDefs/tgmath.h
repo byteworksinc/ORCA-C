@@ -129,6 +129,7 @@
 #define log2p1(x)       __tg_real_x(log2p1,(x))
 #define logp1(x)        __tg_real_x(logp1,(x))
 #define pown(x,y)       __tg_real_x_y(pown,(x),(y))
+#define rsqrt(x)        __tg_real_x(rsqrt,(x))
 #endif
 
 #endif

@@ -287,6 +287,9 @@ long double     logp1l(long double);
 double          pown(double, long long int);
 float           pownf(float, long long int);
 long double     pownl(long double, long long int);
+double          rsqrt(double);
+float           rsqrtf(float);
+long double     rsqrtl(long double);
 #endif
 
 #endif
