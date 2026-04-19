@@ -110,6 +110,10 @@
 #define trunc(x)        __tg_real_x(trunc,(x))
 
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define acospi(x)       __tg_real_x(acospi,(x))
+#define asinpi(x)       __tg_real_x(asinpi,(x))
+#define atan2pi(y,x)    __tg_real_x_y(atan2pi,(y),(x))
+#define atanpi(x)       __tg_real_x(atanpi,(x))
 #define compoundn(x,y)  __tg_real_x_y(compoundn,(x),(y))
 #define dadd(x,y)       daddl((x),(y))
 #define ddiv(x,y)       ddivl((x),(y))

@@ -245,6 +245,18 @@ float           truncf(float);
 long double     truncl(long double);
 
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+double          acospi(double);
+float           acospif(float);
+long double     acospil(long double);
+double          asinpi(double);
+float           asinpif(float);
+long double     asinpil(long double);
+double          atan2pi(double, double);
+float           atan2pif(float, float);
+long double     atan2pil(long double, long double);
+double          atanpi(double);
+float           atanpif(float);
+long double     atanpil(long double);
 double          compoundn(double, long long);
 float           compoundnf(float, long long);
 long double     compoundnl(long double, long long);

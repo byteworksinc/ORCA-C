@@ -426,6 +426,22 @@ long double rsqrtl(long double x);
 
 These functions return the reciprocal of the square root of x.
 
+#include <math.h>
+double      acospi(double x);
+float       acospif(float x);
+long double acospil(long double x);
+double      asinpi(double x);
+float       asinpif(float x);
+long double asinpil(long double x);
+double      atanpi(double x);
+float       atanpif(float x);
+long double atanpil(long double x);
+double      atan2pi(double y, double x);
+float       atan2pif(float y, float x);
+long double atan2pil(long double y, long double x);
+
+These functions compute acos(x)/pi, asin(x)/pi, atan(x)/pi, or atan2(y,x)/pi.  They can be seen as expressing an angle in units of half-revolutions.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
