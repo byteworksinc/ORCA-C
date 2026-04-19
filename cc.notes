@@ -442,6 +442,19 @@ long double atan2pil(long double y, long double x);
 
 These functions compute acos(x)/pi, asin(x)/pi, atan(x)/pi, or atan2(y,x)/pi.  They can be seen as expressing an angle in units of half-revolutions.
 
+#include <math.h>
+double      cospi(double x);
+float       cospif(float x);
+long double cospil(long double x);
+double      sinpi(double x);
+float       sinpif(float x);
+long double sinpil(long double x);
+double      tanpi(double x);
+float       tanpif(float x);
+long double tanpil(long double x);
+
+These functions compute the cosine, sine, or tangent of x*pi.  Thus, the argument can be seen as expressing an angle in units of half-revolutions.  For large values of x, these functions provide greater accuracy than corresponding calls to cos, sin, or tan (with x multiplied by an approximation of pi).
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.

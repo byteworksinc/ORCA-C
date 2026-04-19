@@ -115,6 +115,7 @@
 #define atan2pi(y,x)    __tg_real_x_y(atan2pi,(y),(x))
 #define atanpi(x)       __tg_real_x(atanpi,(x))
 #define compoundn(x,y)  __tg_real_x_y(compoundn,(x),(y))
+#define cospi(x)        __tg_real_x(cospi,(x))
 #define dadd(x,y)       daddl((x),(y))
 #define ddiv(x,y)       ddivl((x),(y))
 #define dmul(x,y)       dmull((x),(y))
@@ -134,6 +135,8 @@
 #define logp1(x)        __tg_real_x(logp1,(x))
 #define pown(x,y)       __tg_real_x_y(pown,(x),(y))
 #define rsqrt(x)        __tg_real_x(rsqrt,(x))
+#define sinpi(x)        __tg_real_x(sinpi,(x))
+#define tanpi(x)        __tg_real_x(tanpi,(x))
 #endif
 
 #endif

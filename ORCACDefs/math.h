@@ -260,6 +260,9 @@ long double     atanpil(long double);
 double          compoundn(double, long long);
 float           compoundnf(float, long long);
 long double     compoundnl(long double, long long);
+double          cospi(double);
+float           cospif(float);
+long double     cospil(long double);
 double          daddl(long double, long double);
 double          ddivl(long double, long double);
 double          dmull(long double, long double);
@@ -302,6 +305,12 @@ long double     pownl(long double, long long int);
 double          rsqrt(double);
 float           rsqrtf(float);
 long double     rsqrtl(long double);
+double          sinpi(double);
+float           sinpif(float);
+long double     sinpil(long double);
+double          tanpi(double);
+float           tanpif(float);
+long double     tanpil(long double);
 #endif
 
 #endif
