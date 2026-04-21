@@ -462,6 +462,16 @@ long double roundevenl(long double x);
 
 These functions round x to the nearest integer, rounding halfway cases to an even integer, regardless of the current rounding direction.
 
+#include <math.h>
+double      nextup(double x);
+float       nextupf(float x);
+long double nextupl(long double x);
+double      nextdown(double x);
+float       nextdownf(float x);
+long double nextdownl(long double x);
+
+These functions return the next value greater than or less than x that is representable in the return type of the function.  If that value is zero, it has the same sign as x.  nextup(INFINITY) or nextdown(-INFINITY) returns the argument value.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
