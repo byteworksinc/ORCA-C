@@ -66,6 +66,11 @@ int __fpcompare(long double, long double, short);
 #define islessgreater(x,y)  __fpcompare((x),(y),0xC0)
 #define isunordered(x,y)    __fpcompare((x),(y),0x01)
 
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define issubnormal(x)  (__fpclassify(x) == FP_SUBNORMAL)
+#define iszero(x)       (__fpclassify(x) == FP_ZERO)
+#endif
+
 #ifndef __KeepNamespacePure__
    #define arctan(x) atan(x)
 #endif

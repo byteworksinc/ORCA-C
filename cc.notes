@@ -479,6 +479,16 @@ int         canonicalizel(long double *cx, const long double *x);
 
 These functions read the floating-point value from *x and attempt to write a canonical version of it to *cx.  This means that *cx will have the same value as *x but may sometimes have a different bit pattern that follows the implementation's usual or preferred way of representing that value.  If *x is a signaling NaN, *cx is set to a quiet NaN with the same NaN code.  These functions return 0 if they succeed, or nonzero if the value cannot be canonicalized; in ORCA/C, they always succeed.
 
+18. Several new function-like macros for classification of floating-point numbers have been added:
+
+#include <math.h>
+int issubnormal(real-floating x);
+int iszero(real-floating x);
+
+These macros accept an argument of any real floating type, i.e. float, double, or long double.  They behave as if the argument is converted strictly to its semantic type before classifying it, removing any extra range and precision.
+
+issubnormal() returns a non-zero value if its argument is subnormal.  iszero() returns a non-zero value if its argument is zero.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
