@@ -46,6 +46,7 @@ int __fpclassifyd(double);
 int __fpclassifyl(long double);
 int __signbit(long double);
 int __fpcompare(long double, long double, short);
+int __iscanonicall(long double);
 
 #define __fpclassify(x) _Generic((x), \
    float: __fpclassifyf, \
@@ -69,6 +70,10 @@ int __fpcompare(long double, long double, short);
 #if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
 #define issubnormal(x)  (__fpclassify(x) == FP_SUBNORMAL)
 #define iszero(x)       (__fpclassify(x) == FP_ZERO)
+#define iscanonical(x)  _Generic((x), \
+   float: ((float)(x), 1), \
+   double: ((double)(x), 1), \
+   long double: __iscanonicall(x))
 #endif
 
 #ifndef __KeepNamespacePure__

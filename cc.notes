@@ -484,10 +484,11 @@ These functions read the floating-point value from *x and attempt to write a can
 #include <math.h>
 int issubnormal(real-floating x);
 int iszero(real-floating x);
+int iscanonical(real-floating x);
 
 These macros accept an argument of any real floating type, i.e. float, double, or long double.  They behave as if the argument is converted strictly to its semantic type before classifying it, removing any extra range and precision.
 
-issubnormal() returns a non-zero value if its argument is subnormal.  iszero() returns a non-zero value if its argument is zero.
+issubnormal() returns a non-zero value if its argument is subnormal.  iszero() returns a non-zero value if its argument is zero.  iscanonical() returns a non-zero value if its argument has a canonical representation, i.e. if its bit pattern matches the usual or preferred way to represent its value.
 
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
