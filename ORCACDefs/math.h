@@ -47,6 +47,7 @@ int __fpclassifyl(long double);
 int __signbit(long double);
 int __fpcompare(long double, long double, short);
 int __iscanonicall(long double);
+int __iseqsig(long double, long double);
 
 #define __fpclassify(x) _Generic((x), \
    float: __fpclassifyf, \
@@ -74,6 +75,7 @@ int __iscanonicall(long double);
    float: ((float)(x), 1), \
    double: ((double)(x), 1), \
    long double: __iscanonicall(x))
+#define iseqsig(x,y)    __iseqsig((x),(y))
 #endif
 
 #ifndef __KeepNamespacePure__

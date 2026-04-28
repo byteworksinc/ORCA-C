@@ -490,6 +490,13 @@ These macros accept an argument of any real floating type, i.e. float, double, o
 
 issubnormal() returns a non-zero value if its argument is subnormal.  iszero() returns a non-zero value if its argument is zero.  iscanonical() returns a non-zero value if its argument has a canonical representation, i.e. if its bit pattern matches the usual or preferred way to represent its value.
 
+19. The iseqsig() macro has been added:
+
+#include <math.h>
+int iseqsig(real-floating x, real-floating y);
+
+This macro returns the value of (x)==(y).  If x or y is a NaN, it signals the "invalid" floating-point exception.  (In the current version of ORCA/C, the == operator usually also signals "invalid" for NaN operands, but that behavior is not guaranteed and may be changed in the future.)
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
