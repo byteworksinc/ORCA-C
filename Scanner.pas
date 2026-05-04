@@ -4940,8 +4940,10 @@ else begin
    if isBitInt then
       if unsigned then
          token.itype := GetBitIntType(true, BitWidth(token.qval))
-      else
-         token.itype := GetBitIntType(false, BitWidth(token.qval) + 1);
+      else if token.qval.hi >= 0 then
+         token.itype := GetBitIntType(false, BitWidth(token.qval) + 1)
+      else if flagOverflows then
+         FlagError(6);
    case token.itype^.baseType of
       cgWord: begin
          token.class := intConstant;
