@@ -127,7 +127,7 @@
 #define fadd(x,y)       __tg_real_x_y_no_f(fadd,(x),(y))
 #define fdiv(x,y)       __tg_real_x_y_no_f(fdiv,(x),(y))
 #define fmul(x,y)       __tg_real_x_y_no_f(fmul,(x),(y))
-#define fsqrt(x,y)      __tg_real_x_no_f(fsqrt,(x))
+#define fsqrt(x)        __tg_real_x_no_f(fsqrt,(x))
 #define fsub(x,y)       __tg_real_x_y_no_f(fsub,(x),(y))
 #define llogb(x)        __tg_real_x(llogb,(x))
 #define log10p1(x)      __tg_real_x(log10p1,(x))
