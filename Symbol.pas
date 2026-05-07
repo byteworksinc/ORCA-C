@@ -837,7 +837,7 @@ case kind1 of
          StrictCompTypes := StrictCompTypes(t1^.ptype, t2^.ptype);
 
    nullptrType:
-         StrictCompTypes := kind2 = nullptrType;
+      StrictCompTypes := kind2 = nullptrType;
 
    enumType:
       Error(enumTypeUsed);

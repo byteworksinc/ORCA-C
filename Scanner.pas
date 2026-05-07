@@ -4608,10 +4608,10 @@ var
    {  code never actually get converted to numeric constants.   }
    
    begin {FlagError}
-      if err = 0 then
-         err := errCode
-      else if err <> errCode then
-         err := 189;
+   if err = 0 then
+      err := errCode
+   else if err <> errCode then
+      err := 189;
    end; {FlagError}
 
 
