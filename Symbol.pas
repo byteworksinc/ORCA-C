@@ -125,6 +125,11 @@ function StrictCompTypes (t1, t2: typePtr): boolean;
 { C standard rules.                                             }
 
 
+function SameTypes (t1, t2: typePtr): boolean;
+
+{ Determine if the two types are the same.                      }
+
+
 procedure DoGlobals;
 
 { declare the ~globals and ~arrays segments                     }
@@ -854,6 +859,82 @@ case kind1 of
    end; {case}
 1:
 end; {StrictCompTypes}
+
+
+function SameTypes {t1, t2: typePtr): boolean};
+
+{ Determine if the two types are the same.                      }
+
+label 1;
+
+var
+   kind1,kind2: typeKind;               {temp variables (for speed)}
+   lTreatNoParmsFnAsPrototyped: boolean; {saved copy of treatNoParmsFnAsPrototyped}
+
+begin {SameTypes}
+if t1 = t2 then begin                   {shortcut}
+   SameTypes := true;
+   goto 1;
+   end; {if}
+SameTypes := false;                     {assume the types are not the same}
+if t1^.qualifiers <> t2^.qualifiers then {qualifiers must be the same}
+   goto 1;
+while t1^.kind = definedType do         {scan past type definitions}
+   t1 := t1^.dType;
+while t2^.kind = definedType do
+   t2 := t2^.dType;
+kind1 := t1^.kind;                      {get these for efficiency}
+kind2 := t2^.kind;
+
+case kind1 of
+
+   scalarType:
+      SameTypes := StrictCompTypes(t1, t2);
+
+   arrayType:
+      if kind2 = arrayType then begin
+         if t1^.elements <> t2^.elements then
+            goto 1;
+         if t1^.isVariableLength <> t2^.isVariableLength then
+            goto 1;
+         if t1^.isVariableLength and (t1^.sizeLLN <> t2^.sizeLLN) then
+            goto 1;
+         if t1^.aQualifiers <> t2^.aQualifiers then
+            goto 1;
+         SameTypes := SameTypes(t1^.atype, t2^.atype);
+         end; {if}
+
+   functionType:
+      if kind2 = functionType then begin
+         if not SameTypes(t1^.ftype, t2^.ftype) then
+            goto 1;
+         if t1^.varargs <> t2^.varargs then
+            goto 1;
+         if (cStd < c23) and (t1^.prototyped <> t2^.prototyped) then
+            goto 1;
+         if t1^.isPascal <> t2^.isPascal then
+            goto 1;
+         lTreatNoParmsFnAsPrototyped := treatNoParmsFnAsPrototyped;
+         treatNoParmsFnAsPrototyped := cStd >= c23;
+         SameTypes := StrictCompTypes(t1, t2);
+         treatNoParmsFnAsPrototyped := lTreatNoParmsFnAsPrototyped;
+         end; {if}
+
+   pointerType:
+      if kind2 = pointerType then
+         SameTypes := SameTypes(t1^.ptype, t2^.ptype);
+
+   nullptrType:
+      SameTypes := kind2 = nullptrType;
+
+   structType,unionType:
+      SameTypes := t1 = t2;
+
+   otherwise: ;
+
+   end; {case}
+1:
+end; {SameTypes}
 
 
 procedure DoGlobals;
@@ -2768,11 +2849,14 @@ if space <> fieldListSpace then begin   {are we defining a function?}
             or ((globalTable <> table) 
                and (not (class in [externsy,typedefsy])
                   or not (cs^.class in [externsy,typedefsy])))
-            or ((class = typedefsy)
-               and (IsVariablyModifiedType(itype)
-                  or IsVariablyModifiedType(cs^.itype)))
             then
-            redeclOK := false;
+            redeclOK := false
+         else if class = typedefsy then
+            if IsVariablyModifiedType(itype)
+               or IsVariablyModifiedType(cs^.itype)
+               or (not looseTypeChecks and not SameTypes(itype, cs^.itype))
+               then
+               redeclOK := false;
          end; {if}
       if redeclOK then begin
          itype := MakeCompositeType(cs^.itype, itype);
