@@ -186,8 +186,6 @@ var
    firstCompoundStatement: boolean;     {are we doing a function level compound statement?}
    fType: typePtr;                      {return type of the current function}
    functionName: stringPtr;             {name of the current function}
-   isForwardDeclared: boolean;          {is the field list component           }
-                                        { referencing a forward struct/union?  }
    isFunction: boolean;                 {is the declaration a function?}
    returnLabel: integer;                {label for exit point}
    statementList: statementPtr;         {list of open statements}
@@ -1589,7 +1587,6 @@ type
 var
    i: integer;                          {loop variable}
    lastWasIdentifier: boolean;          {for deciding if the declarator is a function}
-   lastWasPointer: boolean;             {was the last type a pointer?}
    madeFunctionTable: boolean;          {made symbol table for function type?}
    newName: stringPtr;                  {new symbol name}
    parameterStorage: boolean;           {is the new symbol in a parm list?}
@@ -1653,7 +1650,6 @@ var
       {pvar^.bitsize := 0;}
       {pvar^.initialized := false;}
       {pvar^.iPtr := nil;}
-      {pvar^.isForwardDeclared := false;}
       pvar^.class := autosy;
       pvar^.storage := parameter;
       variable := pvar;
@@ -2169,25 +2165,6 @@ if madeFunctionTable then
 if variable <> nil then begin
    if parameterStorage then
       variable^.storage := parameter;
-   if isForwardDeclared then begin      {handle forward declarations}
-      tPtr := variable^.itype;
-      lastWasPointer := false;
-      while tPtr^.kind in
-         [pointerType,arrayType,functionType,definedType] do begin
-         if tPtr^.kind = pointerType then
-            lastWasPointer := true
-         else if tPtr^.kind <> definedType then
-            lastWasPointer := false;
-         tPtr := tPtr^.pType;
-         end; {while}
-      if ((tPtr <> declSpecifiers.typeSpec)
-         and (not (tPtr^.kind in [structType,unionType])))
-         then begin
-         Error(107);
-         SkipStatement;
-         end; {if}
-      variable^.isForwardDeclared := true;
-      end; {if}
    if declSpecifiers.inferType then
       variable^.underspecified := true;
    end; {if}
@@ -3070,8 +3047,6 @@ var
                goto 2;
             if ip^.itype^.size = 0 then
                goto 2;
-            if ip^.isForwardDeclared then
-               ResolveForwardReference(ip);
             disp := startingDisp + ip^.disp;
             if ip^.bitsize <> 0 then begin {zero out padding bits in bitfields}
                bfp := ip;
@@ -3244,8 +3219,6 @@ procedure DeclarationSpecifiers (var declSpecifiers: declSpecifiersRecord;
 {               following the declaration specifiers            }
 {                                                               }
 { outputs:                                                      }
-{       isForwardDeclared - is the field list component         }
-{               referencing a forward struct/union?             }
 {       declaredTagOrEnumConst - set if a tag or an enum const  }
 {               is declared (otherwise unchanged)               }
 
@@ -3268,7 +3241,6 @@ var
    
    typeQualifiers: typeQualifierSet;    {set of type qualifiers found}
 
-   myIsForwardDeclared: boolean;        {value of isForwardDeclared to generate}
    myTypeSpec: typePtr;                 {value of typeSpec to generate}
    myDeclarationModifiers: tokenSet;    {all modifiers in this declaration}
    myStorageClass: tokenEnum;           {storage class}
@@ -3299,7 +3271,6 @@ var
       done: boolean;                    {for loop termination}
       fl,tfl,ufl: identPtr;             {field list}
       ldoingParameters: boolean;        {local copy of doingParameters}
-      lisForwardDeclared: boolean;      {local copy of isForwardDeclared}
       maxDisp: longint;                 {for determining union sizes}
       variable: identPtr;               {variable being defined}
       didFlexibleArray: boolean;        {have we seen a flexible array member?}
@@ -3346,7 +3317,6 @@ var
    begin {FieldList}
    ldoingParameters := doingParameters; {allow fields in K&R dec. area}
    doingParameters := false;
-   lisForwardDeclared := isForwardDeclared; {stack this value}
    bitDisp := 0;                        {start allocation from byte 0}
    disp := 0;
    maxDisp := 0;
@@ -3516,7 +3486,6 @@ var
       end {if}
    else
       Error(26);                        {error if no named declarations}
-   isForwardDeclared := lisForwardDeclared; {restore the forward flag}
    doingParameters := ldoingParameters; {restore the parameters flag}
    end; {FieldList}
 
@@ -4001,7 +3970,6 @@ var
 
 begin {DeclarationSpecifiers}
 myTypeSpec := nil;
-myIsForwardDeclared := false;           {not doing a forward reference (yet)}
 myDeclarationModifiers := [];
 myStorageClass := ident;
 typeQualifiers := [];
@@ -4184,7 +4152,6 @@ while token.kind in allowedTokens do begin
                if structPtr <> nil then
                   structTypePtr := structPtr^.itype
                else begin
-                  myIsForwardDeclared := true;
                   globalStruct := doingParameters and (token.kind <> lbracech);
                   if globalStruct then begin
                      lUseGlobalPool := useGlobalPool;
@@ -4333,7 +4300,6 @@ while token.kind in allowedTokens do begin
       end; {case}
    end; {while}
 3:
-isForwardDeclared := myIsForwardDeclared;
 declSpecifiers.declarationModifiers := myDeclarationModifiers;
 if _Thread_localsy in myDeclarationModifiers then
    if myStorageClass = ident then

@@ -3009,8 +3009,6 @@ if tree^.token.class = identifier then begin
       ip := lType^.fieldList;           {find a matching field}
       while ip <> nil do begin
          if ip^.name^ = tree^.token.name^ then begin
-            if ip^.isForwardDeclared then 
-               ResolveForwardReference(ip);
             size := ip^.disp;           {match found - record parameters}
             expressionType := MakeQualifiedType(ip^.itype, qualifiers);
             bitDisp := ip^.bitDisp;

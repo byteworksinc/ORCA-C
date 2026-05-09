@@ -346,7 +346,7 @@ type
         definedType : (dType: typePtr;);
         structType,
         unionType   : (fieldList: identPtr;	{field list}
-		       sName: stringPtr;	{struct name; for forward refs}
+		       sName: stringPtr;	{struct name}
 		       constMember: boolean;    {does it have a const member?}
 		       flexibleArrayMember: boolean; {does it have a FAM?}
                       );
@@ -403,7 +403,6 @@ type
      bitsize: integer;                  {width in bits; 0 for byte sizes}
      state: stateKind;                  {state of the definition}
      iPtr: initializerPtr;              {pointer to the first initializer}
-     isForwardDeclared: boolean;        {does this var use a forward declared type?}
      class: tokenEnum;                  {storage class}
      used: boolean;                     {is this identifier used?}
      underspecified: boolean;           {not yet fully specified (need initializer)?}

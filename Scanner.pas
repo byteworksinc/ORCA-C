@@ -832,7 +832,7 @@ if list or (numErr <> 0) then begin
         104: msg := @'lint: missing function type';
         105: msg := @'lint: parameter list not prototyped';
         106: msg := @'cannot take the address of a bit field';
-        107: msg := @'illegal use of forward declaration';
+       {107: msg := @'illegal use of forward declaration';}
         108: msg := @'unknown or invalid cc= option';
         109: msg := @'illegal math operation in a constant expression';
         110: msg := @'lint: unknown pragma';

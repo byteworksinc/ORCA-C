@@ -537,3 +537,4 @@ This macro returns the value of (x)==(y).  If x or y is a NaN, it signals the "i
 
 15. The localtime(), gmtime(), and mktime() functions were unnecessarily slow.  They are now significantly faster.
 
+16. If a pointer to or array of a tagged struct or union type was declared in an outer scope and subsequently used in an inner scope where a different type had been declared with the same tag, a spurious error might be reported.

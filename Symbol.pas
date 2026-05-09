@@ -18,7 +18,6 @@
 {  PopTable - Pop a symbol table (remove definitions local to a }
 {       block)                                                  }
 {  PushTable - Create a new symbol table, pushing the old one   }
-{  ResolveForwardReference - resolve a forward reference        }
 {                                                               }
 {  External Variables:                                          }
 {                                                               }
@@ -381,14 +380,6 @@ procedure PopTable;
 procedure PushTable;
 
 { Create a new symbol table, pushing the old one                }
-
-
-procedure ResolveForwardReference (iPtr: identPtr);
-
-{ resolve a forward reference                                   }
-{                                                               }
-{ parameters:                                                   }
-{       iPtr - ptr to the forward declared identifier           }
 
 
 function StringType(prefix: charStrPrefixEnum): typePtr;
@@ -1377,8 +1368,6 @@ while sPtr <> nil do begin
    while iPtr <> nil do begin
       if iPtr^.name^ = name^ then begin
          FindSymbol := iPtr;
-         if iPtr^.isForwardDeclared then
-            ResolveForwardReference(iPtr);
          tk.symbolPtr := iPtr;
          goto 1;
          end; {if}
@@ -1410,8 +1399,6 @@ while sPtr <> nil do begin
       while iPtr <> nil do begin
          if iPtr^.name^ = np^ then begin
             FindSymbol := iPtr;
-            if iPtr^.isForwardDeclared then
-               ResolveForwardReference(iPtr);
             tk.symbolPtr := iPtr;
             goto 1;
             end; {if}
@@ -2911,7 +2898,6 @@ if needSymbol then begin
    {p^.iPtr := nil;}                    {no initializers, yet}
    {p^.saved := 0;}			{not saved}
    p^.state := state;                   {set the state}
-   {p^.isForwardDeclared := false;}     {assume no forward declarations are used}
    p^.name := name;                     {record the name}
    {p^.next := nil;}
    {p^.used := false;}                  {unused for now}
@@ -3035,60 +3021,6 @@ tPtr^.next := table;
 table := tPtr;
 tPtr^.noStatics := true;
 end; {PushTable}
-
-
-procedure ResolveForwardReference {iPtr: identPtr};
-
-{ resolve a forward reference                                   }
-{                                                               }
-{ parameters:                                                   }
-{       iPtr - ptr to the forward declared identifier           }
-
-var
-   fl: identPtr;			{for tracing field lists}
-   ltk: tokenType;                      {for searching for forward refs}
-   sym: identPtr;                       {for finding forward refs}
-   lPtr,tPtr: typePtr;                  {for tracing forward declared types}
-
-begin {ResolveForwardReference}
-iPtr^.isForwardDeclared := false;	{we will succeed or flag an error...}
-tPtr := iPtr^.itype;			{skip to the struct/union type}
-lPtr := nil;
-while tPtr^.kind in [pointerType,arrayType,functionType,definedType] do begin
-   lPtr := tPtr;
-   tPtr := tPtr^.pType;
-   end;
-if tPtr^.sName <> nil then begin	{resolve the forward reference}
-   ltk.name := tPtr^.sName;
-   ltk.symbolPtr := nil;
-   sym := FindSymbol(ltk,tagSpace,false,true);
-   if sym <> nil then begin
-      if sym^.itype^.kind <> tPtr^.kind then
-	 Error(107)
-      else begin
-         if sym^.itype = tPtr then
-            tPtr^.sName := nil
-         else begin
-            tPtr := sym^.itype;
-            if lPtr <> nil then
-               lPtr^.ptype := tPtr;
-            end; {else}
-         end; {else}
-      end; {if}
-   end; {if}
-if lPtr <> nil then
-   tPtr := lPtr^.pType;			{check the field list for other fwd refs}
-while tPtr^.kind in [pointerType,arrayType,functionType,definedType] do
-   tPtr := tPtr^.pType;
-if tPtr^.kind in [structType,unionType] then begin
-   fl := tPtr^.fieldList;
-   while fl <> nil do begin
-      if fl^.isForwardDeclared then
-         ResolveForwardReference(fl);
-      fl := fl^.next;
-      end; {while}
-   end; {if}
-end; {ResolveForwardReference}
 
 
 function StringType{prefix: charStrPrefixEnum): typePtr};
