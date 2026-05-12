@@ -192,6 +192,8 @@ Furthermore, it it now permitted to redeclare an enumeration type and its enumer
 
 The arguments can be accessed within the function using va_start, va_arg, and va_end, as in other functions taking a variable number of arguments.  (Note that the name of the last fixed parameter no longer needs to be passed to va_start; see below under "Library Updates".)
 
+23. (C23 modes only) Two complete structure or union types declared with the same tag in different scopes are now considered compatible, provided that they have matching fields (declared in the same order, with corresponding fields having the same names and compatible types).
+
 
 Library Updates
 ---------------

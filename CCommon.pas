@@ -349,6 +349,7 @@ type
 		       sName: stringPtr;	{struct name}
 		       constMember: boolean;    {does it have a const member?}
 		       flexibleArrayMember: boolean; {does it have a FAM?}
+		       isAnonymous: boolean;    {anonymous struct/union?}
                       );
      end;
 
@@ -416,6 +417,7 @@ type
         external:   (inlineDefinition: boolean); {(potential) inline definition of function?}
         global,private: ();
         none: (
+           alignmentSpecified: boolean; {has alignment specifier? (for fields)}
            case anonMemberField: boolean of {field from an anonymous struct/union member?}
               true : (anonMember: identPtr); {containing anonymous struct/union}
               false: ();

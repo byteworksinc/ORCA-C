@@ -3345,6 +3345,7 @@ var
                   and ((structsy in fieldDeclSpecifiers.declarationModifiers)
                      or (unionsy in fieldDeclSpecifiers.declarationModifiers))
                   then begin
+                  tPtr^.isAnonymous := true;
                   anonName := pointer(Malloc(sizeof(anonNameString)));
                   anonName^ := concat('~anon', cnvis(anonNumber));
                   anonNumber := anonNumber+1;
@@ -3356,8 +3357,11 @@ var
                end {if}
             else
                Declarator(fieldDeclSpecifiers, variable, fieldListSpace, false);
-            if variable <> nil then     {enter the var in the field list}
-               AddField(variable, nil);
+            if variable <> nil then begin
+               AddField(variable, nil); {enter the var in the field list}
+               variable^.alignmentSpecified :=
+                  _Alignassy in fieldDeclSpecifiers.declarationModifiers;
+               end; {if}
             end; {if}
          if kind = unionType then begin
             disp := 0;
@@ -4166,6 +4170,7 @@ while token.kind in allowedTokens do begin
                  {structTypePtr^.sName := nil;}
                  {structTypePtr^.constMember := false;}
                  {structTypePtr^.flexibleArrayMember := false;}
+                 {structTypePtr^.isAnonymous := false;}
                   structPtr := NewSymbol(ttoken.name, structTypePtr, ident,
                      tagSpace, defined, false);
                   structTypePtr^.sName := structPtr^.name;
@@ -4204,6 +4209,7 @@ while token.kind in allowedTokens do begin
               {structTypePtr^.sName := nil;}
               {structTypePtr^.constMember := false;}
               {structTypePtr^.flexibleArrayMember := false;}
+              {structTypePtr^.isAnonymous := false;}
                end; {if}
             if structPtr <> nil then
                structPtr^.itype := structTypePtr;

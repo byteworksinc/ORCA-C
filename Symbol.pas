@@ -605,6 +605,65 @@ if not tPtr^.isEmpty or not tPtr^.noStatics then
 end; {CheckUnused}
 
 
+function CompStructs (t1, t2: typePtr): boolean;
+
+{ Determine if two struct/union types are compatible            }
+
+label 1;
+
+var
+   field1,field2: identPtr;             {fields of t1 and t2}
+
+begin {CompStructs}
+if t1 = t2 then begin                   {shortcut / pre-C23 rule}
+   CompStructs := true;
+   goto 1;
+   end; {if}
+CompStructs := false;                   {assume the types are not compatible}
+if cStd < c23 then                      {pre-C23, different structs are incompatible}
+   goto 1;
+if (t1^.kind <> t2^.kind)               {basic type properties must match}
+   or (t1^.size <> t2^.size)
+   or (t1^.qualifiers <> t2^.qualifiers)
+   or (t1^.constMember <> t2^.constMember)
+   or (t1^.flexibleArrayMember <> t2^.flexibleArrayMember) then
+   goto 1;
+if t1^.size = 0 then                    {types must be complete}
+   goto 1;
+                                        {tags must be present and match,}
+                                        {unless both types are anonymous}
+if not t1^.isAnonymous or not t2^.isAnonymous then begin
+   if (t1^.sName = nil) or (t2^.sName = nil) then
+      goto 1;
+   if t1^.sName^ <> t2^.sName^ then
+      goto 1;
+   end; {if}
+field1 := t1^.fieldList;
+field2 := t2^.fieldList;
+while (field1 <> nil) and (field2 <> nil) do begin
+   if (field1^.disp <> field2^.disp)    {field position/properties must match}
+      or (field1^.bitdisp <> field2^.bitdisp)
+      or (field1^.bitsize <> field2^.bitsize)
+      or (field1^.alignmentSpecified <> field2^.alignmentSpecified)
+      or (field1^.anonMemberField <> field2^.anonMemberField) then
+      goto 1;
+                                        {field types must be compatible}
+   if not StrictCompTypes(field1^.itype, field2^.itype) then
+      goto 1;
+                                        {field names must match (if present)}
+   if not (field1^.itype^.isAnonymous and field2^.itype^.isAnonymous) then
+      if field1^.name^ <> field2^.name^ then
+         goto 1;
+   field1 := field1^.next;
+   field2 := field2^.next;
+   end; {while}
+if field1 <> field2 then
+   goto 1;
+CompStructs := true;
+1:
+end; {CompStructs}
+
+
 function CompTypes {t1, t2: typePtr): boolean};
 
 { Determine if the two types are compatible                     }
@@ -688,7 +747,8 @@ else
             CompTypes := true;}
 
       structType,unionType:
-         CompTypes := t1 = t2;
+         if kind2 = kind1 then
+            CompTypes := CompStructs(t1,t2);
 
       otherwise: ;
 
@@ -843,7 +903,8 @@ case kind1 of
          StrictCompTypes := true;}
 
    structType,unionType:
-      StrictCompTypes := t1 = t2;
+      if kind2 = kind1 then
+         StrictCompTypes := CompStructs(t1,t2);
 
    otherwise: ;
 
@@ -2239,6 +2300,7 @@ with defaultStruct^ do begin            {(for structures with errors)}
    sName := nil;
    constMember := false;
    flexibleArrayMember := false;
+   isAnonymous := false;
    new(fieldList);
    with fieldlist^ do begin
       next := nil;
@@ -2248,6 +2310,8 @@ with defaultStruct^ do begin            {(for structures with errors)}
       state := declared;
       disp := 0;
       bitdisp := 0;
+      alignmentSpecified := false;
+      anonMemberField := false;
       end; {with}
    end; {with}
 new(constCharPtr);                      {const char}

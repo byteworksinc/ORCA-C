@@ -18,7 +18,7 @@ uses CCommon, MM, Scanner, Symbol, CGI;
 {$segment 'HEADER'}
 
 const
-   symFileVersion = 59;                 {version number of .sym file format}
+   symFileVersion = 60;                 {version number of .sym file format}
 
 var
    inhibitHeader: boolean;		{should .sym includes be blocked?}
@@ -710,9 +710,12 @@ procedure EndInclude {chPtr: ptr};
    WriteByte(ord(ip^.state));
    WriteByte(ord(ip^.class));
    WriteByte(ord(ip^.storage));
-   if ip^.storage = external then
+   if ip^.storage = none then begin
+      WriteByte(ord(ip^.alignmentSpecified));
+      {ip^.anonMemberField must be false}
+      end {if}
+   else if ip^.storage = external then
       WriteByte(ord(ip^.inlineDefinition));
-   {if ip^.storage = none then ip^.anonMemberField must be false}
    end; {WriteIdent}
 
 
@@ -848,6 +851,7 @@ procedure EndInclude {chPtr: ptr};
             WriteByte(0);
             WriteByte(ord(tp^.constMember));
             WriteByte(ord(tp^.flexibleArrayMember));
+            {tp^.isAnonymous must be false}
             end;
 
          otherwise: ;
@@ -1423,8 +1427,10 @@ var
    sp^.used := false;
    sp^.underspecified := false;
    sp^.nextVMSym := nil;
-   if sp^.storage = none then
-      sp^.anonMemberField := false
+   if sp^.storage = none then begin
+      sp^.alignmentSpecified := boolean(ReadByte);
+      sp^.anonMemberField := false;
+      end {if}
    else if sp^.storage = external then
       sp^.inlineDefinition := boolean(ReadByte);
    ReadIdent := sp;
@@ -1565,6 +1571,7 @@ var
                   end; {while}
                tp^.constMember := boolean(ReadByte);
                tp^.flexibleArrayMember := boolean(ReadByte);
+               tp^.isAnonymous := false;
                end;
 
             nullptrType: ;
