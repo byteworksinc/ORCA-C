@@ -16,7 +16,7 @@ These release notes document the changes between ORCA/C 2.2.1 and ORCA/C 2.3.0. 
 New Language Features
 ---------------------
 
-ORCA/C 2.3.0 has begun adding support for new language features from the recent C23 standard.  To use all available C23 features, select the new "c23" or "c23compat" language modes via the -s option within the cc= portion of the command line.  Some C23 features that are unlikely to cause compatibility problems are also available in other compatibility modes, including the default "c17compat" mode.  Features only available in C23 modes are indicated below.
+ORCA/C 2.3.0 has begun adding support for new language features from the recent C23 standard.  The default language mode is now "c23compat", which includes all available C23 features but also includes some extensions and continues to support some features from earlier standards.  A "c23" language mode that strictly follows the C23 standard is also available.  C23 features that are unlikely to cause compatibility problems are also available in pre-C23 compatibility modes such as "c17compat" mode.  Features only available in C23 modes are indicated below.
 
 The following C23 language features are currently implemented:
 

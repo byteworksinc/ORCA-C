@@ -5319,7 +5319,7 @@ doingFakeFile := false;                 {not doing a fake file}
 doingDigitSequence := false;            {not expecting a digit sequence}
 prohibitDefined := false;               {not prohibiting defined}
 preprocessing := false;                 {not preprocessing}
-cStd := c17;                            {default to C17}
+cStd := c23;                            {default to C23}
 strictMode := false;                    {...with extensions}
 
                                         {error codes for lint messages}
