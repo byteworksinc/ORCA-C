@@ -70,4 +70,9 @@ int __get_flt_rounds(void);
 #define DBL_TRUE_MIN    4.940656458412465441766E-324
 #define LDBL_TRUE_MIN   1.822599765941237E-4951L
 
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define INFINITY 1e5000F
+#define NAN (0.0F/0.0F)
+#endif
+
 #endif
