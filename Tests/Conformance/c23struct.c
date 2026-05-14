@@ -209,6 +209,28 @@ int main(void) {
                 expect_incompatible(typeof(u1), union U1);
         }
 
+        struct S1 {
+                int a,b;
+                int c;
+        };
+
+        struct S3 {
+                int x;
+                struct {
+                        long y;
+                        float z;
+                };
+        };
+
+        struct S5 {
+                struct S1 s1;
+        };
+
+        union U1 {
+                int x:7;
+                long y;
+        };
+
         printf ("Passed Conformance Test c23struct\n");
         return 0;
 

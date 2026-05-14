@@ -3222,7 +3222,7 @@ procedure DeclarationSpecifiers (var declSpecifiers: declSpecifiersRecord;
 {       declaredTagOrEnumConst - set if a tag or an enum const  }
 {               is declared (otherwise unchanged)               }
 
-label 2,3;
+label 3;
 
 var
    tPtr: typePtr;                       {for building types}
@@ -3471,6 +3471,8 @@ var
       until done or (token.kind = eofsy);
       Match(semicolonch,22);            {insist on a closing ';'}
       end; {while}
+   if tp^.fieldList <> nil then
+      Error(212);
    if fl <> nil then begin
       ufl := nil;                       {reverse the field list}
       while fl <> nil do begin
@@ -4191,14 +4193,8 @@ while token.kind in allowedTokens do begin
             Error(9);                   {its an error if there's no name or struct}
             declaredTagOrEnumConst := true; {avoid extra errors}
             end; {else if}
-2:       if token.kind = lbracech then  {handle a structure definition...}
+         if token.kind = lbracech then  {handle a structure definition...}
             begin                       {error if we already have one!}
-            if (structTypePtr <> defaultStruct)
-               and (structTypePtr^.fieldList <> nil) then begin
-               Error(53);
-               structPtr := nil;
-               end; {if}
-            NextToken;                  {skip the '{'}
             if structTypePtr = defaultStruct then begin
                structTypePtr := pointer(Calloc(sizeof(typeRecord)));
               {structTypePtr^.size := 0;}
@@ -4210,10 +4206,30 @@ while token.kind in allowedTokens do begin
               {structTypePtr^.constMember := false;}
               {structTypePtr^.flexibleArrayMember := false;}
               {structTypePtr^.isAnonymous := false;}
+               if structPtr <> nil then
+                  structPtr^.itype := structTypePtr;
+               end {if}
+            else if structTypePtr^.fieldList <> nil then begin
+               if (cStd < c23) and strictMode then begin
+                  Error(53);
+                  structPtr := nil;
+                  end {if}
+               else begin
+                  structTypePtr := pointer(Malloc(sizeof(typeRecord)));
+                  structTypePtr^ := structPtr^.itype^;
+                  structTypePtr^.fieldList := nil;
+                  structTypePtr^.constMember := false;
+                  structTypePtr^.flexibleArrayMember := false;
+                  end; {else}
                end; {if}
-            if structPtr <> nil then
-               structPtr^.itype := structTypePtr;
+            NextToken;                  {skip the '{'}
             FieldList(structTypePtr,tKind); {define the fields}
+            if structPtr <> nil then begin
+               if CompStructs(structPtr^.itype,structTypePtr,SameTypes) then
+                  structTypePtr := structPtr^.itype
+               else
+                  Error(42);
+               end; {if}
             if token.kind = rbracech then {insist on a closing rbrace}
                NextToken
             else begin

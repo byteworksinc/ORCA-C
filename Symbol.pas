@@ -113,6 +113,16 @@ procedure CheckUnused (tPtr: symbolTablePtr);
 { check for unused variables in symbol table                    }
 
 
+function CompStructs (t1, t2: typePtr;
+                      function CmpFunc (t1, t2: typePtr): boolean): boolean;
+
+{ Determine if two struct/union types are compatible            }
+{                                                               }
+{ parameters:                                                   }
+{       t1,t2 - structure/union types to compare                }
+{       CmpFunc - function for comparing types of fields        }
+
+
 function CompTypes (t1, t2: typePtr): boolean;
 
 { Determine if the two types are compatible                     }
@@ -605,9 +615,14 @@ if not tPtr^.isEmpty or not tPtr^.noStatics then
 end; {CheckUnused}
 
 
-function CompStructs (t1, t2: typePtr): boolean;
+function CompStructs {t1, t2: typePtr;
+                      function CmpFunc (t1, t2: typePtr): boolean): boolean};
 
 { Determine if two struct/union types are compatible            }
+{                                                               }
+{ parameters:                                                   }
+{       t1,t2 - structure/union types to compare                }
+{       CmpFunc - function for comparing types of fields        }
 
 label 1;
 
@@ -647,13 +662,21 @@ while (field1 <> nil) and (field2 <> nil) do begin
       or (field1^.alignmentSpecified <> field2^.alignmentSpecified)
       or (field1^.anonMemberField <> field2^.anonMemberField) then
       goto 1;
+   if field1^.itype^.isAnonymous and field2^.itype^.isAnonymous then begin
+                                        {matching anon structs are considered}
+                                        {the same (see C23 6.7.3.4 Example 1)}
+      if not StrictCompTypes(field1^.itype, field2^.itype) then
+         goto 1;
+      end {if}
+   else begin
                                         {field types must be compatible}
-   if not StrictCompTypes(field1^.itype, field2^.itype) then
-      goto 1;
+                                        {(or the same, for redeclarations)}
+      if not CmpFunc(field1^.itype, field2^.itype) then
+         goto 1;
                                         {field names must match (if present)}
-   if not (field1^.itype^.isAnonymous and field2^.itype^.isAnonymous) then
       if field1^.name^ <> field2^.name^ then
          goto 1;
+      end; {else}
    field1 := field1^.next;
    field2 := field2^.next;
    end; {while}
@@ -748,7 +771,7 @@ else
 
       structType,unionType:
          if kind2 = kind1 then
-            CompTypes := CompStructs(t1,t2);
+            CompTypes := CompStructs(t1,t2,StrictCompTypes);
 
       otherwise: ;
 
@@ -904,7 +927,7 @@ case kind1 of
 
    structType,unionType:
       if kind2 = kind1 then
-         StrictCompTypes := CompStructs(t1,t2);
+         StrictCompTypes := CompStructs(t1,t2,StrictCompTypes);
 
    otherwise: ;
 

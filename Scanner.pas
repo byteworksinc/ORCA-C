@@ -937,7 +937,7 @@ if list or (numErr <> 0) then begin
         209: msg := @'''{'' or '';'' expected';
         210: msg := @'invalid underlying type for enum';
         211: msg := @'invalid enum declaration';
-        212: msg := @'illegally nested enum declaration';
+        212: msg := @'illegally nested struct, union, or enum declaration';
         213: msg := @'incompatible redefinition of enum type or constant';
          end; {case}
        if extraStr <> nil then begin
