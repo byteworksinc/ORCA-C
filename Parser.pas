@@ -4155,8 +4155,11 @@ while token.kind in allowedTokens do begin
                   if (token.kind <> semicolonch) or 
                      (myDeclarationModifiers <> []) then
                      structPtr := FindSymbol(ttoken, tagSpace, false, true);
-               if structPtr <> nil then
-                  structTypePtr := structPtr^.itype
+               if structPtr <> nil then begin
+                  structTypePtr := structPtr^.itype;
+                  if structTypePtr^.kind <> tKind then
+                     Error(42);
+                  end {if}
                else begin
                   globalStruct := doingParameters and (token.kind <> lbracech);
                   if globalStruct then begin
