@@ -1625,6 +1625,7 @@ var
       gotStatic: boolean;               {got 'static' in array declarator?}
       numberOfParameters: integer;      {number of K&R-style parameters}
       parameterCodeLoc: codeRef;        {code generated for function params}
+      voidPrototype: boolean;           {is the prototype (void)?}
 
                                         {variables used to preserve states}
                                         { across recursive calls          }
@@ -1793,13 +1794,15 @@ var
                      declaredTagOrEnumConst :=
                         ldeclaredTagOrEnumConst or declaredTagOrEnumConst;
                      if protoType <> nil then begin
-                        if (parameterList = nil)
-                           and StrictCompTypes(protoType, voidPtr)
-                           and ((protoVariable = nil)
-                              or (protoVariable^.name^ = '?'))
-                           and (token.kind = rparench) then
-                           {it is a (void) prototype: no parameters}
-                        else begin
+                        voidPrototype := false;
+                        if parameterList = nil then
+                           if token.kind = rparench then
+                              if StrictCompTypes(protoType, voidPtr) then
+                                 if protoVariable = nil then
+                                    voidPrototype := true
+                                 else if protoVariable^.name^ = '?' then
+                                    voidPrototype := true;
+                        if not voidPrototype then begin
                            wp := pointer(Malloc(sizeof(parameterRecord)));
                            wp^.next := parameterList;
                            parameterList := wp;
@@ -1813,7 +1816,7 @@ var
                                  lastParameter := protoVariable;
                                  end; {if}
                               end; {if}
-                           end; {else}
+                           end; {if}
                         end; {if}
                      if token.kind = commach then begin
                         NextToken;
