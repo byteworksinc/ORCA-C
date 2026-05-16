@@ -46,6 +46,7 @@
 #include <sound.h>
 #include <stdalign.h>
 #include <stdarg.h>
+#include <stdbit.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdfile.h>
