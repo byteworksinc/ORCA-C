@@ -501,6 +501,148 @@ int iseqsig(real-floating x, real-floating y);
 
 This macro returns the value of (x)==(y).  If x or y is a NaN, it signals the "invalid" floating-point exception.  (In the current version of ORCA/C, the == operator usually also signals "invalid" for NaN operands, but that behavior is not guaranteed and may be changed in the future.)
 
+20. Several new functions operating on the bit-level representation of numbers have been added.  These are defined in the new header <stdbit.h>, and for each function family there is one function operating on each of the standard unsigned integer types (excluding bool), as well as a type-generic macro that can operate on any of those types or on unsigned _BitInt(N) types where N matches the width of any of those types.  The type-generic macros have no type suffix, while each of the functions has a suffix corresponding to the type it operates on.
+
+#include <stdbit.h>
+unsigned int stdc_leading_zeros(unsigned-integer value);
+unsigned int stdc_leading_zeros_uc(unsigned char value);
+unsigned int stdc_leading_zeros_us(unsigned short value);
+unsigned int stdc_leading_zeros_ui(unsigned int value);
+unsigned int stdc_leading_zeros_ul(unsigned long value);
+unsigned int stdc_leading_zeros_ull(unsigned long long value);
+
+These functions return the number of leading zero bits in value.
+
+#include <stdbit.h>
+unsigned int stdc_leading_ones(unsigned-integer value);
+unsigned int stdc_leading_ones_uc(unsigned char value);
+unsigned int stdc_leading_ones_us(unsigned short value);
+unsigned int stdc_leading_ones_ui(unsigned int value);
+unsigned int stdc_leading_ones_ul(unsigned long value);
+unsigned int stdc_leading_ones_ull(unsigned long long value);
+
+These functions return the number of leading one bits in value.
+
+#include <stdbit.h>
+unsigned int stdc_trailing_zeros(unsigned-integer value);
+unsigned int stdc_trailing_zeros_uc(unsigned char value);
+unsigned int stdc_trailing_zeros_us(unsigned short value);
+unsigned int stdc_trailing_zeros_ui(unsigned int value);
+unsigned int stdc_trailing_zeros_ul(unsigned long value);
+unsigned int stdc_trailing_zeros_ull(unsigned long long value);
+
+These functions return the number of trailing zero bits in value.
+
+#include <stdbit.h>
+unsigned int stdc_trailing_ones(unsigned-integer value);
+unsigned int stdc_trailing_ones_uc(unsigned char value);
+unsigned int stdc_trailing_ones_us(unsigned short value);
+unsigned int stdc_trailing_ones_ui(unsigned int value);
+unsigned int stdc_trailing_ones_ul(unsigned long value);
+unsigned int stdc_trailing_ones_ull(unsigned long long value);
+
+These functions return the number of trailing one bits in value.
+
+#include <stdbit.h>
+unsigned int stdc_count_zeros(unsigned-integer value);
+unsigned int stdc_count_zeros_uc(unsigned char value);
+unsigned int stdc_count_zeros_us(unsigned short value);
+unsigned int stdc_count_zeros_ui(unsigned int value);
+unsigned int stdc_count_zeros_ul(unsigned long value);
+unsigned int stdc_count_zeros_ull(unsigned long long value);
+
+These functions return the total number of zero bits in value.
+
+#include <stdbit.h>
+unsigned int stdc_count_ones(unsigned-integer value);
+unsigned int stdc_count_ones_uc(unsigned char value);
+unsigned int stdc_count_ones_us(unsigned short value);
+unsigned int stdc_count_ones_ui(unsigned int value);
+unsigned int stdc_count_ones_ul(unsigned long value);
+unsigned int stdc_count_ones_ull(unsigned long long value);
+
+These functions return the total number of one bits in value.
+
+#include <stdbit.h>
+unsigned int stdc_first_leading_zero(unsigned-integer value);
+unsigned int stdc_first_leading_zero_uc(unsigned char value);
+unsigned int stdc_first_leading_zero_us(unsigned short value);
+unsigned int stdc_first_leading_zero_ui(unsigned int value);
+unsigned int stdc_first_leading_zero_ul(unsigned long value);
+unsigned int stdc_first_leading_zero_ull(unsigned long long value);
+
+These functions return the position of the first zero bit in value (counting from the most significant bit), where the most significant bit is numbered as position 1 and successive lower-order bits have successively higher numbers.  If there are no zero bits in value, 0 is returned.
+
+#include <stdbit.h>
+unsigned int stdc_first_leading_one(unsigned-integer value);
+unsigned int stdc_first_leading_one_uc(unsigned char value);
+unsigned int stdc_first_leading_one_us(unsigned short value);
+unsigned int stdc_first_leading_one_ui(unsigned int value);
+unsigned int stdc_first_leading_one_ul(unsigned long value);
+unsigned int stdc_first_leading_one_ull(unsigned long long value);
+
+These functions return the position of the first one bit in value (counting from the most significant bit), where the most significant bit is numbered as position 1 and successive lower-order bits have successively higher numbers.  If there are no one bits in value, 0 is returned.
+
+#include <stdbit.h>
+unsigned int stdc_first_trailing_zero(unsigned-integer value);
+unsigned int stdc_first_trailing_zero_uc(unsigned char value);
+unsigned int stdc_first_trailing_zero_us(unsigned short value);
+unsigned int stdc_first_trailing_zero_ui(unsigned int value);
+unsigned int stdc_first_trailing_zero_ul(unsigned long value);
+unsigned int stdc_first_trailing_zero_ull(unsigned long long value);
+
+These functions return the position of the first zero bit in value (counting from the least significant bit), where the least significant bit is numbered as position 1 and successive higher-order bits have successively higher numbers.  If there are no zero bits in value, 0 is returned.
+
+#include <stdbit.h>
+unsigned int stdc_first_trailing_one(unsigned-integer value);
+unsigned int stdc_first_trailing_one_uc(unsigned char value);
+unsigned int stdc_first_trailing_one_us(unsigned short value);
+unsigned int stdc_first_trailing_one_ui(unsigned int value);
+unsigned int stdc_first_trailing_one_ul(unsigned long value);
+unsigned int stdc_first_trailing_one_ull(unsigned long long value);
+
+These functions return the position of the first one bit in value (counting from the least significant bit), where the least significant bit is numbered as position 1 and successive higher-order bits have successively higher numbers.  If there are no one bits in value, 0 is returned.
+
+#include <stdbit.h>
+bool stdc_has_single_bit(unsigned-integer value);
+bool stdc_has_single_bit_uc(unsigned char value);
+bool stdc_has_single_bit_us(unsigned short value);
+bool stdc_has_single_bit_ui(unsigned int value);
+bool stdc_has_single_bit_ul(unsigned long value);
+bool stdc_has_single_bit_ull(unsigned long long value);
+
+These functions return true if there is exactly one 1 bit in value, or false otherwise.
+
+#include <stdbit.h>
+unsigned int stdc_bit_width(unsigned-integer value);
+unsigned int stdc_bit_width_uc(unsigned char value);
+unsigned int stdc_bit_width_us(unsigned short value);
+unsigned int stdc_bit_width_ui(unsigned int value);
+unsigned int stdc_bit_width_ul(unsigned long value);
+unsigned int stdc_bit_width_ull(unsigned long long value);
+
+These functions return the minimum width of unsigned integer that can hold the specified value.  If value is 0, they return 0.
+
+#include <stdbit.h>
+unsigned-integer   stdc_bit_floor(unsigned-integer value);
+unsigned char      stdc_bit_floor_uc(unsigned char value);
+unsigned short     stdc_bit_floor_us(unsigned short value);
+unsigned int       stdc_bit_floor_ui(unsigned int value);
+unsigned long      stdc_bit_floor_ul(unsigned long value);
+unsigned long long stdc_bit_floor_ull(unsigned long long value);
+
+These functions return the greatest power of two that is less than or equal to value.  If value is 0, they return 0.
+
+#include <stdbit.h>
+unsigned-integer   stdc_bit_ceil(unsigned-integer value);
+unsigned char      stdc_bit_ceil_uc(unsigned char value);
+unsigned short     stdc_bit_ceil_us(unsigned short value);
+unsigned int       stdc_bit_ceil_ui(unsigned int value);
+unsigned long      stdc_bit_ceil_ul(unsigned long value);
+unsigned long long stdc_bit_ceil_ull(unsigned long long value);
+
+These functions return the smallest power of two that is greater than or equal to value.  If that number cannot be represented in the parameter type, they return 0.
+
 -- Bugs from C 2.2.1 that have been fixed in C 2.3.0 ------------------------
 
 1. Constant expressions cast to _Bool, short, or unsigned short would not match the corresponding association in a generic selection expression.
