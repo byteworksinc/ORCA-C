@@ -1,12 +1,12 @@
-ORCA/C 2.3.0 development
+ORCA/C 2.3.0 B1
 Copyright 1997, Byte Works Inc.
-Updated by Stephen Heumann and Kelvin Sherlock, 2017-2025
+Updated by Stephen Heumann and Kelvin Sherlock, 2017-2026
 
-These release notes document the changes between ORCA/C 2.2.1 and ORCA/C 2.3.0.  For changes between ORCA/C 2.0 and ORCA/C 2.2.1, refer to the ORCA/C 2.2.1 release notes.
+These release notes document the changes between ORCA/C 2.2.1 and ORCA/C 2.3.0 B1.  For changes between ORCA/C 2.0 and ORCA/C 2.2.1, refer to the ORCA/C 2.2.1 release notes.
 
 -- Change List --------------------------------------------------------------
 
-2.3.0       1.  Bugs squashed.  See bug notes, below.
+2.3.0 B1    1.  Bugs squashed.  See bug notes, below.
 
             2.  New C23 language and library features added.  See
                 "New Language Features" and "Library Updates," below.
