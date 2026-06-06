@@ -12,6 +12,9 @@
 
 typedef unsigned short fenv_t;
 typedef unsigned short fexcept_t;
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+typedef unsigned short femode_t;
+#endif
 
 /* Floating-point exceptions */
 #define FE_INVALID    0x01
@@ -29,6 +32,9 @@ typedef unsigned short fexcept_t;
 
 extern const fenv_t __FE_DFL_ENV[1];
 #define FE_DFL_ENV (&*__FE_DFL_ENV)
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+#define FE_DFL_MODE (&*__FE_DFL_ENV)
+#endif
 
 int feclearexcept(int);
 int fegetexceptflag(fexcept_t *, int);
@@ -41,5 +47,10 @@ int fegetenv(fenv_t *);
 int feholdexcept(fenv_t *);
 int fesetenv(const fenv_t *);
 int feupdateenv(const fenv_t *);
+#if !defined(__KeepNamespacePure__) || __STDC_VERSION__ >= 202311L
+int fetestexceptflag(const fexcept_t *, int);
+int fegetmode(femode_t *);
+int fesetmode(const femode_t *);
+#endif
 
 #endif
