@@ -5066,6 +5066,7 @@ var
          nextKind: tokenEnum;           {lookahead token kind}
          done: boolean;                 {for loop termination}
          wp: parameterPtr;              {used to build prototype var list}
+         voidPrototype: boolean;        {is the prototype (void)?}
 
       begin {NonEmptyAbstractDeclarator}
       if token.kind = lparench then begin
@@ -5163,13 +5164,15 @@ var
                   if token.kind in prototypeParameterDeclarationStart then begin
                      DoDeclaration(true);
                      if protoType <> nil then begin
-                        if (parameterList = nil)
-                           and StrictCompTypes(protoType, voidPtr)
-                           and ((protoVariable = nil)
-                              or (protoVariable^.name^ = '?'))
-                           and (token.kind = rparench) then
-                           {it is a (void) prototype: no parameters}
-                        else begin
+                        voidPrototype := false;
+                        if parameterList = nil then
+                           if token.kind = rparench then
+                              if StrictCompTypes(protoType, voidPtr) then
+                                 if protoVariable = nil then
+                                    voidPrototype := true
+                                 else if protoVariable^.name^ = '?' then
+                                    voidPrototype := true;
+                        if not voidPrototype then begin
                            wp := pointer(Malloc(sizeof(parameterRecord)));
                            wp^.next := parameterList;
                            parameterList := wp;
