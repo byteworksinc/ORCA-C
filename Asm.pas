@@ -93,6 +93,7 @@ lb^.name := name;
 lnum := GenLabel;
 lb^.lab := lnum;
 lb^.defined := false;
+lb^.lastVMSym := table^.lastVMSym;
 1:
 if definition then begin
    if lb^.defined then
@@ -100,6 +101,7 @@ if definition then begin
    else begin
       lb^.defined := true;
       Gen1(dc_lab, lb^.lab);
+      lb^.lastVMSym := nil;             {avoid any errors for "goto asm_label"}
       end; {else}
    end; {if}
 FindLabel := lnum;
