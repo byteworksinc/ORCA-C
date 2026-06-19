@@ -44,11 +44,11 @@ Of these, alignas, alignof, bool, static_assert, and thread_local are equivalent
 
 3.  (C23 modes only) u8-prefixed string literals have an "array of unsigned char" type, rather than "array of char".
 
-3.  static_assert or _Static_assert can now be used in a one-argument form:
+4.  static_assert or _Static_assert can now be used in a one-argument form:
 
    static_assert ( constant-expression ) ;
 
-4.  When a macro taking a variable number of arguments is invoked with no arguments corresponding to the variable portion of the argument list, the final comma may be omitted.  For example, a macro defined like
+5.  When a macro taking a variable number of arguments is invoked with no arguments corresponding to the variable portion of the argument list, the final comma may be omitted.  For example, a macro defined like
 
    #define m(x, ...) /*...*/
 
@@ -56,19 +56,19 @@ may be invoked as
 
    m(1)
 
-5.  Universal character names (UCNs) within string literals or character constants can now designate any valid Unicode code point, including ASCII characters or control characters.
+6.  Universal character names (UCNs) within string literals or character constants can now designate any valid Unicode code point, including ASCII characters or control characters.
 
-6.  (C23 modes only) The validity of UCNs within identifiers is now defined based on the XID_Start and XID_Continue Unicode properties.
+7.  (C23 modes only) The validity of UCNs within identifiers is now defined based on the XID_Start and XID_Continue Unicode properties.
 
-7.  Attribute specifiers of the form [[ /*...*/ ]] may appear in certain places in declarations and statements, declaring attributes that appertain to various syntactic elements.  ORCA/C currently ignores all attributes.
+8.  Attribute specifiers of the form [[ /*...*/ ]] may appear in certain places in declarations and statements, declaring attributes that appertain to various syntactic elements.  ORCA/C currently ignores all attributes.
 
 The __has_c_attribute preprocessor operator is also available for use within preprocessor expressions.  It is followed by parentheses enclosing an attribute name.  It expands to 0 if the attribute is not supported, or a non-zero value if it is supported.  Since ORCA/C does not currently support any attributes, it always expands to 0 in ORCA/C.
 
-8.  Labels are no longer restricted to appearing only before statements.  They can now appear before declarations (within a function body) or immediately before the closing } of a compound statement.
+9.  Labels are no longer restricted to appearing only before statements.  They can now appear before declarations (within a function body) or immediately before the closing } of a compound statement.
 
-9.  Character constants can now have the u8 prefix, indicating UTF-8 encoding.  Such character constants have the type unsigned char.  Unless designated by an octal or hexadecimal escape sequence, the character specified by a u8-prefixed character constant must be one that can be represented by a single UTF-8 code unit, i.e. a character within the 7-bit ASCII character set.
+10. Character constants can now have the u8 prefix, indicating UTF-8 encoding.  Such character constants have the type unsigned char.  Unless designated by an octal or hexadecimal escape sequence, the character specified by a u8-prefixed character constant must be one that can be represented by a single UTF-8 code unit, i.e. a character within the 7-bit ASCII character set.
 
-10. The #elifdef and #elifndef preprocessor directives are now supported:
+11. The #elifdef and #elifndef preprocessor directives are now supported:
 
    #elifdef identifier
    #elifndef identifier
@@ -81,9 +81,9 @@ and the second is equivalent to
 
    #elif !defined identifier
 
-11. (C23 modes only) The new keywords true and false denote predefined constants with type bool and values 1 and 0, respectively.  If true is used in a preprocessor expression, it is replaced with 1, unlike other identifiers or keywords (including false) that are replaced with 0.  This means that true and false can effectively be used as boolean constants within preprocessor expressions, as well as in regular C code.
+12. (C23 modes only) The new keywords true and false denote predefined constants with type bool and values 1 and 0, respectively.  If true is used in a preprocessor expression, it is replaced with 1, unlike other identifiers or keywords (including false) that are replaced with 0.  This means that true and false can effectively be used as boolean constants within preprocessor expressions, as well as in regular C code.
 
-12. (C23 modes only) Type specifiers using typeof or typeof_unqual are now supported.  They can have the following forms:
+13. (C23 modes only) Type specifiers using typeof or typeof_unqual are now supported.  They can have the following forms:
 
    typeof ( expression )
    typeof ( type-name )
@@ -92,7 +92,7 @@ and the second is equivalent to
 
 These can appear wherever type specifiers are used, e.g. in declarations.  The forms with typeof specify either the type of the expression or the type designated by the type name.  The forms with typeof_unqual are similar, except that they will remove any qualifiers (e.g. const or volatile) from the type.
 
-13. (C23 modes only) Type inference is now supported in variable definitions.  This applies to declarations that meet all of the following requirements:
+14. (C23 modes only) Type inference is now supported in variable definitions.  This applies to declarations that meet all of the following requirements:
 
 - They contain the storage class specifier auto
 - They do not contain any type specifiers
@@ -114,7 +114,7 @@ declares the variable x with type long (because that is the type of 123L) and st
 
 Note that this can change the behavior of code written using the "implicit int" feature of C89/C90, where a declaration with no type specifiers would behave as if the type specifier int was included.  In the "c23compat" language mode, declarations that use auto with no type specifiers but do not meet all the other requirements above will still be processed using the "implicit int" rule.  In "c23" mode or when #pragma lint bit 6 is set, they will produce a lint message.
 
-14. Variable length array types are now supported.  These are array types where the array length expression enclosed in brackets is not an integer constant expression but instead an expression that needs to be evaluated at execution time.  Such array types may occur only in function parameters or within a function body.
+15. Variable length array types are now supported.  These are array types where the array length expression enclosed in brackets is not an integer constant expression but instead an expression that needs to be evaluated at execution time.  Such array types may occur only in function parameters or within a function body.
 
 The array length expression is normally evaluated when the declaration or type name that contains it appears in the code (or at the beginning of the function, in the case of expressions within function parameter declarations).  It must evaluate to a positive value, and this then determines the size of the array type for as long as it remains in scope.
 
@@ -122,7 +122,7 @@ Functions can be defined as taking variable length array parameters (including m
 
 Note that ORCA/C does not allow local variables to have variable length array types.  This is an optional feature in the C23 standard, which ORCA/C does not implement.  As an alternative, it is possible to declare a pointer to a variable length array type and then allocate space for the array with malloc() based on the desired size as determined at run time.
 
-15. The #embed preprocessor directive is now supported.  It can have one of these forms:
+16. The #embed preprocessor directive is now supported.  It can have one of these forms:
 
    #embed "filename" [parameters]
    #embed <filename> [parameters]
@@ -152,9 +152,9 @@ a) __STDC_EMBED_NOT_FOUND__ (a value of 0), indicating that the file could not b
 b) __STDC_EMBED_FOUND__ (a value of 1), indicating that the file was found and the corresponding #embed directive would embed one or more bytes from it
 c) __STDC_EMBED_EMPTY__ (a value of 2), indicating that the file was found, but the file was empty or limit(0) was specified, so the corresponding #embed directive would not embed any bytes from it
 
-16. The __has_include preprocessor operator is available for use within preprocessor expressions.  It is followed by parentheses enclosing a filename in quotes or angle brackets, like the argument for the #include directive.  It searches for a file in the same way the #include directive would and expands to 1 if a file of the specified name is available to include, or 0 if not.  
+17. The __has_include preprocessor operator is available for use within preprocessor expressions.  It is followed by parentheses enclosing a filename in quotes or angle brackets, like the argument for the #include directive.  It searches for a file in the same way the #include directive would and expands to 1 if a file of the specified name is available to include, or 0 if not.  
 
-17. (C23 modes only) C23 removes support for function declarators without prototypes.  K&R-style function definitions with a parameter name list are no longer permitted.  Function declarators like f() are still permitted, but a declarator like this is now considered equivalent to f(void) -- that is, it provides a prototype for a function with no parameters.
+18. (C23 modes only) C23 removes support for function declarators without prototypes.  K&R-style function definitions with a parameter name list are no longer permitted.  Function declarators like f() are still permitted, but a declarator like this is now considered equivalent to f(void) -- that is, it provides a prototype for a function with no parameters.
 
 ORCA/C now supports these rules in C23-based language modes.  However, to provide better compatibility with old code, a new #pragma ignore option is provided that can partially revert to the older rules.  If a C23-based language mode is used but #pragma ignore bit 6 is set, then K&R-style function definitions with parameter name lists will be permitted, and declarations like
 
@@ -164,7 +164,7 @@ are largely treated as if they did not provide a prototype.  A call to a functio
 
 #pragma ignore bit 6 is set by default in the "c23compat" language mode, but it is clear by default in "c23" mode.  It has no effect in pre-C23 language modes, where the rules from the earlier standards are always followed.
 
-18. Bit-precise integer types are now supported.  These are designated by type specifiers of the form _BitInt(N) or unsigned _BitInt(N), where N is an integer constant expression.  The value of N gives the width of the type (the number of value bits).  _BitInt(N) designates a signed N-bit integer type using two's-complement representation; N can range from 2 to 64.  unsigned _BitInt(N) designates an unsigned N-bit integer type; N can range from 1 to 64.  These types are distinct from the traditional C integer types (e.g. int), even though they may sometimes have the same width.
+19. Bit-precise integer types are now supported.  These are designated by type specifiers of the form _BitInt(N) or unsigned _BitInt(N), where N is an integer constant expression.  The value of N gives the width of the type (the number of value bits).  _BitInt(N) designates a signed N-bit integer type using two's-complement representation; N can range from 2 to 64.  unsigned _BitInt(N) designates an unsigned N-bit integer type; N can range from 1 to 64.  These types are distinct from the traditional C integer types (e.g. int), even though they may sometimes have the same width.
 
 In ORCA/C, bit-precise integer types are stored in memory using 16, 32, or 64 bits, whichever is needed to fit them.  If N is not exactly one of those values, then the N-bit value is sign-extended (for signed _BitInt types) or zero-extended (for unsigned _BitInt types) to the width used to store it.
 
@@ -172,11 +172,11 @@ Note that the unary and binary conversion rules do not apply to _BitInt types in
 
 A suffix of wb or WB can be used on an integer constant to give it a _BitInt type that is just wide enough to hold the specified value.  If a wb or WB suffix is used together with u or U, then the constant has an unsigned _BitInt type just wide enough to hold the value.  For example, 6wb has the type _BitInt(4), while 6WBU has the type unsigned _BitInt(3).
 
-19. The empty initializer {} is now supported.  This functions similarly to the initializer {0}, but when initializing structures or unions it also guarantees that any padding is initialized to zero bits.
+20. The empty initializer {} is now supported.  This functions similarly to the initializer {0}, but when initializing structures or unions it also guarantees that any padding is initialized to zero bits.
 
-20. (C23 modes only) The new keyword nullptr denotes a predefined null pointer constant.  It can be assigned or converted to any pointer type, yielding a null pointer value of that type.  The type of nullptr is nullptr_t, which is given by a typedef in <stddef.h>.  It is possible to create variables of type nullptr_t, but this is rarely useful; the only value they can hold is nullptr.
+21. (C23 modes only) The new keyword nullptr denotes a predefined null pointer constant.  It can be assigned or converted to any pointer type, yielding a null pointer value of that type.  The type of nullptr is nullptr_t, which is given by a typedef in <stddef.h>.  It is possible to create variables of type nullptr_t, but this is rarely useful; the only value they can hold is nullptr.
 
-21. Enumeration types have been enhanced in several ways.  First, it is now possible to explicitly specify the underlying integer type that the enumeration type will be be compatible with.  This is done by including a : and then a type name denoting an integer type in between the enum tag (if present) and the { beginning the enumerator list (if present).  When this is done, the enumeration and the enumeration constants within it will have a type compatible with that integer type, and the constants can have any values within the range of that type.  For example, this enumeration specifier declares an enumeration type compatible with long and three enumeration constants of that type:
+22. Enumeration types have been enhanced in several ways.  First, it is now possible to explicitly specify the underlying integer type that the enumeration type will be be compatible with.  This is done by including a : and then a type name denoting an integer type in between the enum tag (if present) and the { beginning the enumerator list (if present).  When this is done, the enumeration and the enumeration constants within it will have a type compatible with that integer type, and the constants can have any values within the range of that type.  For example, this enumeration specifier declares an enumeration type compatible with long and three enumeration constants of that type:
 
    enum X : long {A = 1000000, B, C}
 
@@ -186,15 +186,15 @@ Second, even if the underlying type is not specified explicitly, enumeration con
 
 Furthermore, it it now permitted to redeclare an enumeration type and its enumeration constants within the same scope.  That is, two or more full enumeration specifiers for the same type may appear in the same scope.  They must agree in the names and values of the enumeration constants, and if any of them include an explicitly specified underlying type, they must all do so.
 
-22. Functions taking a variable number of arguments are no longer required to have any fixed parameters.  For example, a function can be defined like:
+23. Functions taking a variable number of arguments are no longer required to have any fixed parameters.  For example, a function can be defined like:
 
    void f(...) { /*...*/ }
 
 The arguments can be accessed within the function using va_start, va_arg, and va_end, as in other functions taking a variable number of arguments.  (Note that the name of the last fixed parameter no longer needs to be passed to va_start; see below under "Library Updates".)
 
-23. (C23 modes only) Two complete structure or union types declared with the same tag in different scopes are now considered compatible, provided that they have matching fields (declared in the same order, with corresponding fields having the same names and compatible types).
+24. (C23 modes only) Two complete structure or union types declared with the same tag in different scopes are now considered compatible, provided that they have matching fields (declared in the same order, with corresponding fields having the same names and compatible types).
 
-24. Two or more full structure or union specifiers for the same type (including the field list) may now appear within the same scope.  The name and type of each field must be exactly the same in each place it is defined.
+25. Two or more full structure or union specifiers for the same type (including the field list) may now appear within the same scope.  The name and type of each field must be exactly the same in each place it is defined.
 
 
 Library Updates
@@ -643,14 +643,14 @@ unsigned long long stdc_bit_ceil_ull(unsigned long long value);
 
 These functions return the smallest power of two that is greater than or equal to value.  If that number cannot be represented in the parameter type, they return 0.
 
-20. The fetestexceptflag function has been added:
+21. The fetestexceptflag function has been added:
 
 #include <fenv.h>
 int fetestexceptflag(const fexcept_t *flagp, int excepts);
 
 This function tests if certain floating-point exception flags are set in *flagp, which should have been previously set by a call to fegetexceptflag.  The excepts argument is a bitwise OR of floating-point exception macros defined in <fenv.h>, specifying the exception flags to test for.  It must only include exception macros that were also included in the excepts argument to the fegetexceptflag call that set *flagp.  fetestexceptflag returns the bitwise OR of the specified exceptions that are set in *flagp.
 
-21. The fegetmode and fesetmode functions have been added:
+22. The fegetmode and fesetmode functions have been added:
 
 #include <fenv.h>
 int fegetmode(femode_t *modep);
