@@ -4,13 +4,12 @@
 
 #include <stdio.h>
 #include <string.h>
-
-typedef enum {false, true} boolean;
+#include <stdbool.h>
 
 int main (void)
 
 {
-boolean fail;
+bool fail;
 int a, b, c, i;
 char str[128];
 

@@ -5,10 +5,9 @@
 #pragma lint -1
 
 #include <stdio.h>
+#include <stdbool.h>
 
-typedef enum {false, true} boolean;
-
-boolean pass;
+bool pass;
 
 /* by default, // comments are allowed */
 
