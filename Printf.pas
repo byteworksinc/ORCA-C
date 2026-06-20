@@ -27,6 +27,7 @@ type
       next: fmtArgPtr;
       ty: typePtr;
       tk: tokenPtr;
+      str: longStringPtr;
    end;
 
    {
@@ -109,6 +110,7 @@ procedure FormatCheck{fmt: fmt_type; args: fmtArgPtr};
 var
    head: fmtArgPtr;
    s: longstringPtr;
+   orig_s: longStringPtr;
    state: state_enum;
    has_length: length_modifier;
    w_width: integer;
@@ -132,9 +134,11 @@ var
    var 
       i: integer;
       ch: char;
+      s: longStringPtr;
 
    begin {Warning}
    if (lint & lintPrintf) <> 0 then begin
+      s := orig_s;
       if error_count = 0 then begin
          WriteLine;
          Error(124);
@@ -1088,6 +1092,7 @@ var
    { get the format string from the pos'th argument. }
    var
       tk: tokenPtr;
+      str: longStringPtr;
 
    begin {get_format_string}
    get_format_string := nil;
@@ -1099,10 +1104,16 @@ var
 
    if (pos = 1) and (args <> nil) then begin
       tk := args^.tk;
+      str := args^.str;
       args := args^.next;
 
-      if (tk <> nil) and (tk^.token.kind = stringconst) then
-         get_format_string := tk^.token.sval
+      if (tk <> nil) and (tk^.token.kind = stringconst) then begin
+         get_format_string := tk^.token.sval;
+         if str <> nil then
+            orig_s := str
+         else
+            orig_s := tk^.token.sval;
+         end {if}
       else
          {Error(125) - disabled for now};
       end; {if}

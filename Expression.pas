@@ -3724,14 +3724,20 @@ var
       doDispose := false;
       while tp <> nil do begin
          if tp^.middle <> nil then begin
-            if fmt <> fmt_none then
+            if fmt <> fmt_none then begin
+               new(tfp);
+               tfp^.next := fp;
+               tfp^.str := nil;
+               fp := tfp;
                if adjustFormat_b then
                   if tp^.middle^.token.kind = stringconst then begin
+                     tfp^.str := tp^.middle^.token.sval;
                      argString := pointer(Malloc(
                         tp^.middle^.token.sval^.length + sizeof(integer)));
                      CopyLongString(argString,tp^.middle^.token.sval);
                      tp^.middle^.token.sval := argString;
                      end; {if}
+               end; {if}
             GenerateCode(tp^.middle);
             if expressionType^.kind in [structType,unionType,definedType]
                then begin
@@ -3746,11 +3752,8 @@ var
                   end; {if}
                end; {if}
             if fmt <> fmt_none then begin
-               new(tfp);
-               tfp^.next := fp;
                tfp^.tk := tp^.middle;
                tfp^.ty := expressionType;
-               fp := tfp;
                end; {if}
             if prototype then begin
                if pCount = 0 then begin
