@@ -117,5 +117,5 @@ MoveTo(SCREENWIDTH-CStringWidth(str), 40);
 DrawCString(str);
 getchar();
 endgraph();
-printf("The name of the file containing the screen dump is:\n%b", filename);
+printf("The name of the file containing the screen dump is:\n%P", filename);
 }
