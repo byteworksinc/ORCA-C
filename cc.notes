@@ -701,3 +701,9 @@ In ORCA/C, the floating-point control modes include the rounding direction, roun
 15. The localtime(), gmtime(), and mktime() functions were unnecessarily slow.  They are now significantly faster.
 
 16. If a pointer to or array of a tagged struct or union type was declared in an outer scope and subsequently used in an inner scope where a different type had been declared with the same tag, a spurious error might be reported.
+
+(Bug fixes below here were added in ORCA/C 2.3.0 B2.)
+
+17. The fgetc() function could return incorrect values on a stream other than stdin that had been configured to use no buffering (via setbuf or setvbuf).  This could also lead to incorrect behavior of other input functions that call fgetc() internally.
+
+(Kelvin Sherlock)
