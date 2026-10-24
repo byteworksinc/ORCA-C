@@ -6,7 +6,7 @@ resource rVersion(1) {
       3,				/* Minor revision */
       0,				/* Bug version */
       beta,				/* Release stage */
-      1,				/* Non-final release # */
+      2,				/* Non-final release # */
       },
    verUS,				/* Region code */
    "ORCA/C",				/* Short version number */
