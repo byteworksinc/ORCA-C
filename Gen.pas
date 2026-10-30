@@ -6125,6 +6125,8 @@ procedure GenTree {op: icptr};
       else begin
 	 GenImplied(m_tax);
 	 GenTree(op^.left);
+         if opcode = pc_mod then        {prevent lda+pha -> pea/pei opt.}
+            GenLab(GenLabel);
 	 end; {else}
       end {else if}
    else begin

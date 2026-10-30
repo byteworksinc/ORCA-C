@@ -707,3 +707,7 @@ In ORCA/C, the floating-point control modes include the rounding direction, roun
 17. The fgetc() function could return incorrect values on a stream other than stdin that had been configured to use no buffering (via setbuf or setvbuf).  This could also lead to incorrect behavior of other input functions that call fgetc() internally.
 
 (Kelvin Sherlock)
+
+18. When native code peephole optimization was enabled, the % operator could sometimes produce incorrect results.  This occurred only when the result type was int, and only with certain combinations of operand expressions.
+
+(Steve Magoun)
