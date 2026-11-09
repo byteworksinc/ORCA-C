@@ -3275,6 +3275,7 @@ case optype of
             GenNative(m_bcc, relative, lab1, nil, 0);
             GenNative(m_ora_imm, immediate, $FF00, nil, 0);
             GenLab(lab1);
+            GenNative(m_ora_imm, immediate, 0, nil, 0);
             end; {if}
          end; {if}
       end; {case cgByte,cgUByte,cgWord,cgUWord}
