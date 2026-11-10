@@ -3527,6 +3527,7 @@ var
                   else
                      Gen0(pc_sbl);
                   end; {if}
+               expressionType := Unqualify(iType);
                goto 1;
                end; {if}
             baseType := cgULong;
