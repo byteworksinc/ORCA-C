@@ -711,3 +711,7 @@ In ORCA/C, the floating-point control modes include the rounding direction, roun
 18. When native code peephole optimization was enabled, the % operator could sometimes produce incorrect results.  This occurred only when the result type was int, and only with certain combinations of operand expressions.
 
 (Steve Magoun)
+
+19. In certain circumstances, the result type of a ++ or -- operator applied to a pointer was computed incorrectly.  This could occur if the size of the pointed-to type was 64k or larger, or for any pointer if null pointer dereference checking (#pragma debug bit 5) was enabled.  This could lead to either spurious errors or incorrect code generation if the ++ or -- operation was used as part of a larger expression.
+
+(Steve Magoun)

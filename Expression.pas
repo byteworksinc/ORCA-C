@@ -3364,7 +3364,7 @@ var
    {     pc_g - op code for a global ++ or --                   }
    {     pc_i - op code for an indirect ++ or --                }
 
-   label 1;
+   label 1,2;
 
    var
       baseType: baseTypeEnum;           {type of operation}
@@ -3527,7 +3527,7 @@ var
                   else
                      Gen0(pc_sbl);
                   end; {if}
-               goto 1;
+               goto 2;
                end; {if}
             baseType := cgULong;
             iSize := long(lSize).lsw;
@@ -3539,7 +3539,7 @@ var
                Gen2tName(pc_g, iSize, 0, baseType, name);
             otherwise: ;
             end; {case}
-         expressionType := Unqualify(itype);
+2:       expressionType := Unqualify(itype);
          end {with}
    else begin
 
